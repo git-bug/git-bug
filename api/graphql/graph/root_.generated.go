@@ -5,12 +5,11 @@ package graph
 import (
 	"bytes"
 	"context"
-	"errors"
+	"fmt"
 	"sync/atomic"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/git-bug/git-bug/api/graphql/models"
 	"github.com/git-bug/git-bug/repository"
 	gqlparser "github.com/vektah/gqlparser/v2"
@@ -19,20 +18,10 @@ import (
 
 // NewExecutableSchema creates an ExecutableSchema from the ResolverRoot interface.
 func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
-	return &executableSchema{
-		schema:     cfg.Schema,
-		resolvers:  cfg.Resolvers,
-		directives: cfg.Directives,
-		complexity: cfg.Complexity,
-	}
+	return &executableSchema{SchemaData: cfg.Schema, Resolvers: cfg.Resolvers, Directives: cfg.Directives, ComplexityRoot: cfg.Complexity}
 }
 
-type Config struct {
-	Schema     *ast.Schema
-	Resolvers  ResolverRoot
-	Directives DirectiveRoot
-	Complexity ComplexityRoot
-}
+type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
 	Bug() BugResolver
@@ -510,27 +499,22 @@ type ComplexityRoot struct {
 	}
 }
 
-type executableSchema struct {
-	schema     *ast.Schema
-	resolvers  ResolverRoot
-	directives DirectiveRoot
-	complexity ComplexityRoot
-}
+type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 func (e *executableSchema) Schema() *ast.Schema {
-	if e.schema != nil {
-		return e.schema
+	if e.SchemaData != nil {
+		return e.SchemaData
 	}
 	return parsedSchema
 }
 
 func (e *executableSchema) Complexity(ctx context.Context, typeName, field string, childComplexity int, rawArgs map[string]any) (int, bool) {
-	ec := executionContext{nil, e, 0, 0, nil}
+	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
 
 	case "Bug.actors":
-		if e.complexity.Bug.Actors == nil {
+		if e.ComplexityRoot.Bug.Actors == nil {
 			break
 		}
 
@@ -539,17 +523,15 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Bug.Actors(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
-
+		return e.ComplexityRoot.Bug.Actors(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 	case "Bug.author":
-		if e.complexity.Bug.Author == nil {
+		if e.ComplexityRoot.Bug.Author == nil {
 			break
 		}
 
-		return e.complexity.Bug.Author(childComplexity), true
-
+		return e.ComplexityRoot.Bug.Author(childComplexity), true
 	case "Bug.comments":
-		if e.complexity.Bug.Comments == nil {
+		if e.ComplexityRoot.Bug.Comments == nil {
 			break
 		}
 
@@ -558,45 +540,39 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Bug.Comments(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
-
+		return e.ComplexityRoot.Bug.Comments(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 	case "Bug.createdAt":
-		if e.complexity.Bug.CreatedAt == nil {
+		if e.ComplexityRoot.Bug.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.Bug.CreatedAt(childComplexity), true
-
+		return e.ComplexityRoot.Bug.CreatedAt(childComplexity), true
 	case "Bug.humanId":
-		if e.complexity.Bug.HumanID == nil {
+		if e.ComplexityRoot.Bug.HumanID == nil {
 			break
 		}
 
-		return e.complexity.Bug.HumanID(childComplexity), true
-
+		return e.ComplexityRoot.Bug.HumanID(childComplexity), true
 	case "Bug.id":
-		if e.complexity.Bug.Id == nil {
+		if e.ComplexityRoot.Bug.Id == nil {
 			break
 		}
 
-		return e.complexity.Bug.Id(childComplexity), true
-
+		return e.ComplexityRoot.Bug.Id(childComplexity), true
 	case "Bug.labels":
-		if e.complexity.Bug.Labels == nil {
+		if e.ComplexityRoot.Bug.Labels == nil {
 			break
 		}
 
-		return e.complexity.Bug.Labels(childComplexity), true
-
+		return e.ComplexityRoot.Bug.Labels(childComplexity), true
 	case "Bug.lastEdit":
-		if e.complexity.Bug.LastEdit == nil {
+		if e.ComplexityRoot.Bug.LastEdit == nil {
 			break
 		}
 
-		return e.complexity.Bug.LastEdit(childComplexity), true
-
+		return e.ComplexityRoot.Bug.LastEdit(childComplexity), true
 	case "Bug.operations":
-		if e.complexity.Bug.Operations == nil {
+		if e.ComplexityRoot.Bug.Operations == nil {
 			break
 		}
 
@@ -605,10 +581,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Bug.Operations(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
-
+		return e.ComplexityRoot.Bug.Operations(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 	case "Bug.participants":
-		if e.complexity.Bug.Participants == nil {
+		if e.ComplexityRoot.Bug.Participants == nil {
 			break
 		}
 
@@ -617,17 +592,15 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Bug.Participants(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
-
+		return e.ComplexityRoot.Bug.Participants(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 	case "Bug.status":
-		if e.complexity.Bug.Status == nil {
+		if e.ComplexityRoot.Bug.Status == nil {
 			break
 		}
 
-		return e.complexity.Bug.Status(childComplexity), true
-
+		return e.ComplexityRoot.Bug.Status(childComplexity), true
 	case "Bug.timeline":
-		if e.complexity.Bug.Timeline == nil {
+		if e.ComplexityRoot.Bug.Timeline == nil {
 			break
 		}
 
@@ -636,990 +609,884 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Bug.Timeline(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
-
+		return e.ComplexityRoot.Bug.Timeline(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 	case "Bug.title":
-		if e.complexity.Bug.Title == nil {
+		if e.ComplexityRoot.Bug.Title == nil {
 			break
 		}
 
-		return e.complexity.Bug.Title(childComplexity), true
+		return e.ComplexityRoot.Bug.Title(childComplexity), true
 
 	case "BugAddCommentAndClosePayload.bug":
-		if e.complexity.BugAddCommentAndClosePayload.Bug == nil {
+		if e.ComplexityRoot.BugAddCommentAndClosePayload.Bug == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentAndClosePayload.Bug(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentAndClosePayload.Bug(childComplexity), true
 	case "BugAddCommentAndClosePayload.clientMutationId":
-		if e.complexity.BugAddCommentAndClosePayload.ClientMutationID == nil {
+		if e.ComplexityRoot.BugAddCommentAndClosePayload.ClientMutationID == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentAndClosePayload.ClientMutationID(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentAndClosePayload.ClientMutationID(childComplexity), true
 	case "BugAddCommentAndClosePayload.commentOperation":
-		if e.complexity.BugAddCommentAndClosePayload.CommentOperation == nil {
+		if e.ComplexityRoot.BugAddCommentAndClosePayload.CommentOperation == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentAndClosePayload.CommentOperation(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentAndClosePayload.CommentOperation(childComplexity), true
 	case "BugAddCommentAndClosePayload.statusOperation":
-		if e.complexity.BugAddCommentAndClosePayload.StatusOperation == nil {
+		if e.ComplexityRoot.BugAddCommentAndClosePayload.StatusOperation == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentAndClosePayload.StatusOperation(childComplexity), true
+		return e.ComplexityRoot.BugAddCommentAndClosePayload.StatusOperation(childComplexity), true
 
 	case "BugAddCommentAndReopenPayload.bug":
-		if e.complexity.BugAddCommentAndReopenPayload.Bug == nil {
+		if e.ComplexityRoot.BugAddCommentAndReopenPayload.Bug == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentAndReopenPayload.Bug(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentAndReopenPayload.Bug(childComplexity), true
 	case "BugAddCommentAndReopenPayload.clientMutationId":
-		if e.complexity.BugAddCommentAndReopenPayload.ClientMutationID == nil {
+		if e.ComplexityRoot.BugAddCommentAndReopenPayload.ClientMutationID == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentAndReopenPayload.ClientMutationID(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentAndReopenPayload.ClientMutationID(childComplexity), true
 	case "BugAddCommentAndReopenPayload.commentOperation":
-		if e.complexity.BugAddCommentAndReopenPayload.CommentOperation == nil {
+		if e.ComplexityRoot.BugAddCommentAndReopenPayload.CommentOperation == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentAndReopenPayload.CommentOperation(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentAndReopenPayload.CommentOperation(childComplexity), true
 	case "BugAddCommentAndReopenPayload.statusOperation":
-		if e.complexity.BugAddCommentAndReopenPayload.StatusOperation == nil {
+		if e.ComplexityRoot.BugAddCommentAndReopenPayload.StatusOperation == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentAndReopenPayload.StatusOperation(childComplexity), true
+		return e.ComplexityRoot.BugAddCommentAndReopenPayload.StatusOperation(childComplexity), true
 
 	case "BugAddCommentOperation.author":
-		if e.complexity.BugAddCommentOperation.Author == nil {
+		if e.ComplexityRoot.BugAddCommentOperation.Author == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentOperation.Author(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentOperation.Author(childComplexity), true
 	case "BugAddCommentOperation.files":
-		if e.complexity.BugAddCommentOperation.Files == nil {
+		if e.ComplexityRoot.BugAddCommentOperation.Files == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentOperation.Files(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentOperation.Files(childComplexity), true
 	case "BugAddCommentOperation.id":
-		if e.complexity.BugAddCommentOperation.Id == nil {
+		if e.ComplexityRoot.BugAddCommentOperation.Id == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentOperation.Id(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentOperation.Id(childComplexity), true
 	case "BugAddCommentOperation.message":
-		if e.complexity.BugAddCommentOperation.Message == nil {
+		if e.ComplexityRoot.BugAddCommentOperation.Message == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentOperation.Message(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentOperation.Message(childComplexity), true
 	case "BugAddCommentOperation.date":
-		if e.complexity.BugAddCommentOperation.Time == nil {
+		if e.ComplexityRoot.BugAddCommentOperation.Time == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentOperation.Time(childComplexity), true
+		return e.ComplexityRoot.BugAddCommentOperation.Time(childComplexity), true
 
 	case "BugAddCommentPayload.bug":
-		if e.complexity.BugAddCommentPayload.Bug == nil {
+		if e.ComplexityRoot.BugAddCommentPayload.Bug == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentPayload.Bug(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentPayload.Bug(childComplexity), true
 	case "BugAddCommentPayload.clientMutationId":
-		if e.complexity.BugAddCommentPayload.ClientMutationID == nil {
+		if e.ComplexityRoot.BugAddCommentPayload.ClientMutationID == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentPayload.ClientMutationID(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentPayload.ClientMutationID(childComplexity), true
 	case "BugAddCommentPayload.operation":
-		if e.complexity.BugAddCommentPayload.Operation == nil {
+		if e.ComplexityRoot.BugAddCommentPayload.Operation == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentPayload.Operation(childComplexity), true
+		return e.ComplexityRoot.BugAddCommentPayload.Operation(childComplexity), true
 
 	case "BugAddCommentTimelineItem.author":
-		if e.complexity.BugAddCommentTimelineItem.Author == nil {
+		if e.ComplexityRoot.BugAddCommentTimelineItem.Author == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentTimelineItem.Author(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentTimelineItem.Author(childComplexity), true
 	case "BugAddCommentTimelineItem.id":
-		if e.complexity.BugAddCommentTimelineItem.CombinedId == nil {
+		if e.ComplexityRoot.BugAddCommentTimelineItem.CombinedId == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentTimelineItem.CombinedId(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentTimelineItem.CombinedId(childComplexity), true
 	case "BugAddCommentTimelineItem.createdAt":
-		if e.complexity.BugAddCommentTimelineItem.CreatedAt == nil {
+		if e.ComplexityRoot.BugAddCommentTimelineItem.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentTimelineItem.CreatedAt(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentTimelineItem.CreatedAt(childComplexity), true
 	case "BugAddCommentTimelineItem.edited":
-		if e.complexity.BugAddCommentTimelineItem.Edited == nil {
+		if e.ComplexityRoot.BugAddCommentTimelineItem.Edited == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentTimelineItem.Edited(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentTimelineItem.Edited(childComplexity), true
 	case "BugAddCommentTimelineItem.files":
-		if e.complexity.BugAddCommentTimelineItem.Files == nil {
+		if e.ComplexityRoot.BugAddCommentTimelineItem.Files == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentTimelineItem.Files(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentTimelineItem.Files(childComplexity), true
 	case "BugAddCommentTimelineItem.history":
-		if e.complexity.BugAddCommentTimelineItem.History == nil {
+		if e.ComplexityRoot.BugAddCommentTimelineItem.History == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentTimelineItem.History(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentTimelineItem.History(childComplexity), true
 	case "BugAddCommentTimelineItem.lastEdit":
-		if e.complexity.BugAddCommentTimelineItem.LastEdit == nil {
+		if e.ComplexityRoot.BugAddCommentTimelineItem.LastEdit == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentTimelineItem.LastEdit(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentTimelineItem.LastEdit(childComplexity), true
 	case "BugAddCommentTimelineItem.message":
-		if e.complexity.BugAddCommentTimelineItem.Message == nil {
+		if e.ComplexityRoot.BugAddCommentTimelineItem.Message == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentTimelineItem.Message(childComplexity), true
-
+		return e.ComplexityRoot.BugAddCommentTimelineItem.Message(childComplexity), true
 	case "BugAddCommentTimelineItem.messageIsEmpty":
-		if e.complexity.BugAddCommentTimelineItem.MessageIsEmpty == nil {
+		if e.ComplexityRoot.BugAddCommentTimelineItem.MessageIsEmpty == nil {
 			break
 		}
 
-		return e.complexity.BugAddCommentTimelineItem.MessageIsEmpty(childComplexity), true
+		return e.ComplexityRoot.BugAddCommentTimelineItem.MessageIsEmpty(childComplexity), true
 
 	case "BugChangeLabelPayload.bug":
-		if e.complexity.BugChangeLabelPayload.Bug == nil {
+		if e.ComplexityRoot.BugChangeLabelPayload.Bug == nil {
 			break
 		}
 
-		return e.complexity.BugChangeLabelPayload.Bug(childComplexity), true
-
+		return e.ComplexityRoot.BugChangeLabelPayload.Bug(childComplexity), true
 	case "BugChangeLabelPayload.clientMutationId":
-		if e.complexity.BugChangeLabelPayload.ClientMutationID == nil {
+		if e.ComplexityRoot.BugChangeLabelPayload.ClientMutationID == nil {
 			break
 		}
 
-		return e.complexity.BugChangeLabelPayload.ClientMutationID(childComplexity), true
-
+		return e.ComplexityRoot.BugChangeLabelPayload.ClientMutationID(childComplexity), true
 	case "BugChangeLabelPayload.operation":
-		if e.complexity.BugChangeLabelPayload.Operation == nil {
+		if e.ComplexityRoot.BugChangeLabelPayload.Operation == nil {
 			break
 		}
 
-		return e.complexity.BugChangeLabelPayload.Operation(childComplexity), true
-
+		return e.ComplexityRoot.BugChangeLabelPayload.Operation(childComplexity), true
 	case "BugChangeLabelPayload.results":
-		if e.complexity.BugChangeLabelPayload.Results == nil {
+		if e.ComplexityRoot.BugChangeLabelPayload.Results == nil {
 			break
 		}
 
-		return e.complexity.BugChangeLabelPayload.Results(childComplexity), true
+		return e.ComplexityRoot.BugChangeLabelPayload.Results(childComplexity), true
 
 	case "BugComment.author":
-		if e.complexity.BugComment.Author == nil {
+		if e.ComplexityRoot.BugComment.Author == nil {
 			break
 		}
 
-		return e.complexity.BugComment.Author(childComplexity), true
-
+		return e.ComplexityRoot.BugComment.Author(childComplexity), true
 	case "BugComment.id":
-		if e.complexity.BugComment.CombinedId == nil {
+		if e.ComplexityRoot.BugComment.CombinedId == nil {
 			break
 		}
 
-		return e.complexity.BugComment.CombinedId(childComplexity), true
-
+		return e.ComplexityRoot.BugComment.CombinedId(childComplexity), true
 	case "BugComment.files":
-		if e.complexity.BugComment.Files == nil {
+		if e.ComplexityRoot.BugComment.Files == nil {
 			break
 		}
 
-		return e.complexity.BugComment.Files(childComplexity), true
-
+		return e.ComplexityRoot.BugComment.Files(childComplexity), true
 	case "BugComment.message":
-		if e.complexity.BugComment.Message == nil {
+		if e.ComplexityRoot.BugComment.Message == nil {
 			break
 		}
 
-		return e.complexity.BugComment.Message(childComplexity), true
+		return e.ComplexityRoot.BugComment.Message(childComplexity), true
 
 	case "BugCommentConnection.edges":
-		if e.complexity.BugCommentConnection.Edges == nil {
+		if e.ComplexityRoot.BugCommentConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.BugCommentConnection.Edges(childComplexity), true
-
+		return e.ComplexityRoot.BugCommentConnection.Edges(childComplexity), true
 	case "BugCommentConnection.nodes":
-		if e.complexity.BugCommentConnection.Nodes == nil {
+		if e.ComplexityRoot.BugCommentConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.BugCommentConnection.Nodes(childComplexity), true
-
+		return e.ComplexityRoot.BugCommentConnection.Nodes(childComplexity), true
 	case "BugCommentConnection.pageInfo":
-		if e.complexity.BugCommentConnection.PageInfo == nil {
+		if e.ComplexityRoot.BugCommentConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.BugCommentConnection.PageInfo(childComplexity), true
-
+		return e.ComplexityRoot.BugCommentConnection.PageInfo(childComplexity), true
 	case "BugCommentConnection.totalCount":
-		if e.complexity.BugCommentConnection.TotalCount == nil {
+		if e.ComplexityRoot.BugCommentConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.BugCommentConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.BugCommentConnection.TotalCount(childComplexity), true
 
 	case "BugCommentEdge.cursor":
-		if e.complexity.BugCommentEdge.Cursor == nil {
+		if e.ComplexityRoot.BugCommentEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.BugCommentEdge.Cursor(childComplexity), true
-
+		return e.ComplexityRoot.BugCommentEdge.Cursor(childComplexity), true
 	case "BugCommentEdge.node":
-		if e.complexity.BugCommentEdge.Node == nil {
+		if e.ComplexityRoot.BugCommentEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.BugCommentEdge.Node(childComplexity), true
+		return e.ComplexityRoot.BugCommentEdge.Node(childComplexity), true
 
 	case "BugCommentHistoryStep.date":
-		if e.complexity.BugCommentHistoryStep.Date == nil {
+		if e.ComplexityRoot.BugCommentHistoryStep.Date == nil {
 			break
 		}
 
-		return e.complexity.BugCommentHistoryStep.Date(childComplexity), true
-
+		return e.ComplexityRoot.BugCommentHistoryStep.Date(childComplexity), true
 	case "BugCommentHistoryStep.message":
-		if e.complexity.BugCommentHistoryStep.Message == nil {
+		if e.ComplexityRoot.BugCommentHistoryStep.Message == nil {
 			break
 		}
 
-		return e.complexity.BugCommentHistoryStep.Message(childComplexity), true
+		return e.ComplexityRoot.BugCommentHistoryStep.Message(childComplexity), true
 
 	case "BugConnection.edges":
-		if e.complexity.BugConnection.Edges == nil {
+		if e.ComplexityRoot.BugConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.BugConnection.Edges(childComplexity), true
-
+		return e.ComplexityRoot.BugConnection.Edges(childComplexity), true
 	case "BugConnection.nodes":
-		if e.complexity.BugConnection.Nodes == nil {
+		if e.ComplexityRoot.BugConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.BugConnection.Nodes(childComplexity), true
-
+		return e.ComplexityRoot.BugConnection.Nodes(childComplexity), true
 	case "BugConnection.pageInfo":
-		if e.complexity.BugConnection.PageInfo == nil {
+		if e.ComplexityRoot.BugConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.BugConnection.PageInfo(childComplexity), true
-
+		return e.ComplexityRoot.BugConnection.PageInfo(childComplexity), true
 	case "BugConnection.totalCount":
-		if e.complexity.BugConnection.TotalCount == nil {
+		if e.ComplexityRoot.BugConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.BugConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.BugConnection.TotalCount(childComplexity), true
 
 	case "BugCreateOperation.author":
-		if e.complexity.BugCreateOperation.Author == nil {
+		if e.ComplexityRoot.BugCreateOperation.Author == nil {
 			break
 		}
 
-		return e.complexity.BugCreateOperation.Author(childComplexity), true
-
+		return e.ComplexityRoot.BugCreateOperation.Author(childComplexity), true
 	case "BugCreateOperation.files":
-		if e.complexity.BugCreateOperation.Files == nil {
+		if e.ComplexityRoot.BugCreateOperation.Files == nil {
 			break
 		}
 
-		return e.complexity.BugCreateOperation.Files(childComplexity), true
-
+		return e.ComplexityRoot.BugCreateOperation.Files(childComplexity), true
 	case "BugCreateOperation.id":
-		if e.complexity.BugCreateOperation.Id == nil {
+		if e.ComplexityRoot.BugCreateOperation.Id == nil {
 			break
 		}
 
-		return e.complexity.BugCreateOperation.Id(childComplexity), true
-
+		return e.ComplexityRoot.BugCreateOperation.Id(childComplexity), true
 	case "BugCreateOperation.message":
-		if e.complexity.BugCreateOperation.Message == nil {
+		if e.ComplexityRoot.BugCreateOperation.Message == nil {
 			break
 		}
 
-		return e.complexity.BugCreateOperation.Message(childComplexity), true
-
+		return e.ComplexityRoot.BugCreateOperation.Message(childComplexity), true
 	case "BugCreateOperation.date":
-		if e.complexity.BugCreateOperation.Time == nil {
+		if e.ComplexityRoot.BugCreateOperation.Time == nil {
 			break
 		}
 
-		return e.complexity.BugCreateOperation.Time(childComplexity), true
-
+		return e.ComplexityRoot.BugCreateOperation.Time(childComplexity), true
 	case "BugCreateOperation.title":
-		if e.complexity.BugCreateOperation.Title == nil {
+		if e.ComplexityRoot.BugCreateOperation.Title == nil {
 			break
 		}
 
-		return e.complexity.BugCreateOperation.Title(childComplexity), true
+		return e.ComplexityRoot.BugCreateOperation.Title(childComplexity), true
 
 	case "BugCreatePayload.bug":
-		if e.complexity.BugCreatePayload.Bug == nil {
+		if e.ComplexityRoot.BugCreatePayload.Bug == nil {
 			break
 		}
 
-		return e.complexity.BugCreatePayload.Bug(childComplexity), true
-
+		return e.ComplexityRoot.BugCreatePayload.Bug(childComplexity), true
 	case "BugCreatePayload.clientMutationId":
-		if e.complexity.BugCreatePayload.ClientMutationID == nil {
+		if e.ComplexityRoot.BugCreatePayload.ClientMutationID == nil {
 			break
 		}
 
-		return e.complexity.BugCreatePayload.ClientMutationID(childComplexity), true
-
+		return e.ComplexityRoot.BugCreatePayload.ClientMutationID(childComplexity), true
 	case "BugCreatePayload.operation":
-		if e.complexity.BugCreatePayload.Operation == nil {
+		if e.ComplexityRoot.BugCreatePayload.Operation == nil {
 			break
 		}
 
-		return e.complexity.BugCreatePayload.Operation(childComplexity), true
+		return e.ComplexityRoot.BugCreatePayload.Operation(childComplexity), true
 
 	case "BugCreateTimelineItem.author":
-		if e.complexity.BugCreateTimelineItem.Author == nil {
+		if e.ComplexityRoot.BugCreateTimelineItem.Author == nil {
 			break
 		}
 
-		return e.complexity.BugCreateTimelineItem.Author(childComplexity), true
-
+		return e.ComplexityRoot.BugCreateTimelineItem.Author(childComplexity), true
 	case "BugCreateTimelineItem.id":
-		if e.complexity.BugCreateTimelineItem.CombinedId == nil {
+		if e.ComplexityRoot.BugCreateTimelineItem.CombinedId == nil {
 			break
 		}
 
-		return e.complexity.BugCreateTimelineItem.CombinedId(childComplexity), true
-
+		return e.ComplexityRoot.BugCreateTimelineItem.CombinedId(childComplexity), true
 	case "BugCreateTimelineItem.createdAt":
-		if e.complexity.BugCreateTimelineItem.CreatedAt == nil {
+		if e.ComplexityRoot.BugCreateTimelineItem.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.BugCreateTimelineItem.CreatedAt(childComplexity), true
-
+		return e.ComplexityRoot.BugCreateTimelineItem.CreatedAt(childComplexity), true
 	case "BugCreateTimelineItem.edited":
-		if e.complexity.BugCreateTimelineItem.Edited == nil {
+		if e.ComplexityRoot.BugCreateTimelineItem.Edited == nil {
 			break
 		}
 
-		return e.complexity.BugCreateTimelineItem.Edited(childComplexity), true
-
+		return e.ComplexityRoot.BugCreateTimelineItem.Edited(childComplexity), true
 	case "BugCreateTimelineItem.files":
-		if e.complexity.BugCreateTimelineItem.Files == nil {
+		if e.ComplexityRoot.BugCreateTimelineItem.Files == nil {
 			break
 		}
 
-		return e.complexity.BugCreateTimelineItem.Files(childComplexity), true
-
+		return e.ComplexityRoot.BugCreateTimelineItem.Files(childComplexity), true
 	case "BugCreateTimelineItem.history":
-		if e.complexity.BugCreateTimelineItem.History == nil {
+		if e.ComplexityRoot.BugCreateTimelineItem.History == nil {
 			break
 		}
 
-		return e.complexity.BugCreateTimelineItem.History(childComplexity), true
-
+		return e.ComplexityRoot.BugCreateTimelineItem.History(childComplexity), true
 	case "BugCreateTimelineItem.lastEdit":
-		if e.complexity.BugCreateTimelineItem.LastEdit == nil {
+		if e.ComplexityRoot.BugCreateTimelineItem.LastEdit == nil {
 			break
 		}
 
-		return e.complexity.BugCreateTimelineItem.LastEdit(childComplexity), true
-
+		return e.ComplexityRoot.BugCreateTimelineItem.LastEdit(childComplexity), true
 	case "BugCreateTimelineItem.message":
-		if e.complexity.BugCreateTimelineItem.Message == nil {
+		if e.ComplexityRoot.BugCreateTimelineItem.Message == nil {
 			break
 		}
 
-		return e.complexity.BugCreateTimelineItem.Message(childComplexity), true
-
+		return e.ComplexityRoot.BugCreateTimelineItem.Message(childComplexity), true
 	case "BugCreateTimelineItem.messageIsEmpty":
-		if e.complexity.BugCreateTimelineItem.MessageIsEmpty == nil {
+		if e.ComplexityRoot.BugCreateTimelineItem.MessageIsEmpty == nil {
 			break
 		}
 
-		return e.complexity.BugCreateTimelineItem.MessageIsEmpty(childComplexity), true
+		return e.ComplexityRoot.BugCreateTimelineItem.MessageIsEmpty(childComplexity), true
 
 	case "BugEdge.cursor":
-		if e.complexity.BugEdge.Cursor == nil {
+		if e.ComplexityRoot.BugEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.BugEdge.Cursor(childComplexity), true
-
+		return e.ComplexityRoot.BugEdge.Cursor(childComplexity), true
 	case "BugEdge.node":
-		if e.complexity.BugEdge.Node == nil {
+		if e.ComplexityRoot.BugEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.BugEdge.Node(childComplexity), true
+		return e.ComplexityRoot.BugEdge.Node(childComplexity), true
 
 	case "BugEditCommentOperation.author":
-		if e.complexity.BugEditCommentOperation.Author == nil {
+		if e.ComplexityRoot.BugEditCommentOperation.Author == nil {
 			break
 		}
 
-		return e.complexity.BugEditCommentOperation.Author(childComplexity), true
-
+		return e.ComplexityRoot.BugEditCommentOperation.Author(childComplexity), true
 	case "BugEditCommentOperation.files":
-		if e.complexity.BugEditCommentOperation.Files == nil {
+		if e.ComplexityRoot.BugEditCommentOperation.Files == nil {
 			break
 		}
 
-		return e.complexity.BugEditCommentOperation.Files(childComplexity), true
-
+		return e.ComplexityRoot.BugEditCommentOperation.Files(childComplexity), true
 	case "BugEditCommentOperation.id":
-		if e.complexity.BugEditCommentOperation.Id == nil {
+		if e.ComplexityRoot.BugEditCommentOperation.Id == nil {
 			break
 		}
 
-		return e.complexity.BugEditCommentOperation.Id(childComplexity), true
-
+		return e.ComplexityRoot.BugEditCommentOperation.Id(childComplexity), true
 	case "BugEditCommentOperation.message":
-		if e.complexity.BugEditCommentOperation.Message == nil {
+		if e.ComplexityRoot.BugEditCommentOperation.Message == nil {
 			break
 		}
 
-		return e.complexity.BugEditCommentOperation.Message(childComplexity), true
-
+		return e.ComplexityRoot.BugEditCommentOperation.Message(childComplexity), true
 	case "BugEditCommentOperation.target":
-		if e.complexity.BugEditCommentOperation.Target == nil {
+		if e.ComplexityRoot.BugEditCommentOperation.Target == nil {
 			break
 		}
 
-		return e.complexity.BugEditCommentOperation.Target(childComplexity), true
-
+		return e.ComplexityRoot.BugEditCommentOperation.Target(childComplexity), true
 	case "BugEditCommentOperation.date":
-		if e.complexity.BugEditCommentOperation.Time == nil {
+		if e.ComplexityRoot.BugEditCommentOperation.Time == nil {
 			break
 		}
 
-		return e.complexity.BugEditCommentOperation.Time(childComplexity), true
+		return e.ComplexityRoot.BugEditCommentOperation.Time(childComplexity), true
 
 	case "BugEditCommentPayload.bug":
-		if e.complexity.BugEditCommentPayload.Bug == nil {
+		if e.ComplexityRoot.BugEditCommentPayload.Bug == nil {
 			break
 		}
 
-		return e.complexity.BugEditCommentPayload.Bug(childComplexity), true
-
+		return e.ComplexityRoot.BugEditCommentPayload.Bug(childComplexity), true
 	case "BugEditCommentPayload.clientMutationId":
-		if e.complexity.BugEditCommentPayload.ClientMutationID == nil {
+		if e.ComplexityRoot.BugEditCommentPayload.ClientMutationID == nil {
 			break
 		}
 
-		return e.complexity.BugEditCommentPayload.ClientMutationID(childComplexity), true
-
+		return e.ComplexityRoot.BugEditCommentPayload.ClientMutationID(childComplexity), true
 	case "BugEditCommentPayload.operation":
-		if e.complexity.BugEditCommentPayload.Operation == nil {
+		if e.ComplexityRoot.BugEditCommentPayload.Operation == nil {
 			break
 		}
 
-		return e.complexity.BugEditCommentPayload.Operation(childComplexity), true
+		return e.ComplexityRoot.BugEditCommentPayload.Operation(childComplexity), true
 
 	case "BugEvent.bug":
-		if e.complexity.BugEvent.Bug == nil {
+		if e.ComplexityRoot.BugEvent.Bug == nil {
 			break
 		}
 
-		return e.complexity.BugEvent.Bug(childComplexity), true
-
+		return e.ComplexityRoot.BugEvent.Bug(childComplexity), true
 	case "BugEvent.type":
-		if e.complexity.BugEvent.Type == nil {
+		if e.ComplexityRoot.BugEvent.Type == nil {
 			break
 		}
 
-		return e.complexity.BugEvent.Type(childComplexity), true
+		return e.ComplexityRoot.BugEvent.Type(childComplexity), true
 
 	case "BugLabelChangeOperation.added":
-		if e.complexity.BugLabelChangeOperation.Added == nil {
+		if e.ComplexityRoot.BugLabelChangeOperation.Added == nil {
 			break
 		}
 
-		return e.complexity.BugLabelChangeOperation.Added(childComplexity), true
-
+		return e.ComplexityRoot.BugLabelChangeOperation.Added(childComplexity), true
 	case "BugLabelChangeOperation.author":
-		if e.complexity.BugLabelChangeOperation.Author == nil {
+		if e.ComplexityRoot.BugLabelChangeOperation.Author == nil {
 			break
 		}
 
-		return e.complexity.BugLabelChangeOperation.Author(childComplexity), true
-
+		return e.ComplexityRoot.BugLabelChangeOperation.Author(childComplexity), true
 	case "BugLabelChangeOperation.id":
-		if e.complexity.BugLabelChangeOperation.Id == nil {
+		if e.ComplexityRoot.BugLabelChangeOperation.Id == nil {
 			break
 		}
 
-		return e.complexity.BugLabelChangeOperation.Id(childComplexity), true
-
+		return e.ComplexityRoot.BugLabelChangeOperation.Id(childComplexity), true
 	case "BugLabelChangeOperation.removed":
-		if e.complexity.BugLabelChangeOperation.Removed == nil {
+		if e.ComplexityRoot.BugLabelChangeOperation.Removed == nil {
 			break
 		}
 
-		return e.complexity.BugLabelChangeOperation.Removed(childComplexity), true
-
+		return e.ComplexityRoot.BugLabelChangeOperation.Removed(childComplexity), true
 	case "BugLabelChangeOperation.date":
-		if e.complexity.BugLabelChangeOperation.Time == nil {
+		if e.ComplexityRoot.BugLabelChangeOperation.Time == nil {
 			break
 		}
 
-		return e.complexity.BugLabelChangeOperation.Time(childComplexity), true
+		return e.ComplexityRoot.BugLabelChangeOperation.Time(childComplexity), true
 
 	case "BugLabelChangeTimelineItem.added":
-		if e.complexity.BugLabelChangeTimelineItem.Added == nil {
+		if e.ComplexityRoot.BugLabelChangeTimelineItem.Added == nil {
 			break
 		}
 
-		return e.complexity.BugLabelChangeTimelineItem.Added(childComplexity), true
-
+		return e.ComplexityRoot.BugLabelChangeTimelineItem.Added(childComplexity), true
 	case "BugLabelChangeTimelineItem.author":
-		if e.complexity.BugLabelChangeTimelineItem.Author == nil {
+		if e.ComplexityRoot.BugLabelChangeTimelineItem.Author == nil {
 			break
 		}
 
-		return e.complexity.BugLabelChangeTimelineItem.Author(childComplexity), true
-
+		return e.ComplexityRoot.BugLabelChangeTimelineItem.Author(childComplexity), true
 	case "BugLabelChangeTimelineItem.id":
-		if e.complexity.BugLabelChangeTimelineItem.CombinedId == nil {
+		if e.ComplexityRoot.BugLabelChangeTimelineItem.CombinedId == nil {
 			break
 		}
 
-		return e.complexity.BugLabelChangeTimelineItem.CombinedId(childComplexity), true
-
+		return e.ComplexityRoot.BugLabelChangeTimelineItem.CombinedId(childComplexity), true
 	case "BugLabelChangeTimelineItem.date":
-		if e.complexity.BugLabelChangeTimelineItem.Date == nil {
+		if e.ComplexityRoot.BugLabelChangeTimelineItem.Date == nil {
 			break
 		}
 
-		return e.complexity.BugLabelChangeTimelineItem.Date(childComplexity), true
-
+		return e.ComplexityRoot.BugLabelChangeTimelineItem.Date(childComplexity), true
 	case "BugLabelChangeTimelineItem.removed":
-		if e.complexity.BugLabelChangeTimelineItem.Removed == nil {
+		if e.ComplexityRoot.BugLabelChangeTimelineItem.Removed == nil {
 			break
 		}
 
-		return e.complexity.BugLabelChangeTimelineItem.Removed(childComplexity), true
+		return e.ComplexityRoot.BugLabelChangeTimelineItem.Removed(childComplexity), true
 
 	case "BugSetStatusOperation.author":
-		if e.complexity.BugSetStatusOperation.Author == nil {
+		if e.ComplexityRoot.BugSetStatusOperation.Author == nil {
 			break
 		}
 
-		return e.complexity.BugSetStatusOperation.Author(childComplexity), true
-
+		return e.ComplexityRoot.BugSetStatusOperation.Author(childComplexity), true
 	case "BugSetStatusOperation.id":
-		if e.complexity.BugSetStatusOperation.Id == nil {
+		if e.ComplexityRoot.BugSetStatusOperation.Id == nil {
 			break
 		}
 
-		return e.complexity.BugSetStatusOperation.Id(childComplexity), true
-
+		return e.ComplexityRoot.BugSetStatusOperation.Id(childComplexity), true
 	case "BugSetStatusOperation.status":
-		if e.complexity.BugSetStatusOperation.Status == nil {
+		if e.ComplexityRoot.BugSetStatusOperation.Status == nil {
 			break
 		}
 
-		return e.complexity.BugSetStatusOperation.Status(childComplexity), true
-
+		return e.ComplexityRoot.BugSetStatusOperation.Status(childComplexity), true
 	case "BugSetStatusOperation.date":
-		if e.complexity.BugSetStatusOperation.Time == nil {
+		if e.ComplexityRoot.BugSetStatusOperation.Time == nil {
 			break
 		}
 
-		return e.complexity.BugSetStatusOperation.Time(childComplexity), true
+		return e.ComplexityRoot.BugSetStatusOperation.Time(childComplexity), true
 
 	case "BugSetStatusTimelineItem.author":
-		if e.complexity.BugSetStatusTimelineItem.Author == nil {
+		if e.ComplexityRoot.BugSetStatusTimelineItem.Author == nil {
 			break
 		}
 
-		return e.complexity.BugSetStatusTimelineItem.Author(childComplexity), true
-
+		return e.ComplexityRoot.BugSetStatusTimelineItem.Author(childComplexity), true
 	case "BugSetStatusTimelineItem.id":
-		if e.complexity.BugSetStatusTimelineItem.CombinedId == nil {
+		if e.ComplexityRoot.BugSetStatusTimelineItem.CombinedId == nil {
 			break
 		}
 
-		return e.complexity.BugSetStatusTimelineItem.CombinedId(childComplexity), true
-
+		return e.ComplexityRoot.BugSetStatusTimelineItem.CombinedId(childComplexity), true
 	case "BugSetStatusTimelineItem.date":
-		if e.complexity.BugSetStatusTimelineItem.Date == nil {
+		if e.ComplexityRoot.BugSetStatusTimelineItem.Date == nil {
 			break
 		}
 
-		return e.complexity.BugSetStatusTimelineItem.Date(childComplexity), true
-
+		return e.ComplexityRoot.BugSetStatusTimelineItem.Date(childComplexity), true
 	case "BugSetStatusTimelineItem.status":
-		if e.complexity.BugSetStatusTimelineItem.Status == nil {
+		if e.ComplexityRoot.BugSetStatusTimelineItem.Status == nil {
 			break
 		}
 
-		return e.complexity.BugSetStatusTimelineItem.Status(childComplexity), true
+		return e.ComplexityRoot.BugSetStatusTimelineItem.Status(childComplexity), true
 
 	case "BugSetTitleOperation.author":
-		if e.complexity.BugSetTitleOperation.Author == nil {
+		if e.ComplexityRoot.BugSetTitleOperation.Author == nil {
 			break
 		}
 
-		return e.complexity.BugSetTitleOperation.Author(childComplexity), true
-
+		return e.ComplexityRoot.BugSetTitleOperation.Author(childComplexity), true
 	case "BugSetTitleOperation.id":
-		if e.complexity.BugSetTitleOperation.Id == nil {
+		if e.ComplexityRoot.BugSetTitleOperation.Id == nil {
 			break
 		}
 
-		return e.complexity.BugSetTitleOperation.Id(childComplexity), true
-
+		return e.ComplexityRoot.BugSetTitleOperation.Id(childComplexity), true
 	case "BugSetTitleOperation.date":
-		if e.complexity.BugSetTitleOperation.Time == nil {
+		if e.ComplexityRoot.BugSetTitleOperation.Time == nil {
 			break
 		}
 
-		return e.complexity.BugSetTitleOperation.Time(childComplexity), true
-
+		return e.ComplexityRoot.BugSetTitleOperation.Time(childComplexity), true
 	case "BugSetTitleOperation.title":
-		if e.complexity.BugSetTitleOperation.Title == nil {
+		if e.ComplexityRoot.BugSetTitleOperation.Title == nil {
 			break
 		}
 
-		return e.complexity.BugSetTitleOperation.Title(childComplexity), true
-
+		return e.ComplexityRoot.BugSetTitleOperation.Title(childComplexity), true
 	case "BugSetTitleOperation.was":
-		if e.complexity.BugSetTitleOperation.Was == nil {
+		if e.ComplexityRoot.BugSetTitleOperation.Was == nil {
 			break
 		}
 
-		return e.complexity.BugSetTitleOperation.Was(childComplexity), true
+		return e.ComplexityRoot.BugSetTitleOperation.Was(childComplexity), true
 
 	case "BugSetTitlePayload.bug":
-		if e.complexity.BugSetTitlePayload.Bug == nil {
+		if e.ComplexityRoot.BugSetTitlePayload.Bug == nil {
 			break
 		}
 
-		return e.complexity.BugSetTitlePayload.Bug(childComplexity), true
-
+		return e.ComplexityRoot.BugSetTitlePayload.Bug(childComplexity), true
 	case "BugSetTitlePayload.clientMutationId":
-		if e.complexity.BugSetTitlePayload.ClientMutationID == nil {
+		if e.ComplexityRoot.BugSetTitlePayload.ClientMutationID == nil {
 			break
 		}
 
-		return e.complexity.BugSetTitlePayload.ClientMutationID(childComplexity), true
-
+		return e.ComplexityRoot.BugSetTitlePayload.ClientMutationID(childComplexity), true
 	case "BugSetTitlePayload.operation":
-		if e.complexity.BugSetTitlePayload.Operation == nil {
+		if e.ComplexityRoot.BugSetTitlePayload.Operation == nil {
 			break
 		}
 
-		return e.complexity.BugSetTitlePayload.Operation(childComplexity), true
+		return e.ComplexityRoot.BugSetTitlePayload.Operation(childComplexity), true
 
 	case "BugSetTitleTimelineItem.author":
-		if e.complexity.BugSetTitleTimelineItem.Author == nil {
+		if e.ComplexityRoot.BugSetTitleTimelineItem.Author == nil {
 			break
 		}
 
-		return e.complexity.BugSetTitleTimelineItem.Author(childComplexity), true
-
+		return e.ComplexityRoot.BugSetTitleTimelineItem.Author(childComplexity), true
 	case "BugSetTitleTimelineItem.id":
-		if e.complexity.BugSetTitleTimelineItem.CombinedId == nil {
+		if e.ComplexityRoot.BugSetTitleTimelineItem.CombinedId == nil {
 			break
 		}
 
-		return e.complexity.BugSetTitleTimelineItem.CombinedId(childComplexity), true
-
+		return e.ComplexityRoot.BugSetTitleTimelineItem.CombinedId(childComplexity), true
 	case "BugSetTitleTimelineItem.date":
-		if e.complexity.BugSetTitleTimelineItem.Date == nil {
+		if e.ComplexityRoot.BugSetTitleTimelineItem.Date == nil {
 			break
 		}
 
-		return e.complexity.BugSetTitleTimelineItem.Date(childComplexity), true
-
+		return e.ComplexityRoot.BugSetTitleTimelineItem.Date(childComplexity), true
 	case "BugSetTitleTimelineItem.title":
-		if e.complexity.BugSetTitleTimelineItem.Title == nil {
+		if e.ComplexityRoot.BugSetTitleTimelineItem.Title == nil {
 			break
 		}
 
-		return e.complexity.BugSetTitleTimelineItem.Title(childComplexity), true
-
+		return e.ComplexityRoot.BugSetTitleTimelineItem.Title(childComplexity), true
 	case "BugSetTitleTimelineItem.was":
-		if e.complexity.BugSetTitleTimelineItem.Was == nil {
+		if e.ComplexityRoot.BugSetTitleTimelineItem.Was == nil {
 			break
 		}
 
-		return e.complexity.BugSetTitleTimelineItem.Was(childComplexity), true
+		return e.ComplexityRoot.BugSetTitleTimelineItem.Was(childComplexity), true
 
 	case "BugStatusClosePayload.bug":
-		if e.complexity.BugStatusClosePayload.Bug == nil {
+		if e.ComplexityRoot.BugStatusClosePayload.Bug == nil {
 			break
 		}
 
-		return e.complexity.BugStatusClosePayload.Bug(childComplexity), true
-
+		return e.ComplexityRoot.BugStatusClosePayload.Bug(childComplexity), true
 	case "BugStatusClosePayload.clientMutationId":
-		if e.complexity.BugStatusClosePayload.ClientMutationID == nil {
+		if e.ComplexityRoot.BugStatusClosePayload.ClientMutationID == nil {
 			break
 		}
 
-		return e.complexity.BugStatusClosePayload.ClientMutationID(childComplexity), true
-
+		return e.ComplexityRoot.BugStatusClosePayload.ClientMutationID(childComplexity), true
 	case "BugStatusClosePayload.operation":
-		if e.complexity.BugStatusClosePayload.Operation == nil {
+		if e.ComplexityRoot.BugStatusClosePayload.Operation == nil {
 			break
 		}
 
-		return e.complexity.BugStatusClosePayload.Operation(childComplexity), true
+		return e.ComplexityRoot.BugStatusClosePayload.Operation(childComplexity), true
 
 	case "BugStatusOpenPayload.bug":
-		if e.complexity.BugStatusOpenPayload.Bug == nil {
+		if e.ComplexityRoot.BugStatusOpenPayload.Bug == nil {
 			break
 		}
 
-		return e.complexity.BugStatusOpenPayload.Bug(childComplexity), true
-
+		return e.ComplexityRoot.BugStatusOpenPayload.Bug(childComplexity), true
 	case "BugStatusOpenPayload.clientMutationId":
-		if e.complexity.BugStatusOpenPayload.ClientMutationID == nil {
+		if e.ComplexityRoot.BugStatusOpenPayload.ClientMutationID == nil {
 			break
 		}
 
-		return e.complexity.BugStatusOpenPayload.ClientMutationID(childComplexity), true
-
+		return e.ComplexityRoot.BugStatusOpenPayload.ClientMutationID(childComplexity), true
 	case "BugStatusOpenPayload.operation":
-		if e.complexity.BugStatusOpenPayload.Operation == nil {
+		if e.ComplexityRoot.BugStatusOpenPayload.Operation == nil {
 			break
 		}
 
-		return e.complexity.BugStatusOpenPayload.Operation(childComplexity), true
+		return e.ComplexityRoot.BugStatusOpenPayload.Operation(childComplexity), true
 
 	case "BugTimelineItemConnection.edges":
-		if e.complexity.BugTimelineItemConnection.Edges == nil {
+		if e.ComplexityRoot.BugTimelineItemConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.BugTimelineItemConnection.Edges(childComplexity), true
-
+		return e.ComplexityRoot.BugTimelineItemConnection.Edges(childComplexity), true
 	case "BugTimelineItemConnection.nodes":
-		if e.complexity.BugTimelineItemConnection.Nodes == nil {
+		if e.ComplexityRoot.BugTimelineItemConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.BugTimelineItemConnection.Nodes(childComplexity), true
-
+		return e.ComplexityRoot.BugTimelineItemConnection.Nodes(childComplexity), true
 	case "BugTimelineItemConnection.pageInfo":
-		if e.complexity.BugTimelineItemConnection.PageInfo == nil {
+		if e.ComplexityRoot.BugTimelineItemConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.BugTimelineItemConnection.PageInfo(childComplexity), true
-
+		return e.ComplexityRoot.BugTimelineItemConnection.PageInfo(childComplexity), true
 	case "BugTimelineItemConnection.totalCount":
-		if e.complexity.BugTimelineItemConnection.TotalCount == nil {
+		if e.ComplexityRoot.BugTimelineItemConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.BugTimelineItemConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.BugTimelineItemConnection.TotalCount(childComplexity), true
 
 	case "BugTimelineItemEdge.cursor":
-		if e.complexity.BugTimelineItemEdge.Cursor == nil {
+		if e.ComplexityRoot.BugTimelineItemEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.BugTimelineItemEdge.Cursor(childComplexity), true
-
+		return e.ComplexityRoot.BugTimelineItemEdge.Cursor(childComplexity), true
 	case "BugTimelineItemEdge.node":
-		if e.complexity.BugTimelineItemEdge.Node == nil {
+		if e.ComplexityRoot.BugTimelineItemEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.BugTimelineItemEdge.Node(childComplexity), true
+		return e.ComplexityRoot.BugTimelineItemEdge.Node(childComplexity), true
 
 	case "Color.B":
-		if e.complexity.Color.B == nil {
+		if e.ComplexityRoot.Color.B == nil {
 			break
 		}
 
-		return e.complexity.Color.B(childComplexity), true
-
+		return e.ComplexityRoot.Color.B(childComplexity), true
 	case "Color.G":
-		if e.complexity.Color.G == nil {
+		if e.ComplexityRoot.Color.G == nil {
 			break
 		}
 
-		return e.complexity.Color.G(childComplexity), true
-
+		return e.ComplexityRoot.Color.G(childComplexity), true
 	case "Color.R":
-		if e.complexity.Color.R == nil {
+		if e.ComplexityRoot.Color.R == nil {
 			break
 		}
 
-		return e.complexity.Color.R(childComplexity), true
+		return e.ComplexityRoot.Color.R(childComplexity), true
 
 	case "EntityEvent.entity":
-		if e.complexity.EntityEvent.Entity == nil {
+		if e.ComplexityRoot.EntityEvent.Entity == nil {
 			break
 		}
 
-		return e.complexity.EntityEvent.Entity(childComplexity), true
-
+		return e.ComplexityRoot.EntityEvent.Entity(childComplexity), true
 	case "EntityEvent.type":
-		if e.complexity.EntityEvent.Type == nil {
+		if e.ComplexityRoot.EntityEvent.Type == nil {
 			break
 		}
 
-		return e.complexity.EntityEvent.Type(childComplexity), true
+		return e.ComplexityRoot.EntityEvent.Type(childComplexity), true
 
 	case "GitBlob.hash":
-		if e.complexity.GitBlob.Hash == nil {
+		if e.ComplexityRoot.GitBlob.Hash == nil {
 			break
 		}
 
-		return e.complexity.GitBlob.Hash(childComplexity), true
-
+		return e.ComplexityRoot.GitBlob.Hash(childComplexity), true
 	case "GitBlob.isBinary":
-		if e.complexity.GitBlob.IsBinary == nil {
+		if e.ComplexityRoot.GitBlob.IsBinary == nil {
 			break
 		}
 
-		return e.complexity.GitBlob.IsBinary(childComplexity), true
-
+		return e.ComplexityRoot.GitBlob.IsBinary(childComplexity), true
 	case "GitBlob.isTruncated":
-		if e.complexity.GitBlob.IsTruncated == nil {
+		if e.ComplexityRoot.GitBlob.IsTruncated == nil {
 			break
 		}
 
-		return e.complexity.GitBlob.IsTruncated(childComplexity), true
-
+		return e.ComplexityRoot.GitBlob.IsTruncated(childComplexity), true
 	case "GitBlob.path":
-		if e.complexity.GitBlob.Path == nil {
+		if e.ComplexityRoot.GitBlob.Path == nil {
 			break
 		}
 
-		return e.complexity.GitBlob.Path(childComplexity), true
-
+		return e.ComplexityRoot.GitBlob.Path(childComplexity), true
 	case "GitBlob.size":
-		if e.complexity.GitBlob.Size == nil {
+		if e.ComplexityRoot.GitBlob.Size == nil {
 			break
 		}
 
-		return e.complexity.GitBlob.Size(childComplexity), true
-
+		return e.ComplexityRoot.GitBlob.Size(childComplexity), true
 	case "GitBlob.text":
-		if e.complexity.GitBlob.Text == nil {
+		if e.ComplexityRoot.GitBlob.Text == nil {
 			break
 		}
 
-		return e.complexity.GitBlob.Text(childComplexity), true
+		return e.ComplexityRoot.GitBlob.Text(childComplexity), true
 
 	case "GitChangedFile.oldPath":
-		if e.complexity.GitChangedFile.OldPath == nil {
+		if e.ComplexityRoot.GitChangedFile.OldPath == nil {
 			break
 		}
 
-		return e.complexity.GitChangedFile.OldPath(childComplexity), true
-
+		return e.ComplexityRoot.GitChangedFile.OldPath(childComplexity), true
 	case "GitChangedFile.path":
-		if e.complexity.GitChangedFile.Path == nil {
+		if e.ComplexityRoot.GitChangedFile.Path == nil {
 			break
 		}
 
-		return e.complexity.GitChangedFile.Path(childComplexity), true
-
+		return e.ComplexityRoot.GitChangedFile.Path(childComplexity), true
 	case "GitChangedFile.status":
-		if e.complexity.GitChangedFile.Status == nil {
+		if e.ComplexityRoot.GitChangedFile.Status == nil {
 			break
 		}
 
-		return e.complexity.GitChangedFile.Status(childComplexity), true
+		return e.ComplexityRoot.GitChangedFile.Status(childComplexity), true
 
 	case "GitChangedFileConnection.nodes":
-		if e.complexity.GitChangedFileConnection.Nodes == nil {
+		if e.ComplexityRoot.GitChangedFileConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.GitChangedFileConnection.Nodes(childComplexity), true
-
+		return e.ComplexityRoot.GitChangedFileConnection.Nodes(childComplexity), true
 	case "GitChangedFileConnection.pageInfo":
-		if e.complexity.GitChangedFileConnection.PageInfo == nil {
+		if e.ComplexityRoot.GitChangedFileConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.GitChangedFileConnection.PageInfo(childComplexity), true
-
+		return e.ComplexityRoot.GitChangedFileConnection.PageInfo(childComplexity), true
 	case "GitChangedFileConnection.totalCount":
-		if e.complexity.GitChangedFileConnection.TotalCount == nil {
+		if e.ComplexityRoot.GitChangedFileConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.GitChangedFileConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.GitChangedFileConnection.TotalCount(childComplexity), true
 
 	case "GitCommit.authorEmail":
-		if e.complexity.GitCommit.AuthorEmail == nil {
+		if e.ComplexityRoot.GitCommit.AuthorEmail == nil {
 			break
 		}
 
-		return e.complexity.GitCommit.AuthorEmail(childComplexity), true
-
+		return e.ComplexityRoot.GitCommit.AuthorEmail(childComplexity), true
 	case "GitCommit.authorName":
-		if e.complexity.GitCommit.AuthorName == nil {
+		if e.ComplexityRoot.GitCommit.AuthorName == nil {
 			break
 		}
 
-		return e.complexity.GitCommit.AuthorName(childComplexity), true
-
+		return e.ComplexityRoot.GitCommit.AuthorName(childComplexity), true
 	case "GitCommit.date":
-		if e.complexity.GitCommit.Date == nil {
+		if e.ComplexityRoot.GitCommit.Date == nil {
 			break
 		}
 
-		return e.complexity.GitCommit.Date(childComplexity), true
-
+		return e.ComplexityRoot.GitCommit.Date(childComplexity), true
 	case "GitCommit.diff":
-		if e.complexity.GitCommit.Diff == nil {
+		if e.ComplexityRoot.GitCommit.Diff == nil {
 			break
 		}
 
@@ -1628,10 +1495,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.GitCommit.Diff(childComplexity, args["path"].(string)), true
-
+		return e.ComplexityRoot.GitCommit.Diff(childComplexity, args["path"].(string)), true
 	case "GitCommit.files":
-		if e.complexity.GitCommit.Files == nil {
+		if e.ComplexityRoot.GitCommit.Files == nil {
 			break
 		}
 
@@ -1640,451 +1506,404 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.GitCommit.Files(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
-
+		return e.ComplexityRoot.GitCommit.Files(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 	case "GitCommit.fullMessage":
-		if e.complexity.GitCommit.FullMessage == nil {
+		if e.ComplexityRoot.GitCommit.FullMessage == nil {
 			break
 		}
 
-		return e.complexity.GitCommit.FullMessage(childComplexity), true
-
+		return e.ComplexityRoot.GitCommit.FullMessage(childComplexity), true
 	case "GitCommit.hash":
-		if e.complexity.GitCommit.Hash == nil {
+		if e.ComplexityRoot.GitCommit.Hash == nil {
 			break
 		}
 
-		return e.complexity.GitCommit.Hash(childComplexity), true
-
+		return e.ComplexityRoot.GitCommit.Hash(childComplexity), true
 	case "GitCommit.message":
-		if e.complexity.GitCommit.Message == nil {
+		if e.ComplexityRoot.GitCommit.Message == nil {
 			break
 		}
 
-		return e.complexity.GitCommit.Message(childComplexity), true
-
+		return e.ComplexityRoot.GitCommit.Message(childComplexity), true
 	case "GitCommit.parents":
-		if e.complexity.GitCommit.Parents == nil {
+		if e.ComplexityRoot.GitCommit.Parents == nil {
 			break
 		}
 
-		return e.complexity.GitCommit.Parents(childComplexity), true
-
+		return e.ComplexityRoot.GitCommit.Parents(childComplexity), true
 	case "GitCommit.shortHash":
-		if e.complexity.GitCommit.ShortHash == nil {
+		if e.ComplexityRoot.GitCommit.ShortHash == nil {
 			break
 		}
 
-		return e.complexity.GitCommit.ShortHash(childComplexity), true
+		return e.ComplexityRoot.GitCommit.ShortHash(childComplexity), true
 
 	case "GitCommitConnection.nodes":
-		if e.complexity.GitCommitConnection.Nodes == nil {
+		if e.ComplexityRoot.GitCommitConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.GitCommitConnection.Nodes(childComplexity), true
-
+		return e.ComplexityRoot.GitCommitConnection.Nodes(childComplexity), true
 	case "GitCommitConnection.pageInfo":
-		if e.complexity.GitCommitConnection.PageInfo == nil {
+		if e.ComplexityRoot.GitCommitConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.GitCommitConnection.PageInfo(childComplexity), true
-
+		return e.ComplexityRoot.GitCommitConnection.PageInfo(childComplexity), true
 	case "GitCommitConnection.totalCount":
-		if e.complexity.GitCommitConnection.TotalCount == nil {
+		if e.ComplexityRoot.GitCommitConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.GitCommitConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.GitCommitConnection.TotalCount(childComplexity), true
 
 	case "GitDiffHunk.lines":
-		if e.complexity.GitDiffHunk.Lines == nil {
+		if e.ComplexityRoot.GitDiffHunk.Lines == nil {
 			break
 		}
 
-		return e.complexity.GitDiffHunk.Lines(childComplexity), true
-
+		return e.ComplexityRoot.GitDiffHunk.Lines(childComplexity), true
 	case "GitDiffHunk.newLines":
-		if e.complexity.GitDiffHunk.NewLines == nil {
+		if e.ComplexityRoot.GitDiffHunk.NewLines == nil {
 			break
 		}
 
-		return e.complexity.GitDiffHunk.NewLines(childComplexity), true
-
+		return e.ComplexityRoot.GitDiffHunk.NewLines(childComplexity), true
 	case "GitDiffHunk.newStart":
-		if e.complexity.GitDiffHunk.NewStart == nil {
+		if e.ComplexityRoot.GitDiffHunk.NewStart == nil {
 			break
 		}
 
-		return e.complexity.GitDiffHunk.NewStart(childComplexity), true
-
+		return e.ComplexityRoot.GitDiffHunk.NewStart(childComplexity), true
 	case "GitDiffHunk.oldLines":
-		if e.complexity.GitDiffHunk.OldLines == nil {
+		if e.ComplexityRoot.GitDiffHunk.OldLines == nil {
 			break
 		}
 
-		return e.complexity.GitDiffHunk.OldLines(childComplexity), true
-
+		return e.ComplexityRoot.GitDiffHunk.OldLines(childComplexity), true
 	case "GitDiffHunk.oldStart":
-		if e.complexity.GitDiffHunk.OldStart == nil {
+		if e.ComplexityRoot.GitDiffHunk.OldStart == nil {
 			break
 		}
 
-		return e.complexity.GitDiffHunk.OldStart(childComplexity), true
+		return e.ComplexityRoot.GitDiffHunk.OldStart(childComplexity), true
 
 	case "GitDiffLine.content":
-		if e.complexity.GitDiffLine.Content == nil {
+		if e.ComplexityRoot.GitDiffLine.Content == nil {
 			break
 		}
 
-		return e.complexity.GitDiffLine.Content(childComplexity), true
-
+		return e.ComplexityRoot.GitDiffLine.Content(childComplexity), true
 	case "GitDiffLine.newLine":
-		if e.complexity.GitDiffLine.NewLine == nil {
+		if e.ComplexityRoot.GitDiffLine.NewLine == nil {
 			break
 		}
 
-		return e.complexity.GitDiffLine.NewLine(childComplexity), true
-
+		return e.ComplexityRoot.GitDiffLine.NewLine(childComplexity), true
 	case "GitDiffLine.oldLine":
-		if e.complexity.GitDiffLine.OldLine == nil {
+		if e.ComplexityRoot.GitDiffLine.OldLine == nil {
 			break
 		}
 
-		return e.complexity.GitDiffLine.OldLine(childComplexity), true
-
+		return e.ComplexityRoot.GitDiffLine.OldLine(childComplexity), true
 	case "GitDiffLine.type":
-		if e.complexity.GitDiffLine.Type == nil {
+		if e.ComplexityRoot.GitDiffLine.Type == nil {
 			break
 		}
 
-		return e.complexity.GitDiffLine.Type(childComplexity), true
+		return e.ComplexityRoot.GitDiffLine.Type(childComplexity), true
 
 	case "GitFileDiff.hunks":
-		if e.complexity.GitFileDiff.Hunks == nil {
+		if e.ComplexityRoot.GitFileDiff.Hunks == nil {
 			break
 		}
 
-		return e.complexity.GitFileDiff.Hunks(childComplexity), true
-
+		return e.ComplexityRoot.GitFileDiff.Hunks(childComplexity), true
 	case "GitFileDiff.isBinary":
-		if e.complexity.GitFileDiff.IsBinary == nil {
+		if e.ComplexityRoot.GitFileDiff.IsBinary == nil {
 			break
 		}
 
-		return e.complexity.GitFileDiff.IsBinary(childComplexity), true
-
+		return e.ComplexityRoot.GitFileDiff.IsBinary(childComplexity), true
 	case "GitFileDiff.isDelete":
-		if e.complexity.GitFileDiff.IsDelete == nil {
+		if e.ComplexityRoot.GitFileDiff.IsDelete == nil {
 			break
 		}
 
-		return e.complexity.GitFileDiff.IsDelete(childComplexity), true
-
+		return e.ComplexityRoot.GitFileDiff.IsDelete(childComplexity), true
 	case "GitFileDiff.isNew":
-		if e.complexity.GitFileDiff.IsNew == nil {
+		if e.ComplexityRoot.GitFileDiff.IsNew == nil {
 			break
 		}
 
-		return e.complexity.GitFileDiff.IsNew(childComplexity), true
-
+		return e.ComplexityRoot.GitFileDiff.IsNew(childComplexity), true
 	case "GitFileDiff.oldPath":
-		if e.complexity.GitFileDiff.OldPath == nil {
+		if e.ComplexityRoot.GitFileDiff.OldPath == nil {
 			break
 		}
 
-		return e.complexity.GitFileDiff.OldPath(childComplexity), true
-
+		return e.ComplexityRoot.GitFileDiff.OldPath(childComplexity), true
 	case "GitFileDiff.path":
-		if e.complexity.GitFileDiff.Path == nil {
+		if e.ComplexityRoot.GitFileDiff.Path == nil {
 			break
 		}
 
-		return e.complexity.GitFileDiff.Path(childComplexity), true
+		return e.ComplexityRoot.GitFileDiff.Path(childComplexity), true
 
 	case "GitLastCommit.commit":
-		if e.complexity.GitLastCommit.Commit == nil {
+		if e.ComplexityRoot.GitLastCommit.Commit == nil {
 			break
 		}
 
-		return e.complexity.GitLastCommit.Commit(childComplexity), true
-
+		return e.ComplexityRoot.GitLastCommit.Commit(childComplexity), true
 	case "GitLastCommit.name":
-		if e.complexity.GitLastCommit.Name == nil {
+		if e.ComplexityRoot.GitLastCommit.Name == nil {
 			break
 		}
 
-		return e.complexity.GitLastCommit.Name(childComplexity), true
+		return e.ComplexityRoot.GitLastCommit.Name(childComplexity), true
 
 	case "GitRef.commit":
-		if e.complexity.GitRef.Commit == nil {
+		if e.ComplexityRoot.GitRef.Commit == nil {
 			break
 		}
 
-		return e.complexity.GitRef.Commit(childComplexity), true
-
+		return e.ComplexityRoot.GitRef.Commit(childComplexity), true
 	case "GitRef.hash":
-		if e.complexity.GitRef.Hash == nil {
+		if e.ComplexityRoot.GitRef.Hash == nil {
 			break
 		}
 
-		return e.complexity.GitRef.Hash(childComplexity), true
-
+		return e.ComplexityRoot.GitRef.Hash(childComplexity), true
 	case "GitRef.name":
-		if e.complexity.GitRef.Name == nil {
+		if e.ComplexityRoot.GitRef.Name == nil {
 			break
 		}
 
-		return e.complexity.GitRef.Name(childComplexity), true
-
+		return e.ComplexityRoot.GitRef.Name(childComplexity), true
 	case "GitRef.shortName":
-		if e.complexity.GitRef.ShortName == nil {
+		if e.ComplexityRoot.GitRef.ShortName == nil {
 			break
 		}
 
-		return e.complexity.GitRef.ShortName(childComplexity), true
-
+		return e.ComplexityRoot.GitRef.ShortName(childComplexity), true
 	case "GitRef.type":
-		if e.complexity.GitRef.Type == nil {
+		if e.ComplexityRoot.GitRef.Type == nil {
 			break
 		}
 
-		return e.complexity.GitRef.Type(childComplexity), true
+		return e.ComplexityRoot.GitRef.Type(childComplexity), true
 
 	case "GitRefConnection.nodes":
-		if e.complexity.GitRefConnection.Nodes == nil {
+		if e.ComplexityRoot.GitRefConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.GitRefConnection.Nodes(childComplexity), true
-
+		return e.ComplexityRoot.GitRefConnection.Nodes(childComplexity), true
 	case "GitRefConnection.pageInfo":
-		if e.complexity.GitRefConnection.PageInfo == nil {
+		if e.ComplexityRoot.GitRefConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.GitRefConnection.PageInfo(childComplexity), true
-
+		return e.ComplexityRoot.GitRefConnection.PageInfo(childComplexity), true
 	case "GitRefConnection.totalCount":
-		if e.complexity.GitRefConnection.TotalCount == nil {
+		if e.ComplexityRoot.GitRefConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.GitRefConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.GitRefConnection.TotalCount(childComplexity), true
 
 	case "GitTreeEntry.hash":
-		if e.complexity.GitTreeEntry.Hash == nil {
+		if e.ComplexityRoot.GitTreeEntry.Hash == nil {
 			break
 		}
 
-		return e.complexity.GitTreeEntry.Hash(childComplexity), true
-
+		return e.ComplexityRoot.GitTreeEntry.Hash(childComplexity), true
 	case "GitTreeEntry.lastCommit":
-		if e.complexity.GitTreeEntry.LastCommit == nil {
+		if e.ComplexityRoot.GitTreeEntry.LastCommit == nil {
 			break
 		}
 
-		return e.complexity.GitTreeEntry.LastCommit(childComplexity), true
-
+		return e.ComplexityRoot.GitTreeEntry.LastCommit(childComplexity), true
 	case "GitTreeEntry.name":
-		if e.complexity.GitTreeEntry.Name == nil {
+		if e.ComplexityRoot.GitTreeEntry.Name == nil {
 			break
 		}
 
-		return e.complexity.GitTreeEntry.Name(childComplexity), true
-
+		return e.ComplexityRoot.GitTreeEntry.Name(childComplexity), true
 	case "GitTreeEntry.type":
-		if e.complexity.GitTreeEntry.ObjectType == nil {
+		if e.ComplexityRoot.GitTreeEntry.ObjectType == nil {
 			break
 		}
 
-		return e.complexity.GitTreeEntry.ObjectType(childComplexity), true
+		return e.ComplexityRoot.GitTreeEntry.ObjectType(childComplexity), true
 
 	case "Identity.avatarUrl":
-		if e.complexity.Identity.AvatarUrl == nil {
+		if e.ComplexityRoot.Identity.AvatarUrl == nil {
 			break
 		}
 
-		return e.complexity.Identity.AvatarUrl(childComplexity), true
-
+		return e.ComplexityRoot.Identity.AvatarUrl(childComplexity), true
 	case "Identity.displayName":
-		if e.complexity.Identity.DisplayName == nil {
+		if e.ComplexityRoot.Identity.DisplayName == nil {
 			break
 		}
 
-		return e.complexity.Identity.DisplayName(childComplexity), true
-
+		return e.ComplexityRoot.Identity.DisplayName(childComplexity), true
 	case "Identity.email":
-		if e.complexity.Identity.Email == nil {
+		if e.ComplexityRoot.Identity.Email == nil {
 			break
 		}
 
-		return e.complexity.Identity.Email(childComplexity), true
-
+		return e.ComplexityRoot.Identity.Email(childComplexity), true
 	case "Identity.humanId":
-		if e.complexity.Identity.HumanID == nil {
+		if e.ComplexityRoot.Identity.HumanID == nil {
 			break
 		}
 
-		return e.complexity.Identity.HumanID(childComplexity), true
-
+		return e.ComplexityRoot.Identity.HumanID(childComplexity), true
 	case "Identity.id":
-		if e.complexity.Identity.Id == nil {
+		if e.ComplexityRoot.Identity.Id == nil {
 			break
 		}
 
-		return e.complexity.Identity.Id(childComplexity), true
-
+		return e.ComplexityRoot.Identity.Id(childComplexity), true
 	case "Identity.isProtected":
-		if e.complexity.Identity.IsProtected == nil {
+		if e.ComplexityRoot.Identity.IsProtected == nil {
 			break
 		}
 
-		return e.complexity.Identity.IsProtected(childComplexity), true
-
+		return e.ComplexityRoot.Identity.IsProtected(childComplexity), true
 	case "Identity.login":
-		if e.complexity.Identity.Login == nil {
+		if e.ComplexityRoot.Identity.Login == nil {
 			break
 		}
 
-		return e.complexity.Identity.Login(childComplexity), true
-
+		return e.ComplexityRoot.Identity.Login(childComplexity), true
 	case "Identity.name":
-		if e.complexity.Identity.Name == nil {
+		if e.ComplexityRoot.Identity.Name == nil {
 			break
 		}
 
-		return e.complexity.Identity.Name(childComplexity), true
+		return e.ComplexityRoot.Identity.Name(childComplexity), true
 
 	case "IdentityConnection.edges":
-		if e.complexity.IdentityConnection.Edges == nil {
+		if e.ComplexityRoot.IdentityConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.IdentityConnection.Edges(childComplexity), true
-
+		return e.ComplexityRoot.IdentityConnection.Edges(childComplexity), true
 	case "IdentityConnection.nodes":
-		if e.complexity.IdentityConnection.Nodes == nil {
+		if e.ComplexityRoot.IdentityConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.IdentityConnection.Nodes(childComplexity), true
-
+		return e.ComplexityRoot.IdentityConnection.Nodes(childComplexity), true
 	case "IdentityConnection.pageInfo":
-		if e.complexity.IdentityConnection.PageInfo == nil {
+		if e.ComplexityRoot.IdentityConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.IdentityConnection.PageInfo(childComplexity), true
-
+		return e.ComplexityRoot.IdentityConnection.PageInfo(childComplexity), true
 	case "IdentityConnection.totalCount":
-		if e.complexity.IdentityConnection.TotalCount == nil {
+		if e.ComplexityRoot.IdentityConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.IdentityConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.IdentityConnection.TotalCount(childComplexity), true
 
 	case "IdentityEdge.cursor":
-		if e.complexity.IdentityEdge.Cursor == nil {
+		if e.ComplexityRoot.IdentityEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.IdentityEdge.Cursor(childComplexity), true
-
+		return e.ComplexityRoot.IdentityEdge.Cursor(childComplexity), true
 	case "IdentityEdge.node":
-		if e.complexity.IdentityEdge.Node == nil {
+		if e.ComplexityRoot.IdentityEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.IdentityEdge.Node(childComplexity), true
+		return e.ComplexityRoot.IdentityEdge.Node(childComplexity), true
 
 	case "IdentityEvent.identity":
-		if e.complexity.IdentityEvent.Identity == nil {
+		if e.ComplexityRoot.IdentityEvent.Identity == nil {
 			break
 		}
 
-		return e.complexity.IdentityEvent.Identity(childComplexity), true
-
+		return e.ComplexityRoot.IdentityEvent.Identity(childComplexity), true
 	case "IdentityEvent.type":
-		if e.complexity.IdentityEvent.Type == nil {
+		if e.ComplexityRoot.IdentityEvent.Type == nil {
 			break
 		}
 
-		return e.complexity.IdentityEvent.Type(childComplexity), true
+		return e.ComplexityRoot.IdentityEvent.Type(childComplexity), true
 
 	case "Label.color":
-		if e.complexity.Label.Color == nil {
+		if e.ComplexityRoot.Label.Color == nil {
 			break
 		}
 
-		return e.complexity.Label.Color(childComplexity), true
-
+		return e.ComplexityRoot.Label.Color(childComplexity), true
 	case "Label.name":
-		if e.complexity.Label.Name == nil {
+		if e.ComplexityRoot.Label.Name == nil {
 			break
 		}
 
-		return e.complexity.Label.Name(childComplexity), true
+		return e.ComplexityRoot.Label.Name(childComplexity), true
 
 	case "LabelChangeResult.label":
-		if e.complexity.LabelChangeResult.Label == nil {
+		if e.ComplexityRoot.LabelChangeResult.Label == nil {
 			break
 		}
 
-		return e.complexity.LabelChangeResult.Label(childComplexity), true
-
+		return e.ComplexityRoot.LabelChangeResult.Label(childComplexity), true
 	case "LabelChangeResult.status":
-		if e.complexity.LabelChangeResult.Status == nil {
+		if e.ComplexityRoot.LabelChangeResult.Status == nil {
 			break
 		}
 
-		return e.complexity.LabelChangeResult.Status(childComplexity), true
+		return e.ComplexityRoot.LabelChangeResult.Status(childComplexity), true
 
 	case "LabelConnection.edges":
-		if e.complexity.LabelConnection.Edges == nil {
+		if e.ComplexityRoot.LabelConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.LabelConnection.Edges(childComplexity), true
-
+		return e.ComplexityRoot.LabelConnection.Edges(childComplexity), true
 	case "LabelConnection.nodes":
-		if e.complexity.LabelConnection.Nodes == nil {
+		if e.ComplexityRoot.LabelConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.LabelConnection.Nodes(childComplexity), true
-
+		return e.ComplexityRoot.LabelConnection.Nodes(childComplexity), true
 	case "LabelConnection.pageInfo":
-		if e.complexity.LabelConnection.PageInfo == nil {
+		if e.ComplexityRoot.LabelConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.LabelConnection.PageInfo(childComplexity), true
-
+		return e.ComplexityRoot.LabelConnection.PageInfo(childComplexity), true
 	case "LabelConnection.totalCount":
-		if e.complexity.LabelConnection.TotalCount == nil {
+		if e.ComplexityRoot.LabelConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.LabelConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.LabelConnection.TotalCount(childComplexity), true
 
 	case "LabelEdge.cursor":
-		if e.complexity.LabelEdge.Cursor == nil {
+		if e.ComplexityRoot.LabelEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.LabelEdge.Cursor(childComplexity), true
-
+		return e.ComplexityRoot.LabelEdge.Cursor(childComplexity), true
 	case "LabelEdge.node":
-		if e.complexity.LabelEdge.Node == nil {
+		if e.ComplexityRoot.LabelEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.LabelEdge.Node(childComplexity), true
+		return e.ComplexityRoot.LabelEdge.Node(childComplexity), true
 
 	case "Mutation.bugAddComment":
-		if e.complexity.Mutation.BugAddComment == nil {
+		if e.ComplexityRoot.Mutation.BugAddComment == nil {
 			break
 		}
 
@@ -2093,10 +1912,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.BugAddComment(childComplexity, args["input"].(models.BugAddCommentInput)), true
-
+		return e.ComplexityRoot.Mutation.BugAddComment(childComplexity, args["input"].(models.BugAddCommentInput)), true
 	case "Mutation.bugAddCommentAndClose":
-		if e.complexity.Mutation.BugAddCommentAndClose == nil {
+		if e.ComplexityRoot.Mutation.BugAddCommentAndClose == nil {
 			break
 		}
 
@@ -2105,10 +1923,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.BugAddCommentAndClose(childComplexity, args["input"].(models.BugAddCommentAndCloseInput)), true
-
+		return e.ComplexityRoot.Mutation.BugAddCommentAndClose(childComplexity, args["input"].(models.BugAddCommentAndCloseInput)), true
 	case "Mutation.bugAddCommentAndReopen":
-		if e.complexity.Mutation.BugAddCommentAndReopen == nil {
+		if e.ComplexityRoot.Mutation.BugAddCommentAndReopen == nil {
 			break
 		}
 
@@ -2117,10 +1934,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.BugAddCommentAndReopen(childComplexity, args["input"].(models.BugAddCommentAndReopenInput)), true
-
+		return e.ComplexityRoot.Mutation.BugAddCommentAndReopen(childComplexity, args["input"].(models.BugAddCommentAndReopenInput)), true
 	case "Mutation.bugChangeLabels":
-		if e.complexity.Mutation.BugChangeLabels == nil {
+		if e.ComplexityRoot.Mutation.BugChangeLabels == nil {
 			break
 		}
 
@@ -2129,10 +1945,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.BugChangeLabels(childComplexity, args["input"].(*models.BugChangeLabelInput)), true
-
+		return e.ComplexityRoot.Mutation.BugChangeLabels(childComplexity, args["input"].(*models.BugChangeLabelInput)), true
 	case "Mutation.bugCreate":
-		if e.complexity.Mutation.BugCreate == nil {
+		if e.ComplexityRoot.Mutation.BugCreate == nil {
 			break
 		}
 
@@ -2141,10 +1956,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.BugCreate(childComplexity, args["input"].(models.BugCreateInput)), true
-
+		return e.ComplexityRoot.Mutation.BugCreate(childComplexity, args["input"].(models.BugCreateInput)), true
 	case "Mutation.bugEditComment":
-		if e.complexity.Mutation.BugEditComment == nil {
+		if e.ComplexityRoot.Mutation.BugEditComment == nil {
 			break
 		}
 
@@ -2153,10 +1967,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.BugEditComment(childComplexity, args["input"].(models.BugEditCommentInput)), true
-
+		return e.ComplexityRoot.Mutation.BugEditComment(childComplexity, args["input"].(models.BugEditCommentInput)), true
 	case "Mutation.bugSetTitle":
-		if e.complexity.Mutation.BugSetTitle == nil {
+		if e.ComplexityRoot.Mutation.BugSetTitle == nil {
 			break
 		}
 
@@ -2165,10 +1978,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.BugSetTitle(childComplexity, args["input"].(models.BugSetTitleInput)), true
-
+		return e.ComplexityRoot.Mutation.BugSetTitle(childComplexity, args["input"].(models.BugSetTitleInput)), true
 	case "Mutation.bugStatusClose":
-		if e.complexity.Mutation.BugStatusClose == nil {
+		if e.ComplexityRoot.Mutation.BugStatusClose == nil {
 			break
 		}
 
@@ -2177,10 +1989,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.BugStatusClose(childComplexity, args["input"].(models.BugStatusCloseInput)), true
-
+		return e.ComplexityRoot.Mutation.BugStatusClose(childComplexity, args["input"].(models.BugStatusCloseInput)), true
 	case "Mutation.bugStatusOpen":
-		if e.complexity.Mutation.BugStatusOpen == nil {
+		if e.ComplexityRoot.Mutation.BugStatusOpen == nil {
 			break
 		}
 
@@ -2189,80 +2000,73 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.BugStatusOpen(childComplexity, args["input"].(models.BugStatusOpenInput)), true
+		return e.ComplexityRoot.Mutation.BugStatusOpen(childComplexity, args["input"].(models.BugStatusOpenInput)), true
 
 	case "OperationConnection.edges":
-		if e.complexity.OperationConnection.Edges == nil {
+		if e.ComplexityRoot.OperationConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.OperationConnection.Edges(childComplexity), true
-
+		return e.ComplexityRoot.OperationConnection.Edges(childComplexity), true
 	case "OperationConnection.nodes":
-		if e.complexity.OperationConnection.Nodes == nil {
+		if e.ComplexityRoot.OperationConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.OperationConnection.Nodes(childComplexity), true
-
+		return e.ComplexityRoot.OperationConnection.Nodes(childComplexity), true
 	case "OperationConnection.pageInfo":
-		if e.complexity.OperationConnection.PageInfo == nil {
+		if e.ComplexityRoot.OperationConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.OperationConnection.PageInfo(childComplexity), true
-
+		return e.ComplexityRoot.OperationConnection.PageInfo(childComplexity), true
 	case "OperationConnection.totalCount":
-		if e.complexity.OperationConnection.TotalCount == nil {
+		if e.ComplexityRoot.OperationConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.OperationConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.OperationConnection.TotalCount(childComplexity), true
 
 	case "OperationEdge.cursor":
-		if e.complexity.OperationEdge.Cursor == nil {
+		if e.ComplexityRoot.OperationEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.OperationEdge.Cursor(childComplexity), true
-
+		return e.ComplexityRoot.OperationEdge.Cursor(childComplexity), true
 	case "OperationEdge.node":
-		if e.complexity.OperationEdge.Node == nil {
+		if e.ComplexityRoot.OperationEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.OperationEdge.Node(childComplexity), true
+		return e.ComplexityRoot.OperationEdge.Node(childComplexity), true
 
 	case "PageInfo.endCursor":
-		if e.complexity.PageInfo.EndCursor == nil {
+		if e.ComplexityRoot.PageInfo.EndCursor == nil {
 			break
 		}
 
-		return e.complexity.PageInfo.EndCursor(childComplexity), true
-
+		return e.ComplexityRoot.PageInfo.EndCursor(childComplexity), true
 	case "PageInfo.hasNextPage":
-		if e.complexity.PageInfo.HasNextPage == nil {
+		if e.ComplexityRoot.PageInfo.HasNextPage == nil {
 			break
 		}
 
-		return e.complexity.PageInfo.HasNextPage(childComplexity), true
-
+		return e.ComplexityRoot.PageInfo.HasNextPage(childComplexity), true
 	case "PageInfo.hasPreviousPage":
-		if e.complexity.PageInfo.HasPreviousPage == nil {
+		if e.ComplexityRoot.PageInfo.HasPreviousPage == nil {
 			break
 		}
 
-		return e.complexity.PageInfo.HasPreviousPage(childComplexity), true
-
+		return e.ComplexityRoot.PageInfo.HasPreviousPage(childComplexity), true
 	case "PageInfo.startCursor":
-		if e.complexity.PageInfo.StartCursor == nil {
+		if e.ComplexityRoot.PageInfo.StartCursor == nil {
 			break
 		}
 
-		return e.complexity.PageInfo.StartCursor(childComplexity), true
+		return e.ComplexityRoot.PageInfo.StartCursor(childComplexity), true
 
 	case "Query.repositories":
-		if e.complexity.Query.Repositories == nil {
+		if e.ComplexityRoot.Query.Repositories == nil {
 			break
 		}
 
@@ -2271,10 +2075,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Repositories(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
-
+		return e.ComplexityRoot.Query.Repositories(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 	case "Query.repository":
-		if e.complexity.Query.Repository == nil {
+		if e.ComplexityRoot.Query.Repository == nil {
 			break
 		}
 
@@ -2283,10 +2086,10 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Repository(childComplexity, args["ref"].(*string)), true
+		return e.ComplexityRoot.Query.Repository(childComplexity, args["ref"].(*string)), true
 
 	case "Repository.allBugs":
-		if e.complexity.Repository.AllBugs == nil {
+		if e.ComplexityRoot.Repository.AllBugs == nil {
 			break
 		}
 
@@ -2295,10 +2098,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Repository.AllBugs(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int), args["query"].(*string)), true
-
+		return e.ComplexityRoot.Repository.AllBugs(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int), args["query"].(*string)), true
 	case "Repository.allIdentities":
-		if e.complexity.Repository.AllIdentities == nil {
+		if e.ComplexityRoot.Repository.AllIdentities == nil {
 			break
 		}
 
@@ -2307,10 +2109,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Repository.AllIdentities(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
-
+		return e.ComplexityRoot.Repository.AllIdentities(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 	case "Repository.blob":
-		if e.complexity.Repository.Blob == nil {
+		if e.ComplexityRoot.Repository.Blob == nil {
 			break
 		}
 
@@ -2319,10 +2120,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Repository.Blob(childComplexity, args["ref"].(string), args["path"].(string)), true
-
+		return e.ComplexityRoot.Repository.Blob(childComplexity, args["ref"].(string), args["path"].(string)), true
 	case "Repository.bug":
-		if e.complexity.Repository.Bug == nil {
+		if e.ComplexityRoot.Repository.Bug == nil {
 			break
 		}
 
@@ -2331,10 +2131,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Repository.Bug(childComplexity, args["prefix"].(string)), true
-
+		return e.ComplexityRoot.Repository.Bug(childComplexity, args["prefix"].(string)), true
 	case "Repository.commit":
-		if e.complexity.Repository.Commit == nil {
+		if e.ComplexityRoot.Repository.Commit == nil {
 			break
 		}
 
@@ -2343,10 +2142,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Repository.Commit(childComplexity, args["hash"].(string)), true
-
+		return e.ComplexityRoot.Repository.Commit(childComplexity, args["hash"].(string)), true
 	case "Repository.commits":
-		if e.complexity.Repository.Commits == nil {
+		if e.ComplexityRoot.Repository.Commits == nil {
 			break
 		}
 
@@ -2355,17 +2153,15 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Repository.Commits(childComplexity, args["after"].(*string), args["first"].(*int), args["ref"].(string), args["path"].(*string), args["since"].(*time.Time), args["until"].(*time.Time)), true
-
+		return e.ComplexityRoot.Repository.Commits(childComplexity, args["after"].(*string), args["first"].(*int), args["ref"].(string), args["path"].(*string), args["since"].(*time.Time), args["until"].(*time.Time)), true
 	case "Repository.head":
-		if e.complexity.Repository.Head == nil {
+		if e.ComplexityRoot.Repository.Head == nil {
 			break
 		}
 
-		return e.complexity.Repository.Head(childComplexity), true
-
+		return e.ComplexityRoot.Repository.Head(childComplexity), true
 	case "Repository.identity":
-		if e.complexity.Repository.Identity == nil {
+		if e.ComplexityRoot.Repository.Identity == nil {
 			break
 		}
 
@@ -2374,10 +2170,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Repository.Identity(childComplexity, args["prefix"].(string)), true
-
+		return e.ComplexityRoot.Repository.Identity(childComplexity, args["prefix"].(string)), true
 	case "Repository.lastCommits":
-		if e.complexity.Repository.LastCommits == nil {
+		if e.ComplexityRoot.Repository.LastCommits == nil {
 			break
 		}
 
@@ -2386,17 +2181,15 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Repository.LastCommits(childComplexity, args["ref"].(string), args["path"].(*string), args["names"].([]string)), true
-
+		return e.ComplexityRoot.Repository.LastCommits(childComplexity, args["ref"].(string), args["path"].(*string), args["names"].([]string)), true
 	case "Repository.name":
-		if e.complexity.Repository.Name == nil {
+		if e.ComplexityRoot.Repository.Name == nil {
 			break
 		}
 
-		return e.complexity.Repository.Name(childComplexity), true
-
+		return e.ComplexityRoot.Repository.Name(childComplexity), true
 	case "Repository.refs":
-		if e.complexity.Repository.Refs == nil {
+		if e.ComplexityRoot.Repository.Refs == nil {
 			break
 		}
 
@@ -2405,10 +2198,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Repository.Refs(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int), args["type"].(*repository.GitRefType)), true
-
+		return e.ComplexityRoot.Repository.Refs(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int), args["type"].(*repository.GitRefType)), true
 	case "Repository.tree":
-		if e.complexity.Repository.Tree == nil {
+		if e.ComplexityRoot.Repository.Tree == nil {
 			break
 		}
 
@@ -2417,17 +2209,15 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Repository.Tree(childComplexity, args["ref"].(string), args["path"].(*string)), true
-
+		return e.ComplexityRoot.Repository.Tree(childComplexity, args["ref"].(string), args["path"].(*string)), true
 	case "Repository.userIdentity":
-		if e.complexity.Repository.UserIdentity == nil {
+		if e.ComplexityRoot.Repository.UserIdentity == nil {
 			break
 		}
 
-		return e.complexity.Repository.UserIdentity(childComplexity), true
-
+		return e.ComplexityRoot.Repository.UserIdentity(childComplexity), true
 	case "Repository.validLabels":
-		if e.complexity.Repository.ValidLabels == nil {
+		if e.ComplexityRoot.Repository.ValidLabels == nil {
 			break
 		}
 
@@ -2436,52 +2226,48 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Repository.ValidLabels(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
+		return e.ComplexityRoot.Repository.ValidLabels(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 
 	case "RepositoryConnection.edges":
-		if e.complexity.RepositoryConnection.Edges == nil {
+		if e.ComplexityRoot.RepositoryConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.RepositoryConnection.Edges(childComplexity), true
-
+		return e.ComplexityRoot.RepositoryConnection.Edges(childComplexity), true
 	case "RepositoryConnection.nodes":
-		if e.complexity.RepositoryConnection.Nodes == nil {
+		if e.ComplexityRoot.RepositoryConnection.Nodes == nil {
 			break
 		}
 
-		return e.complexity.RepositoryConnection.Nodes(childComplexity), true
-
+		return e.ComplexityRoot.RepositoryConnection.Nodes(childComplexity), true
 	case "RepositoryConnection.pageInfo":
-		if e.complexity.RepositoryConnection.PageInfo == nil {
+		if e.ComplexityRoot.RepositoryConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.RepositoryConnection.PageInfo(childComplexity), true
-
+		return e.ComplexityRoot.RepositoryConnection.PageInfo(childComplexity), true
 	case "RepositoryConnection.totalCount":
-		if e.complexity.RepositoryConnection.TotalCount == nil {
+		if e.ComplexityRoot.RepositoryConnection.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.RepositoryConnection.TotalCount(childComplexity), true
+		return e.ComplexityRoot.RepositoryConnection.TotalCount(childComplexity), true
 
 	case "RepositoryEdge.cursor":
-		if e.complexity.RepositoryEdge.Cursor == nil {
+		if e.ComplexityRoot.RepositoryEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.RepositoryEdge.Cursor(childComplexity), true
-
+		return e.ComplexityRoot.RepositoryEdge.Cursor(childComplexity), true
 	case "RepositoryEdge.node":
-		if e.complexity.RepositoryEdge.Node == nil {
+		if e.ComplexityRoot.RepositoryEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.RepositoryEdge.Node(childComplexity), true
+		return e.ComplexityRoot.RepositoryEdge.Node(childComplexity), true
 
 	case "Subscription.allEvents":
-		if e.complexity.Subscription.AllEvents == nil {
+		if e.ComplexityRoot.Subscription.AllEvents == nil {
 			break
 		}
 
@@ -2490,10 +2276,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Subscription.AllEvents(childComplexity, args["repoRef"].(*string), args["typename"].(*string)), true
-
+		return e.ComplexityRoot.Subscription.AllEvents(childComplexity, args["repoRef"].(*string), args["typename"].(*string)), true
 	case "Subscription.bugEvents":
-		if e.complexity.Subscription.BugEvents == nil {
+		if e.ComplexityRoot.Subscription.BugEvents == nil {
 			break
 		}
 
@@ -2502,10 +2287,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Subscription.BugEvents(childComplexity, args["repoRef"].(*string)), true
-
+		return e.ComplexityRoot.Subscription.BugEvents(childComplexity, args["repoRef"].(*string)), true
 	case "Subscription.identityEvents":
-		if e.complexity.Subscription.IdentityEvents == nil {
+		if e.ComplexityRoot.Subscription.IdentityEvents == nil {
 			break
 		}
 
@@ -2514,7 +2298,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Subscription.IdentityEvents(childComplexity, args["repoRef"].(*string)), true
+		return e.ComplexityRoot.Subscription.IdentityEvents(childComplexity, args["repoRef"].(*string)), true
 
 	}
 	return 0, false
@@ -2522,7 +2306,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
-	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
+	ec := newExecutionContext(opCtx, e, make(chan graphql.DeferredResult))
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputBugAddCommentAndCloseInput,
 		ec.unmarshalInputBugAddCommentAndReopenInput,
@@ -2546,9 +2330,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
 				data = ec._Query(ctx, opCtx.Operation.SelectionSet)
 			} else {
-				if atomic.LoadInt32(&ec.pendingDeferred) > 0 {
-					result := <-ec.deferredResults
-					atomic.AddInt32(&ec.pendingDeferred, -1)
+				if atomic.LoadInt32(&ec.PendingDeferred) > 0 {
+					result := <-ec.DeferredResults
+					atomic.AddInt32(&ec.PendingDeferred, -1)
 					data = result.Result
 					response.Path = result.Path
 					response.Label = result.Label
@@ -2560,8 +2344,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			var buf bytes.Buffer
 			data.MarshalGQL(&buf)
 			response.Data = buf.Bytes()
-			if atomic.LoadInt32(&ec.deferred) > 0 {
-				hasNext := atomic.LoadInt32(&ec.pendingDeferred) > 0
+			if atomic.LoadInt32(&ec.Deferred) > 0 {
+				hasNext := atomic.LoadInt32(&ec.PendingDeferred) > 0
 				response.HasNext = &hasNext
 			}
 
@@ -2606,44 +2390,22 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 }
 
 type executionContext struct {
-	*graphql.OperationContext
-	*executableSchema
-	deferred        int32
-	pendingDeferred int32
-	deferredResults chan graphql.DeferredResult
+	*graphql.ExecutionContextState[ResolverRoot, DirectiveRoot, ComplexityRoot]
 }
 
-func (ec *executionContext) processDeferredGroup(dg graphql.DeferredGroup) {
-	atomic.AddInt32(&ec.pendingDeferred, 1)
-	go func() {
-		ctx := graphql.WithFreshResponseContext(dg.Context)
-		dg.FieldSet.Dispatch(ctx)
-		ds := graphql.DeferredResult{
-			Path:   dg.Path,
-			Label:  dg.Label,
-			Result: dg.FieldSet,
-			Errors: graphql.GetErrors(ctx),
-		}
-		// null fields should bubble up
-		if dg.FieldSet.Invalids > 0 {
-			ds.Result = graphql.Null
-		}
-		ec.deferredResults <- ds
-	}()
-}
-
-func (ec *executionContext) introspectSchema() (*introspection.Schema, error) {
-	if ec.DisableIntrospection {
-		return nil, errors.New("introspection disabled")
+func newExecutionContext(
+	opCtx *graphql.OperationContext,
+	execSchema *executableSchema,
+	deferredResults chan graphql.DeferredResult,
+) *executionContext {
+	return &executionContext{
+		ExecutionContextState: graphql.NewExecutionContextState[ResolverRoot, DirectiveRoot, ComplexityRoot](
+			opCtx,
+			(*graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot])(execSchema),
+			parsedSchema,
+			deferredResults,
+		),
 	}
-	return introspection.WrapSchema(ec.Schema()), nil
-}
-
-func (ec *executionContext) introspectType(name string) (*introspection.Type, error) {
-	if ec.DisableIntrospection {
-		return nil, errors.New("introspection disabled")
-	}
-	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
 var sources = []*ast.Source{
@@ -3706,3 +3468,867 @@ interface Entity {
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
+
+// childFields_* functions provide shared child field context lookups.
+// Each function is generated once per unique object type, deduplicating the
+// switch statements that were previously inlined in every fieldContext_* function.
+
+func (ec *executionContext) childFields_Bug(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_Bug_id(ctx, field)
+	case "humanId":
+		return ec.fieldContext_Bug_humanId(ctx, field)
+	case "status":
+		return ec.fieldContext_Bug_status(ctx, field)
+	case "title":
+		return ec.fieldContext_Bug_title(ctx, field)
+	case "labels":
+		return ec.fieldContext_Bug_labels(ctx, field)
+	case "author":
+		return ec.fieldContext_Bug_author(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_Bug_createdAt(ctx, field)
+	case "lastEdit":
+		return ec.fieldContext_Bug_lastEdit(ctx, field)
+	case "actors":
+		return ec.fieldContext_Bug_actors(ctx, field)
+	case "participants":
+		return ec.fieldContext_Bug_participants(ctx, field)
+	case "comments":
+		return ec.fieldContext_Bug_comments(ctx, field)
+	case "timeline":
+		return ec.fieldContext_Bug_timeline(ctx, field)
+	case "operations":
+		return ec.fieldContext_Bug_operations(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type Bug", field.Name)
+}
+
+func (ec *executionContext) childFields_BugAddCommentAndClosePayload(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "clientMutationId":
+		return ec.fieldContext_BugAddCommentAndClosePayload_clientMutationId(ctx, field)
+	case "bug":
+		return ec.fieldContext_BugAddCommentAndClosePayload_bug(ctx, field)
+	case "commentOperation":
+		return ec.fieldContext_BugAddCommentAndClosePayload_commentOperation(ctx, field)
+	case "statusOperation":
+		return ec.fieldContext_BugAddCommentAndClosePayload_statusOperation(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugAddCommentAndClosePayload", field.Name)
+}
+
+func (ec *executionContext) childFields_BugAddCommentAndReopenPayload(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "clientMutationId":
+		return ec.fieldContext_BugAddCommentAndReopenPayload_clientMutationId(ctx, field)
+	case "bug":
+		return ec.fieldContext_BugAddCommentAndReopenPayload_bug(ctx, field)
+	case "commentOperation":
+		return ec.fieldContext_BugAddCommentAndReopenPayload_commentOperation(ctx, field)
+	case "statusOperation":
+		return ec.fieldContext_BugAddCommentAndReopenPayload_statusOperation(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugAddCommentAndReopenPayload", field.Name)
+}
+
+func (ec *executionContext) childFields_BugAddCommentOperation(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_BugAddCommentOperation_id(ctx, field)
+	case "author":
+		return ec.fieldContext_BugAddCommentOperation_author(ctx, field)
+	case "date":
+		return ec.fieldContext_BugAddCommentOperation_date(ctx, field)
+	case "message":
+		return ec.fieldContext_BugAddCommentOperation_message(ctx, field)
+	case "files":
+		return ec.fieldContext_BugAddCommentOperation_files(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugAddCommentOperation", field.Name)
+}
+
+func (ec *executionContext) childFields_BugAddCommentPayload(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "clientMutationId":
+		return ec.fieldContext_BugAddCommentPayload_clientMutationId(ctx, field)
+	case "bug":
+		return ec.fieldContext_BugAddCommentPayload_bug(ctx, field)
+	case "operation":
+		return ec.fieldContext_BugAddCommentPayload_operation(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugAddCommentPayload", field.Name)
+}
+
+func (ec *executionContext) childFields_BugChangeLabelPayload(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "clientMutationId":
+		return ec.fieldContext_BugChangeLabelPayload_clientMutationId(ctx, field)
+	case "bug":
+		return ec.fieldContext_BugChangeLabelPayload_bug(ctx, field)
+	case "operation":
+		return ec.fieldContext_BugChangeLabelPayload_operation(ctx, field)
+	case "results":
+		return ec.fieldContext_BugChangeLabelPayload_results(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugChangeLabelPayload", field.Name)
+}
+
+func (ec *executionContext) childFields_BugComment(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_BugComment_id(ctx, field)
+	case "author":
+		return ec.fieldContext_BugComment_author(ctx, field)
+	case "message":
+		return ec.fieldContext_BugComment_message(ctx, field)
+	case "files":
+		return ec.fieldContext_BugComment_files(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugComment", field.Name)
+}
+
+func (ec *executionContext) childFields_BugCommentConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_BugCommentConnection_edges(ctx, field)
+	case "nodes":
+		return ec.fieldContext_BugCommentConnection_nodes(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_BugCommentConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_BugCommentConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugCommentConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_BugCommentEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "cursor":
+		return ec.fieldContext_BugCommentEdge_cursor(ctx, field)
+	case "node":
+		return ec.fieldContext_BugCommentEdge_node(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugCommentEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_BugCommentHistoryStep(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "message":
+		return ec.fieldContext_BugCommentHistoryStep_message(ctx, field)
+	case "date":
+		return ec.fieldContext_BugCommentHistoryStep_date(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugCommentHistoryStep", field.Name)
+}
+
+func (ec *executionContext) childFields_BugConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_BugConnection_edges(ctx, field)
+	case "nodes":
+		return ec.fieldContext_BugConnection_nodes(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_BugConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_BugConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_BugCreateOperation(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_BugCreateOperation_id(ctx, field)
+	case "author":
+		return ec.fieldContext_BugCreateOperation_author(ctx, field)
+	case "date":
+		return ec.fieldContext_BugCreateOperation_date(ctx, field)
+	case "title":
+		return ec.fieldContext_BugCreateOperation_title(ctx, field)
+	case "message":
+		return ec.fieldContext_BugCreateOperation_message(ctx, field)
+	case "files":
+		return ec.fieldContext_BugCreateOperation_files(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugCreateOperation", field.Name)
+}
+
+func (ec *executionContext) childFields_BugCreatePayload(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "clientMutationId":
+		return ec.fieldContext_BugCreatePayload_clientMutationId(ctx, field)
+	case "bug":
+		return ec.fieldContext_BugCreatePayload_bug(ctx, field)
+	case "operation":
+		return ec.fieldContext_BugCreatePayload_operation(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugCreatePayload", field.Name)
+}
+
+func (ec *executionContext) childFields_BugEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "cursor":
+		return ec.fieldContext_BugEdge_cursor(ctx, field)
+	case "node":
+		return ec.fieldContext_BugEdge_node(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_BugEditCommentOperation(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_BugEditCommentOperation_id(ctx, field)
+	case "author":
+		return ec.fieldContext_BugEditCommentOperation_author(ctx, field)
+	case "date":
+		return ec.fieldContext_BugEditCommentOperation_date(ctx, field)
+	case "target":
+		return ec.fieldContext_BugEditCommentOperation_target(ctx, field)
+	case "message":
+		return ec.fieldContext_BugEditCommentOperation_message(ctx, field)
+	case "files":
+		return ec.fieldContext_BugEditCommentOperation_files(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugEditCommentOperation", field.Name)
+}
+
+func (ec *executionContext) childFields_BugEditCommentPayload(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "clientMutationId":
+		return ec.fieldContext_BugEditCommentPayload_clientMutationId(ctx, field)
+	case "bug":
+		return ec.fieldContext_BugEditCommentPayload_bug(ctx, field)
+	case "operation":
+		return ec.fieldContext_BugEditCommentPayload_operation(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugEditCommentPayload", field.Name)
+}
+
+func (ec *executionContext) childFields_BugEvent(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "type":
+		return ec.fieldContext_BugEvent_type(ctx, field)
+	case "bug":
+		return ec.fieldContext_BugEvent_bug(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugEvent", field.Name)
+}
+
+func (ec *executionContext) childFields_BugLabelChangeOperation(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_BugLabelChangeOperation_id(ctx, field)
+	case "author":
+		return ec.fieldContext_BugLabelChangeOperation_author(ctx, field)
+	case "date":
+		return ec.fieldContext_BugLabelChangeOperation_date(ctx, field)
+	case "added":
+		return ec.fieldContext_BugLabelChangeOperation_added(ctx, field)
+	case "removed":
+		return ec.fieldContext_BugLabelChangeOperation_removed(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugLabelChangeOperation", field.Name)
+}
+
+func (ec *executionContext) childFields_BugSetStatusOperation(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_BugSetStatusOperation_id(ctx, field)
+	case "author":
+		return ec.fieldContext_BugSetStatusOperation_author(ctx, field)
+	case "date":
+		return ec.fieldContext_BugSetStatusOperation_date(ctx, field)
+	case "status":
+		return ec.fieldContext_BugSetStatusOperation_status(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugSetStatusOperation", field.Name)
+}
+
+func (ec *executionContext) childFields_BugSetTitleOperation(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_BugSetTitleOperation_id(ctx, field)
+	case "author":
+		return ec.fieldContext_BugSetTitleOperation_author(ctx, field)
+	case "date":
+		return ec.fieldContext_BugSetTitleOperation_date(ctx, field)
+	case "title":
+		return ec.fieldContext_BugSetTitleOperation_title(ctx, field)
+	case "was":
+		return ec.fieldContext_BugSetTitleOperation_was(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugSetTitleOperation", field.Name)
+}
+
+func (ec *executionContext) childFields_BugSetTitlePayload(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "clientMutationId":
+		return ec.fieldContext_BugSetTitlePayload_clientMutationId(ctx, field)
+	case "bug":
+		return ec.fieldContext_BugSetTitlePayload_bug(ctx, field)
+	case "operation":
+		return ec.fieldContext_BugSetTitlePayload_operation(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugSetTitlePayload", field.Name)
+}
+
+func (ec *executionContext) childFields_BugStatusClosePayload(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "clientMutationId":
+		return ec.fieldContext_BugStatusClosePayload_clientMutationId(ctx, field)
+	case "bug":
+		return ec.fieldContext_BugStatusClosePayload_bug(ctx, field)
+	case "operation":
+		return ec.fieldContext_BugStatusClosePayload_operation(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugStatusClosePayload", field.Name)
+}
+
+func (ec *executionContext) childFields_BugStatusOpenPayload(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "clientMutationId":
+		return ec.fieldContext_BugStatusOpenPayload_clientMutationId(ctx, field)
+	case "bug":
+		return ec.fieldContext_BugStatusOpenPayload_bug(ctx, field)
+	case "operation":
+		return ec.fieldContext_BugStatusOpenPayload_operation(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugStatusOpenPayload", field.Name)
+}
+
+func (ec *executionContext) childFields_BugTimelineItemConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_BugTimelineItemConnection_edges(ctx, field)
+	case "nodes":
+		return ec.fieldContext_BugTimelineItemConnection_nodes(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_BugTimelineItemConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_BugTimelineItemConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugTimelineItemConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_BugTimelineItemEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "cursor":
+		return ec.fieldContext_BugTimelineItemEdge_cursor(ctx, field)
+	case "node":
+		return ec.fieldContext_BugTimelineItemEdge_node(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BugTimelineItemEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_Color(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "R":
+		return ec.fieldContext_Color_R(ctx, field)
+	case "G":
+		return ec.fieldContext_Color_G(ctx, field)
+	case "B":
+		return ec.fieldContext_Color_B(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type Color", field.Name)
+}
+
+func (ec *executionContext) childFields_EntityEvent(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "type":
+		return ec.fieldContext_EntityEvent_type(ctx, field)
+	case "entity":
+		return ec.fieldContext_EntityEvent_entity(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EntityEvent", field.Name)
+}
+
+func (ec *executionContext) childFields_GitBlob(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "path":
+		return ec.fieldContext_GitBlob_path(ctx, field)
+	case "hash":
+		return ec.fieldContext_GitBlob_hash(ctx, field)
+	case "text":
+		return ec.fieldContext_GitBlob_text(ctx, field)
+	case "size":
+		return ec.fieldContext_GitBlob_size(ctx, field)
+	case "isBinary":
+		return ec.fieldContext_GitBlob_isBinary(ctx, field)
+	case "isTruncated":
+		return ec.fieldContext_GitBlob_isTruncated(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GitBlob", field.Name)
+}
+
+func (ec *executionContext) childFields_GitChangedFile(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "path":
+		return ec.fieldContext_GitChangedFile_path(ctx, field)
+	case "oldPath":
+		return ec.fieldContext_GitChangedFile_oldPath(ctx, field)
+	case "status":
+		return ec.fieldContext_GitChangedFile_status(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GitChangedFile", field.Name)
+}
+
+func (ec *executionContext) childFields_GitChangedFileConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "nodes":
+		return ec.fieldContext_GitChangedFileConnection_nodes(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_GitChangedFileConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_GitChangedFileConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GitChangedFileConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_GitCommit(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "hash":
+		return ec.fieldContext_GitCommit_hash(ctx, field)
+	case "shortHash":
+		return ec.fieldContext_GitCommit_shortHash(ctx, field)
+	case "message":
+		return ec.fieldContext_GitCommit_message(ctx, field)
+	case "fullMessage":
+		return ec.fieldContext_GitCommit_fullMessage(ctx, field)
+	case "authorName":
+		return ec.fieldContext_GitCommit_authorName(ctx, field)
+	case "authorEmail":
+		return ec.fieldContext_GitCommit_authorEmail(ctx, field)
+	case "date":
+		return ec.fieldContext_GitCommit_date(ctx, field)
+	case "parents":
+		return ec.fieldContext_GitCommit_parents(ctx, field)
+	case "files":
+		return ec.fieldContext_GitCommit_files(ctx, field)
+	case "diff":
+		return ec.fieldContext_GitCommit_diff(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GitCommit", field.Name)
+}
+
+func (ec *executionContext) childFields_GitCommitConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "nodes":
+		return ec.fieldContext_GitCommitConnection_nodes(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_GitCommitConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_GitCommitConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GitCommitConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_GitDiffHunk(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "oldStart":
+		return ec.fieldContext_GitDiffHunk_oldStart(ctx, field)
+	case "oldLines":
+		return ec.fieldContext_GitDiffHunk_oldLines(ctx, field)
+	case "newStart":
+		return ec.fieldContext_GitDiffHunk_newStart(ctx, field)
+	case "newLines":
+		return ec.fieldContext_GitDiffHunk_newLines(ctx, field)
+	case "lines":
+		return ec.fieldContext_GitDiffHunk_lines(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GitDiffHunk", field.Name)
+}
+
+func (ec *executionContext) childFields_GitDiffLine(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "type":
+		return ec.fieldContext_GitDiffLine_type(ctx, field)
+	case "content":
+		return ec.fieldContext_GitDiffLine_content(ctx, field)
+	case "oldLine":
+		return ec.fieldContext_GitDiffLine_oldLine(ctx, field)
+	case "newLine":
+		return ec.fieldContext_GitDiffLine_newLine(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GitDiffLine", field.Name)
+}
+
+func (ec *executionContext) childFields_GitFileDiff(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "path":
+		return ec.fieldContext_GitFileDiff_path(ctx, field)
+	case "oldPath":
+		return ec.fieldContext_GitFileDiff_oldPath(ctx, field)
+	case "isBinary":
+		return ec.fieldContext_GitFileDiff_isBinary(ctx, field)
+	case "isNew":
+		return ec.fieldContext_GitFileDiff_isNew(ctx, field)
+	case "isDelete":
+		return ec.fieldContext_GitFileDiff_isDelete(ctx, field)
+	case "hunks":
+		return ec.fieldContext_GitFileDiff_hunks(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GitFileDiff", field.Name)
+}
+
+func (ec *executionContext) childFields_GitLastCommit(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext_GitLastCommit_name(ctx, field)
+	case "commit":
+		return ec.fieldContext_GitLastCommit_commit(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GitLastCommit", field.Name)
+}
+
+func (ec *executionContext) childFields_GitRef(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext_GitRef_name(ctx, field)
+	case "shortName":
+		return ec.fieldContext_GitRef_shortName(ctx, field)
+	case "type":
+		return ec.fieldContext_GitRef_type(ctx, field)
+	case "hash":
+		return ec.fieldContext_GitRef_hash(ctx, field)
+	case "commit":
+		return ec.fieldContext_GitRef_commit(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GitRef", field.Name)
+}
+
+func (ec *executionContext) childFields_GitRefConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "nodes":
+		return ec.fieldContext_GitRefConnection_nodes(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_GitRefConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_GitRefConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GitRefConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_GitTreeEntry(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext_GitTreeEntry_name(ctx, field)
+	case "type":
+		return ec.fieldContext_GitTreeEntry_type(ctx, field)
+	case "hash":
+		return ec.fieldContext_GitTreeEntry_hash(ctx, field)
+	case "lastCommit":
+		return ec.fieldContext_GitTreeEntry_lastCommit(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type GitTreeEntry", field.Name)
+}
+
+func (ec *executionContext) childFields_Identity(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_Identity_id(ctx, field)
+	case "humanId":
+		return ec.fieldContext_Identity_humanId(ctx, field)
+	case "name":
+		return ec.fieldContext_Identity_name(ctx, field)
+	case "email":
+		return ec.fieldContext_Identity_email(ctx, field)
+	case "login":
+		return ec.fieldContext_Identity_login(ctx, field)
+	case "displayName":
+		return ec.fieldContext_Identity_displayName(ctx, field)
+	case "avatarUrl":
+		return ec.fieldContext_Identity_avatarUrl(ctx, field)
+	case "isProtected":
+		return ec.fieldContext_Identity_isProtected(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type Identity", field.Name)
+}
+
+func (ec *executionContext) childFields_IdentityConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_IdentityConnection_edges(ctx, field)
+	case "nodes":
+		return ec.fieldContext_IdentityConnection_nodes(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_IdentityConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_IdentityConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IdentityConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_IdentityEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "cursor":
+		return ec.fieldContext_IdentityEdge_cursor(ctx, field)
+	case "node":
+		return ec.fieldContext_IdentityEdge_node(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IdentityEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_IdentityEvent(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "type":
+		return ec.fieldContext_IdentityEvent_type(ctx, field)
+	case "identity":
+		return ec.fieldContext_IdentityEvent_identity(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type IdentityEvent", field.Name)
+}
+
+func (ec *executionContext) childFields_Label(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext_Label_name(ctx, field)
+	case "color":
+		return ec.fieldContext_Label_color(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type Label", field.Name)
+}
+
+func (ec *executionContext) childFields_LabelChangeResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "label":
+		return ec.fieldContext_LabelChangeResult_label(ctx, field)
+	case "status":
+		return ec.fieldContext_LabelChangeResult_status(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type LabelChangeResult", field.Name)
+}
+
+func (ec *executionContext) childFields_LabelConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_LabelConnection_edges(ctx, field)
+	case "nodes":
+		return ec.fieldContext_LabelConnection_nodes(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_LabelConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_LabelConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type LabelConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_LabelEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "cursor":
+		return ec.fieldContext_LabelEdge_cursor(ctx, field)
+	case "node":
+		return ec.fieldContext_LabelEdge_node(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type LabelEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_OperationConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_OperationConnection_edges(ctx, field)
+	case "nodes":
+		return ec.fieldContext_OperationConnection_nodes(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_OperationConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_OperationConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type OperationConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_OperationEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "cursor":
+		return ec.fieldContext_OperationEdge_cursor(ctx, field)
+	case "node":
+		return ec.fieldContext_OperationEdge_node(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type OperationEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_PageInfo(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "hasNextPage":
+		return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+	case "hasPreviousPage":
+		return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+	case "startCursor":
+		return ec.fieldContext_PageInfo_startCursor(ctx, field)
+	case "endCursor":
+		return ec.fieldContext_PageInfo_endCursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+}
+
+func (ec *executionContext) childFields_Repository(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext_Repository_name(ctx, field)
+	case "allBugs":
+		return ec.fieldContext_Repository_allBugs(ctx, field)
+	case "bug":
+		return ec.fieldContext_Repository_bug(ctx, field)
+	case "allIdentities":
+		return ec.fieldContext_Repository_allIdentities(ctx, field)
+	case "identity":
+		return ec.fieldContext_Repository_identity(ctx, field)
+	case "userIdentity":
+		return ec.fieldContext_Repository_userIdentity(ctx, field)
+	case "refs":
+		return ec.fieldContext_Repository_refs(ctx, field)
+	case "tree":
+		return ec.fieldContext_Repository_tree(ctx, field)
+	case "blob":
+		return ec.fieldContext_Repository_blob(ctx, field)
+	case "commits":
+		return ec.fieldContext_Repository_commits(ctx, field)
+	case "commit":
+		return ec.fieldContext_Repository_commit(ctx, field)
+	case "lastCommits":
+		return ec.fieldContext_Repository_lastCommits(ctx, field)
+	case "head":
+		return ec.fieldContext_Repository_head(ctx, field)
+	case "validLabels":
+		return ec.fieldContext_Repository_validLabels(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type Repository", field.Name)
+}
+
+func (ec *executionContext) childFields_RepositoryConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_RepositoryConnection_edges(ctx, field)
+	case "nodes":
+		return ec.fieldContext_RepositoryConnection_nodes(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_RepositoryConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_RepositoryConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RepositoryConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_RepositoryEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "cursor":
+		return ec.fieldContext_RepositoryEdge_cursor(ctx, field)
+	case "node":
+		return ec.fieldContext_RepositoryEdge_node(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RepositoryEdge", field.Name)
+}
+
+func (ec *executionContext) childFields___Directive(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext___Directive_name(ctx, field)
+	case "description":
+		return ec.fieldContext___Directive_description(ctx, field)
+	case "isRepeatable":
+		return ec.fieldContext___Directive_isRepeatable(ctx, field)
+	case "locations":
+		return ec.fieldContext___Directive_locations(ctx, field)
+	case "args":
+		return ec.fieldContext___Directive_args(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type __Directive", field.Name)
+}
+
+func (ec *executionContext) childFields___EnumValue(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext___EnumValue_name(ctx, field)
+	case "description":
+		return ec.fieldContext___EnumValue_description(ctx, field)
+	case "isDeprecated":
+		return ec.fieldContext___EnumValue_isDeprecated(ctx, field)
+	case "deprecationReason":
+		return ec.fieldContext___EnumValue_deprecationReason(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type __EnumValue", field.Name)
+}
+
+func (ec *executionContext) childFields___Field(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext___Field_name(ctx, field)
+	case "description":
+		return ec.fieldContext___Field_description(ctx, field)
+	case "args":
+		return ec.fieldContext___Field_args(ctx, field)
+	case "type":
+		return ec.fieldContext___Field_type(ctx, field)
+	case "isDeprecated":
+		return ec.fieldContext___Field_isDeprecated(ctx, field)
+	case "deprecationReason":
+		return ec.fieldContext___Field_deprecationReason(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type __Field", field.Name)
+}
+
+func (ec *executionContext) childFields___InputValue(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext___InputValue_name(ctx, field)
+	case "description":
+		return ec.fieldContext___InputValue_description(ctx, field)
+	case "type":
+		return ec.fieldContext___InputValue_type(ctx, field)
+	case "defaultValue":
+		return ec.fieldContext___InputValue_defaultValue(ctx, field)
+	case "isDeprecated":
+		return ec.fieldContext___InputValue_isDeprecated(ctx, field)
+	case "deprecationReason":
+		return ec.fieldContext___InputValue_deprecationReason(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type __InputValue", field.Name)
+}
+
+func (ec *executionContext) childFields___Schema(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "description":
+		return ec.fieldContext___Schema_description(ctx, field)
+	case "types":
+		return ec.fieldContext___Schema_types(ctx, field)
+	case "queryType":
+		return ec.fieldContext___Schema_queryType(ctx, field)
+	case "mutationType":
+		return ec.fieldContext___Schema_mutationType(ctx, field)
+	case "subscriptionType":
+		return ec.fieldContext___Schema_subscriptionType(ctx, field)
+	case "directives":
+		return ec.fieldContext___Schema_directives(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+}
+
+func (ec *executionContext) childFields___Type(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "kind":
+		return ec.fieldContext___Type_kind(ctx, field)
+	case "name":
+		return ec.fieldContext___Type_name(ctx, field)
+	case "description":
+		return ec.fieldContext___Type_description(ctx, field)
+	case "specifiedByURL":
+		return ec.fieldContext___Type_specifiedByURL(ctx, field)
+	case "fields":
+		return ec.fieldContext___Type_fields(ctx, field)
+	case "interfaces":
+		return ec.fieldContext___Type_interfaces(ctx, field)
+	case "possibleTypes":
+		return ec.fieldContext___Type_possibleTypes(ctx, field)
+	case "enumValues":
+		return ec.fieldContext___Type_enumValues(ctx, field)
+	case "inputFields":
+		return ec.fieldContext___Type_inputFields(ctx, field)
+	case "ofType":
+		return ec.fieldContext___Type_ofType(ctx, field)
+	case "isOneOf":
+		return ec.fieldContext___Type_isOneOf(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
+}

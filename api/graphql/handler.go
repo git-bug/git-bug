@@ -5,16 +5,14 @@ package graphql
 
 import (
 	"io"
-	"net"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
-	"github.com/gorilla/websocket"
+	coderws "github.com/coder/websocket"
 	"github.com/vektah/gqlparser/v2/ast"
 
 	"github.com/git-bug/git-bug/api/graphql/graph"
@@ -28,29 +26,24 @@ func NewHandler(mrc *cache.MultiRepoCache, errorOut io.Writer, devMode bool) htt
 
 	h := handler.New(graph.NewExecutableSchema(config))
 
-	wsUpgrader := websocket.Upgrader{}
+	// coder/websocket authorizes the request host itself and rejects every other
+	// origin, which is the check we want in production.
+	wsAcceptOptions := coderws.AcceptOptions{}
 	if devMode {
 		// In dev mode the Vite proxy sits on a different port than the backend,
-		// so we compare hostnames only rather than the full host:port.
-		wsUpgrader.CheckOrigin = func(r *http.Request) bool {
-			origin := r.Header.Get("Origin")
-			if origin == "" {
-				return true
-			}
-			u, err := url.Parse(origin)
-			if err != nil {
-				return false
-			}
-			requestHost, _, err := net.SplitHostPort(r.Host)
-			if err != nil {
-				requestHost = r.Host
-			}
-			return u.Hostname() == requestHost
+		// so also accept loopback origins whatever their port. Patterns are
+		// matched with path.Match, hence the escaping around the IPv6 literal.
+		wsAcceptOptions.OriginPatterns = []string{
+			"localhost", "localhost:*",
+			"127.0.0.1", "127.0.0.1:*",
+			`\[::1\]`, `\[::1\]:*`,
 		}
 	}
 	h.AddTransport(transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
-		Upgrader:              wsUpgrader,
+		Implementation: transport.CoderWebsocketImplementation{
+			AcceptOptions: wsAcceptOptions,
+		},
 	})
 	h.AddTransport(transport.Options{})
 	h.AddTransport(transport.GET{})
