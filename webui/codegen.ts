@@ -6,6 +6,13 @@ const config: CodegenConfig = {
   documents: ["src/**/*.{ts,tsx}", "!src/__generated__/**/*"],
   ignoreNoDocuments: true,
   generates: {
+    "./src/__generated__/enums.ts": {
+      plugins: ["typescript"],
+      config: {
+        onlyEnums: true,
+        enumsAsConst: true,
+      },
+    },
     "./src/__generated__/": {
       preset: "client",
       presetConfig: {

@@ -654,7 +654,9 @@ exports[`Markdown/UnlabeledCodeBlock matches snapshot 1`] = `
     </p>
     
 
-    <pre>
+    <pre
+      tabindex="0"
+    >
       <code>
         # Please enter the title and comment message. The first non-empty line will be
 # used as the title. Lines starting with '#' will be ignored.

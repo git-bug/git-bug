@@ -493,10 +493,13 @@ function AuthorFilter({
     return result;
   }, [allIdentities, isSearching, matchesSearch, currentUserId, selectedAuthorId, recentAuthorIds]);
 
-  // Reset active index when filtered list changes
-  useEffect(() => {
+  // Reset the active index when the filtered list changes.  Adjusting state
+  // during render avoids the extra render pass an effect would cause.
+  const [lastVisible, setLastVisible] = useState(visibleIdentities);
+  if (visibleIdentities !== lastVisible) {
+    setLastVisible(visibleIdentities);
     setActiveIndex(visibleIdentities.length > 0 ? 0 : null);
-  }, [visibleIdentities]);
+  }
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter" && activeIndex != null) {

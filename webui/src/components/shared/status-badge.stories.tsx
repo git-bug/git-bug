@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { Status } from "@/__generated__/graphql";
+import { Status } from "@/__generated__/enums";
 
 import { StatusBadge } from "./status-badge";
 

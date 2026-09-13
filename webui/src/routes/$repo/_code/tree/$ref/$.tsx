@@ -3,8 +3,8 @@
 import { useQuery, useReadQuery } from "@apollo/client/react";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { GitObjectType } from "@/__generated__/enums";
 import { graphql } from "@/__generated__/gql";
-import { GitObjectType } from "@/__generated__/graphql";
 import { FileTree } from "@/components/code/file-tree";
 import { Markdown } from "@/components/content/markdown";
 import { Skeleton } from "@/components/ui/skeleton";

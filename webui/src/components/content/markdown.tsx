@@ -1,7 +1,7 @@
 import rehypeShikiFromHighlighter from "@shikijs/rehype/core";
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type ExtraProps } from "react-markdown";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeExternalLinks from "rehype-external-links";
 import rehypeRaw from "rehype-raw";
@@ -94,6 +94,24 @@ function useShikiHighlighter(): HighlighterCore | null {
   return highlighter;
 }
 
+// `node` is react-markdown's hast node.  It has to be dropped rather than
+// spread onto an element, or it renders as node="[object Object]".
+type ImgProps = React.ImgHTMLAttributes<HTMLImageElement> & ExtraProps;
+type AnchorProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & ExtraProps;
+type PreProps = React.ComponentProps<"pre"> & ExtraProps;
+
+// A horizontally scrollable region must be keyboard focusable (axe rule
+// scrollable-region-focusable).  Shiki sets tabindex="0" on the blocks it
+// highlights, but code blocks without a language keep their plain markup, so
+// they get it here.
+//
+// tabIndex comes after the spread so it wins: sanitizeSchema lets a raw <pre>
+// in the document carry its own tabindex, and a tabindex="-1" would otherwise
+// leave the block unreachable by keyboard — the very thing this is fixing.
+function PreBlock({ node: _node, ...props }: PreProps) {
+  return <pre {...props} tabIndex={0} />;
+}
+
 export function Markdown({ content, className, repoContext }: MarkdownProps) {
   const highlighter = useShikiHighlighter();
 
@@ -120,7 +138,9 @@ export function Markdown({ content, className, repoContext }: MarkdownProps) {
     const { repo, ref, basePath } = repoContext;
     const gitfilePrefix = `/gitfile/${repo}/${ref}/`;
     return {
-      img: ({ src, alt, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => {
+      // `node` is dropped here for the same reason as in PreBlock above: spread
+      // onto an element it renders as node="[object Object]".
+      img: ({ node: _node, src, alt, ...props }: ImgProps) => {
         // Wrap repo-local images in a Link to the blob view
         if (src?.startsWith(gitfilePrefix)) {
           const path = src.slice(gitfilePrefix.length);
@@ -132,7 +152,7 @@ export function Markdown({ content, className, repoContext }: MarkdownProps) {
         }
         return <img src={src} alt={alt} {...props} />;
       },
-      a: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
+      a: ({ node: _node, href, children, ...props }: AnchorProps) => {
         if (!href) return <a {...props}>{children}</a>;
 
         // Anchor links stay as-is
@@ -210,7 +230,7 @@ export function Markdown({ content, className, repoContext }: MarkdownProps) {
           [rehypeExternalLinks, { target: "_blank", rel: ["noopener", "noreferrer"] }],
         ]}
         urlTransform={urlTransform}
-        components={components}
+        components={{ pre: PreBlock, ...components }}
       >
         {content}
       </ReactMarkdown>

@@ -7,7 +7,7 @@ exports[`IssueRow/ClosedIssue matches snapshot 1`] = `
   >
     <svg
       aria-hidden="true"
-      class="lucide lucide-circle-check mt-0.5 size-4 shrink-0 text-purple-600 dark:text-purple-400"
+      class="lucide lucide-circle-check lucide-check-circle-2 mt-0.5 size-4 shrink-0 text-purple-600 dark:text-purple-400"
       fill="none"
       height="24"
       stroke="currentColor"
@@ -24,7 +24,7 @@ exports[`IssueRow/ClosedIssue matches snapshot 1`] = `
         r="10"
       />
       <path
-        d="m9 12 2 2 4-4"
+        d="m16 9-5.5 5.5L8 12"
       />
     </svg>
     <div
@@ -113,12 +113,12 @@ exports[`IssueRow/List matches snapshot 1`] = `
         <circle
           cx="12"
           cy="12"
-          r="10"
+          r="1"
         />
         <circle
           cx="12"
           cy="12"
-          r="1"
+          r="10"
         />
       </svg>
       <div
@@ -191,7 +191,7 @@ exports[`IssueRow/List matches snapshot 1`] = `
     >
       <svg
         aria-hidden="true"
-        class="lucide lucide-circle-check mt-0.5 size-4 shrink-0 text-purple-600 dark:text-purple-400"
+        class="lucide lucide-circle-check lucide-check-circle-2 mt-0.5 size-4 shrink-0 text-purple-600 dark:text-purple-400"
         fill="none"
         height="24"
         stroke="currentColor"
@@ -208,7 +208,7 @@ exports[`IssueRow/List matches snapshot 1`] = `
           r="10"
         />
         <path
-          d="m9 12 2 2 4-4"
+          d="m16 9-5.5 5.5L8 12"
         />
       </svg>
       <div
@@ -289,12 +289,12 @@ exports[`IssueRow/List matches snapshot 1`] = `
         <circle
           cx="12"
           cy="12"
-          r="10"
+          r="1"
         />
         <circle
           cx="12"
           cy="12"
-          r="1"
+          r="10"
         />
       </svg>
       <div
@@ -353,12 +353,12 @@ exports[`IssueRow/NoLabelsNoComments matches snapshot 1`] = `
       <circle
         cx="12"
         cy="12"
-        r="10"
+        r="1"
       />
       <circle
         cx="12"
         cy="12"
-        r="1"
+        r="10"
       />
     </svg>
     <div
@@ -416,12 +416,12 @@ exports[`IssueRow/OpenIssue matches snapshot 1`] = `
       <circle
         cx="12"
         cy="12"
-        r="10"
+        r="1"
       />
       <circle
         cx="12"
         cy="12"
-        r="1"
+        r="10"
       />
     </svg>
     <div

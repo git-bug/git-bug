@@ -43,11 +43,6 @@ export function TitleEditor({ bugPrefix, title, humanId, ref_ }: TitleEditorProp
     if (editing) inputRef.current?.focus();
   }, [editing]);
 
-  // Keep local value in sync if title prop changes (e.g. after refetch)
-  useEffect(() => {
-    if (!editing) setValue(title);
-  }, [title, editing]);
-
   async function handleSave() {
     const trimmed = value.trim();
     if (trimmed && trimmed !== title) {
@@ -108,7 +103,12 @@ export function TitleEditor({ bugPrefix, title, humanId, ref_ }: TitleEditorProp
       </h1>
       {user && (
         <button
-          onClick={() => setEditing(true)}
+          onClick={() => {
+            // Seed the draft from the current title, which may have changed
+            // since the last edit (e.g. after a refetch).
+            setValue(title);
+            setEditing(true);
+          }}
           className="text-muted-foreground hover:text-foreground mt-1 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
           title="Edit title"
         >

@@ -16,6 +16,11 @@
     "typescript/no-unsafe-return": "warn",
     "typescript/await-thenable": "error",
     "typescript/no-unnecessary-type-assertion": "warn",
+    // oxlint 1.82 flags any member access on an identifier named `refs` as a ref
+    // read during render, including floating-ui's `ref={refs.setFloating}` (a
+    // callback setter, not a `.current` read).  There is no way to write that
+    // API differently, so this stays a warning rather than an error.
+    "react/refs": "warn",
     "react/react-in-jsx-scope": "off"
   },
   "options": {

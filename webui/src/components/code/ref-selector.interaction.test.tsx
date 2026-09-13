@@ -1,9 +1,9 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 
+import { GitRefType } from "@/__generated__/enums";
 import type { FragmentType } from "@/__generated__/fragment-masking";
 import { makeFragmentData } from "@/__generated__/fragment-masking";
-import { GitRefType } from "@/__generated__/graphql";
 
 import { RefSelector, REF_SELECTOR_REFS_FRAGMENT } from "./ref-selector";
 

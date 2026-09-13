@@ -13,9 +13,9 @@ import {
 import { GitBranch, Tag } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { GitRefType } from "@/__generated__/enums";
 import { useFragment, type FragmentType } from "@/__generated__/fragment-masking";
 import { graphql } from "@/__generated__/gql";
-import { GitRefType } from "@/__generated__/graphql";
 import { Button } from "@/components/ui/button";
 import * as Listbox from "@/components/ui/listbox";
 import { cn } from "@/lib/utils";

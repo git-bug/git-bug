@@ -1,7 +1,7 @@
 import { CircleDot, CircleCheck, MessageSquare } from "lucide-react";
 
+import { Status } from "@/__generated__/enums";
 import { graphql } from "@/__generated__/gql";
-import { Status } from "@/__generated__/graphql";
 import { cn } from "@/lib/utils";
 
 graphql(`

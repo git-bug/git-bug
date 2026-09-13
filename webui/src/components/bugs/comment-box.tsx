@@ -1,8 +1,9 @@
 import { useMutation } from "@apollo/client/react";
 import { useState } from "react";
 
+import { Status } from "@/__generated__/enums";
 import { graphql } from "@/__generated__/gql";
-import { Status, BugDetailDocument } from "@/__generated__/graphql";
+import { BugDetailDocument } from "@/__generated__/graphql";
 import { Markdown } from "@/components/content/markdown";
 import * as CommentCard from "@/components/shared/comment-card";
 import * as WritePreview from "@/components/shared/write-preview";

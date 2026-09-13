@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Suspense } from "react";
 import { describe, it, expect, vi } from "vitest";
 
+import { Status } from "@/__generated__/enums";
 import {
   BugAddCommentDocument,
   BugAddCommentAndCloseDocument,
@@ -11,7 +12,6 @@ import {
   BugStatusCloseDocument,
   BugStatusOpenDocument,
   BugDetailDocument,
-  Status,
 } from "@/__generated__/graphql";
 import { useAuth } from "@/lib/auth";
 

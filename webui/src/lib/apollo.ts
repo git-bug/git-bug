@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache, HttpLink } from "@apollo/client";
+import { ApolloClient, InMemoryCache, HttpLink, type InMemoryCacheConfig } from "@apollo/client";
 import { createQueryPreloader } from "@apollo/client/react";
 
 const httpLink = new HttpLink({
@@ -6,6 +6,15 @@ const httpLink = new HttpLink({
   // include credentials so future httpOnly auth cookies are sent automatically
   credentials: "include",
 });
+
+// Exported so tests can build a cache that behaves like the app's: Repository
+// has no id field, and without this Apollo cannot resolve it across pages.
+export const typePolicies: InMemoryCacheConfig["typePolicies"] = {
+  // Repository has no id field — treat as a singleton per cache
+  Repository: {
+    keyFields: [],
+  },
+};
 
 export const client = new ApolloClient({
   link: httpLink,
@@ -16,14 +25,7 @@ export const client = new ApolloClient({
   // useSuspenseFragment — it works without dataMasking.
   dataMasking: false,
 
-  cache: new InMemoryCache({
-    typePolicies: {
-      // Repository has no id field — treat as a singleton per cache
-      Repository: {
-        keyFields: [],
-      },
-    },
-  }),
+  cache: new InMemoryCache({ typePolicies }),
 });
 
 // Preloader for use in TanStack Router loaders. Returns a QueryRef
