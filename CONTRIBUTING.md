@@ -38,11 +38,16 @@ make build/debug  # a debugger-friendly build (no optimisation, no inlining)
 make test       # run the Go test suite
 ```
 
-The web UI is compiled into the binary with `//go:embed`, and `webui/dist` is
-not tracked in git, so **the web UI has to be built before the Go build will
-succeed**. Every `make` target that produces a binary does this for you. If you
-are running `go build` or `go test` by hand for the first time, run
-`make build-webui` once beforehand.
+The web UI is compiled into the binary with `//go:embed`, but `webui/dist` is
+not tracked in git, so the embed sits behind a `webui` build tag. Without the
+tag the package still compiles with an empty asset set, which means `go build`,
+`go test` and `go install` all work on a fresh clone with no Node.js toolchain
+— you just get a binary whose `git-bug webui` command explains that it has no
+web UI and how to get one.
+
+Every `make` target that produces a binary builds the frontend and passes
+`-tags webui`, so `make build` and `make install` give you the real thing.
+Release binaries do the same, via [`.goreleaser.yaml`](./.goreleaser.yaml).
 
 To work on the web UI itself, see [`webui/README.md`](./webui/README.md).
 

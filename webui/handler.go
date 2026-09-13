@@ -2,7 +2,6 @@ package webui
 
 import (
 	"compress/gzip"
-	"embed"
 	"io"
 	"io/fs"
 	"mime"
@@ -10,9 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 )
-
-//go:embed all:dist
-var assets embed.FS
 
 func init() {
 	// Override OS-specific MIME registry (Windows maps .js → application/javascript).
