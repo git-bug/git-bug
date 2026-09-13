@@ -2,9 +2,9 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { formatDistanceToNow } from "date-fns";
 
 import { withApollo, withCachedFragments, withRouter } from "@/../.storybook/decorators";
+import { Status } from "@/__generated__/enums";
 import type { FragmentType } from "@/__generated__/fragment-masking";
 import { makeFragmentData } from "@/__generated__/fragment-masking";
-import { Status } from "@/__generated__/graphql";
 
 import * as IssueRow from "./issue-row";
 import { LabelBadge, LABEL_FIELDS_FRAGMENT } from "./label-badge";

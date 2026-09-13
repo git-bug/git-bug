@@ -5,6 +5,7 @@ import { graphql } from "@/__generated__/gql";
 const ALL_IDENTITIES_QUERY = graphql(`
   query AllIdentities($ref: String) {
     repository(ref: $ref) {
+      name
       allIdentities(first: 1000) {
         nodes {
           id
@@ -23,6 +24,7 @@ const ALL_IDENTITIES_QUERY = graphql(`
 const VALID_LABELS_QUERY = graphql(`
   query ValidLabels($ref: String) {
     repository(ref: $ref) {
+      name
       validLabels {
         nodes {
           name

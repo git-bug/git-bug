@@ -20,10 +20,10 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   errorComponent: ErrorPage,
 });
 
-function ErrorPage({ error }: { error?: Error }) {
+function ErrorPage({ error }: { error?: unknown }) {
   const router = useRouter();
 
-  const message = error?.message ?? "An unexpected error occurred.";
+  const message = error instanceof Error ? error.message : "An unexpected error occurred.";
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-center">

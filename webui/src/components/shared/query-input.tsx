@@ -272,6 +272,7 @@ export function Root({
       if (!nextOpen) {
         setCompletion(null);
         setSuggestions([]);
+        setLoading(false);
       }
     },
     placement: "bottom-start",
@@ -300,18 +301,20 @@ export function Root({
 
   const { getReferenceProps, getFloatingProps, getItemProps } = useInteractions([dismiss, listNav]);
 
-  // Fetch suggestions when completion changes
+  // Fetch suggestions when completion changes.  Clearing them when there is no
+  // completion left is done wherever the completion is cleared, so this effect
+  // only ever has fetching to do.
   useEffect(() => {
-    if (!completion) {
-      setSuggestions([]);
-      setLoading(false);
-      return;
-    }
+    if (!completion) return;
 
     let cancelled = false;
     const result = completion.provider.getSuggestions(completion.query);
 
     if (result instanceof Promise) {
+      // Entering the loading state is what synchronising with an async provider
+      // looks like: there is no event to hang it off, and the request has to be
+      // in flight before we know anything to derive it from.
+      // oxlint-disable-next-line react/set-state-in-effect
       setLoading(true);
       void result.then((items) => {
         if (!cancelled) {
@@ -335,6 +338,11 @@ export function Root({
     const info = getCompletionInfo(newValue, cursor, providers);
     setCompletion(info);
     setActiveIndex(null);
+    if (!info) {
+      // Nothing completable at the cursor any more — drop what was showing.
+      setSuggestions([]);
+      setLoading(false);
+    }
   }
 
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
@@ -360,6 +368,7 @@ export function Root({
     onChange(newValue);
     setCompletion(null);
     setSuggestions([]);
+    setLoading(false);
 
     const newCursor = completion.tokenStart + completedToken.length + 1;
     requestAnimationFrame(() => {

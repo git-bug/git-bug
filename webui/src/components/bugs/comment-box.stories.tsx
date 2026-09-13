@@ -3,7 +3,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { withApollo, withRouter } from "@/../.storybook/decorators";
-import { Status } from "@/__generated__/graphql";
+import { Status } from "@/__generated__/enums";
 
 import { CommentBox } from "./comment-box";
 

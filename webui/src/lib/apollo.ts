@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache, HttpLink } from "@apollo/client";
+import { ApolloClient, InMemoryCache, HttpLink, type InMemoryCacheConfig } from "@apollo/client";
 import { createQueryPreloader } from "@apollo/client/react";
 
 const httpLink = new HttpLink({
@@ -6,6 +6,17 @@ const httpLink = new HttpLink({
   // include credentials so future httpOnly auth cookies are sent automatically
   credentials: "include",
 });
+
+// Repository has no `id`; `name` identifies it, null being the default repo.
+// Every query selecting `repository` must also select `name`, or Apollo throws
+// `Missing field 'name' while extracting keyFields` and the query returns
+// nothing.  apollo.test.ts enforces that, and covers why `[]` and `false` don't
+// work here.  Exported so tests and the Storybook mock client reuse it.
+export const typePolicies: InMemoryCacheConfig["typePolicies"] = {
+  Repository: {
+    keyFields: ["name"],
+  },
+};
 
 export const client = new ApolloClient({
   link: httpLink,
@@ -16,14 +27,7 @@ export const client = new ApolloClient({
   // useSuspenseFragment — it works without dataMasking.
   dataMasking: false,
 
-  cache: new InMemoryCache({
-    typePolicies: {
-      // Repository has no id field — treat as a singleton per cache
-      Repository: {
-        keyFields: [],
-      },
-    },
-  }),
+  cache: new InMemoryCache({ typePolicies }),
 });
 
 // Preloader for use in TanStack Router loaders. Returns a QueryRef

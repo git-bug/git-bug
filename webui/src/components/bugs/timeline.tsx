@@ -5,9 +5,10 @@ import { formatDistanceToNow } from "date-fns";
 import { Tag, GitPullRequestClosed, Pencil, CircleDot } from "lucide-react";
 import { useState } from "react";
 
+import { Status } from "@/__generated__/enums";
 import { useFragment, type FragmentType } from "@/__generated__/fragment-masking";
 import { graphql } from "@/__generated__/gql";
-import { Status, BugDetailDocument } from "@/__generated__/graphql";
+import { BugDetailDocument } from "@/__generated__/graphql";
 import { Markdown } from "@/components/content/markdown";
 import * as CommentCard from "@/components/shared/comment-card";
 import { LabelBadge } from "@/components/shared/label-badge";

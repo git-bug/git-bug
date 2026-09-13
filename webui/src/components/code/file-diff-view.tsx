@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 const DIFF_QUERY = graphql(`
   query FileDiff($repo: String, $hash: String!, $path: String!) {
     repository(ref: $repo) {
+      name
       commit(hash: $hash) {
         diff(path: $path) {
           path

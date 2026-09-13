@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const BLOB_QUERY = graphql(`
   query CodePageBlob($repo: String, $ref: String!, $path: String!) {
     repository(ref: $repo) {
+      name
       blob(ref: $ref, path: $path) {
         ...FileViewerBlob
       }

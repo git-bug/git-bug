@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { withApollo, withCachedFragments, withRouter } from "@/../.storybook/decorators";
+import { Status } from "@/__generated__/enums";
 import { makeFragmentData } from "@/__generated__/fragment-masking";
-import { Status } from "@/__generated__/graphql";
 
 import { Timeline, TIMELINE_ITEMS_FRAGMENT } from "./timeline";
 

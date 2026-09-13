@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const COMMIT_QUERY = graphql(`
   query CommitPageDetail($repo: String, $hash: String!) {
     repository(ref: $repo) {
+      name
       commit(hash: $hash) {
         hash
         shortHash

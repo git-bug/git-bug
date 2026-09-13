@@ -10,6 +10,7 @@ import { graphql } from "@/__generated__/gql";
 export const USER_IDENTITY_QUERY = graphql(`
   query UserIdentity {
     repository {
+      name
       userIdentity {
         ...IdentitySummary
         id

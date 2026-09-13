@@ -45,7 +45,7 @@ exports[`FileContent/MarkdownFile matches snapshot 1`] = `
         >
           <svg
             aria-hidden="true"
-            class="lucide lucide-code-xml size-3.5"
+            class="lucide lucide-code-xml lucide-code-2 size-3.5"
             fill="none"
             height="24"
             stroke="currentColor"
@@ -86,7 +86,6 @@ exports[`FileContent/MarkdownFile matches snapshot 1`] = `
             <a
               aria-hidden="true"
               href="#project-title"
-              node="[object Object]"
               tabindex="-1"
             >
               <span
@@ -108,7 +107,6 @@ exports[`FileContent/MarkdownFile matches snapshot 1`] = `
             , and a 
             <a
               href="https://example.com"
-              node="[object Object]"
               rel="noopener noreferrer"
               target="_blank"
             >
@@ -125,7 +123,6 @@ exports[`FileContent/MarkdownFile matches snapshot 1`] = `
             <a
               aria-hidden="true"
               href="#features"
-              node="[object Object]"
               tabindex="-1"
             >
               <span

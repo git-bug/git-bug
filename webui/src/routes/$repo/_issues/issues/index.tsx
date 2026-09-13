@@ -2,7 +2,7 @@ import { useReadQuery } from "@apollo/client/react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import * as v from "valibot";
 
 import { graphql } from "@/__generated__/gql";
@@ -18,6 +18,7 @@ const BUG_LIST_QUERY = graphql(`
     $after: String
   ) {
     repository(ref: $ref) {
+      name
       openCount: allBugs(query: $openQuery, first: 1) {
         totalCount
       }
@@ -103,7 +104,7 @@ function RouteComponent() {
   const { q, after, page = 1, prev = "" } = Route.useSearch();
 
   // Parse the URL query into structured filter state for the dropdowns
-  const parsed = parseQueryString(q);
+  const parsed = useMemo(() => parseQueryString(q), [q]);
   const {
     status: statusFilter,
     labels: selectedLabels,
@@ -113,10 +114,14 @@ function RouteComponent() {
   // Draft is the text input value — starts from URL, only committed on submit
   const [draft, setDraft] = useState(q);
 
-  // Sync draft when URL query changes (e.g. tab clicks, filter changes)
-  useEffect(() => {
+  // Re-seed the draft when the URL query changes from somewhere else (tab
+  // clicks, filter dropdowns, back/forward).  Adjusting state during render is
+  // React's recommended alternative to syncing it in an effect.
+  const [lastQ, setLastQ] = useState(q);
+  if (q !== lastQ) {
+    setLastQ(q);
     setDraft(q);
-  }, [q]);
+  }
 
   const { bugListRef } = Route.useLoaderData();
   const { labelsRef, identitiesRef } = Route.useRouteContext();

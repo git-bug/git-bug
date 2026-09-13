@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
+import { useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import { useAuth } from "@/lib/auth";
@@ -510,5 +511,65 @@ describe("SortFilter", () => {
     openSort();
     const oldest = screen.getByRole("option", { name: /oldest/i });
     expect(oldest).toHaveAttribute("aria-selected", "true");
+  });
+});
+
+// ── AuthorFilter — stability across parent renders ───────────────────────────
+//
+// The issues page passes a freshly built `recentAuthorIds` array every render.
+// Comparing that by identity resets the keyboard highlight mid-navigation.
+
+describe("AuthorFilter — parent re-renders", () => {
+  function Harness() {
+    const [tick, setTick] = useState(0);
+    return (
+      <>
+        <button data-testid="rerender" onClick={() => setTick((t) => t + 1)}>
+          {tick}
+        </button>
+        <IssueFilters
+          labels={DEFAULT_LABELS}
+          identities={DEFAULT_IDENTITIES}
+          selectedLabels={[]}
+          onLabelsChange={() => {}}
+          selectedAuthorId={null}
+          onAuthorChange={() => {}}
+          // rebuilt every render, like the issues page does
+          recentAuthorIds={DEFAULT_IDENTITIES.map((i) => i.humanId)}
+          sort="creation-desc"
+          onSortChange={() => {}}
+        />
+      </>
+    );
+  }
+
+  it("keeps the keyboard highlight when the parent re-renders", () => {
+    render(<Harness />);
+    openAuthor();
+    const listbox = screen.getAllByRole("listbox")[0]!;
+    fireEvent.keyDown(listbox, { key: "ArrowDown" });
+    fireEvent.keyDown(listbox, { key: "ArrowDown" });
+    const active = listbox.getAttribute("aria-activedescendant");
+    expect(active).toBe("author-option-1");
+
+    fireEvent.click(screen.getByTestId("rerender"));
+
+    expect(screen.getAllByRole("listbox")[0]).toHaveAttribute("aria-activedescendant", active!);
+  });
+
+  it("still resets the highlight when the search actually filters the list", () => {
+    render(<Harness />);
+    openAuthor();
+    const listbox = screen.getAllByRole("listbox")[0]!;
+    fireEvent.keyDown(listbox, { key: "ArrowDown" });
+    fireEvent.keyDown(listbox, { key: "ArrowDown" });
+    expect(listbox).toHaveAttribute("aria-activedescendant", "author-option-1");
+
+    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: "Bob" } });
+
+    expect(screen.getAllByRole("listbox")[0]).toHaveAttribute(
+      "aria-activedescendant",
+      "author-option-0",
+    );
   });
 });

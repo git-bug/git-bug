@@ -1,6 +1,6 @@
 import { CircleDot, CircleCheck } from "lucide-react";
 
-import { Status } from "@/__generated__/graphql";
+import { Status } from "@/__generated__/enums";
 import { cn } from "@/lib/utils";
 
 interface StatusBadgeProps {

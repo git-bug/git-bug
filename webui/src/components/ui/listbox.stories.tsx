@@ -13,7 +13,7 @@ import {
 } from "@floating-ui/react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { GitBranch, ChevronDown, Tag } from "lucide-react";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 
 import { Button } from "./button";
 import * as Listbox from "./listbox";
@@ -176,9 +176,12 @@ function MultiSelectWithSearch() {
     ? allTags.filter((t) => t.name.toLowerCase().includes(search.toLowerCase()))
     : allTags;
 
-  useEffect(() => {
+  // Reset the active item when the filtered list size changes
+  const [lastCount, setLastCount] = useState(filtered.length);
+  if (filtered.length !== lastCount) {
+    setLastCount(filtered.length);
     setActiveIndex(filtered.length > 0 ? 0 : null);
-  }, [filtered.length]);
+  }
 
   function toggle(name: string) {
     setSelected((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]));
@@ -301,9 +304,12 @@ function GroupedSelect() {
   const filteredTags = tags.filter((t) => t.toLowerCase().includes(q));
   const allFiltered = [...filteredBranches, ...filteredTags];
 
-  useEffect(() => {
+  // Reset the active item when the filtered list size changes
+  const [lastCount, setLastCount] = useState(allFiltered.length);
+  if (allFiltered.length !== lastCount) {
+    setLastCount(allFiltered.length);
     setActiveIndex(allFiltered.length > 0 ? 0 : null);
-  }, [allFiltered.length]);
+  }
 
   let idx = 0;
 

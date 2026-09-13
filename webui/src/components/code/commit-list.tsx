@@ -5,7 +5,7 @@ import { useQuery } from "@apollo/client/react";
 import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { GitCommit } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { graphql } from "@/__generated__/gql";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const COMMITS_QUERY = graphql(`
   query CommitList($repo: String, $ref: String!, $path: String, $after: String, $first: Int) {
     repository(ref: $repo) {
+      name
       commits(ref: $ref, path: $path, after: $after, first: $first) {
         nodes {
           hash
@@ -47,22 +48,39 @@ type CommitNode = {
   date: string;
 };
 
-export function CommitList({ repo, ref_, path }: CommitListProps) {
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [allCommits, setAllCommits] = useState<CommitNode[]>([]);
+// Pages appended by "Load more", carrying the pageInfo of the last one fetched.
+type MorePages = {
+  nodes: CommitNode[];
+  cursor: string | null;
+  hasNextPage: boolean;
+} | null;
 
+export function CommitList({ repo, ref_, path }: CommitListProps) {
   const { data, loading, error, fetchMore } = useQuery(COMMITS_QUERY, {
     variables: { repo, ref: ref_, path: path ?? null, after: null, first: PAGE_SIZE },
     skip: !ref_,
   });
 
-  useEffect(() => {
-    const nodes = data?.repository?.commits?.nodes ?? [];
-    setAllCommits(nodes);
-    setCursor(data?.repository?.commits?.pageInfo?.endCursor ?? null);
-  }, [data]);
+  // The query result is the first page; pages pulled in by "Load more" are
+  // accumulated here.  They are dropped whenever the query result itself
+  // changes (another repo, ref or path), which adjusting state during render
+  // does without the extra render pass an effect would cost.
+  const [morePages, setMorePages] = useState<MorePages>(null);
+  const [lastData, setLastData] = useState(data);
+  if (data !== lastData) {
+    setLastData(data);
+    setMorePages(null);
+  }
 
-  const hasMore = !!cursor && allCommits.length > 0 && allCommits.length % PAGE_SIZE === 0;
+  const firstPage = data?.repository?.commits?.nodes ?? [];
+  const firstPageInfo = data?.repository?.commits?.pageInfo;
+  const allCommits = morePages ? [...firstPage, ...morePages.nodes] : firstPage;
+  const cursor = morePages ? morePages.cursor : (firstPageInfo?.endCursor ?? null);
+  const hasNextPage = morePages ? morePages.hasNextPage : (firstPageInfo?.hasNextPage ?? false);
+
+  // endCursor is non-null for every non-empty page, the last one included, so
+  // only hasNextPage can tell us whether another page exists.
+  const hasMore = hasNextPage && !!cursor;
   const [loadingMore, setLoadingMore] = useState(false);
 
   function loadMore() {
@@ -73,8 +91,12 @@ export function CommitList({ repo, ref_, path }: CommitListProps) {
     })
       .then((result) => {
         const newNodes = result.data?.repository?.commits?.nodes ?? [];
-        setAllCommits((prev) => [...prev, ...newNodes]);
-        setCursor(result.data?.repository?.commits?.pageInfo?.endCursor ?? null);
+        const pageInfo = result.data?.repository?.commits?.pageInfo;
+        setMorePages((prev) => ({
+          nodes: [...(prev?.nodes ?? []), ...newNodes],
+          cursor: pageInfo?.endCursor ?? null,
+          hasNextPage: pageInfo?.hasNextPage ?? false,
+        }));
       })
       .finally(() => setLoadingMore(false));
   }

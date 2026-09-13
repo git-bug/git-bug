@@ -2,8 +2,8 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 
 import { withApollo, withCachedFragments } from "@/../.storybook/decorators";
+import { GitRefType } from "@/__generated__/enums";
 import { makeFragmentData } from "@/__generated__/fragment-masking";
-import { GitRefType } from "@/__generated__/graphql";
 
 import { RefSelector, REF_SELECTOR_REFS_FRAGMENT } from "./ref-selector";
 

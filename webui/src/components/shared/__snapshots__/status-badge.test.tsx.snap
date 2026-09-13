@@ -7,7 +7,7 @@ exports[`StatusBadge/Closed matches snapshot 1`] = `
   >
     <svg
       aria-hidden="true"
-      class="lucide lucide-circle-check size-3"
+      class="lucide lucide-circle-check lucide-check-circle-2 size-3"
       fill="none"
       height="24"
       stroke="currentColor"
@@ -24,7 +24,7 @@ exports[`StatusBadge/Closed matches snapshot 1`] = `
         r="10"
       />
       <path
-        d="m9 12 2 2 4-4"
+        d="m16 9-5.5 5.5L8 12"
       />
     </svg>
     Closed
@@ -53,12 +53,12 @@ exports[`StatusBadge/Open matches snapshot 1`] = `
       <circle
         cx="12"
         cy="12"
-        r="10"
+        r="1"
       />
       <circle
         cx="12"
         cy="12"
-        r="1"
+        r="10"
       />
     </svg>
     Open
