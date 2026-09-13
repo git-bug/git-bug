@@ -82,7 +82,7 @@
     "playwright": "^1.59.1",
     "storybook": "^10.3.4",
     "tailwindcss": "^4.2.2",
-    "typescript": "^6.0.2",
+    "typescript": "^6.0.3",
     "vite": "^8.0.3",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-svgr": "^5.0.0",
