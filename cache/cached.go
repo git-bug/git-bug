@@ -107,7 +107,3 @@ func (e *CachedEntityBase[SnapT, OpT]) CreateLamportTime() lamport.Time {
 func (e *CachedEntityBase[SnapT, OpT]) EditLamportTime() lamport.Time {
 	return e.entity.EditLamportTime()
 }
-
-func (e *CachedEntityBase[SnapT, OpT]) FirstOp() OpT {
-	return e.entity.FirstOp()
-}

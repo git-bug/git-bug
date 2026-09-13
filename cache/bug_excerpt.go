@@ -53,7 +53,7 @@ func NewBugExcerpt(b *BugCache) *BugExcerpt {
 		id:                b.Id(),
 		CreateLamportTime: b.CreateLamportTime(),
 		EditLamportTime:   b.EditLamportTime(),
-		CreateUnixTime:    b.FirstOp().Time().Unix(),
+		CreateUnixTime:    snap.Operations[0].Time().Unix(),
 		EditUnixTime:      snap.EditTime().Unix(),
 		AuthorId:          snap.Author.Id(),
 		Status:            snap.Status,
@@ -62,7 +62,7 @@ func NewBugExcerpt(b *BugCache) *BugExcerpt {
 		Participants:      participantsIds,
 		Title:             snap.Title,
 		LenComments:       len(snap.Comments),
-		CreateMetadata:    b.FirstOp().AllMetadata(),
+		CreateMetadata:    snap.Operations[0].AllMetadata(),
 	}
 
 	return e
