@@ -2,11 +2,16 @@
 package identity
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/pkg/errors"
+
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"golang.org/x/crypto/ssh"
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
@@ -273,10 +278,12 @@ func (i *Identity) Commit(repo repository.ClockedRepo) error {
 	}
 
 	var lastCommit repository.Hash
+	var lastCommittedKeys []*Key
+
 	for _, v := range i.versions {
 		if v.commitHash != "" {
 			lastCommit = v.commitHash
-			// ignore already commit versions
+			lastCommittedKeys = v.keys
 			continue
 		}
 
@@ -295,17 +302,44 @@ func (i *Identity) Commit(repo repository.ClockedRepo) error {
 			return err
 		}
 
-		var commitHash repository.Hash
-		if lastCommit != "" {
-			commitHash, err = repo.StoreCommit(treeHash, lastCommit)
+		// Determine the signing authority for this version:
+		// - previous committed version's keys (ongoing protection), or
+		// - this version's own keys when there are no prior committed keys
+		//   (self-certification on the first version that introduces keys).
+		signingKeys := lastCommittedKeys
+		if len(signingKeys) == 0 {
+			signingKeys = v.keys
+		}
+
+		var (
+			commitHash repository.Hash
+			signer     repository.Signer
+		)
+		if len(signingKeys) > 0 {
+			signer, err = signerFromKeys(signingKeys)
+			if err != nil {
+				return fmt.Errorf("identity has keys but no signing key is available: %w", err)
+			}
+		}
+		if signer != nil {
+			if lastCommit != "" {
+				commitHash, err = repo.StoreSignedCommit(treeHash, signer, lastCommit)
+			} else {
+				commitHash, err = repo.StoreSignedCommit(treeHash, signer)
+			}
 		} else {
-			commitHash, err = repo.StoreCommit(treeHash)
+			if lastCommit != "" {
+				commitHash, err = repo.StoreCommit(treeHash, lastCommit)
+			} else {
+				commitHash, err = repo.StoreCommit(treeHash)
+			}
 		}
 		if err != nil {
 			return err
 		}
 
 		lastCommit = commitHash
+		lastCommittedKeys = v.keys
 		v.commitHash = commitHash
 	}
 
@@ -359,19 +393,41 @@ func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
 
 	modified := false
 	var lastCommit repository.Hash
+
+	// Keys from the last version processed so far. Each new version must be signed
+	// by a key that was present in the immediately preceding version — the sequential
+	// predecessor, not a lamport-time lookup. Identity version authority is chain-based:
+	// you prove you owned the previous version's key to append a new one. This mirrors
+	// exactly what Commit() uses (lastCommittedKeys).
+	var prevKeys []*Key
+
 	for j, otherVersion := range other.versions {
-		// if there is more version in other, take them
-		if len(i.versions) == j {
-			i.versions = append(i.versions, otherVersion)
-			lastCommit = otherVersion.commitHash
-			modified = true
+		if len(i.versions) > j {
+			if i.versions[j].commitHash != otherVersion.commitHash {
+				return false, ErrNonFastForwardMerge
+			}
+			prevKeys = i.versions[j].keys
+			continue
 		}
 
-		// we have a non fast-forward merge.
-		// as explained in the doc above, refusing to merge
-		if i.versions[j].commitHash != otherVersion.commitHash {
-			return false, ErrNonFastForwardMerge
+		// New version: verify it was signed by the previous version's keys.
+		if len(prevKeys) > 0 {
+			commit, err := repo.ReadCommit(otherVersion.commitHash)
+			if err != nil {
+				return false, fmt.Errorf("can't read identity version commit: %w", err)
+			}
+			if len(commit.Signature) == 0 {
+				return false, fmt.Errorf("protected identity has an unsigned version commit")
+			}
+			if err := verifyCommitSignature(commit, prevKeys); err != nil {
+				return false, fmt.Errorf("identity version signature verification failed: %w", err)
+			}
 		}
+
+		prevKeys = otherVersion.keys
+		i.versions = append(i.versions, otherVersion)
+		lastCommit = otherVersion.commitHash
+		modified = true
 	}
 
 	if modified {
@@ -381,7 +437,7 @@ func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
 		}
 	}
 
-	return false, nil
+	return modified, nil
 }
 
 // Validate check if the Identity data is valid
@@ -523,11 +579,65 @@ func (i *Identity) LastModificationLamports() map[string]lamport.Time {
 	return i.lastVersion().times
 }
 
-// IsProtected return true if the chain of git commits started to be signed.
-// If that's the case, only signed commit with a valid key for this identity can be added.
+// IsProtected returns true if the identity has signing keys in any version.
+// Protected identities require new versions to be signed by a previously valid key.
 func (i *Identity) IsProtected() bool {
-	// Todo
+	for _, v := range i.versions {
+		if len(v.keys) > 0 {
+			return true
+		}
+	}
 	return false
+}
+
+// signerFromKeys returns the first available Signer from the given key slice.
+func signerFromKeys(keys []*Key) (repository.Signer, error) {
+	var lastErr error
+	for _, k := range keys {
+		s, err := k.Signer()
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		return s, nil
+	}
+	if lastErr != nil {
+		return nil, lastErr
+	}
+	return nil, fmt.Errorf("no keys provided")
+}
+
+// verifyCommitSignature checks that the commit's signature is valid against one of the given keys.
+func verifyCommitSignature(commit repository.Commit, keys []*Key) error {
+	if repository.IsSSHSignature(commit.Signature) {
+		var sshPubKeys []ssh.PublicKey
+		for _, key := range keys {
+			pub, err := key.SSHPublicKey()
+			if err == nil {
+				sshPubKeys = append(sshPubKeys, pub)
+			}
+		}
+		if len(sshPubKeys) == 0 {
+			return fmt.Errorf("commit is SSH-signed but no SSH keys available for verification")
+		}
+		return repository.VerifySSHSIG(sshPubKeys, commit.SignedData, commit.Signature)
+	}
+	// PGP signature
+	keyring := openpgp.EntityList{}
+	for _, key := range keys {
+		if key.PGPEntity() == "" {
+			continue
+		}
+		entities, err := openpgp.ReadArmoredKeyRing(strings.NewReader(key.PGPEntity()))
+		if err == nil {
+			keyring = append(keyring, entities...)
+		}
+	}
+	if len(keyring) == 0 {
+		return fmt.Errorf("commit is PGP-signed but no PGP keys available for verification")
+	}
+	_, err := openpgp.CheckArmoredDetachedSignature(keyring, bytes.NewReader(commit.SignedData), bytes.NewReader(commit.Signature), nil)
+	return err
 }
 
 // SetMetadata store arbitrary metadata along the last not-commit version.
