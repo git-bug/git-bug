@@ -22,6 +22,7 @@ and verify your installation.
   - [Nixpkgs](#nixpkgs)
 - [FreeBSD](#freebsd)
 - [MacOS](#macos)
+- [mise](#mise)
 - [Windows](#windows)
 - [Build from source](#build-from-source)
 - [Verify your installation](#verify-your-installation)
@@ -108,6 +109,51 @@ nix shell nixpkgs\#git-bug
 ```
 brew install git-bug
 ```
+
+## mise<a name="mise"></a>
+
+[`mise`][mise] can install and manage `git-bug` on macOS, Linux, and other
+platforms supported by the `git-bug` release binaries. This is a good option if
+you already use `mise` to keep command-line tools pinned per project or shared
+across machines.
+
+Before using these commands, install `mise` and ensure its shell integration is
+active. You can confirm that your shell can find it with:
+
+```
+mise --version
+```
+
+To install the latest available `git-bug` release globally, run:
+
+```
+mise use -g git-bug@latest
+```
+
+To pin `git-bug` for only the current project, run the same command without
+`-g` from the project directory:
+
+```
+mise use git-bug@latest
+```
+
+After installation, refresh shims if your shell does not immediately find the
+new command:
+
+```
+mise reshim git-bug
+```
+
+Finally, verify that the shim resolves and the installed binary runs:
+
+```
+which git-bug
+git bug version
+```
+
+Use the project-pinned form when collaborators should get the same `git-bug`
+version from the repository's mise configuration. Use the global form when you
+only want `git-bug` available as a personal command-line tool.
 
 ## Windows<a name="windows"></a>
 
@@ -258,6 +304,7 @@ ______________________________________________________________________
 
 [brew.sh]: https://brew.sh
 [docs/home]: ./doc
+[mise]: https://mise.jdx.dev
 [p/aur]: https://aur.archlinux.org/packages/git-bug-bin
 [p/nix]: https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/applications/version-management/git-bug/default.nix
 [rel/latest]: https://github.com/git-bug/git-bug/releases/latest
