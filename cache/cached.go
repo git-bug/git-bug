@@ -42,7 +42,9 @@ func (e *CachedEntityBase[SnapT, OpT]) ResolveOperationWithMetadata(key string, 
 	// preallocate but empty
 	matching := make([]entity.Id, 0, 5)
 
-	for _, op := range e.entity.Operations() {
+	// Metadata can be added to an operation by a SetMetadataOperation, which only
+	// takes effect when applied. Go through the snapshot to make sure it has been.
+	for _, op := range e.entity.Compile().AllOperations() {
 		opValue, ok := op.GetMetadata(key)
 		if ok && value == opValue {
 			matching = append(matching, op.Id())

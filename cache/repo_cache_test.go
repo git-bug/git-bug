@@ -404,6 +404,44 @@ func TestLongDescription(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestResolveOperationWithMetadataFromSetMetadata(t *testing.T) {
+	// See https://github.com/git-bug/git-bug/issues/1582
+	// Bridges mark exported operations with a SetMetadata operation. That
+	// metadata must be found on a freshly loaded entity, before anything
+	// compiled its snapshot.
+
+	repo := repository.CreateGoGitTestRepo(t, false)
+
+	backend, err := NewRepoCacheNoEvents(repo)
+	require.NoError(t, err)
+
+	i, err := backend.Identities().New("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	require.NoError(t, backend.SetUserIdentity(i))
+
+	b, _, err := backend.Bugs().New("title", "message")
+	require.NoError(t, err)
+	_, commentOp, err := b.AddComment("comment")
+	require.NoError(t, err)
+	require.NoError(t, b.Commit())
+
+	_, err = b.SetMetadata(commentOp.Id(), map[string]string{"key": "value"})
+	require.NoError(t, err)
+	require.NoError(t, b.Commit())
+
+	require.NoError(t, backend.Close())
+
+	// reopen the cache, as a separate process would
+	backend = createTestRepoCacheNoEvents(t, repo)
+
+	b, err = backend.Bugs().Resolve(b.Id())
+	require.NoError(t, err)
+
+	opId, err := b.ResolveOperationWithMetadata("key", "value")
+	require.NoError(t, err)
+	require.Equal(t, commentOp.Id(), opId)
+}
+
 func checkBugPresence(t *testing.T, cache *RepoCache, bug *BugCache, presence bool) {
 	t.Helper()
 
