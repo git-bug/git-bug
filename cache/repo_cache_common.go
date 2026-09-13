@@ -9,7 +9,6 @@ import (
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
-	"github.com/git-bug/git-bug/util/multierr"
 )
 
 func (c *RepoCache) Name() string {
@@ -95,11 +94,15 @@ func (c *RepoCache) Fetch(remote string) (string, error) {
 
 // RemoveAll deletes all entities from the cache and the disk.
 func (c *RepoCache) RemoveAll() error {
-	var errWait multierr.ErrWaitGroup
+	// This is done sequentially on purpose: listing refs reads every loose ref
+	// file, and on Windows a file can't be deleted while another goroutine has
+	// it open.
 	for _, mgmt := range c.subcaches {
-		errWait.Go(mgmt.RemoveAll)
+		if err := mgmt.RemoveAll(); err != nil {
+			return err
+		}
 	}
-	return errWait.Wait()
+	return nil
 }
 
 // MergeAll will merge all the available remote bug and identities
