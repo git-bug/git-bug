@@ -60,7 +60,13 @@ func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 	go func() {
 		defer close(out)
 
-		for issue := range Issues(ctx, gi.client, gi.conf[confKeyProjectID], since) {
+		for result := range Issues(ctx, gi.client, gi.conf[confKeyProjectID], since) {
+			if result.Err != nil {
+				err := fmt.Errorf("listing issues: %v", result.Err)
+				out <- core.NewImportError(err, "")
+				return
+			}
+			issue := result.Issue
 
 			b, err := gi.ensureIssue(repo, issue)
 			if err != nil {
@@ -341,9 +347,9 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 	return nil
 }
 
-func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.IdentityCache, error) {
+func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int64) (*cache.IdentityCache, error) {
 	// Look first in the cache
-	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGitlabId, strconv.Itoa(id))
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGitlabId, strconv.FormatInt(id, 10))
 	if err == nil {
 		return i, nil
 	}
@@ -364,7 +370,7 @@ func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int) (*cache.Id
 		nil,
 		map[string]string{
 			// because Gitlab
-			metaKeyGitlabId:    strconv.Itoa(id),
+			metaKeyGitlabId:    strconv.FormatInt(id, 10),
 			metaKeyGitlabLogin: user.Username,
 		},
 	)
