@@ -22,6 +22,7 @@ const USER_PROFILE_QUERY = graphql(`
     $after: String
   ) {
     repository(ref: $ref) {
+      name
       identity(prefix: $prefix) {
         id
         humanId

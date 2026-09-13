@@ -8,6 +8,7 @@ import { CommentBox } from "@/components/bugs/comment-box";
 const BUG_DETAIL_QUERY = graphql(`
   query BugDetail($ref: String, $prefix: String!) {
     repository(ref: $ref) {
+      name
       bug(prefix: $prefix) {
         ...BugSummary
         humanId

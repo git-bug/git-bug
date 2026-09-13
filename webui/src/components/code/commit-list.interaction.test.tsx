@@ -60,6 +60,8 @@ function makeQueryMock(
         data: {
           repository: {
             __typename: "Repository" as const,
+            // Selected by the query and required by the cache key policy
+            name: "myrepo",
             commits: {
               __typename: "GitCommitConnection" as const,
               nodes: commits,

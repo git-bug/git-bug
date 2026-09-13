@@ -7,12 +7,13 @@ const httpLink = new HttpLink({
   credentials: "include",
 });
 
-// Exported so tests can build a cache that behaves like the app's: Repository
-// has no id field, and without this Apollo cannot resolve it across pages.
+// Repository has no `id`; `name` identifies it, null being the single default
+// repository.  Every query selecting `repository` must select `name` too, or
+// Apollo cannot compute the key — apollo.test.ts enforces that, and covers why
+// neither `[]` nor `false` works here.  Exported so tests share this config.
 export const typePolicies: InMemoryCacheConfig["typePolicies"] = {
-  // Repository has no id field — treat as a singleton per cache
   Repository: {
-    keyFields: [],
+    keyFields: ["name"],
   },
 };
 

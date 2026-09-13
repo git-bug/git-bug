@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const COMMITS_QUERY = graphql(`
   query CommitList($repo: String, $ref: String!, $path: String, $after: String, $first: Int) {
     repository(ref: $repo) {
+      name
       commits(ref: $ref, path: $path, after: $after, first: $first) {
         nodes {
           hash

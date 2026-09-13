@@ -18,6 +18,7 @@ const BUG_LIST_QUERY = graphql(`
     $after: String
   ) {
     repository(ref: $ref) {
+      name
       openCount: allBugs(query: $openQuery, first: 1) {
         totalCount
       }

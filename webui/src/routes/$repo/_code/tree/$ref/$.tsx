@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const TREE_QUERY = graphql(`
   query CodePageTree($repo: String, $ref: String!, $path: String) {
     repository(ref: $repo) {
+      name
       tree(ref: $ref, path: $path) {
         name
         type
@@ -24,6 +25,7 @@ const TREE_QUERY = graphql(`
 const LAST_COMMITS_QUERY = graphql(`
   query CodePageLastCommits($repo: String, $ref: String!, $path: String, $names: [String!]!) {
     repository(ref: $repo) {
+      name
       lastCommits(ref: $ref, path: $path, names: $names) {
         name
         commit {
@@ -40,6 +42,7 @@ const LAST_COMMITS_QUERY = graphql(`
 const README_QUERY = graphql(`
   query CodePageReadme($repo: String, $ref: String!, $path: String!) {
     repository(ref: $repo) {
+      name
       blob(ref: $ref, path: $path) {
         text
       }
