@@ -226,6 +226,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			// if we find github ID, github URL must be found too
 			err := fmt.Errorf("incomplete Github metadata: expected to find issue URL")
 			out <- core.NewExportError(err, b.Id())
+			return
 		}
 
 		// extract owner and project
@@ -237,7 +238,8 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		}
 
 		// ignore issue coming from other repositories
-		if owner != ge.conf[confKeyOwner] && project != ge.conf[confKeyProject] {
+		// (Github owner and project names are case-insensitive)
+		if !strings.EqualFold(owner, ge.conf[confKeyOwner]) || !strings.EqualFold(project, ge.conf[confKeyProject]) {
 			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("skipping issue from url:%s", githubURL))
 			return
 		}
@@ -343,7 +345,9 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				// case comment edition operation: we need to edit the Github comment
 				commentID, ok := ge.cachedOperationIDs[op.Target]
 				if !ok {
-					panic("unexpected error: comment id not found")
+					// the comment was not exported (e.g. its author has no token),
+					// so there is nothing to edit on Github
+					continue
 				}
 
 				eid, eurl, err := ge.editCommentGithubIssue(ctx, client, commentID, op.Message)
