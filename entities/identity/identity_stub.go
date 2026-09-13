@@ -72,7 +72,7 @@ func (IdentityStub) Keys() []*Key {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 
-func (i *IdentityStub) SigningKey(repo repository.RepoKeyring) (*Key, error) {
+func (i *IdentityStub) Signer() (repository.Signer, error) {
 	panic("identities needs to be properly loaded with identity.ReadLocal()")
 }
 

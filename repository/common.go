@@ -1,13 +1,5 @@
 package repository
 
-import (
-	"io"
-
-	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/ProtonMail/go-crypto/openpgp/armor"
-	"github.com/ProtonMail/go-crypto/openpgp/errors"
-)
-
 // nonNativeListCommits is an implementation for ListCommits, for the case where
 // the underlying git implementation doesn't support if natively.
 func nonNativeListCommits(repo RepoData, ref string) ([]Hash, error) {
@@ -52,18 +44,6 @@ func nonNativeListCommits(repo RepoData, ref string) ([]Hash, error) {
 	}
 
 	return result, nil
-}
-
-// deArmorSignature convert an armored (text serialized) signature into raw binary
-func deArmorSignature(armoredSig io.Reader) (io.Reader, error) {
-	block, err := armor.Decode(armoredSig)
-	if err != nil {
-		return nil, err
-	}
-	if block.Type != openpgp.SignatureType {
-		return nil, errors.InvalidArgumentError("expected '" + openpgp.SignatureType + "', got: " + block.Type)
-	}
-	return block.Body, nil
 }
 
 func must[T any](v T, err error) T {

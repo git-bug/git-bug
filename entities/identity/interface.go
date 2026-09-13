@@ -37,8 +37,9 @@ type Interface interface {
 	// Can be empty.
 	Keys() []*Key
 
-	// SigningKey return the key that should be used to sign new messages. If no key is available, return nil.
-	SigningKey(repo repository.RepoKeyring) (*Key, error)
+	// Signer returns a Signer for the first available signing key.
+	// Returns nil, nil if the identity has no keys.
+	Signer() (repository.Signer, error)
 
 	// ValidKeysAtTime return the set of keys valid at a given lamport time for a given clock of another entity
 	// Can be empty.

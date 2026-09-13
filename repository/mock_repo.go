@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/99designs/keyring"
-	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-billy/v5/memfs"
 
 	"github.com/git-bug/git-bug/util/lamport"
@@ -308,7 +307,7 @@ func (r *mockRepoDataBrowse) StoreCommit(treeHash Hash, parents ...Hash) (Hash, 
 	return r.StoreSignedCommit(treeHash, nil, parents...)
 }
 
-func (r *mockRepoDataBrowse) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error) {
+func (r *mockRepoDataBrowse) StoreSignedCommit(treeHash Hash, signer Signer, parents ...Hash) (Hash, error) {
 	hasher := sha1.New()
 	hasher.Write([]byte(treeHash))
 	for _, parent := range parents {
@@ -321,13 +320,13 @@ func (r *mockRepoDataBrowse) StoreSignedCommit(treeHash Hash, signKey *openpgp.E
 		parents:  parents,
 		date:     time.Now(),
 	}
-	if signKey != nil {
-		// unlike go-git, we only sign the tree hash for simplicity instead of all the fields (parents ...)
-		var sig bytes.Buffer
-		if err := openpgp.DetachSign(&sig, signKey, strings.NewReader(string(treeHash)), nil); err != nil {
+	if signer != nil {
+		// sign only the tree hash for simplicity (mock doesn't encode full commit objects)
+		sig, err := signer.Sign([]byte(treeHash))
+		if err != nil {
 			return "", err
 		}
-		c.sig = sig.String()
+		c.sig = string(sig)
 	}
 	r.commits[hash] = c
 	return hash, nil
@@ -346,10 +345,9 @@ func (r *mockRepoDataBrowse) ReadCommit(hash Hash) (Commit, error) {
 	}
 
 	if c.sig != "" {
-		// Note: this is actually incorrect as the signed data should be the full commit (+comment, +date ...)
-		// but only the tree hash work for our purpose here.
-		result.SignedData = strings.NewReader(string(c.treeHash))
-		result.Signature = strings.NewReader(c.sig)
+		// signed data is just the tree hash (mock doesn't encode full commit objects)
+		result.SignedData = []byte(c.treeHash)
+		result.Signature = []byte(c.sig)
 	}
 
 	return result, nil
