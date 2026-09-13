@@ -1,8 +1,6 @@
 package main
 
 import (
-	"errors"
-	"fmt"
 	"runtime/debug"
 	"strings"
 
@@ -10,25 +8,21 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-var (
-	version = "undefined"
-)
+// version is injected at build time with `-X main.version=<version>`. See
+// //:.goreleaser.yaml for releases, and //:Makefile for local builds.
+var version = "undefined"
 
-// getVersion returns a string representing the version information defined when
-// the binary was built, or a sane default indicating a local build. a string is
-// always returned. an error may be returned along with the string in the event
-// that we detect a local build but are unable to get build metadata.
+// getVersion returns the version information embedded in the binary, in the
+// format documented by `git-bug version`:
 //
-// TODO: support validation of the version (that it's a real version)
+//	<version> [commit[/dirty]] <compiler version> <platform> <arch>
+//
+// Only <version> has to be injected at build time. Everything else comes from
+// the build metadata that go stamps into the binary on its own, which also
+// covers binaries built with `go install`.
+//
 // TODO: support notifying the user if their version is out of date
-func getVersion() (string, error) {
-	var arch string
-	var commit string
-	var modified bool
-	var platform string
-
-	var v strings.Builder
-
+func getVersion() string {
 	// this supports overriding the default version if the deprecated var used
 	// for setting the exact version for releases is supplied. we are doing this
 	// in order to give downstream package maintainers a longer window to
@@ -39,23 +33,27 @@ func getVersion() (string, error) {
 		version = commands.GitExactTag
 	}
 
-	// automatically add the v prefix if it's missing
-	if version != "undefined" && !strings.HasPrefix(version, "v") {
-		version = fmt.Sprintf("v%s", version)
+	// add the v prefix if it's missing, then fall back to "undefined" if what
+	// we are left with isn't a real version. this guards against whatever a
+	// downstream packager might inject.
+	if !strings.HasPrefix(version, "v") {
+		version = "v" + version
 	}
-
-	// reset the version string to undefined if it is invalid
-	if ok := semver.IsValid(version); !ok {
+	if !semver.IsValid(version) {
 		version = "undefined"
 	}
 
+	var v strings.Builder
 	v.WriteString(version)
 
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
-		v.WriteString(fmt.Sprintf(" (no build info)\n"))
-		return v.String(), errors.New("unable to read build metadata")
+		v.WriteString(" (no build info)\n")
+		return v.String()
 	}
+
+	var arch, commit, platform string
+	var modified bool
 
 	for _, kv := range info.Settings {
 		switch kv.Key {
@@ -64,31 +62,33 @@ func getVersion() (string, error) {
 		case "GOARCH":
 			arch = kv.Value
 		case "vcs.modified":
-			if kv.Value == "true" {
-				modified = true
-			}
+			modified = kv.Value == "true"
 		case "vcs.revision":
 			commit = kv.Value
 		}
 	}
 
 	if commit != "" {
-		v.WriteString(fmt.Sprintf(" %.12s", commit))
+		if len(commit) > 12 {
+			commit = commit[:12]
+		}
+		v.WriteString(" " + commit)
+		if modified {
+			v.WriteString("/dirty")
+		}
 	}
 
-	if modified {
-		v.WriteString("/dirty")
-	}
-
-	v.WriteString(fmt.Sprintf(" %s", info.GoVersion))
+	v.WriteString(" " + info.GoVersion)
 
 	if platform != "" {
-		v.WriteString(fmt.Sprintf(" %s", platform))
+		v.WriteString(" " + platform)
 	}
 
 	if arch != "" {
-		v.WriteString(fmt.Sprintf(" %s", arch))
+		v.WriteString(" " + arch)
 	}
 
-	return fmt.Sprint(v.String(), "\n"), nil
+	v.WriteString("\n")
+
+	return v.String()
 }
