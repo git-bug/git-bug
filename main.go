@@ -16,7 +16,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	v, _ := getVersion()
+	v := getVersion()
 	root := commands.NewRootCommand(ctx, v)
 	if err := root.Execute(); err != nil {
 		os.Exit(1)

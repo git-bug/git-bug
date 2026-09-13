@@ -4,20 +4,10 @@ ifeq ($(UNAME_S),Darwin)
     XARGS:=xargs
 endif
 
-SYSTEM=$(shell nix eval --impure --expr 'builtins.currentSystem' --raw 2>/dev/null || echo '')
-
 TAG:=$(shell git describe --match 'v*' --always --dirty --broken)
 LDFLAGS:=-X main.version="${TAG}"
 
 all: build
-
-.PHONY: list-checks
-list-checks:
-	@if test -z "$(SYSTEM)"; then echo "unable to detect system. is nix installed?" && exit 1; fi
-	@printf "Available checks for $(SYSTEM) (run all with \`nix flake check\`):\n"
-	@nix flake show --json 2>/dev/null |\
-		dasel -r json -w plain '.checks.x86_64-linux.keys().all()' |\
-		xargs -I NAME printf '\t%-20s %s\n' "NAME" "nix build .#checks.linux.NAME"
 
 .PHONY: build-webui
 build-webui:
@@ -26,23 +16,18 @@ build-webui:
 .PHONY: build
 build: build-webui
 	go generate
-	go build -ldflags "$(LDFLAGS)" .
+	go build -tags webui -ldflags "$(LDFLAGS)" .
 
 # produce a debugger-friendly build
 .PHONY: build/debug
 build/debug: build-webui
 	go generate
-	go build -ldflags "$(LDFLAGS)" -gcflags=all="-N -l" .
+	go build -tags webui -ldflags "$(LDFLAGS)" -gcflags=all="-N -l" .
 
 .PHONY: install
 install: build-webui
 	go generate
-	go install -ldflags "$(LDFLAGS)" .
-
-.PHONY: releases
-releases: build-webui
-	go generate
-	go run github.com/mitchellh/gox@v1.0.1 -ldflags "$(LDFLAGS)" -osarch '!darwin/386' -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
+	go install -tags webui -ldflags "$(LDFLAGS)" .
 
 .PHONY: secure
 secure:
@@ -68,6 +53,6 @@ clean-local-identities:
 	git for-each-ref refs/remotes/origin/identities/ | cut -f 2 | $(XARGS) -n 1 git update-ref -d
 	rm -f .git/git-bug/identity-cache
 
-.PHONY: clean-local-identities
+.PHONY: clean-remote-identities
 clean-remote-identities:
 	git ls-remote origin "refs/identities/*" | cut -f 2 | $(XARGS) git push origin -d

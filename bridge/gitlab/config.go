@@ -128,7 +128,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 
 	conf := make(core.Configuration)
 	conf[core.ConfigKeyTarget] = target
-	conf[confKeyProjectID] = strconv.Itoa(id)
+	conf[confKeyProjectID] = strconv.FormatInt(id, 10)
 	conf[confKeyGitlabBaseUrl] = baseUrl
 	conf[confKeyDefaultLogin] = login
 
@@ -274,7 +274,7 @@ func getValidGitlabRemoteURLs(repo repository.RepoCommon, baseUrl string) ([]str
 	return urls, nil
 }
 
-func validateProjectURL(baseUrl, url string, token *auth.Token) (int, error) {
+func validateProjectURL(baseUrl, url string, token *auth.Token) (int64, error) {
 	projectPath, err := getProjectPath(baseUrl, url)
 	if err != nil {
 		return 0, err

@@ -1,0 +1,56 @@
+---
+# Note: this file configures *version* updates only. Dependabot *security*
+# updates are enabled in the repository settings and are unaffected by
+# anything here — they ignore both the schedules and the cooldowns below, so a
+# real vulnerability still gets a pull request immediately.
+version: 2
+
+updates:
+  # Actions are pinned to commit SHAs; dependabot updates the SHA along with
+  # the version comment next to it, which is the only thing keeping those pins
+  # from silently going stale. The cooldown is here because a compromised
+  # action runs with this repository's token.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 3
+    groups:
+      go:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # The webui has ~65 dependencies in a fast-moving ecosystem. Monthly and
+  # grouped keeps this to at most a dozen pull requests a year, and the
+  # cooldown means a freshly published (possibly compromised) release is never
+  # proposed until it has been in the wild long enough to be pulled.
+  - package-ecosystem: npm
+    directory: /webui
+    schedule:
+      interval: monthly
+    cooldown:
+      semver-patch-days: 7
+      semver-minor-days: 14
+      semver-major-days: 30
+    groups:
+      npm:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch

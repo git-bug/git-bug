@@ -12,7 +12,7 @@ var _ Event = mockEvent(0)
 type mockEvent int64
 
 func (m mockEvent) ID() string           { panic("implement me") }
-func (m mockEvent) UserID() int          { panic("implement me") }
+func (m mockEvent) UserID() int64        { panic("implement me") }
 func (m mockEvent) Kind() EventKind      { panic("implement me") }
 func (m mockEvent) CreatedAt() time.Time { return time.Unix(int64(m), 0) }
 

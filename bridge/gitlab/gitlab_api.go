@@ -8,27 +8,35 @@ import (
 	"gitlab.com/gitlab-org/api/client-go"
 )
 
+// IssueResult is either a gitlab issue, or the error that interrupted the listing.
+type IssueResult struct {
+	Issue *gitlab.Issue
+	Err   error
+}
+
 // Issues returns a channel with gitlab project issues, ascending order.
-func Issues(ctx context.Context, client *gitlab.Client, pid string, since time.Time) <-chan *gitlab.Issue {
-	out := make(chan *gitlab.Issue)
+// An error while listing is reported on the channel and ends the iteration.
+func Issues(ctx context.Context, client *gitlab.Client, pid string, since time.Time) <-chan IssueResult {
+	out := make(chan IssueResult)
 
 	go func() {
 		defer close(out)
 
 		opts := gitlab.ListProjectIssuesOptions{
 			UpdatedAfter: &since,
-			Scope:        gitlab.String("all"),
-			Sort:         gitlab.String("asc"),
+			Scope:        gitlab.Ptr("all"),
+			Sort:         gitlab.Ptr("asc"),
 		}
 
 		for {
 			issues, resp, err := client.Issues.ListProjectIssues(pid, &opts, gitlab.WithContext(ctx))
 			if err != nil {
+				out <- IssueResult{Err: err}
 				return
 			}
 
 			for _, issue := range issues {
-				out <- issue
+				out <- IssueResult{Issue: issue}
 			}
 
 			if resp.CurrentPage >= resp.TotalPages {
@@ -50,8 +58,8 @@ func Notes(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue) <-ch
 		defer close(out)
 
 		opts := gitlab.ListIssueNotesOptions{
-			OrderBy: gitlab.String("created_at"),
-			Sort:    gitlab.String("asc"),
+			OrderBy: gitlab.Ptr("created_at"),
+			Sort:    gitlab.Ptr("asc"),
 		}
 
 		for {
@@ -59,6 +67,7 @@ func Notes(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue) <-ch
 
 			if err != nil {
 				out <- ErrorEvent{Err: err, Time: time.Now()}
+				return
 			}
 
 			for _, note := range notes {
@@ -90,6 +99,7 @@ func LabelEvents(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue
 
 			if err != nil {
 				out <- ErrorEvent{Err: err, Time: time.Now()}
+				return
 			}
 
 			for _, e := range events {
@@ -122,6 +132,7 @@ func StateEvents(ctx context.Context, client *gitlab.Client, issue *gitlab.Issue
 			events, resp, err := client.ResourceStateEvents.ListIssueStateEvents(issue.ProjectID, issue.IID, &opts, gitlab.WithContext(ctx))
 			if err != nil {
 				out <- ErrorEvent{Err: err, Time: time.Now()}
+				return
 			}
 
 			for _, e := range events {

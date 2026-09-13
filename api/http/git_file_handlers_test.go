@@ -3,6 +3,9 @@ package http
 import (
 	"bytes"
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
+	"fmt"
 	"image"
 	"image/png"
 	"mime/multipart"
@@ -39,6 +42,10 @@ func TestGitFileHandlers(t *testing.T) {
 	err = png.Encode(data, img)
 	require.NoError(t, err)
 	imgBytes := data.Bytes()
+	// Derive the expected hash rather than hardcoding it: the exact bytes
+	// png.Encode produces depend on the Go stdlib's compression, which changes
+	// between releases, and with them the blob hash.
+	imgBlobHash := gitBlobHash(imgBytes)
 
 	// ── Upload ────────────────────────────────────────────────────────────────
 
@@ -59,7 +66,7 @@ func TestGitFileHandlers(t *testing.T) {
 
 		NewGitUploadFileHandler(mrc).ServeHTTP(w, r)
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, `{"hash":"3426a1488292d8f3f3c59ca679681336542b986f"}`, w.Body.String())
+		assert.Equal(t, fmt.Sprintf(`{"hash":%q}`, imgBlobHash), w.Body.String())
 	})
 
 	// ── Download by hash ──────────────────────────────────────────────────────
@@ -70,7 +77,7 @@ func TestGitFileHandlers(t *testing.T) {
 		r = r.WithContext(auth.CtxWithUser(r.Context(), author.Id()))
 		r = mux.SetURLVars(r, map[string]string{
 			"repo": "",
-			"rest": "3426a1488292d8f3f3c59ca679681336542b986f",
+			"rest": imgBlobHash,
 		})
 
 		NewGitFileHandler(mrc).ServeHTTP(w, r)
@@ -212,4 +219,13 @@ func TestGitFileHandlers(t *testing.T) {
 		w := serve("main")
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
+}
+
+// gitBlobHash computes the hash git gives a blob holding the given content:
+// sha1 over the "blob <size>\x00" header followed by the content itself.
+func gitBlobHash(data []byte) string {
+	hasher := sha1.New()
+	fmt.Fprintf(hasher, "blob %d\x00", len(data))
+	hasher.Write(data)
+	return hex.EncodeToString(hasher.Sum(nil))
 }

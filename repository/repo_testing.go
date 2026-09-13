@@ -225,10 +225,10 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	require.NoError(t, err)
 	require.Equal(t, []Hash{commit1, commit2}, commits)
 
-	_, err = repo.ResolveRef("/refs/bugs/refnotexist")
+	_, err = repo.ResolveRef("refs/bugs/refnotexist")
 	require.ErrorIs(t, err, ErrNotFound)
 
-	err = repo.CopyRef("/refs/bugs/refnotexist", "refs/foo")
+	err = repo.CopyRef("refs/bugs/refnotexist", "refs/foo")
 	require.ErrorIs(t, err, ErrNotFound)
 
 	// Cleanup

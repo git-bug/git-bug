@@ -14,7 +14,7 @@ import (
 // Event represents a unified GitLab event (note, label or state event).
 type Event interface {
 	ID() string
-	UserID() int
+	UserID() int64
 	Kind() EventKind
 	CreatedAt() time.Time
 }
@@ -49,7 +49,7 @@ var _ Event = &NoteEvent{}
 type NoteEvent struct{ gitlab.Note }
 
 func (n NoteEvent) ID() string           { return fmt.Sprintf("%d", n.Note.ID) }
-func (n NoteEvent) UserID() int          { return n.Author.ID }
+func (n NoteEvent) UserID() int64        { return n.Author.ID }
 func (n NoteEvent) CreatedAt() time.Time { return *n.Note.CreatedAt }
 
 func (n NoteEvent) Kind() EventKind {
@@ -125,7 +125,7 @@ var _ Event = &LabelEvent{}
 type LabelEvent struct{ gitlab.LabelEvent }
 
 func (l LabelEvent) ID() string           { return fmt.Sprintf("%d", l.LabelEvent.ID) }
-func (l LabelEvent) UserID() int          { return l.User.ID }
+func (l LabelEvent) UserID() int64        { return l.User.ID }
 func (l LabelEvent) CreatedAt() time.Time { return *l.LabelEvent.CreatedAt }
 func (l LabelEvent) Kind() EventKind {
 	switch l.Action {
@@ -143,7 +143,7 @@ var _ Event = &StateEvent{}
 type StateEvent struct{ gitlab.StateEvent }
 
 func (s StateEvent) ID() string           { return fmt.Sprintf("%d", s.StateEvent.ID) }
-func (s StateEvent) UserID() int          { return s.User.ID }
+func (s StateEvent) UserID() int64        { return s.User.ID }
 func (s StateEvent) CreatedAt() time.Time { return *s.StateEvent.CreatedAt }
 func (s StateEvent) Kind() EventKind {
 	switch s.State {
@@ -164,7 +164,7 @@ type ErrorEvent struct {
 }
 
 func (e ErrorEvent) ID() string           { return "" }
-func (e ErrorEvent) UserID() int          { return -1 }
+func (e ErrorEvent) UserID() int64        { return -1 }
 func (e ErrorEvent) CreatedAt() time.Time { return e.Time }
 func (e ErrorEvent) Kind() EventKind      { return EventError }
 

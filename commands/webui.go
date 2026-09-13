@@ -74,6 +74,19 @@ Available git config:
 
 // setupRoutes builds the router and registers all API and UI routes.
 func setupRoutes(env *execenv.Env, opts webUIOptions) (*mux.Router, func() error, error) {
+	if !webui.Available {
+		return nil, nil, errors.New(`this binary was built without the web UI
+
+The web UI is a separate frontend that has to be built with Node.js and
+compiled into the binary. Binaries produced by "go build" or "go install" do
+not include it.
+
+To get a binary with the web UI, either download an official release from
+https://github.com/git-bug/git-bug/releases, or build one from a clone of the
+repository with "make build" (or "make install"), which builds the frontend
+first and then compiles it in.`)
+	}
+
 	router := mux.NewRouter()
 
 	// If the webUI is not read-only, use an authentication middleware with a

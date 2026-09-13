@@ -154,7 +154,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 
 	var bugUpdated bool
 	var err error
-	var bugGitlabID int
+	var bugGitlabID int64
 	var bugGitlabIDString string
 	var GitlabBaseUrl string
 	var bugCreationId string
@@ -197,7 +197,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 
 		// will be used to mark operation related to a bug as exported
 		bugGitlabIDString = gitlabID
-		bugGitlabID, err = strconv.Atoi(bugGitlabIDString)
+		bugGitlabID, err = strconv.ParseInt(bugGitlabIDString, 10, 64)
 		if err != nil {
 			out <- core.NewExportError(fmt.Errorf("unexpected gitlab id format: %s", bugGitlabIDString), b.Id())
 			return
@@ -220,7 +220,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			return
 		}
 
-		idString := strconv.Itoa(id)
+		idString := strconv.FormatInt(id, 10)
 		out <- core.NewExportBug(b.Id())
 
 		_, err = b.SetMetadata(
@@ -274,7 +274,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			continue
 		}
 
-		var id int
+		var id int64
 		var idString, url string
 		switch op := op.(type) {
 		case *bug.AddCommentOperation:
@@ -289,7 +289,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 
 			out <- core.NewExportComment(b.Id())
 
-			idString = strconv.Itoa(id)
+			idString = strconv.FormatInt(id, 10)
 			// cache comment id
 			ge.cachedOperationIDs[op.Id().String()] = idString
 
@@ -318,7 +318,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 					return
 				}
 
-				commentIDint, err := strconv.Atoi(commentID)
+				commentIDint, err := strconv.ParseInt(commentID, 10, 64)
 				if err != nil {
 					out <- core.NewExportError(fmt.Errorf("unexpected comment id format"), b.Id())
 					return
@@ -383,7 +383,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			panic("unhandled operation type case")
 		}
 
-		idString = strconv.Itoa(id)
+		idString = strconv.FormatInt(id, 10)
 		// mark operation as exported
 		if err := markOperationAsExported(b, op.Id(), idString, url); err != nil {
 			err := errors.Wrap(err, "marking operation as exported")
@@ -419,7 +419,7 @@ func markOperationAsExported(b *cache.BugCache, target entity.Id, gitlabID, gitl
 }
 
 // create a gitlab. issue and return it ID
-func createGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID, title, body string) (int, int, string, error) {
+func createGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID, title, body string) (int64, int64, string, error) {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	issue, _, err := gc.Issues.CreateIssue(
@@ -438,7 +438,7 @@ func createGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID, tit
 }
 
 // add a comment to an issue and return it ID
-func addCommentGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int, body string) (int, error) {
+func addCommentGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int64, body string) (int64, error) {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	note, _, err := gc.Notes.CreateIssueNote(
@@ -455,7 +455,7 @@ func addCommentGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID 
 	return note.ID, nil
 }
 
-func editCommentGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID, noteID int, body string) error {
+func editCommentGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID, noteID int64, body string) error {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	_, _, err := gc.Notes.UpdateIssueNote(
@@ -469,7 +469,7 @@ func editCommentGitlabIssue(ctx context.Context, gc *gitlab.Client, repositoryID
 	return err
 }
 
-func updateGitlabIssueStatus(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int, status common.Status) error {
+func updateGitlabIssueStatus(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int64, status common.Status) error {
 	var state string
 
 	switch status {
@@ -494,7 +494,7 @@ func updateGitlabIssueStatus(ctx context.Context, gc *gitlab.Client, repositoryI
 	return err
 }
 
-func updateGitlabIssueBody(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int, body string) error {
+func updateGitlabIssueBody(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int64, body string) error {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	_, _, err := gc.Issues.UpdateIssue(
@@ -508,7 +508,7 @@ func updateGitlabIssueBody(ctx context.Context, gc *gitlab.Client, repositoryID 
 	return err
 }
 
-func updateGitlabIssueTitle(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int, title string) error {
+func updateGitlabIssueTitle(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int64, title string) error {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	_, _, err := gc.Issues.UpdateIssue(
@@ -523,7 +523,7 @@ func updateGitlabIssueTitle(ctx context.Context, gc *gitlab.Client, repositoryID
 }
 
 // update gitlab. issue labels
-func updateGitlabIssueLabels(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int, labels []string) error {
+func updateGitlabIssueLabels(ctx context.Context, gc *gitlab.Client, repositoryID string, issueID int64, labels []string) error {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	gitlabLabels := gitlab.LabelOptions(labels)
