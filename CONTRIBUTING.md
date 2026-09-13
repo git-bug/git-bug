@@ -53,9 +53,9 @@ To work on the web UI itself, see [`webui/README.md`](./webui/README.md).
 
 ## Checks
 
-CI checks that the Go code is formatted (`gofmt -l`) and that the generated
-files below are up to date. `make secure` checks dependencies for known
-vulnerabilities.
+CI checks that the Go code is formatted (`gofmt -l`), that the generated files
+below are up to date, and that no dependency has a known vulnerability
+reachable from our code. That last one is `make secure` locally.
 
 The man pages in `doc/man` and the shell completions in `misc/completion` are
 generated from the command tree and committed to the repository. If you add or
