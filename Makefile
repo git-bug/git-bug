@@ -31,7 +31,7 @@ install: build-webui
 
 .PHONY: secure
 secure:
-	go run golang.org/x/vuln/cmd/govulncheck ./...
+	go tool govulncheck ./...
 
 .PHONY: test
 test:

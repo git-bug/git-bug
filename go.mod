@@ -39,7 +39,10 @@ require (
 	golang.org/x/vuln v1.8.0
 )
 
-tool github.com/99designs/gqlgen
+tool (
+	github.com/99designs/gqlgen
+	golang.org/x/vuln/cmd/govulncheck
+)
 
 require (
 	dario.cat/mergo v1.0.1 // indirect
