@@ -4,14 +4,15 @@ version: 2
 
 project_name: git-bug
 
+report_sizes: true
+
 before:
   hooks:
-    # The webui is compiled into the binary with //go:embed (see
-    # //webui:handler.go) and webui/dist is not tracked in git, so the frontend
-    # must be built before any go build can succeed.
+    # The webui is compiled into the binary with //go:embed, behind the "webui"
+    # build tag (see //webui:assets.go). webui/dist is not tracked in git, so
+    # the frontend has to be built before the tagged build can succeed.
     - pnpm --dir webui install --frozen-lockfile
     - pnpm --dir webui run build
-    - go mod download
 
 builds:
   - id: git-bug
@@ -22,8 +23,7 @@ builds:
     flags:
       - -trimpath
     tags:
-      # //webui:assets.go embeds webui/dist behind this tag; without it the
-      # binary has no web UI. The before hooks build the frontend.
+      # without this the binary has no web UI, and `git-bug webui` says so
       - webui
     ldflags:
       # main.version is read by //:version.go. Everything else shown by
@@ -31,36 +31,19 @@ builds:
       # build metadata go stamps into the binary on its own.
       - -s -w -X main.version=v{{ .Version }}
     mod_timestamp: "{{ .CommitTimestamp }}"
-    goos:
-      - linux
-      - darwin
-      - windows
-      - freebsd
-      - openbsd
-      - netbsd
-    goarch:
-      - amd64
-      - arm64
-      - arm
-    goarm:
-      - "6"
-      - "7"
-    ignore:
-      # 32-bit arm is only worth shipping for linux (raspberry pi and friends)
-      - goos: darwin
-        goarch: arm
-      - goos: windows
-        goarch: arm
-      - goos: freebsd
-        goarch: arm
-      - goos: openbsd
-        goarch: arm
-      - goos: netbsd
-        goarch: arm
-      - goos: openbsd
-        goarch: arm64
-      - goos: netbsd
-        goarch: arm64
+    targets:
+      - linux_amd64
+      - linux_arm64
+      - linux_arm_6
+      - linux_arm_7
+      - darwin_amd64
+      - darwin_arm64
+      - windows_amd64
+      - windows_arm64
+      - freebsd_amd64
+      - freebsd_arm64
+      - openbsd_amd64
+      - netbsd_amd64
 
 archives:
   # The primary artifact: a versioned archive carrying the binary alongside the
@@ -68,6 +51,7 @@ archives:
   - id: archive
     ids:
       - git-bug
+    wrap_in_directory: true
     formats:
       - tar.gz
     format_overrides:
@@ -87,7 +71,8 @@ archives:
         dst: completion
 
   # Bare binaries, named exactly as the previous gox-based release named them,
-  # so existing download URLs and downstream packaging keep working.
+  # so existing download URLs (in particular
+  # /releases/latest/download/git-bug_<os>_<arch>) keep working.
   - id: binary
     ids:
       - git-bug
@@ -95,6 +80,56 @@ archives:
       - binary
     name_template: >-
       {{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}
+
+# Linux packages. These are the only channel we publish ourselves: Homebrew,
+# AUR, nixpkgs, Scoop and the FreeBSD port are all maintained downstream by
+# other people, and are deliberately left alone.
+nfpms:
+  - id: packages
+    ids:
+      - git-bug
+    package_name: git-bug
+    vendor: git-bug
+    homepage: https://github.com/git-bug/git-bug
+    maintainer: Michael Muré <batolettre@gmail.com>
+    description: Distributed, offline-first bug tracker embedded in git, with bridges
+    license: GPL-3.0-or-later
+    formats:
+      - deb
+      - rpm
+      - apk
+      - archlinux
+    bindir: /usr/bin
+    contents:
+      # unlike the archives, a package can put these where the system will
+      # actually find them
+      - src: doc/man/*.1
+        dst: /usr/share/man/man1
+      - src: misc/completion/bash/git-bug
+        dst: /usr/share/bash-completion/completions/git-bug
+      - src: misc/completion/zsh/git-bug
+        dst: /usr/share/zsh/site-functions/_git-bug
+      - src: misc/completion/fish/git-bug
+        dst: /usr/share/fish/vendor_completions.d/git-bug.fish
+
+sboms:
+  - id: archive
+    artifacts: archive
+
+# Keyless signing: in CI, cosign gets its identity from the GitHub OIDC token,
+# so there is no key to manage. Signing the checksum file covers every artifact
+# listed in it with a single signature.
+signs:
+  - cmd: cosign
+    artifacts: checksum
+    output: true
+    certificate: "${artifact}.pem"
+    args:
+      - sign-blob
+      - "--output-certificate=${certificate}"
+      - "--output-signature=${signature}"
+      - "${artifact}"
+      - "--yes"
 
 checksum:
   name_template: checksums.txt

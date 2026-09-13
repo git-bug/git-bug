@@ -23,6 +23,10 @@ jobs:
       #
       # [0]: https://github.com/orgs/community/discussions/68252
       contents: write
+      # cosign and the build provenance attestation both get their identity
+      # from the GitHub OIDC token rather than a managed key.
+      id-token: write
+      attestations: write
     steps:
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -56,6 +60,12 @@ jobs:
       - name: Test
         run: make test
 
+      - name: Install cosign
+        uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
+
+      - name: Install syft
+        uses: anchore/sbom-action/download-syft@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+
       # goreleaser rebuilds the webui itself, via the hooks declared in
       # //:.goreleaser.yaml, so that a local `goreleaser release --snapshot`
       # behaves the same way as this job does.
@@ -66,3 +76,18 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Records how these artifacts were built, verifiable with
+      # `gh attestation verify <file> --repo git-bug/git-bug`.
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.deb
+            dist/*.rpm
+            dist/*.apk
+            dist/*.pkg.tar.zst
+            dist/*/git-bug
+            dist/*/git-bug.exe
