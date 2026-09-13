@@ -453,6 +453,12 @@ function AuthorFilter({
     [search],
   );
 
+  // Callers rebuild `recentAuthorIds` on every render, so key on its contents:
+  // the reset below treats a new `visibleIdentities` as a changed list.
+  // humanIds are hex, so a comma can't appear in one.
+  const recentKey = recentAuthorIds.join(",");
+  const recentIds = useMemo(() => (recentKey === "" ? [] : recentKey.split(",")), [recentKey]);
+
   const visibleIdentities = useMemo(() => {
     if (isSearching) {
       return allIdentities.filter(matchesSearch);
@@ -478,7 +484,7 @@ function AuthorFilter({
       }
     }
     // 3. Recently seen
-    for (const humanId of recentAuthorIds) {
+    for (const humanId of recentIds) {
       const match = allIdentities.find((i) => i.humanId === humanId);
       if (match && !pinned.has(match.id)) {
         result.push(match);
@@ -491,7 +497,7 @@ function AuthorFilter({
       if (!pinned.has(i.id)) result.push(i);
     }
     return result;
-  }, [allIdentities, isSearching, matchesSearch, currentUserId, selectedAuthorId, recentAuthorIds]);
+  }, [allIdentities, isSearching, matchesSearch, currentUserId, selectedAuthorId, recentIds]);
 
   // Reset the active index when the filtered list changes.  Adjusting state
   // during render avoids the extra render pass an effect would cause.

@@ -7,10 +7,11 @@ const httpLink = new HttpLink({
   credentials: "include",
 });
 
-// Repository has no `id`; `name` identifies it, null being the single default
-// repository.  Every query selecting `repository` must select `name` too, or
-// Apollo cannot compute the key — apollo.test.ts enforces that, and covers why
-// neither `[]` nor `false` works here.  Exported so tests share this config.
+// Repository has no `id`; `name` identifies it, null being the default repo.
+// Every query selecting `repository` must also select `name`, or Apollo throws
+// `Missing field 'name' while extracting keyFields` and the query returns
+// nothing.  apollo.test.ts enforces that, and covers why `[]` and `false` don't
+// work here.  Exported so tests and the Storybook mock client reuse it.
 export const typePolicies: InMemoryCacheConfig["typePolicies"] = {
   Repository: {
     keyFields: ["name"],

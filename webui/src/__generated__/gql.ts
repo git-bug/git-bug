@@ -38,7 +38,7 @@ type Documents = {
     "\n  query Repositories {\n    repositories {\n      nodes {\n        name\n      }\n      totalCount\n    }\n  }\n": typeof types.RepositoriesDocument,
     "\n  query Repository($ref: String) {\n    repository(ref: $ref) {\n      name\n    }\n  }\n": typeof types.RepositoryDocument,
     "\n      query Commits($repo: String, $gitRef: String!, $after: String) {\n        repository(ref: $repo) {\n          name\n          commits(ref: $gitRef, after: $after) {\n            nodes {\n              hash\n            }\n          }\n        }\n      }\n    ": typeof types.CommitsDocument,
-    "\n  query UserIdentity {\n    repository {\n      userIdentity {\n        ...IdentitySummary\n        id\n        humanId\n        displayName\n        avatarUrl\n        name\n        email\n        login\n      }\n    }\n  }\n": typeof types.UserIdentityDocument,
+    "\n  query UserIdentity {\n    repository {\n      name\n      userIdentity {\n        ...IdentitySummary\n        id\n        humanId\n        displayName\n        avatarUrl\n        name\n        email\n        login\n      }\n    }\n  }\n": typeof types.UserIdentityDocument,
     "\n  query CodePageRefs($repo: String) {\n    repository(ref: $repo) {\n      name\n      head {\n        shortName\n      }\n      refs {\n        ...RefSelectorRefs\n      }\n    }\n  }\n": typeof types.CodePageRefsDocument,
     "\n  query CodePageBlob($repo: String, $ref: String!, $path: String!) {\n    repository(ref: $repo) {\n      name\n      blob(ref: $ref, path: $path) {\n        ...FileViewerBlob\n      }\n    }\n  }\n": typeof types.CodePageBlobDocument,
     "\n  query CodePageTree($repo: String, $ref: String!, $path: String) {\n    repository(ref: $repo) {\n      name\n      tree(ref: $ref, path: $path) {\n        name\n        type\n        hash\n      }\n    }\n  }\n": typeof types.CodePageTreeDocument,
@@ -77,7 +77,7 @@ const documents: Documents = {
     "\n  query Repositories {\n    repositories {\n      nodes {\n        name\n      }\n      totalCount\n    }\n  }\n": types.RepositoriesDocument,
     "\n  query Repository($ref: String) {\n    repository(ref: $ref) {\n      name\n    }\n  }\n": types.RepositoryDocument,
     "\n      query Commits($repo: String, $gitRef: String!, $after: String) {\n        repository(ref: $repo) {\n          name\n          commits(ref: $gitRef, after: $after) {\n            nodes {\n              hash\n            }\n          }\n        }\n      }\n    ": types.CommitsDocument,
-    "\n  query UserIdentity {\n    repository {\n      userIdentity {\n        ...IdentitySummary\n        id\n        humanId\n        displayName\n        avatarUrl\n        name\n        email\n        login\n      }\n    }\n  }\n": types.UserIdentityDocument,
+    "\n  query UserIdentity {\n    repository {\n      name\n      userIdentity {\n        ...IdentitySummary\n        id\n        humanId\n        displayName\n        avatarUrl\n        name\n        email\n        login\n      }\n    }\n  }\n": types.UserIdentityDocument,
     "\n  query CodePageRefs($repo: String) {\n    repository(ref: $repo) {\n      name\n      head {\n        shortName\n      }\n      refs {\n        ...RefSelectorRefs\n      }\n    }\n  }\n": types.CodePageRefsDocument,
     "\n  query CodePageBlob($repo: String, $ref: String!, $path: String!) {\n    repository(ref: $repo) {\n      name\n      blob(ref: $ref, path: $path) {\n        ...FileViewerBlob\n      }\n    }\n  }\n": types.CodePageBlobDocument,
     "\n  query CodePageTree($repo: String, $ref: String!, $path: String) {\n    repository(ref: $repo) {\n      name\n      tree(ref: $ref, path: $path) {\n        name\n        type\n        hash\n      }\n    }\n  }\n": types.CodePageTreeDocument,
@@ -205,7 +205,7 @@ export function graphql(source: "\n      query Commits($repo: String, $gitRef: S
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query UserIdentity {\n    repository {\n      userIdentity {\n        ...IdentitySummary\n        id\n        humanId\n        displayName\n        avatarUrl\n        name\n        email\n        login\n      }\n    }\n  }\n"): (typeof documents)["\n  query UserIdentity {\n    repository {\n      userIdentity {\n        ...IdentitySummary\n        id\n        humanId\n        displayName\n        avatarUrl\n        name\n        email\n        login\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query UserIdentity {\n    repository {\n      name\n      userIdentity {\n        ...IdentitySummary\n        id\n        humanId\n        displayName\n        avatarUrl\n        name\n        email\n        login\n      }\n    }\n  }\n"): (typeof documents)["\n  query UserIdentity {\n    repository {\n      name\n      userIdentity {\n        ...IdentitySummary\n        id\n        humanId\n        displayName\n        avatarUrl\n        name\n        email\n        login\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

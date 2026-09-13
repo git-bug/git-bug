@@ -41,6 +41,8 @@ function withCommitsMock(commits: typeof ALL_COMMITS): Decorator {
       result: {
         data: {
           repository: {
+            // Selected by the query and required by the cache key policy
+            name: "_",
             commits: {
               nodes: commits,
               pageInfo: { hasNextPage: false, endCursor: null },
