@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 )
@@ -381,6 +382,69 @@ func TestMerge(t *testing.T) {
 	// make sure that the graphs become stable over multiple repo, due to the
 	// fast-forward
 	assertEqualRefs(t, repoA, repoB, "refs/"+def.Namespace)
+}
+
+// Merging without an author must work, except when a merge commit is required.
+// See https://github.com/git-bug/git-bug/issues/1003
+func TestMergeWithoutAuthor(t *testing.T) {
+	repoA, repoB, _, id1, _, resolvers, def := makeTestContextRemote(t)
+
+	eA := New(def)
+	eA.Append(newOp1(id1, "foo"))
+	err := eA.Commit(repoA)
+	require.NoError(t, err)
+
+	_, err = Push(def, repoA, "remote")
+	require.NoError(t, err)
+
+	_, err = Fetch(def, repoB, "remote")
+	require.NoError(t, err)
+
+	// new entity: no author needed
+	results := MergeAll(def, wrapper, repoB, resolvers, "remote", nil)
+	assertMergeResults(t, []entity.MergeResult{
+		{Id: eA.Id(), Status: entity.MergeStatusNew},
+	}, results)
+
+	// concurrent edition on both sides
+	eA.Append(newOp1(id1, "bar"))
+	err = eA.Commit(repoA)
+	require.NoError(t, err)
+
+	eB, err := Read(def, wrapper, repoB, resolvers, eA.Id())
+	require.NoError(t, err)
+	eB.Append(newOp1(id1, "foobar"))
+	err = eB.Commit(repoB)
+	require.NoError(t, err)
+
+	_, err = Push(def, repoA, "remote")
+	require.NoError(t, err)
+	_, err = Fetch(def, repoB, "remote")
+	require.NoError(t, err)
+
+	localRef := "refs/" + def.Namespace + "/" + eA.Id().String()
+	before, err := repoB.ResolveRef(localRef)
+	require.NoError(t, err)
+
+	// merge commit required: error, and the local entity is left untouched
+	var all []entity.MergeResult
+	for result := range MergeAll(def, wrapper, repoB, resolvers, "remote", nil) {
+		all = append(all, result)
+	}
+	require.Len(t, all, 1)
+	require.Equal(t, entity.MergeStatusError, all[0].Status)
+	require.Equal(t, eA.Id(), all[0].Id)
+	require.ErrorIs(t, all[0].Err, identity.ErrNoIdentitySet)
+
+	after, err := repoB.ResolveRef(localRef)
+	require.NoError(t, err)
+	require.Equal(t, before, after)
+
+	// with an author, the merge goes through
+	results = MergeAll(def, wrapper, repoB, resolvers, "remote", id1)
+	assertMergeResults(t, []entity.MergeResult{
+		{Id: eA.Id(), Status: entity.MergeStatusUpdated},
+	}, results)
 }
 
 func TestRemove(t *testing.T) {

@@ -289,6 +289,77 @@ func TestCachePushPull(t *testing.T) {
 	require.Len(t, cacheA.Bugs().AllIds(), 2)
 }
 
+// Pulling into a fresh repo must not require a user identity, otherwise it's
+// impossible to adopt an identity that only exists on the remote.
+// See https://github.com/git-bug/git-bug/issues/1003
+func TestCachePullWithoutIdentity(t *testing.T) {
+	repoA, repoB, _ := repository.SetupGoGitReposAndRemote(t)
+
+	cacheA := createTestRepoCacheNoEvents(t, repoA)
+	cacheB := createTestRepoCacheNoEvents(t, repoB)
+
+	reneA, err := cacheA.Identities().New("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	err = cacheA.SetUserIdentity(reneA)
+	require.NoError(t, err)
+
+	_, _, err = cacheA.Bugs().New("bug1", "message")
+	require.NoError(t, err)
+
+	_, err = cacheA.Push("origin")
+	require.NoError(t, err)
+
+	// B has no identity set
+	_, err = cacheB.GetUserIdentity()
+	require.ErrorIs(t, err, identity.ErrNoIdentitySet)
+
+	err = cacheB.Pull("origin")
+	require.NoError(t, err)
+
+	require.Len(t, cacheB.Identities().AllIds(), 1)
+	require.Len(t, cacheB.Bugs().AllIds(), 1)
+
+	// adopt the pulled identity
+	reneB, err := cacheB.Identities().Resolve(reneA.Id())
+	require.NoError(t, err)
+	err = cacheB.SetUserIdentity(reneB)
+	require.NoError(t, err)
+
+	userB, err := cacheB.GetUserIdentity()
+	require.NoError(t, err)
+	require.Equal(t, reneA.Id(), userB.Id())
+
+	// concurrent edition of the bug on both sides
+	bugA, err := cacheA.Bugs().ResolvePrefix("")
+	require.NoError(t, err)
+	_, _, err = bugA.AddComment("from A")
+	require.NoError(t, err)
+	require.NoError(t, bugA.Commit())
+	_, err = cacheA.Push("origin")
+	require.NoError(t, err)
+
+	bugB, err := cacheB.Bugs().Resolve(bugA.Id())
+	require.NoError(t, err)
+	_, _, err = bugB.AddComment("from B")
+	require.NoError(t, err)
+	require.NoError(t, bugB.Commit())
+
+	// a merge commit is required, which needs an identity
+	err = cacheB.ClearUserIdentity()
+	require.NoError(t, err)
+
+	_, err = cacheB.Fetch("origin")
+	require.NoError(t, err)
+	var mergeErrs []error
+	for result := range cacheB.MergeAll("origin") {
+		if result.Err != nil {
+			mergeErrs = append(mergeErrs, result.Err)
+		}
+	}
+	require.Len(t, mergeErrs, 1)
+	require.ErrorIs(t, mergeErrs[0], identity.ErrNoIdentitySet)
+}
+
 func TestRemove(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
 	remoteA := repository.CreateGoGitTestRepo(t, true)

@@ -2,6 +2,7 @@ package dag
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/pkg/errors"
 
@@ -67,7 +68,8 @@ func Pull[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 //     --> emit entity.MergeStatusUpdated
 //
 // Note: an author is necessary for the case where a merge commit is created, as this commit will
-// have an author and may be signed if a signing key is available.
+// have an author and may be signed if a signing key is available. The author can be nil, in which
+// case entities that require a merge commit will yield a merge error.
 func MergeAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, author identity.Interface) <-chan entity.MergeResult {
 	out := make(chan entity.MergeResult)
 
@@ -156,10 +158,8 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 		return entity.NewMergeError(err, id)
 	}
 
-	for _, hash := range localCommits {
-		if hash == remoteCommit {
-			return entity.NewMergeNothingStatus(id)
-		}
+	if slices.Contains(localCommits, remoteCommit) {
+		return entity.NewMergeNothingStatus(id)
 	}
 
 	// SCENARIO 4
@@ -172,13 +172,7 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 	}
 
 	// fast-forward is possible if otherRef include ref
-	fastForwardPossible := false
-	for _, hash := range remoteCommits {
-		if hash == localCommit {
-			fastForwardPossible = true
-			break
-		}
-	}
+	fastForwardPossible := slices.Contains(remoteCommits, localCommit)
 
 	if fastForwardPossible {
 		err = repo.UpdateRef(localRef, remoteCommit)
@@ -196,6 +190,13 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 	// For simplicity when reading and to have clocks that record this change, we store
 	// an empty operationPack.
 	// First step is to collect those clocks.
+
+	// A merge commit needs an author. It's only required here, so that pulling
+	// without a user identity set (e.g. in a fresh clone) works in all other cases.
+	if author == nil {
+		return entity.NewMergeError(errors.Wrapf(identity.ErrNoIdentitySet,
+			"%s %s has diverged and requires a merge commit", def.Typename, id.Human()), id)
+	}
 
 	localEntity, err := read[EntityT](def, wrapper, repo, resolvers, localRef)
 	if err != nil {
