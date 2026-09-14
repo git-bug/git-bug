@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	neturl "net/url"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -53,6 +55,8 @@ type githubExporter struct {
 	cachedOperationIDs map[entity.Id]string
 
 	// cache labels used to speed up exporting labels events
+	// labelsMu protects cachedLabels, as labels can be added and removed concurrently
+	labelsMu     sync.Mutex
 	cachedLabels map[string]string
 
 	// channel to send export results
@@ -558,18 +562,62 @@ func (ge *githubExporter) createGithubLabel(ctx context.Context, label, color st
 		return "", err
 	}
 
+	defer resp.Body.Close()
+
+	// 422 is returned if the label already exists, for example if it was created
+	// after we cached the labels (Github creates the default labels of a new
+	// repository asynchronously). In that case, use the existing label.
+	if resp.StatusCode == http.StatusUnprocessableEntity {
+		labelID, err := ge.getGithubLabel(ctx, label)
+		if err != nil {
+			return "", fmt.Errorf("error creating label: response status %v, and failed to get existing label: %w", resp.StatusCode, err)
+		}
+		return labelID, nil
+	}
+
 	if resp.StatusCode != http.StatusCreated {
 		return "", fmt.Errorf("error creating label: response status %v", resp.StatusCode)
 	}
 
+	return decodeGithubLabelID(resp.Body)
+}
+
+// get an existing label and return it github id
+func (ge *githubExporter) getGithubLabel(ctx context.Context, label string) (string, error) {
+	url := fmt.Sprintf("%s/repos/%s/%s/labels/%s", githubV3Url, ge.conf[confKeyOwner], ge.conf[confKeyProject], neturl.PathEscape(label))
+	client := &http.Client{}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+
+	// need the token for private repositories
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", ge.defaultToken.Value))
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("error getting label: response status %v", resp.StatusCode)
+	}
+
+	return decodeGithubLabelID(resp.Body)
+}
+
+func decodeGithubLabelID(body io.Reader) (string, error) {
 	aux := struct {
-		ID     int    `json:"id"`
 		NodeID string `json:"node_id"`
-		Color  string `json:"color"`
 	}{}
 
-	data, _ = io.ReadAll(resp.Body)
-	defer resp.Body.Close()
+	data, err := io.ReadAll(body)
+	if err != nil {
+		return "", err
+	}
 
 	err = json.Unmarshal(data, &aux)
 	if err != nil {
@@ -624,6 +672,10 @@ func (ge *githubExporter) getOrCreateGithubLabelID(ctx context.Context, gc *rate
 func (ge *githubExporter) getLabelsIDs(ctx context.Context, gc *rateLimitHandlerClient, repositoryID string, labels []common.Label) ([]githubv4.ID, error) {
 	ids := make([]githubv4.ID, 0, len(labels))
 	var err error
+
+	// holding the lock while creating labels also avoids creating the same label twice
+	ge.labelsMu.Lock()
+	defer ge.labelsMu.Unlock()
 
 	// check labels ids
 	for _, label := range labels {

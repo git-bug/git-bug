@@ -26,7 +26,9 @@ jobs:
   with-go:
     strategy:
       matrix:
-        go-version: [1.26.x, 1.27.x]
+        # Keep the newest Go version and ubuntu-latest first: the first job of
+        # the matrix (strategy.job-index == 0) runs the e2e bridge tests.
+        go-version: [1.27.x, 1.26.x]
         platform: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
     steps:
@@ -60,12 +62,16 @@ jobs:
       - name: Test
         run: make test
         env:
-          GITHUB_USER: ${{ env.TEST_USER_GITHUB }}
-          GITHUB_TOKEN: ${{ secrets.TEST_TOKEN_GITHUB }}
-          GITHUB_TOKEN_PRIVATE: ${{ secrets._GITHUB_TOKEN_PRIVATE }}
-          GITHUB_TOKEN_PUBLIC: ${{ secrets._GITHUB_TOKEN_PUBLIC }}
-          GITLAB_API_TOKEN: ${{ secrets.GITLAB_API_TOKEN }}
-          GITLAB_PROJECT_ID: ${{ secrets.GITLAB_PROJECT_ID }}
+          # The bridge e2e tests talk to the real GitHub and GitLab APIs, and
+          # create and delete repositories on the test accounts. Only run them
+          # on the first matrix job, so that concurrent jobs don't trip rate
+          # limits or step on each other. Other jobs skip them.
+          GITHUB_USER: ${{ strategy.job-index == 0 && vars.TEST_USER_GITHUB || '' }}
+          GITHUB_TOKEN: ${{ strategy.job-index == 0 && secrets._GITHUB_TOKEN_ADMIN || '' }}
+          GITHUB_TOKEN_PRIVATE: ${{ strategy.job-index == 0 && secrets._GITHUB_TOKEN_PRIVATE || '' }}
+          GITHUB_TOKEN_PUBLIC: ${{ strategy.job-index == 0 && secrets._GITHUB_TOKEN_PUBLIC || '' }}
+          GITLAB_API_TOKEN: ${{ strategy.job-index == 0 && secrets.GITLAB_API_TOKEN || '' }}
+          GITLAB_PROJECT_ID: ${{ strategy.job-index == 0 && secrets.GITLAB_PROJECT_ID || '' }}
 
   with-node:
     runs-on: ubuntu-latest
