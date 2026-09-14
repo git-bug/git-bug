@@ -11,6 +11,7 @@ import (
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/misc/random_bugs"
 	"github.com/git-bug/git-bug/query"
 	"github.com/git-bug/git-bug/repository"
 )
@@ -386,6 +387,29 @@ func TestCacheEviction(t *testing.T) {
 	checkBugPresence(t, repoCache, bug3, true)
 	require.Len(t, repoCache.bugs.cached, 2)
 	require.Equal(t, 2, repoCache.bugs.lru.Len())
+}
+
+func TestBuildConcurrentResolve(t *testing.T) {
+	// See https://github.com/git-bug/git-bug/issues/1226
+	// Bugs and identities subcaches are built concurrently, and reading bugs
+	// resolves their authors through the identities subcache.
+
+	repo := repository.CreateGoGitTestRepo(t, false)
+	random_bugs.FillRepoWithSeed(repo, 20, 42)
+
+	repoCache := createTestRepoCacheNoEvents(t, repo)
+
+	for _, id := range repoCache.Bugs().AllIds() {
+		b, err := repoCache.Bugs().Resolve(id)
+		require.NoError(t, err)
+
+		author := b.Snapshot().Author
+		cached, err := repoCache.Identities().Resolve(author.Id())
+		require.NoError(t, err)
+
+		// a single copy of each identity should exist in memory
+		require.Same(t, cached, author)
+	}
 }
 
 func TestLongDescription(t *testing.T) {
