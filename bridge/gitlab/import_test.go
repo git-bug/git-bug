@@ -17,7 +17,6 @@ import (
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/git-bug/git-bug/repository"
-	"github.com/git-bug/git-bug/util/interrupt"
 )
 
 func TestGitlabImport(t *testing.T) {
@@ -37,7 +36,6 @@ func TestGitlabImport(t *testing.T) {
 	require.NoError(t, err)
 
 	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
 
 	author, err := identity.NewIdentity(repo, "Amine Hilaly", "hilalyamine@gmail.com")
 	require.NoError(t, err)

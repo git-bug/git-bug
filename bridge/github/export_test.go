@@ -5,10 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"math/rand"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"testing"
 	"time"
 
@@ -20,7 +23,6 @@ import (
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/git-bug/git-bug/repository"
-	"github.com/git-bug/git-bug/util/interrupt"
 )
 
 const (
@@ -160,7 +162,6 @@ func TestGithubPushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
 
 	// Setup token + cleanup
 	token := auth.NewToken(target, envToken)
@@ -168,40 +169,38 @@ func TestGithubPushPull(t *testing.T) {
 	err = auth.Store(repo, token)
 	require.NoError(t, err)
 
-	cleanToken := func() error {
-		return auth.Remove(repo, token.ID())
-	}
-	defer cleanToken()
-	interrupt.RegisterCleaner(cleanToken)
+	defer auth.Remove(repo, token.ID())
 
 	tests := testCases(t, backend)
+
+	// On interrupt, cancel ctx instead of killing the process, so that the test
+	// fails normally and the cleanups below (removing the Github repository) run.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	t.Cleanup(stop)
 
 	// generate project name
 	projectName := generateRepoName()
 
 	// create target Github repository
-	err = createRepository(projectName, envToken)
+	err = createRepository(ctx, projectName, envToken)
 	require.NoError(t, err)
 
 	slog.Info("created github repository", "name", projectName)
 
-	// Let Github handle the repo creation and update all their internal caches.
-	// Avoid HTTP error 404 retrieving repository node id
-	time.Sleep(10 * time.Second)
-
-	// Make sure to remove the Github repository when the test end
-	defer func(t *testing.T) {
-		if err := deleteRepository(projectName, envUser, envToken); err != nil {
-			t.Fatal(err)
+	// Make sure to remove the Github repository when the test end.
+	// ctx is not used, as it's already canceled after an interrupt.
+	t.Cleanup(func() {
+		if err := deleteRepository(context.Background(), projectName, envUser, envToken); err != nil {
+			t.Error(err)
+			return
 		}
 		fmt.Println("deleted repository:", projectName)
-	}(t)
-
-	interrupt.RegisterCleaner(func() error {
-		return deleteRepository(projectName, envUser, envToken)
 	})
 
-	ctx := context.Background()
+	// Let Github handle the repo creation and update all their internal caches.
+	// Avoid HTTP error 404 retrieving repository node id
+	err = waitRepository(ctx, projectName, envUser, envToken, 60*time.Second)
+	require.NoError(t, err)
 
 	// initialize exporter
 	exporter := &githubExporter{}
@@ -289,7 +288,6 @@ func TestGithubPushPull(t *testing.T) {
 }
 
 func generateRepoName() string {
-	rand.Seed(time.Now().UnixNano())
 	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	b := make([]rune, 8)
 	for i := range b {
@@ -299,7 +297,7 @@ func generateRepoName() string {
 }
 
 // create repository need a token with scope 'repo'
-func createRepository(project, token string) error {
+func createRepository(ctx context.Context, project, token string) error {
 	// This function use the V3 Github API because repository creation is not supported yet on the V4 API.
 	url := fmt.Sprintf("%s/user/repos", githubV3Url)
 
@@ -320,7 +318,7 @@ func createRepository(project, token string) error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
@@ -337,15 +335,60 @@ func createRepository(project, token string) error {
 		return err
 	}
 
-	return resp.Body.Close()
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("error creating repository: %s: %s", resp.Status, body)
+	}
+
+	return nil
+}
+
+// waitRepository polls the V3 API until the repository is visible, as Github
+// can take a moment before a freshly created repository is usable.
+func waitRepository(ctx context.Context, project, owner, token string, timeout time.Duration) error {
+	url := fmt.Sprintf("%s/repos/%s/%s", githubV3Url, owner, project)
+
+	client := &http.Client{
+		Timeout: defaultTimeout,
+	}
+
+	deadline := time.Now().Add(timeout)
+	for {
+		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+
+		resp, err := client.Do(req)
+		if err == nil {
+			_ = resp.Body.Close()
+			if resp.StatusCode == http.StatusOK {
+				return nil
+			}
+			err = fmt.Errorf("unexpected status: %s", resp.Status)
+		}
+
+		if time.Now().After(deadline) {
+			return fmt.Errorf("repository %s/%s not available after %s: %w", owner, project, timeout, err)
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(2 * time.Second):
+		}
+	}
 }
 
 // delete repository need a token with scope 'delete_repo'
-func deleteRepository(project, owner, token string) error {
+func deleteRepository(ctx context.Context, project, owner, token string) error {
 	// This function use the V3 Github API because repository removal is not supported yet on the V4 API.
 	url := fmt.Sprintf("%s/repos/%s/%s", githubV3Url, owner, project)
 
-	req, err := http.NewRequest("DELETE", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
 	if err != nil {
 		return err
 	}
