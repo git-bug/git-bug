@@ -576,10 +576,15 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) MergeAll(remote string) <-chan en
 	go func() {
 		defer close(out)
 
-		author, err := sc.getUserIdentity()
-		if err != nil {
+		// the author is only needed for merge commits, so a user identity is optional
+		user, err := sc.getUserIdentity()
+		if err != nil && !errors.Is(err, identity.ErrNoIdentitySet) {
 			out <- entity.NewMergeError(err, "")
 			return
+		}
+		var author identity.Interface
+		if err == nil {
+			author = user
 		}
 
 		results := sc.actions.MergeAll(sc.repo, sc.resolvers(), remote, author)
