@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"testing"
 	"time"
 
@@ -20,7 +22,6 @@ import (
 	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/repository"
-	"github.com/git-bug/git-bug/util/interrupt"
 )
 
 const (
@@ -162,7 +163,6 @@ func TestGitlabPushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
 
 	token := auth.NewToken(target, envToken)
 	token.SetMetadata(auth.MetaKeyLogin, login)
@@ -172,28 +172,31 @@ func TestGitlabPushPull(t *testing.T) {
 
 	tests := testCases(t, backend)
 
+	// On interrupt, cancel ctx instead of killing the process, so that the test
+	// fails normally and the cleanups below (removing the Gitlab repository) run.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	t.Cleanup(stop)
+
 	// generate project name
 	projectName := generateRepoName()
 
 	// create target Gitlab repository
-	projectID, err := createRepository(context.TODO(), projectName, token)
+	projectID, err := createRepository(ctx, projectName, token)
 	require.NoError(t, err)
 
 	fmt.Printf("created project: %s (%d)\n", projectName, projectID)
 
-	// Make sure to remove the Gitlab repository when the test end
-	defer func(t *testing.T) {
-		if err := deleteRepository(context.TODO(), projectID, token); err != nil {
-			t.Fatal(err)
+	// Make sure to remove the Gitlab repository when the test end.
+	// ctx is not used, as it's already canceled after an interrupt.
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+		defer cancel()
+		if err := deleteRepository(ctx, projectID, token); err != nil {
+			t.Error(err)
+			return
 		}
 		fmt.Printf("deleted repository: %s (%d)\n", projectName, projectID)
-	}(t)
-
-	interrupt.RegisterCleaner(func() error {
-		return deleteRepository(context.TODO(), projectID, token)
 	})
-
-	ctx := context.Background()
 
 	// initialize exporter
 	exporter := &gitlabExporter{}
@@ -281,7 +284,6 @@ func TestGitlabPushPull(t *testing.T) {
 }
 
 func generateRepoName() string {
-	rand.Seed(time.Now().UnixNano())
 	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	b := make([]rune, 8)
 	for i := range b {

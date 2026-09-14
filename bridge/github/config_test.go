@@ -100,9 +100,6 @@ func TestSplitURL(t *testing.T) {
 }
 
 func TestValidateUsername(t *testing.T) {
-	if env := os.Getenv("TRAVIS"); env == "true" {
-		t.Skip("Travis environment: avoiding non authenticated requests")
-	}
 	if _, has := os.LookupEnv("CI"); has {
 		t.Skip("Github action environment: avoiding non authenticated requests")
 	}

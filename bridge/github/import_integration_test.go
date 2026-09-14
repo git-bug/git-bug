@@ -16,7 +16,6 @@ import (
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/repository"
-	"github.com/git-bug/git-bug/util/interrupt"
 )
 
 // using testify/mock and mockery
@@ -39,7 +38,6 @@ func TestGithubImporterIntegration(t *testing.T) {
 	require.NoError(t, err)
 
 	defer backend.Close()
-	interrupt.RegisterCleaner(backend.Close)
 	require.NoError(t, err)
 
 	// act
