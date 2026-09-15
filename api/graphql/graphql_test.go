@@ -290,9 +290,9 @@ func TestGitBrowseQueries(t *testing.T) {
 	c3, err := repo.StoreCommit(rootTreeV3, c2)
 	require.NoError(t, err)
 
-	require.NoError(t, repo.UpdateRef("refs/heads/main", c3))
-	require.NoError(t, repo.UpdateRef("refs/heads/feature", c2))
-	require.NoError(t, repo.UpdateRef("refs/tags/v1.0", c1))
+	require.NoError(t, repo.UpdateRef("refs/heads/main", "", c3))
+	require.NoError(t, repo.UpdateRef("refs/heads/feature", "", c2))
+	require.NoError(t, repo.UpdateRef("refs/tags/v1.0", "", c1))
 
 	// ── set up GraphQL handler ─────────────────────────────────────────────────
 
@@ -533,8 +533,9 @@ func TestGitBrowseQueries(t *testing.T) {
 
 	// ── head ─────────────────────────────────────────────────────────────────
 
-	t.Run("head_detached", func(t *testing.T) {
-		require.NoError(t, repo.UpdateRef("HEAD", c3))
+	t.Run("head", func(t *testing.T) {
+		// a new repository's HEAD points to refs/heads/master
+		require.NoError(t, repo.UpdateRef("refs/heads/master", "", c3))
 		var resp struct {
 			Repository struct {
 				Head struct {
@@ -549,9 +550,9 @@ func TestGitBrowseQueries(t *testing.T) {
 			repository { head { name shortName type hash } }
 		}`, &resp))
 		got := resp.Repository.Head
-		require.Equal(t, "HEAD", got.Name)
-		require.Equal(t, "HEAD", got.ShortName)
-		require.Equal(t, "COMMIT", got.Type)
+		require.Equal(t, "refs/heads/master", got.Name)
+		require.Equal(t, "master", got.ShortName)
+		require.Equal(t, "BRANCH", got.Type)
 		require.Equal(t, string(c3), got.Hash)
 	})
 

@@ -442,7 +442,10 @@ func (e *Entity) CommitAsNeeded(repo repository.ClockedRepo) error {
 	return nil
 }
 
-// Commit write the appended operations in the repository
+// Commit write the appended operations in the repository.
+// The Git reference is only moved if it still points to the last commit this Entity
+// knows about, otherwise repository.ErrRefChanged is returned. On any error, the
+// Entity is left unchanged, with its operations still pending.
 func (e *Entity) Commit(repo repository.ClockedRepo) error {
 	if !e.NeedCommit() {
 		return fmt.Errorf("can't commit an entity with no pending operation")
@@ -453,22 +456,26 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 		return errors.Wrapf(err, "can't commit a %s with invalid data", e.Definition.Typename)
 	}
 
-	for len(e.staging) > 0 {
+	// work on copies, the entity is only updated once the reference is
+	createTime, editTime, lastCommit := e.createTime, e.editTime, e.lastCommit
+	staging := e.staging
+
+	for len(staging) > 0 {
 		var author identity.Interface
 		var toCommit []Operation
 
 		// Split into chunks with the same author
-		for len(e.staging) > 0 {
-			op := e.staging[0]
+		for len(staging) > 0 {
+			op := staging[0]
 			if author != nil && op.Author().Id() != author.Id() {
 				break
 			}
-			author = e.staging[0].Author()
+			author = op.Author()
 			toCommit = append(toCommit, op)
-			e.staging = e.staging[1:]
+			staging = staging[1:]
 		}
 
-		e.editTime, err = repo.Increment(fmt.Sprintf(editClockPattern, e.Namespace))
+		editTime, err = repo.Increment(fmt.Sprintf(editClockPattern, e.Namespace))
 		if err != nil {
 			return err
 		}
@@ -476,39 +483,43 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 		opp := &operationPack{
 			Author:     author,
 			Operations: toCommit,
-			EditTime:   e.editTime,
+			EditTime:   editTime,
 		}
 
-		if e.lastCommit == "" {
-			e.createTime, err = repo.Increment(fmt.Sprintf(creationClockPattern, e.Namespace))
+		if lastCommit == "" {
+			createTime, err = repo.Increment(fmt.Sprintf(creationClockPattern, e.Namespace))
 			if err != nil {
 				return err
 			}
-			opp.CreateTime = e.createTime
+			opp.CreateTime = createTime
 		}
 
 		var parentCommit []repository.Hash
-		if e.lastCommit != "" {
-			parentCommit = []repository.Hash{e.lastCommit}
+		if lastCommit != "" {
+			parentCommit = []repository.Hash{lastCommit}
 		}
 
-		commitHash, err := opp.Write(e.Definition, repo, parentCommit...)
+		lastCommit, err = opp.Write(e.Definition, repo, parentCommit...)
 		if err != nil {
 			return err
 		}
-
-		e.lastCommit = commitHash
-		e.ops = append(e.ops, toCommit...)
 	}
-
-	// not strictly necessary but make equality testing easier in tests
-	e.staging = nil
 
 	// Create or update the Git reference for this entity
 	// When pushing later, the remote will ensure that this ref update
 	// is fast-forward, that is no data has been overwritten.
 	ref := fmt.Sprintf(refsPattern, e.Namespace, e.Id().String())
-	return repo.UpdateRef(ref, e.lastCommit)
+	err = repo.UpdateRef(ref, e.lastCommit, lastCommit)
+	if err != nil {
+		return err
+	}
+
+	e.createTime, e.editTime, e.lastCommit = createTime, editTime, lastCommit
+	e.ops = append(e.ops, e.staging...)
+	// not strictly necessary but make equality testing easier in tests
+	e.staging = nil
+
+	return nil
 }
 
 // CreateLamportTime return the Lamport time of creation
