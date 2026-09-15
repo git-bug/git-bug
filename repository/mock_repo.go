@@ -363,7 +363,10 @@ func (r *mockRepoDataBrowse) ResolveRef(ref string) (Hash, error) {
 	return h, nil
 }
 
-func (r *mockRepoDataBrowse) UpdateRef(ref string, hash Hash) error {
+func (r *mockRepoDataBrowse) UpdateRef(ref string, old Hash, hash Hash) error {
+	if r.refs[ref] != old {
+		return fmt.Errorf("%w: %s", ErrRefChanged, ref)
+	}
 	r.refs[ref] = hash
 	return nil
 }
