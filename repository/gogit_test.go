@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -60,6 +61,71 @@ func TestNewGoGitRepo(t *testing.T) {
 
 func TestGoGitRepo(t *testing.T) {
 	RepoTest(t, CreateGoGitTestRepo)
+}
+
+func TestGoGitRepo_Head(t *testing.T) {
+	repo := CreateGoGitTestRepo(t, false)
+
+	// a new repository's HEAD points to refs/heads/master, which doesn't exist yet
+	_, err := repo.Head()
+	require.ErrorIs(t, err, ErrNotFound)
+
+	blobHash, err := repo.StoreData(randomData())
+	require.NoError(t, err)
+	treeHash, err := repo.StoreTree([]TreeEntry{{ObjectType: Blob, Hash: blobHash, Name: "blob"}})
+	require.NoError(t, err)
+	commit, err := repo.StoreCommit(treeHash)
+	require.NoError(t, err)
+	require.NoError(t, repo.UpdateRef("refs/heads/master", "", commit))
+
+	meta, err := repo.Head()
+	require.NoError(t, err)
+	require.Equal(t, RefMeta{
+		Name:      "refs/heads/master",
+		ShortName: "master",
+		Type:      GitRefTypeBranch,
+		Hash:      string(commit),
+	}, meta)
+}
+
+func TestGoGitRepo_ConcurrentUpdateRef(t *testing.T) {
+	repo := CreateGoGitTestRepo(t, false)
+
+	commits := make([]Hash, 21)
+	for i := range commits {
+		blobHash, err := repo.StoreData(randomData())
+		require.NoError(t, err)
+		treeHash, err := repo.StoreTree([]TreeEntry{{ObjectType: Blob, Hash: blobHash, Name: "blob"}})
+		require.NoError(t, err)
+		commits[i], err = repo.StoreCommit(treeHash)
+		require.NoError(t, err)
+	}
+
+	ref := "refs/concurrent/update"
+	require.NoError(t, repo.UpdateRef(ref, "", commits[0]))
+
+	// every writer moves the ref from the same commit to its own: exactly one must succeed
+	candidates := commits[1:]
+	errs := make([]error, len(candidates))
+	var wg sync.WaitGroup
+	for i, commit := range candidates {
+		wg.Go(func() { errs[i] = repo.UpdateRef(ref, commits[0], commit) })
+	}
+	wg.Wait()
+
+	var winners []Hash
+	for i, err := range errs {
+		if err == nil {
+			winners = append(winners, candidates[i])
+			continue
+		}
+		require.ErrorIs(t, err, ErrRefChanged)
+	}
+	require.Len(t, winners, 1)
+
+	h, err := repo.ResolveRef(ref)
+	require.NoError(t, err)
+	require.Equal(t, winners[0], h)
 }
 
 func TestGoGitRepo_Indexes(t *testing.T) {

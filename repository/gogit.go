@@ -21,6 +21,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	fdiff "github.com/go-git/go-git/v5/plumbing/format/diff"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/storage"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
@@ -741,9 +742,32 @@ func (repo *GoGitRepo) ResolveRef(ref string) (Hash, error) {
 	return Hash(r.Hash().String()), nil
 }
 
-// UpdateRef will create or update a Git reference
-func (repo *GoGitRepo) UpdateRef(ref string, hash Hash) error {
-	return repo.r.Storer.SetReference(plumbing.NewHashReference(plumbing.ReferenceName(ref), plumbing.NewHash(hash.String())))
+// UpdateRef sets a Git reference to hash, only if it currently points to old.
+// An empty old means that the reference must not exist yet.
+// Returns ErrRefChanged otherwise, and the reference is left unchanged.
+func (repo *GoGitRepo) UpdateRef(ref string, old Hash, hash Hash) error {
+	name := plumbing.ReferenceName(ref)
+	newRef := plumbing.NewHashReference(name, plumbing.NewHash(hash.String()))
+
+	if old == "" {
+		// go-git can't express "must not exist" atomically: two concurrent
+		// creations of the same ref can both succeed.
+		exist, err := repo.RefExist(ref)
+		if err != nil {
+			return err
+		}
+		if exist {
+			return fmt.Errorf("%w: %s already exists", ErrRefChanged, ref)
+		}
+		return repo.r.Storer.SetReference(newRef)
+	}
+
+	// go-git holds a lock on the ref file while checking and writing.
+	err := repo.r.Storer.CheckAndSetReference(newRef, plumbing.NewHashReference(name, plumbing.NewHash(old.String())))
+	if errors.Is(err, storage.ErrReferenceHasChanged) || errors.Is(err, plumbing.ErrReferenceNotFound) {
+		return fmt.Errorf("%w: %s", ErrRefChanged, ref)
+	}
+	return err
 }
 
 // RemoveRef will remove a Git reference
