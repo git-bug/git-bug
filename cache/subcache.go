@@ -221,7 +221,9 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() <-chan BuildEvent {
 			Event:    BuildEventStarted,
 		}
 
+		sc.mu.Lock()
 		sc.excerpts = make(map[entity.Id]ExcerptT)
+		sc.mu.Unlock()
 
 		allEntities := sc.actions.ReadAllWithResolver(sc.repo, sc.resolvers())
 
@@ -256,10 +258,18 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() <-chan BuildEvent {
 				return
 			}
 
-			cached := sc.makeCached(e.Entity, sc.entityUpdated)
+			// Other subcaches are built concurrently and can resolve entities of
+			// this one in the meantime, so the maps need to be protected, and an
+			// already loaded copy needs to be kept to avoid duplicates in memory.
+			sc.mu.Lock()
+			cached, ok := sc.cached[e.Entity.Id()]
+			if !ok {
+				cached = sc.makeCached(e.Entity, sc.entityUpdated)
+				// might as well keep them in memory
+				sc.cached[e.Entity.Id()] = cached
+			}
 			sc.excerpts[e.Entity.Id()] = sc.makeExcerpt(cached)
-			// might as well keep them in memory
-			sc.cached[e.Entity.Id()] = cached
+			sc.mu.Unlock()
 
 			indexData := sc.makeIndexData(cached)
 			if err := indexer(e.Entity.Id().String(), indexData); err != nil {
@@ -371,6 +381,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Resolve(id entity.Id) (CacheT, er
 	sc.mu.RLock()
 	cached, ok := sc.cached[id]
 	if ok {
+		// mark as recently used
 		sc.lru.Get(id)
 		sc.mu.RUnlock()
 		return cached, nil
@@ -385,6 +396,13 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Resolve(id entity.Id) (CacheT, er
 	cached = sc.makeCached(e, sc.entityUpdated)
 
 	sc.mu.Lock()
+	if existing, ok := sc.cached[id]; ok {
+		// loaded concurrently in the meantime, keep a single copy in memory
+		// and mark it as recently used
+		sc.lru.Get(id)
+		sc.mu.Unlock()
+		return existing, nil
+	}
 	sc.cached[id] = cached
 	sc.lru.Add(id)
 	sc.mu.Unlock()
@@ -665,6 +683,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) updateExcerptAndIndex(id entity.I
 		// complicated data loss.
 		return errors.New("entity missing from cache")
 	}
+	// mark as recently used
 	sc.lru.Get(id)
 	sc.excerpts[id] = sc.makeExcerpt(e)
 	sc.mu.Unlock()
