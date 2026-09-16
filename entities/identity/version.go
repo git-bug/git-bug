@@ -131,7 +131,11 @@ func (v *version) Clone() *version {
 	clone.nonce = make([]byte, len(v.nonce))
 	copy(clone.nonce, v.nonce)
 
-	// not copying metadata
+	// not copying metadata: a version holds only the metadata set on it, the
+	// accumulation happens when reading (see Identity.ImmutableMetadata). Note
+	// that "clone := *v" above copied the map header, so this has to be reset
+	// explicitly, or both versions would share the same map.
+	clone.metadata = nil
 
 	return &clone
 }
