@@ -263,6 +263,9 @@ func (i *Identity) Mutate(repo repository.RepoClock, f func(orig *Mutator)) erro
 
 // Commit write the identity into the Repository. In particular, this ensures that
 // the Id is properly set.
+// The Git reference is only moved if it still points to the last committed version,
+// otherwise repository.ErrRefChanged is returned. On any error, the new versions
+// are left pending.
 func (i *Identity) Commit(repo repository.ClockedRepo) error {
 	if !i.NeedCommit() {
 		return fmt.Errorf("can't commit an identity with no pending version")
@@ -272,9 +275,11 @@ func (i *Identity) Commit(repo repository.ClockedRepo) error {
 		return errors.Wrap(err, "can't commit an identity with invalid data")
 	}
 
-	var lastCommit repository.Hash
+	var oldCommit, lastCommit repository.Hash
+	newCommits := make(map[*version]repository.Hash)
 	for _, v := range i.versions {
 		if v.commitHash != "" {
+			oldCommit = v.commitHash
 			lastCommit = v.commitHash
 			// ignore already commit versions
 			continue
@@ -306,11 +311,21 @@ func (i *Identity) Commit(repo repository.ClockedRepo) error {
 		}
 
 		lastCommit = commitHash
-		v.commitHash = commitHash
+		newCommits[v] = commitHash
 	}
 
 	ref := fmt.Sprintf("%s%s", identityRefPattern, i.Id().String())
-	return repo.UpdateRef(ref, lastCommit)
+	err := repo.UpdateRef(ref, oldCommit, lastCommit)
+	if err != nil {
+		return err
+	}
+
+	// only mark the versions as committed once the reference is updated
+	for v, commitHash := range newCommits {
+		v.commitHash = commitHash
+	}
+
+	return nil
 }
 
 func (i *Identity) CommitAsNeeded(repo repository.ClockedRepo) error {
@@ -357,14 +372,15 @@ func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
 		return false, errors.New("merging unrelated identities is not supported")
 	}
 
-	modified := false
+	oldCommit := i.lastVersion().commitHash
+	var newVersions []*version
 	var lastCommit repository.Hash
 	for j, otherVersion := range other.versions {
 		// if there is more version in other, take them
-		if len(i.versions) == j {
-			i.versions = append(i.versions, otherVersion)
+		if j >= len(i.versions) {
+			newVersions = append(newVersions, otherVersion)
 			lastCommit = otherVersion.commitHash
-			modified = true
+			continue
 		}
 
 		// we have a non fast-forward merge.
@@ -374,11 +390,14 @@ func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
 		}
 	}
 
-	if modified {
-		err := repo.UpdateRef(identityRefPattern+i.Id().String(), lastCommit)
+	if len(newVersions) > 0 {
+		err := repo.UpdateRef(identityRefPattern+i.Id().String(), oldCommit, lastCommit)
 		if err != nil {
 			return false, err
 		}
+
+		// only take the new versions once the reference is updated
+		i.versions = append(i.versions, newVersions...)
 	}
 
 	return false, nil

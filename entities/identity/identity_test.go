@@ -116,6 +116,34 @@ func TestIdentityMutate(t *testing.T) {
 	require.Equal(t, identity.Login(), "rene")
 }
 
+func TestIdentityCommitStaleCopy(t *testing.T) {
+	repo := makeIdentityTestRepo(t)
+
+	identity, err := NewIdentity(repo, "René Descartes", "rene.descartes@example.com")
+	require.NoError(t, err)
+	require.NoError(t, identity.Commit(repo))
+
+	copy1, err := ReadLocal(repo, identity.Id())
+	require.NoError(t, err)
+	copy2, err := ReadLocal(repo, identity.Id())
+	require.NoError(t, err)
+
+	require.NoError(t, copy1.Mutate(repo, func(orig *Mutator) { orig.Name = "René" }))
+	require.NoError(t, copy1.Commit(repo))
+
+	require.NoError(t, copy2.Mutate(repo, func(orig *Mutator) { orig.Login = "rene" }))
+	require.ErrorIs(t, copy2.Commit(repo), repository.ErrRefChanged)
+
+	// the stale copy keeps its new version pending
+	require.True(t, copy2.NeedCommit())
+
+	loaded, err := ReadLocal(repo, identity.Id())
+	require.NoError(t, err)
+	require.Len(t, loaded.versions, 2)
+	require.Equal(t, "René", loaded.Name())
+	require.Empty(t, loaded.Login())
+}
+
 func commitsAreSet(t *testing.T, identity *Identity) {
 	for _, version := range identity.versions {
 		require.NotEmpty(t, version.commitHash)

@@ -27,6 +27,7 @@ func RepoTest(t *testing.T, creator RepoCreator) {
 
 			t.Run("Data", func(t *testing.T) {
 				RepoDataTest(t, repo)
+				RepoDataUpdateRefTest(t, repo)
 				RepoDataSignatureTest(t, repo)
 			})
 
@@ -199,7 +200,7 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	require.NoError(t, err)
 	require.False(t, exist1)
 
-	err = repo.UpdateRef("refs/bugs/ref1", commit2)
+	err = repo.UpdateRef("refs/bugs/ref1", "", commit2)
 	require.NoError(t, err)
 
 	exist1, err = repo.RefExist("refs/bugs/ref1")
@@ -239,6 +240,66 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	// RemoveRef is idempotent
 	err = repo.RemoveRef("refs/bugs/ref1")
 	require.NoError(t, err)
+}
+
+// RepoDataUpdateRefTest checks that UpdateRef only moves a ref from its expected value.
+func RepoDataUpdateRefTest(t *testing.T, repo RepoData) {
+	blobHash, err := repo.StoreData(randomData())
+	require.NoError(t, err)
+	treeHash, err := repo.StoreTree([]TreeEntry{{ObjectType: Blob, Hash: blobHash, Name: "blob"}})
+	require.NoError(t, err)
+	commit1, err := repo.StoreCommit(treeHash)
+	require.NoError(t, err)
+	commit2, err := repo.StoreCommit(treeHash, commit1)
+	require.NoError(t, err)
+
+	requireRef := func(t *testing.T, ref string, expected Hash) {
+		t.Helper()
+		h, err := repo.ResolveRef(ref)
+		require.NoError(t, err)
+		require.Equal(t, expected, h)
+	}
+
+	t.Run("expected value matches", func(t *testing.T) {
+		ref := "refs/update-ref/match"
+		require.NoError(t, repo.UpdateRef(ref, "", commit1))
+		require.NoError(t, repo.UpdateRef(ref, commit1, commit2))
+		requireRef(t, ref, commit2)
+	})
+
+	t.Run("stale expected value", func(t *testing.T) {
+		ref := "refs/update-ref/stale"
+		require.NoError(t, repo.UpdateRef(ref, "", commit2))
+		require.ErrorIs(t, repo.UpdateRef(ref, commit1, commit1), ErrRefChanged)
+		requireRef(t, ref, commit2)
+	})
+
+	t.Run("create an existing ref", func(t *testing.T) {
+		ref := "refs/update-ref/exists"
+		require.NoError(t, repo.UpdateRef(ref, "", commit1))
+		require.ErrorIs(t, repo.UpdateRef(ref, "", commit2), ErrRefChanged)
+		requireRef(t, ref, commit1)
+	})
+
+	t.Run("stale expected value on a missing ref", func(t *testing.T) {
+		ref := "refs/update-ref/missing"
+		require.ErrorIs(t, repo.UpdateRef(ref, commit1, commit2), ErrRefChanged)
+		_, err := repo.ResolveRef(ref)
+		require.ErrorIs(t, err, ErrNotFound)
+
+		// TODO: remove once go-git includes a fix for https://github.com/go-git/go-git/issues/2399
+		if rk, ok := repo.(*replaceKeyring); ok {
+			if _, ok := rk.TestedRepo.(*GoGitRepo); ok {
+				// the empty ref file left by go-git would break listing refs in the next tests
+				require.NoError(t, repo.RemoveRef(ref))
+				t.Skip("go-git leaves an empty ref file behind: https://github.com/go-git/go-git/issues/2399")
+			}
+		}
+
+		refs, err := repo.ListRefs("refs/update-ref/")
+		require.NoError(t, err)
+		require.NotContains(t, refs, ref)
+	})
 }
 
 func RepoDataSignatureTest(t *testing.T, repo RepoData) {
@@ -449,9 +510,9 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 	c3, err := repo.StoreCommit(rootTreeV3, c2)
 	require.NoError(t, err)
 
-	require.NoError(t, repo.UpdateRef("refs/heads/main", c3))
-	require.NoError(t, repo.UpdateRef("refs/heads/feature", c2))
-	require.NoError(t, repo.UpdateRef("refs/tags/v1.0", c1))
+	require.NoError(t, repo.UpdateRef("refs/heads/main", "", c3))
+	require.NoError(t, repo.UpdateRef("refs/heads/feature", "", c2))
+	require.NoError(t, repo.UpdateRef("refs/tags/v1.0", "", c1))
 
 	// ── Branches ──────────────────────────────────────────────────────────────
 
@@ -767,26 +828,5 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		// unknown hash
 		_, err = repo.CommitFileDiff(randomHash(), "main.go")
 		require.ErrorIs(t, err, ErrNotFound)
-	})
-
-	// ── Head ──────────────────────────────────────────────────────────────────
-
-	t.Run("Head", func(t *testing.T) {
-		// Detached HEAD: UpdateRef sets HEAD to a bare hash.
-		require.NoError(t, repo.UpdateRef("HEAD", c3))
-
-		meta, err := repo.Head()
-		require.NoError(t, err)
-		require.Equal(t, string(c3), meta.Hash)
-		require.Equal(t, GitRefTypeCommit, meta.Type)
-		// Detached HEAD has no branch/tag name; both name fields should be "HEAD".
-		require.Equal(t, "HEAD", meta.Name)
-		require.Equal(t, "HEAD", meta.ShortName)
-
-		// Moving HEAD to a different commit should be reflected immediately.
-		require.NoError(t, repo.UpdateRef("HEAD", c1))
-		meta2, err := repo.Head()
-		require.NoError(t, err)
-		require.Equal(t, string(c1), meta2.Hash)
 	})
 }

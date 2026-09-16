@@ -175,7 +175,7 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 	fastForwardPossible := slices.Contains(remoteCommits, localCommit)
 
 	if fastForwardPossible {
-		err = repo.UpdateRef(localRef, remoteCommit)
+		err = repo.UpdateRef(localRef, localCommit, remoteCommit)
 		if err != nil {
 			return entity.NewMergeError(err, id)
 		}
@@ -221,7 +221,7 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 	}
 
 	// finally update the ref
-	err = repo.UpdateRef(localRef, commitHash)
+	err = repo.UpdateRef(localRef, localCommit, commitHash)
 	if err != nil {
 		return entity.NewMergeError(err, id)
 	}
