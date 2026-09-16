@@ -2,6 +2,7 @@ package cache
 
 import (
 	"encoding/gob"
+	"slices"
 	"time"
 
 	"github.com/git-bug/git-bug/entities/common"
@@ -57,7 +58,7 @@ func NewBugExcerpt(b *BugCache) *BugExcerpt {
 		EditUnixTime:      snap.EditTime().Unix(),
 		AuthorId:          snap.Author.Id(),
 		Status:            snap.Status,
-		Labels:            snap.Labels,
+		Labels:            slices.Clone(snap.Labels), // don't share the map
 		Actors:            actorsIds,
 		Participants:      participantsIds,
 		Title:             snap.Title,
