@@ -241,6 +241,40 @@ func TestMetadata(t *testing.T) {
 	require.Len(t, identity.versions, versionCount+1)
 }
 
+// Test that setting metadata after a commit doesn't change the committed version
+func TestMetadataAfterCommit(t *testing.T) {
+	repo := makeIdentityTestRepo(t)
+
+	identity, err := NewIdentity(repo, "René Descartes", "rene.descartes@example.com")
+	require.NoError(t, err)
+
+	identity.SetMetadata("key1", "value1")
+	err = identity.Commit(repo)
+	require.NoError(t, err)
+
+	// the last version is commit, so a new one is created to hold the new value
+	versionCount := len(identity.versions)
+	identity.SetMetadata("key1", "value2")
+	require.Len(t, identity.versions, versionCount+1)
+
+	// each version holds only the value that was set on it
+	assertHasKeyValue(t, identity.versions[versionCount-1].AllMetadata(), "key1", "value1")
+	assertHasKeyValue(t, identity.versions[versionCount].AllMetadata(), "key1", "value2")
+
+	assertHasKeyValue(t, identity.ImmutableMetadata(), "key1", "value1")
+	assertHasKeyValue(t, identity.MutableMetadata(), "key1", "value2")
+
+	// and what we read back from git says the same thing
+	err = identity.Commit(repo)
+	require.NoError(t, err)
+
+	loaded, err := ReadLocal(repo, identity.Id())
+	require.NoError(t, err)
+
+	assertHasKeyValue(t, loaded.ImmutableMetadata(), "key1", "value1")
+	assertHasKeyValue(t, loaded.MutableMetadata(), "key1", "value2")
+}
+
 func assertHasKeyValue(t *testing.T, metadata map[string]string, key, value string) {
 	val, ok := metadata[key]
 	require.True(t, ok)
