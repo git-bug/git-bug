@@ -605,6 +605,28 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) MergeAll(remote string) <-chan en
 			author = user
 		}
 
+		index, err := sc.repo.GetIndex(sc.namespace)
+		if err != nil {
+			out <- entity.NewMergeError(err, "")
+			return
+		}
+
+		// merge a single entity in the cache and its views. The excerpt file is
+		// not written here, it's written once for all the merged entities.
+		updateCache := func(result entity.MergeResult) error {
+			e := result.Entity.(EntityT)
+			cached := sc.makeCached(e, sc.entityUpdated)
+
+			sc.mu.Lock()
+			sc.excerpts[result.Id] = sc.makeExcerpt(cached)
+			// might as well keep them in memory
+			sc.cached[result.Id] = cached
+			sc.mu.Unlock()
+
+			// index before notifying, so that an observer can already search it
+			return index.IndexOne(result.Id.String(), sc.makeIndexData(cached))
+		}
+
 		results := sc.actions.MergeAll(sc.repo, sc.resolvers(), remote, author)
 		for result := range results {
 			out <- result
@@ -615,26 +637,18 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) MergeAll(remote string) <-chan en
 
 			switch result.Status {
 			case entity.MergeStatusNew:
-				e := result.Entity.(EntityT)
-				cached := sc.makeCached(e, sc.entityUpdated)
-
-				sc.mu.Lock()
-				sc.excerpts[result.Id] = sc.makeExcerpt(cached)
-				// might as well keep them in memory
-				sc.cached[result.Id] = cached
-				sc.mu.Unlock()
+				if err := updateCache(result); err != nil {
+					out <- entity.NewMergeError(err, result.Id)
+					continue
+				}
 				sc.notifyObservers(EntityEventCreated, result.Id)
 
 			case entity.MergeStatusUpdated:
 				// TODO: can that result in multiple copy of the same entity?
-				e := result.Entity.(EntityT)
-				cached := sc.makeCached(e, sc.entityUpdated)
-
-				sc.mu.Lock()
-				sc.excerpts[result.Id] = sc.makeExcerpt(cached)
-				// might as well keep them in memory
-				sc.cached[result.Id] = cached
-				sc.mu.Unlock()
+				if err := updateCache(result); err != nil {
+					out <- entity.NewMergeError(err, result.Id)
+					continue
+				}
 				sc.notifyObservers(EntityEventUpdated, result.Id)
 			}
 		}

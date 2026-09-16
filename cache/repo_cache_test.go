@@ -290,6 +290,67 @@ func TestCachePushPull(t *testing.T) {
 	require.Len(t, cacheA.Bugs().AllIds(), 2)
 }
 
+// Entities created or updated by a merge must be indexed for full-text search,
+// the same way as entities created or changed locally.
+func TestCacheMergeIndex(t *testing.T) {
+	repoA, repoB, _ := repository.SetupGoGitReposAndRemote(t)
+
+	cacheA := createTestRepoCacheNoEvents(t, repoA)
+	cacheB := createTestRepoCacheNoEvents(t, repoB)
+
+	reneA, err := cacheA.Identities().New("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	err = cacheA.SetUserIdentity(reneA)
+	require.NoError(t, err)
+
+	search := func(t *testing.T, cache *RepoCache, term string) []entity.Id {
+		t.Helper()
+		q, err := query.Parse(term)
+		require.NoError(t, err)
+		res, err := cache.Bugs().Query(q)
+		require.NoError(t, err)
+		return res
+	}
+
+	// A creates a bug holding a unique marker
+	bugA, _, err := cacheA.Bugs().New("title", "markercreate")
+	require.NoError(t, err)
+
+	_, err = cacheA.Push("origin")
+	require.NoError(t, err)
+
+	// a bug merged as new is searchable in B
+	err = cacheB.Pull("origin")
+	require.NoError(t, err)
+	require.Equal(t, []entity.Id{bugA.Id()}, search(t, cacheB, "markercreate"))
+
+	// A adds a comment holding a second marker
+	_, _, err = bugA.AddComment("markerupdate")
+	require.NoError(t, err)
+	err = bugA.Commit()
+	require.NoError(t, err)
+
+	_, err = cacheA.Push("origin")
+	require.NoError(t, err)
+
+	// the new text of a bug merged as updated is searchable in B
+	err = cacheB.Pull("origin")
+	require.NoError(t, err)
+	require.Equal(t, []entity.Id{bugA.Id()}, search(t, cacheB, "markerupdate"))
+
+	// the index of B is complete, so a restart doesn't need to rebuild it
+	indexCount := func(t *testing.T, name string) uint64 {
+		t.Helper()
+		idx, err := repoB.GetIndex(name)
+		require.NoError(t, err)
+		count, err := idx.DocCount()
+		require.NoError(t, err)
+		return count
+	}
+	require.Equal(t, uint64(len(cacheB.Bugs().AllIds())), indexCount(t, bug.Namespace))
+	require.Equal(t, uint64(len(cacheB.Identities().AllIds())), indexCount(t, identity.Namespace))
+}
+
 // Pulling into a fresh repo must not require a user identity, otherwise it's
 // impossible to adopt an identity that only exists on the remote.
 // See https://github.com/git-bug/git-bug/issues/1003
