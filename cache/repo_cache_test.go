@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -288,6 +289,152 @@ func TestCachePushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, cacheA.Bugs().AllIds(), 2)
+}
+
+// searchObserver records the events it receives, and whether the entity could
+// already be found by a full-text search for term when the event was received.
+type searchObserver struct {
+	cache  *RepoCache
+	term   string
+	events []searchEvent
+}
+
+type searchEvent struct {
+	event EntityEventType
+	id    entity.Id
+	found bool
+}
+
+func (o *searchObserver) EntityEvent(event EntityEventType, _ string, _ string, id entity.Id) {
+	// no require here, as this doesn't run in the test goroutine
+	found := false
+	q, err := query.Parse(o.term)
+	if err == nil {
+		res, err := o.cache.Bugs().Query(q)
+		found = err == nil && slices.Contains(res, id)
+	}
+	o.events = append(o.events, searchEvent{event: event, id: id, found: found})
+}
+
+// watch resets the recorded events, and sets the term to search for.
+func (o *searchObserver) watch(term string) {
+	o.term = term
+	o.events = nil
+}
+
+// Entities created or updated by a merge must be up to date in the excerpts and
+// the full-text index by the time observers are notified, the same way as
+// entities created or changed locally.
+func TestCacheMerge(t *testing.T) {
+	repoA, repoB, _ := repository.SetupGoGitReposAndRemote(t)
+
+	cacheA := createTestRepoCacheNoEvents(t, repoA)
+	cacheB := createTestRepoCacheNoEvents(t, repoB)
+
+	reneA, err := cacheA.Identities().New("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	err = cacheA.SetUserIdentity(reneA)
+	require.NoError(t, err)
+
+	search := func(t *testing.T, cache *RepoCache, term string) []entity.Id {
+		t.Helper()
+		q, err := query.Parse(term)
+		require.NoError(t, err)
+		res, err := cache.Bugs().Query(q)
+		require.NoError(t, err)
+		return res
+	}
+
+	obs := &searchObserver{cache: cacheB}
+	require.NoError(t, cacheB.registerObserver("repotest", bug.Typename, obs))
+
+	// A creates a bug holding a unique marker
+	bugA, _, err := cacheA.Bugs().New("title", "markercreate")
+	require.NoError(t, err)
+
+	_, err = cacheA.Push("origin")
+	require.NoError(t, err)
+
+	// a bug merged as new is searchable in B, already when observers are notified
+	obs.watch("markercreate")
+	err = cacheB.Pull("origin")
+	require.NoError(t, err)
+	require.Equal(t, []entity.Id{bugA.Id()}, search(t, cacheB, "markercreate"))
+	require.Equal(t, []searchEvent{{EntityEventCreated, bugA.Id(), true}}, obs.events)
+
+	// A adds a comment holding a second marker
+	_, _, err = bugA.AddComment("markerupdate")
+	require.NoError(t, err)
+	err = bugA.Commit()
+	require.NoError(t, err)
+
+	_, err = cacheA.Push("origin")
+	require.NoError(t, err)
+
+	// the new text of a bug merged as updated is searchable in B, already when
+	// observers are notified
+	obs.watch("markerupdate")
+	err = cacheB.Pull("origin")
+	require.NoError(t, err)
+	require.Equal(t, []entity.Id{bugA.Id()}, search(t, cacheB, "markerupdate"))
+	require.Equal(t, []searchEvent{{EntityEventUpdated, bugA.Id(), true}}, obs.events)
+
+	// a merge commit requires a user identity in B
+	reneB, err := cacheB.Identities().Resolve(reneA.Id())
+	require.NoError(t, err)
+	err = cacheB.SetUserIdentity(reneB)
+	require.NoError(t, err)
+
+	// A comments and closes the bug while B comments, so B needs a merge commit
+	_, _, err = bugA.AddComment("markerremote")
+	require.NoError(t, err)
+	_, err = bugA.Close()
+	require.NoError(t, err)
+	err = bugA.Commit()
+	require.NoError(t, err)
+
+	_, err = cacheA.Push("origin")
+	require.NoError(t, err)
+
+	bugB, err := cacheB.Bugs().Resolve(bugA.Id())
+	require.NoError(t, err)
+	_, _, err = bugB.AddComment("markerlocal")
+	require.NoError(t, err)
+	err = bugB.Commit()
+	require.NoError(t, err)
+
+	// the text of both sides of a merge commit is searchable in B, already when
+	// observers are notified
+	obs.watch("markerremote")
+	err = cacheB.Pull("origin")
+	require.NoError(t, err)
+	require.Equal(t, []entity.Id{bugA.Id()}, search(t, cacheB, "markerremote"))
+	require.Equal(t, []entity.Id{bugA.Id()}, search(t, cacheB, "markerlocal"))
+	require.Equal(t, []searchEvent{{EntityEventUpdated, bugA.Id(), true}}, obs.events)
+
+	// the excerpt holds the merged state as well
+	require.Equal(t, []entity.Id{bugA.Id()}, search(t, cacheB, "status:closed"))
+
+	// the merged bug can still be changed in B
+	bugB, err = cacheB.Bugs().Resolve(bugA.Id())
+	require.NoError(t, err)
+	_, _, err = bugB.AddComment("markeraftermerge")
+	require.NoError(t, err)
+	err = bugB.Commit()
+	require.NoError(t, err)
+
+	// the index count matches the excerpts, so the next load won't detect a
+	// mismatch and rebuild the cache
+	indexCount := func(t *testing.T, name string) uint64 {
+		t.Helper()
+		idx, err := repoB.GetIndex(name)
+		require.NoError(t, err)
+		count, err := idx.DocCount()
+		require.NoError(t, err)
+		return count
+	}
+	require.Equal(t, uint64(len(cacheB.Bugs().AllIds())), indexCount(t, bug.Namespace))
+	require.Equal(t, uint64(len(cacheB.Identities().AllIds())), indexCount(t, identity.Namespace))
 }
 
 // Pulling into a fresh repo must not require a user identity, otherwise it's
