@@ -488,18 +488,20 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 
 			if result.Err != nil {
 				g.Update(func(gui *gocui.Gui) error {
-					ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
+					ui.msgPopup.Activate(msgPopupErrorTitle, result.Err.Error())
 					return nil
 				})
 			} else {
 				_, _ = fmt.Fprintf(&buffer, "%s%s: %s",
-					beginLine, colors.Cyan(result.Entity.Id().Human()), result,
+					beginLine, colors.Cyan(result.Id.Human()), result,
 				)
 
 				beginLine = "\n"
 
+				// the update runs in the UI goroutine, so it gets a copy of the buffer
+				msg := buffer.String()
 				g.Update(func(gui *gocui.Gui) error {
-					ui.msgPopup.UpdateMessage(buffer.String())
+					ui.msgPopup.UpdateMessage(msg)
 					return nil
 				})
 			}
@@ -507,8 +509,9 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 
 		_, _ = fmt.Fprintf(&buffer, "%sdone", beginLine)
 
+		msg := buffer.String()
 		g.Update(func(gui *gocui.Gui) error {
-			ui.msgPopup.UpdateMessage(buffer.String())
+			ui.msgPopup.UpdateMessage(msg)
 			return nil
 		})
 
