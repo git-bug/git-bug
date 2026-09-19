@@ -619,8 +619,14 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) MergeAll(remote string) <-chan en
 
 			sc.mu.Lock()
 			sc.excerpts[result.Id] = sc.makeExcerpt(cached)
-			// might as well keep them in memory
-			sc.cached[result.Id] = cached
+			// If the entity is already loaded, replace it with the merged version,
+			// otherwise the loaded copy would be outdated.
+			// If it's not loaded, don't load it: a merge is not a use of the entity,
+			// and adding it to the LRU could evict entities that are actually in use.
+			// The downside is that the entity is read again from git when needed.
+			if _, loaded := sc.cached[result.Id]; loaded {
+				sc.cached[result.Id] = cached
+			}
 			sc.mu.Unlock()
 
 			// index before notifying, so that an observer can already search it

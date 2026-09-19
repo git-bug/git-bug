@@ -471,12 +471,13 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 				ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
 				return nil
 			})
-		} else {
-			g.Update(func(gui *gocui.Gui) error {
-				ui.msgPopup.UpdateMessage(stdout)
-				return nil
-			})
+			return
 		}
+
+		g.Update(func(gui *gocui.Gui) error {
+			ui.msgPopup.UpdateMessage(stdout)
+			return nil
+		})
 
 		var buffer bytes.Buffer
 		beginLine := ""
@@ -487,28 +488,34 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 			}
 
 			if result.Err != nil {
-				g.Update(func(gui *gocui.Gui) error {
-					ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
-					return nil
-				})
+				_, _ = fmt.Fprintf(&buffer, "%s%s", beginLine, colors.Red(result))
 			} else {
 				_, _ = fmt.Fprintf(&buffer, "%s%s: %s",
-					beginLine, colors.Cyan(result.Entity.Id().Human()), result,
+					beginLine, colors.Cyan(result.Id.Human()), result,
 				)
-
-				beginLine = "\n"
-
-				g.Update(func(gui *gocui.Gui) error {
-					ui.msgPopup.UpdateMessage(buffer.String())
-					return nil
-				})
 			}
+
+			beginLine = "\n"
+
+			// the update runs in the UI goroutine, so it gets a copy of the buffer
+			msg := buffer.String()
+			failed := result.Err != nil
+			g.Update(func(gui *gocui.Gui) error {
+				if failed {
+					// switch to the error title, which later updates keep
+					ui.msgPopup.Activate(msgPopupErrorTitle, msg)
+				} else {
+					ui.msgPopup.UpdateMessage(msg)
+				}
+				return nil
+			})
 		}
 
 		_, _ = fmt.Fprintf(&buffer, "%sdone", beginLine)
 
+		msg := buffer.String()
 		g.Update(func(gui *gocui.Gui) error {
-			ui.msgPopup.UpdateMessage(buffer.String())
+			ui.msgPopup.UpdateMessage(msg)
 			return nil
 		})
 

@@ -52,7 +52,7 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 		remoteRefs, err := repo.ListRefs(remoteRefSpec)
 
 		if err != nil {
-			out <- entity.MergeResult{Err: err}
+			out <- entity.NewMergeError(err, "")
 			return
 		}
 
