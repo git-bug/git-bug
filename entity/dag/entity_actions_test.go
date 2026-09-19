@@ -488,6 +488,11 @@ func TestMergeConcurrentReturnsMergedEntity(t *testing.T) {
 
 	merged := all[0].Entity.(*Foo)
 
+	// same operations, order, clocks and last commit as a later read
+	fresh, err := Read(def, wrapper, repoB, resolvers, eA.Id())
+	require.NoError(t, err)
+	assertEqualEntities(t, fresh.Entity, merged.Entity)
+
 	var fields []string
 	for _, op := range merged.Operations() {
 		fields = append(fields, op.(*op1).Field1)
@@ -496,6 +501,86 @@ func TestMergeConcurrentReturnsMergedEntity(t *testing.T) {
 
 	merged.Append(newOp1(id1, "after"))
 	require.NoError(t, merged.Commit(repoB))
+}
+
+// Invalid remote data must never reach the local entities, whether the merge
+// would create, fast-forward or join the local entity with a merge commit.
+func TestMergeInvalidRemote(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		existing bool // the entity already exists locally
+		diverged bool // the local entity has new commits
+	}{
+		{name: "new"},
+		{name: "fast-forward", existing: true},
+		{name: "merge commit", existing: true, diverged: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			repoA, repoB, _, id1, _, resolvers, def := makeTestContextRemote(t)
+
+			eA := New(def)
+			eA.Append(newOp1(id1, "foo"))
+			require.NoError(t, eA.Commit(repoA))
+
+			if tc.existing {
+				_, err := Push(def, repoA, "remote")
+				require.NoError(t, err)
+				_, err = Fetch(def, repoB, "remote")
+				require.NoError(t, err)
+				for result := range MergeAll(def, wrapper, repoB, resolvers, "remote", id1) {
+					require.NoError(t, result.Err)
+				}
+			}
+
+			if tc.diverged {
+				eB, err := Read(def, wrapper, repoB, resolvers, eA.Id())
+				require.NoError(t, err)
+				eB.Append(newOp1(id1, "bar"))
+				require.NoError(t, eB.Commit(repoB))
+			}
+
+			localRef := "refs/" + def.Namespace + "/" + eA.Id().String()
+
+			// A adds a commit whose edit time isn't after its parent's, which is
+			// illegal for any entity. Entity.Commit always takes a fresh edit time,
+			// so the operationPack is written directly.
+			opp := &operationPack{
+				Author:     id1,
+				Operations: []Operation{newOp1(id1, "baz")},
+				EditTime:   eA.editTime,
+			}
+			forged, err := opp.Write(def, repoA, eA.lastCommit)
+			require.NoError(t, err)
+			require.NoError(t, repoA.UpdateRef(localRef, eA.lastCommit, forged))
+
+			_, err = Push(def, repoA, "remote")
+			require.NoError(t, err)
+			_, err = Fetch(def, repoB, "remote")
+			require.NoError(t, err)
+
+			resolveLocal := func() repository.Hash {
+				hash, err := repoB.ResolveRef(localRef)
+				if err == repository.ErrNotFound {
+					return ""
+				}
+				require.NoError(t, err)
+				return hash
+			}
+			before := resolveLocal()
+
+			var all []entity.MergeResult
+			for result := range MergeAll(def, wrapper, repoB, resolvers, "remote", id1) {
+				all = append(all, result)
+			}
+			require.Len(t, all, 1)
+			require.NoError(t, all[0].Err)
+			require.Equal(t, eA.Id(), all[0].Id)
+			require.Equal(t, entity.MergeStatusInvalid, all[0].Status)
+			require.Contains(t, all[0].Reason, "lamport clock ordering doesn't match the DAG")
+
+			require.Equal(t, before, resolveLocal())
+		})
+	}
 }
 
 // Merging when there is nothing to merge in is the most common case, and must
