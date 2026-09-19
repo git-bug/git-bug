@@ -54,12 +54,12 @@ func Pull[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 // MergeAll will merge all the available remote Entity:
 //
 // Multiple scenario exist:
-//  1. if the remote Entity doesn't exist locally, it's created
+//  1. if the remote and local Entity have the same state, nothing is changed
+//     --> emit entity.MergeStatusNothing
+//  2. if the local Entity has new commits but the remote don't, nothing is changed
+//     --> emit entity.MergeStatusNothing
+//  3. if the remote Entity doesn't exist locally, it's created
 //     --> emit entity.MergeStatusNew
-//  2. if the remote and local Entity have the same state, nothing is changed
-//     --> emit entity.MergeStatusNothing
-//  3. if the local Entity has new commits but the remote don't, nothing is changed
-//     --> emit entity.MergeStatusNothing
 //  4. if the remote has new commit, the local bug is updated to match the same history
 //     (fast-forward update)
 //     --> emit entity.MergeStatusUpdated
@@ -100,6 +100,50 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 		return entity.NewMergeInvalidStatus(id, errors.Wrap(err, "invalid ref").Error())
 	}
 
+	localRef := fmt.Sprintf("refs/%s/%s", def.Namespace, id.String())
+
+	remoteCommit, err := repo.ResolveRef(remoteRef)
+	if err != nil {
+		return entity.NewMergeError(err, id)
+	}
+
+	localExist, err := repo.RefExist(localRef)
+	if err != nil {
+		return entity.NewMergeError(err, id)
+	}
+
+	// Scenarios 1 and 2 don't change anything, so they are checked before reading
+	// the remote Entity as there is no need to pay for it. Scenario 1 is by far
+	// the most common case.
+
+	var localCommit repository.Hash
+	if localExist {
+		localCommit, err = repo.ResolveRef(localRef)
+		if err != nil {
+			return entity.NewMergeError(err, id)
+		}
+
+		// SCENARIO 1
+		// if the remote and local Entity have the same state, nothing is changed
+
+		if localCommit == remoteCommit {
+			// nothing to merge
+			return entity.NewMergeNothingStatus(id)
+		}
+
+		// SCENARIO 2
+		// if the local Entity has new commits but the remote don't, nothing is changed
+
+		localCommits, err := repo.ListCommits(localRef)
+		if err != nil {
+			return entity.NewMergeError(err, id)
+		}
+
+		if slices.Contains(localCommits, remoteCommit) {
+			return entity.NewMergeNothingStatus(id)
+		}
+	}
+
 	remoteEntity, err := read[EntityT](def, wrapper, repo, resolvers, remoteRef)
 	if err != nil {
 		return entity.NewMergeInvalidStatus(id,
@@ -112,15 +156,8 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 			errors.Wrapf(err, "remote %s data is invalid", def.Typename).Error())
 	}
 
-	localRef := fmt.Sprintf("refs/%s/%s", def.Namespace, id.String())
-
-	// SCENARIO 1
+	// SCENARIO 3
 	// if the remote Entity doesn't exist locally, it's created
-
-	localExist, err := repo.RefExist(localRef)
-	if err != nil {
-		return entity.NewMergeError(err, id)
-	}
 
 	if !localExist {
 		// the bug is not local yet, simply create the reference
@@ -130,36 +167,6 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 		}
 
 		return entity.NewMergeNewStatus(id, remoteEntity)
-	}
-
-	localCommit, err := repo.ResolveRef(localRef)
-	if err != nil {
-		return entity.NewMergeError(err, id)
-	}
-
-	remoteCommit, err := repo.ResolveRef(remoteRef)
-	if err != nil {
-		return entity.NewMergeError(err, id)
-	}
-
-	// SCENARIO 2
-	// if the remote and local Entity have the same state, nothing is changed
-
-	if localCommit == remoteCommit {
-		// nothing to merge
-		return entity.NewMergeNothingStatus(id)
-	}
-
-	// SCENARIO 3
-	// if the local Entity has new commits but the remote don't, nothing is changed
-
-	localCommits, err := repo.ListCommits(localRef)
-	if err != nil {
-		return entity.NewMergeError(err, id)
-	}
-
-	if slices.Contains(localCommits, remoteCommit) {
-		return entity.NewMergeNothingStatus(id)
 	}
 
 	// SCENARIO 4
@@ -198,11 +205,6 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 			"%s %s has diverged and requires a merge commit", def.Typename, id.Human()), id)
 	}
 
-	localEntity, err := read[EntityT](def, wrapper, repo, resolvers, localRef)
-	if err != nil {
-		return entity.NewMergeError(err, id)
-	}
-
 	editTime, err := repo.Increment(fmt.Sprintf(editClockPattern, def.Namespace))
 	if err != nil {
 		return entity.NewMergeError(err, id)
@@ -226,10 +228,14 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 		return entity.NewMergeError(err, id)
 	}
 
-	// Note: we don't need to update localEntity state (lastCommit, operations...) as we
-	// discard it entirely anyway.
+	// read the merged entity back, so that the returned entity holds the operations
+	// of both branches and can be committed on top of the merge commit.
+	mergedEntity, err := read[EntityT](def, wrapper, repo, resolvers, localRef)
+	if err != nil {
+		return entity.NewMergeError(err, id)
+	}
 
-	return entity.NewMergeUpdatedStatus(id, localEntity)
+	return entity.NewMergeUpdatedStatus(id, mergedEntity)
 }
 
 // Remove delete an Entity.

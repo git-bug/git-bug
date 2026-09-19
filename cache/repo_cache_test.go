@@ -338,7 +338,44 @@ func TestCacheMergeIndex(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []entity.Id{bugA.Id()}, search(t, cacheB, "markerupdate"))
 
-	// the index of B is complete, so a restart doesn't need to rebuild it
+	// a merge commit requires a user identity in B
+	reneB, err := cacheB.Identities().Resolve(reneA.Id())
+	require.NoError(t, err)
+	err = cacheB.SetUserIdentity(reneB)
+	require.NoError(t, err)
+
+	// A and B both add a comment, so B needs a merge commit
+	_, _, err = bugA.AddComment("markerremote")
+	require.NoError(t, err)
+	err = bugA.Commit()
+	require.NoError(t, err)
+
+	_, err = cacheA.Push("origin")
+	require.NoError(t, err)
+
+	bugB, err := cacheB.Bugs().Resolve(bugA.Id())
+	require.NoError(t, err)
+	_, _, err = bugB.AddComment("markerlocal")
+	require.NoError(t, err)
+	err = bugB.Commit()
+	require.NoError(t, err)
+
+	// the text of both sides of a merge commit is searchable in B
+	err = cacheB.Pull("origin")
+	require.NoError(t, err)
+	require.Equal(t, []entity.Id{bugA.Id()}, search(t, cacheB, "markerremote"))
+	require.Equal(t, []entity.Id{bugA.Id()}, search(t, cacheB, "markerlocal"))
+
+	// the merged bug can still be changed in B
+	bugB, err = cacheB.Bugs().Resolve(bugA.Id())
+	require.NoError(t, err)
+	_, _, err = bugB.AddComment("markeraftermerge")
+	require.NoError(t, err)
+	err = bugB.Commit()
+	require.NoError(t, err)
+
+	// the index count matches the excerpts, so the next load won't detect a
+	// mismatch and rebuild the cache
 	indexCount := func(t *testing.T, name string) uint64 {
 		t.Helper()
 		idx, err := repoB.GetIndex(name)

@@ -447,6 +447,108 @@ func TestMergeWithoutAuthor(t *testing.T) {
 	}, results)
 }
 
+// The entity returned by a merge commit must be the merged entity: it holds the
+// operations of both branches, and further changes can be committed on top.
+func TestMergeConcurrentReturnsMergedEntity(t *testing.T) {
+	repoA, repoB, _, id1, _, resolvers, def := makeTestContextRemote(t)
+
+	eA := New(def)
+	eA.Append(newOp1(id1, "foo"))
+	require.NoError(t, eA.Commit(repoA))
+
+	_, err := Push(def, repoA, "remote")
+	require.NoError(t, err)
+	_, err = Fetch(def, repoB, "remote")
+	require.NoError(t, err)
+	for result := range MergeAll(def, wrapper, repoB, resolvers, "remote", id1) {
+		require.NoError(t, result.Err)
+	}
+
+	// concurrent edition on both sides
+	eA.Append(newOp1(id1, "remote"))
+	require.NoError(t, eA.Commit(repoA))
+
+	eB, err := Read(def, wrapper, repoB, resolvers, eA.Id())
+	require.NoError(t, err)
+	eB.Append(newOp1(id1, "local"))
+	require.NoError(t, eB.Commit(repoB))
+
+	_, err = Push(def, repoA, "remote")
+	require.NoError(t, err)
+	_, err = Fetch(def, repoB, "remote")
+	require.NoError(t, err)
+
+	var all []entity.MergeResult
+	for result := range MergeAll(def, wrapper, repoB, resolvers, "remote", id1) {
+		all = append(all, result)
+	}
+	require.Len(t, all, 1)
+	require.NoError(t, all[0].Err)
+	require.Equal(t, entity.MergeStatusUpdated, all[0].Status)
+
+	merged := all[0].Entity.(*Foo)
+
+	var fields []string
+	for _, op := range merged.Operations() {
+		fields = append(fields, op.(*op1).Field1)
+	}
+	require.ElementsMatch(t, []string{"foo", "remote", "local"}, fields)
+
+	merged.Append(newOp1(id1, "after"))
+	require.NoError(t, merged.Commit(repoB))
+}
+
+// Merging when there is nothing to merge in is the most common case, and must
+// not pay for reading the remote entity.
+func TestMergeNothingDoesntReadRemote(t *testing.T) {
+	repoA, repoB, _, id1, _, resolvers, def := makeTestContextRemote(t)
+
+	e := New(def)
+	e.Append(newOp1(id1, "foo"))
+	require.NoError(t, e.Commit(repoA))
+
+	_, err := Push(def, repoA, "remote")
+	require.NoError(t, err)
+	_, err = Fetch(def, repoB, "remote")
+	require.NoError(t, err)
+
+	// reading an entity resolves the author of its operations
+	var resolved int
+	counting := entity.Resolvers{
+		&identity.Identity{}: entity.ResolverFunc[identity.Interface](func(id entity.Id) (identity.Interface, error) {
+			resolved++
+			return entity.Resolve[identity.Interface](resolvers, id)
+		}),
+	}
+
+	results := MergeAll(def, wrapper, repoB, counting, "remote", id1)
+	assertMergeResults(t, []entity.MergeResult{
+		{Id: e.Id(), Status: entity.MergeStatusNew},
+	}, results)
+	require.NotZero(t, resolved)
+
+	// same state on both sides
+	resolved = 0
+	results = MergeAll(def, wrapper, repoB, counting, "remote", id1)
+	assertMergeResults(t, []entity.MergeResult{
+		{Id: e.Id(), Status: entity.MergeStatusNothing},
+	}, results)
+	require.Zero(t, resolved)
+
+	// the local entity has new commits
+	eB, err := Read(def, wrapper, repoB, resolvers, e.Id())
+	require.NoError(t, err)
+	eB.Append(newOp1(id1, "bar"))
+	require.NoError(t, eB.Commit(repoB))
+
+	resolved = 0
+	results = MergeAll(def, wrapper, repoB, counting, "remote", id1)
+	assertMergeResults(t, []entity.MergeResult{
+		{Id: e.Id(), Status: entity.MergeStatusNothing},
+	}, results)
+	require.Zero(t, resolved)
+}
+
 func TestRemove(t *testing.T) {
 	repoA, _, _, id1, _, resolvers, def := makeTestContextRemote(t)
 
