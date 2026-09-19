@@ -259,7 +259,7 @@ func TestCachePushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create a bug in A
-	_, _, err = cacheA.Bugs().New("bug1", "message")
+	bug1A, _, err := cacheA.Bugs().New("bug1", "message")
 	require.NoError(t, err)
 
 	// A --> remote --> B
@@ -271,6 +271,9 @@ func TestCachePushPull(t *testing.T) {
 
 	require.Len(t, cacheB.Bugs().AllIds(), 1)
 
+	// a merge doesn't load the bug in memory, as a merge is not a use of it
+	require.Empty(t, cacheB.bugs.cached)
+
 	// retrieve and set identity
 	reneB, err := cacheB.Identities().Resolve(reneA.Id())
 	require.NoError(t, err)
@@ -279,7 +282,7 @@ func TestCachePushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	// B --> remote --> A
-	_, _, err = cacheB.Bugs().New("bug2", "message")
+	bug2B, _, err := cacheB.Bugs().New("bug2", "message")
 	require.NoError(t, err)
 
 	_, err = cacheB.Push("origin")
@@ -289,6 +292,33 @@ func TestCachePushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, cacheA.Bugs().AllIds(), 2)
+
+	// in A, bug1 is loaded as it was created there, bug2 is not
+	require.Len(t, cacheA.bugs.cached, 1)
+
+	// B updates both bugs
+	for _, id := range []entity.Id{bug1A.Id(), bug2B.Id()} {
+		b, err := cacheB.Bugs().Resolve(id)
+		require.NoError(t, err)
+		_, _, err = b.AddComment("comment")
+		require.NoError(t, err)
+		require.NoError(t, b.Commit())
+	}
+
+	_, err = cacheB.Push("origin")
+	require.NoError(t, err)
+
+	err = cacheA.Pull("origin")
+	require.NoError(t, err)
+
+	// the loaded bug1 is replaced with the merged version, so that it's not
+	// outdated, and bug2 is still not loaded
+	require.Len(t, cacheA.bugs.cached, 1)
+	require.Equal(t, 1, cacheA.bugs.lru.Len())
+
+	bug1A, err = cacheA.Bugs().Resolve(bug1A.Id())
+	require.NoError(t, err)
+	require.Len(t, bug1A.Snapshot().Comments, 2)
 }
 
 // searchObserver records the events it receives, and whether the entity could

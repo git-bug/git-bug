@@ -79,7 +79,7 @@ func MergeAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) 
 		remoteRefSpec := fmt.Sprintf("refs/remotes/%s/%s/", remote, def.Namespace)
 		remoteRefs, err := repo.ListRefs(remoteRefSpec)
 		if err != nil {
-			out <- entity.MergeResult{Err: err}
+			out <- entity.NewMergeError(err, "")
 			return
 		}
 
