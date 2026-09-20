@@ -467,6 +467,52 @@ func TestCacheMerge(t *testing.T) {
 	require.Equal(t, uint64(len(cacheB.Identities().AllIds())), indexCount(t, identity.Namespace))
 }
 
+// A merge failure is reported by Pull, but doesn't stop the other entities from
+// being merged.
+func TestCachePullAfterFailure(t *testing.T) {
+	repoA, repoB, _ := repository.SetupGoGitReposAndRemote(t)
+
+	cacheA := createTestRepoCacheNoEvents(t, repoA)
+	cacheB := createTestRepoCacheNoEvents(t, repoB)
+
+	reneA, err := cacheA.Identities().New("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	err = cacheA.SetUserIdentity(reneA)
+	require.NoError(t, err)
+
+	_, err = cacheA.Push("origin")
+	require.NoError(t, err)
+	err = cacheB.Pull("origin")
+	require.NoError(t, err)
+
+	// the identity diverges, which can't be merged. Identities are merged before
+	// bugs, so this failure is the first merge result.
+	reneB, err := cacheB.Identities().Resolve(reneA.Id())
+	require.NoError(t, err)
+	err = reneB.Mutate(repoB, func(m *identity.Mutator) { m.Name = "René B" })
+	require.NoError(t, err)
+	err = reneB.Commit()
+	require.NoError(t, err)
+
+	err = reneA.Mutate(repoA, func(m *identity.Mutator) { m.Name = "René A" })
+	require.NoError(t, err)
+	err = reneA.Commit()
+	require.NoError(t, err)
+
+	// more than one bug, as the merge used to stop right after the first one
+	bug1A, _, err := cacheA.Bugs().New("bug1", "message")
+	require.NoError(t, err)
+	bug2A, _, err := cacheA.Bugs().New("bug2", "message")
+	require.NoError(t, err)
+
+	_, err = cacheA.Push("origin")
+	require.NoError(t, err)
+
+	err = cacheB.Pull("origin")
+	require.ErrorContains(t, err, "merge failure")
+	require.ElementsMatch(t, []entity.Id{bug1A.Id(), bug2A.Id()}, cacheB.Bugs().AllIds())
+}
+
 // Pulling into a fresh repo must not require a user identity, otherwise it's
 // impossible to adopt an identity that only exists on the remote.
 // See https://github.com/git-bug/git-bug/issues/1003

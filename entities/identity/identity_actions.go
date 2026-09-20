@@ -29,16 +29,21 @@ func Pull(repo repository.ClockedRepo, remote string) error {
 		return err
 	}
 
+	var failure error
 	for merge := range MergeAll(repo, remote) {
-		if merge.Err != nil {
-			return merge.Err
+		if failure != nil {
+			// keep reading, so that the other identities are merged and
+			// MergeAll's goroutine doesn't block forever
+			continue
 		}
-		if merge.Status == entity.MergeStatusInvalid {
-			return errors.Errorf("merge failure: %s", merge.Reason)
+		if merge.Err != nil {
+			failure = merge.Err
+		} else if merge.Status == entity.MergeStatusInvalid {
+			failure = fmt.Errorf("merge failure: %s", merge.Reason)
 		}
 	}
 
-	return nil
+	return failure
 }
 
 // MergeAll will merge all the available remote identity
