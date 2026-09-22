@@ -279,6 +279,13 @@ body {
      as a page of its own. */
   font-size: var(--prose-font-size, 0.875rem);
   line-height: 1.6;
+
+  /* A pasted URL, a hash or a long path has no break opportunity, and the
+     typography plugin sets no wrapping rule at all — one autolinked mail
+     notification link is enough to push a comment past its card.  This is
+     inherited, so it reaches links, list items and blockquotes; `pre` keeps
+     white-space: pre and so scrolls horizontally instead of wrapping. */
+  overflow-wrap: break-word;
 }
 
 /* `prose` scales headings for article layouts; in a comment thread a 36px h1
