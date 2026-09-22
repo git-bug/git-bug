@@ -118,16 +118,16 @@ sboms:
 
 # Keyless signing: in CI, cosign gets its identity from the GitHub OIDC token,
 # so there is no key to manage. Signing the checksum file covers every artifact
-# listed in it with a single signature.
+# listed in it with a single signature. The signature and the certificate both
+# go in one sigstore bundle, which is the only output format cosign v3 writes.
 signs:
   - cmd: cosign
     artifacts: checksum
     output: true
-    certificate: "${artifact}.pem"
+    signature: "${artifact}.sigstore.json"
     args:
       - sign-blob
-      - "--output-certificate=${certificate}"
-      - "--output-signature=${signature}"
+      - "--bundle=${signature}"
       - "${artifact}"
       - "--yes"
 
