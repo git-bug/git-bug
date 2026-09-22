@@ -43,6 +43,13 @@ interface MarkdownProps {
   className?: string;
   /** When set, relative links/images are resolved against the repo. */
   repoContext?: RepoContext;
+  /**
+   * "comment" (the default) sizes the body to the 14px chrome it sits in —
+   * timeline comments, the comment box preview, the new-issue preview.
+   * "document" is the larger 16px metric, for a README or a .md file rendered
+   * as the whole page.
+   */
+  size?: "comment" | "document";
 }
 
 function isRelativeUrl(url: string): boolean {
@@ -112,7 +119,7 @@ function PreBlock({ node: _node, ...props }: PreProps) {
   return <pre {...props} tabIndex={0} />;
 }
 
-export function Markdown({ content, className, repoContext }: MarkdownProps) {
+export function Markdown({ content, className, repoContext, size = "comment" }: MarkdownProps) {
   const highlighter = useShikiHighlighter();
 
   // Rewrite image src to /gitfile for raw content serving.
@@ -199,7 +206,11 @@ export function Markdown({ content, className, repoContext }: MarkdownProps) {
   return (
     <div
       className={cn(
-        "prose prose-sm dark:prose-invert max-w-none",
+        // No `prose-sm` / `dark:prose-invert`: leading and every --tw-prose-*
+        // colour are bound to the theme tokens in index.css, which also holds
+        // the default body size.
+        "prose max-w-none",
+        size === "document" && "[--prose-font-size:1rem]",
         // Code blocks: border, rounded corners, fallback bg for non-highlighted blocks.
         // Shiki adds .shiki class which overrides the background via CSS in index.css.
         "prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto",

@@ -6,7 +6,7 @@ import { Header } from "./header";
 // Header above the current route's page component via <Outlet>.
 export function Shell() {
   return (
-    <div className="bg-background min-h-screen font-sans antialiased">
+    <div className="bg-background min-h-screen font-sans">
       <Header />
       <main className="mx-auto max-w-screen-xl px-4 py-6">
         <Outlet />

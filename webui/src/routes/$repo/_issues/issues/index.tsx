@@ -300,7 +300,7 @@ function RouteComponent() {
         {bugs?.nodes.length === 0 && <EmptyState>No {statusFilter ?? ""} issues found.</EmptyState>}
 
         {bugs?.nodes.map((bug) => (
-          <IssueRow.Root key={bug.id} className="hover:bg-muted/30">
+          <IssueRow.Root key={bug.id} className="hover:bg-muted transition-colors">
             <IssueRow.StatusIcon status={bug.status} />
             <div className="min-w-0 flex-1">
               <IssueRow.TitleArea>

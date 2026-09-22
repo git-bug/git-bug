@@ -3,7 +3,7 @@
 exports[`IssueRow/ClosedIssue matches snapshot 1`] = `
 <div>
   <div
-    class="border-border flex items-start gap-3 border-b px-4 py-3 last:border-0 hover:bg-muted/30"
+    class="border-border flex items-start gap-3 border-b px-4 py-3.5 last:border-0 hover:bg-muted transition-colors"
   >
     <svg
       aria-hidden="true"
@@ -31,7 +31,7 @@ exports[`IssueRow/ClosedIssue matches snapshot 1`] = `
       class="min-w-0 flex-1"
     >
       <div
-        class="flex flex-wrap items-baseline gap-2"
+        class="flex flex-wrap items-baseline gap-2 leading-6"
       >
         <a
           class="text-foreground hover:text-primary font-medium hover:underline"
@@ -47,7 +47,7 @@ exports[`IssueRow/ClosedIssue matches snapshot 1`] = `
         </span>
       </div>
       <p
-        class="text-muted-foreground mt-0.5 text-xs"
+        class="text-muted-foreground mt-1 text-[13px]"
       >
         #
         d4e5f6
@@ -64,7 +64,7 @@ exports[`IssueRow/ClosedIssue matches snapshot 1`] = `
       </p>
     </div>
     <div
-      class="text-muted-foreground flex shrink-0 items-center gap-1 text-xs"
+      class="text-muted-foreground flex shrink-0 items-center gap-1 text-[13px]"
     >
       <svg
         aria-hidden="true"
@@ -95,7 +95,7 @@ exports[`IssueRow/List matches snapshot 1`] = `
     class="border-border rounded-md border"
   >
     <div
-      class="border-border flex items-start gap-3 border-b px-4 py-3 last:border-0 hover:bg-muted/30"
+      class="border-border flex items-start gap-3 border-b px-4 py-3.5 last:border-0 hover:bg-muted transition-colors"
     >
       <svg
         aria-hidden="true"
@@ -125,7 +125,7 @@ exports[`IssueRow/List matches snapshot 1`] = `
         class="min-w-0 flex-1"
       >
         <div
-          class="flex flex-wrap items-baseline gap-2"
+          class="flex flex-wrap items-baseline gap-2 leading-6"
         >
           <a
             class="text-foreground hover:text-primary font-medium hover:underline"
@@ -147,7 +147,7 @@ exports[`IssueRow/List matches snapshot 1`] = `
           </span>
         </div>
         <p
-          class="text-muted-foreground mt-0.5 text-xs"
+          class="text-muted-foreground mt-1 text-[13px]"
         >
           #
           a1b2c3
@@ -164,7 +164,7 @@ exports[`IssueRow/List matches snapshot 1`] = `
         </p>
       </div>
       <div
-        class="text-muted-foreground flex shrink-0 items-center gap-1 text-xs"
+        class="text-muted-foreground flex shrink-0 items-center gap-1 text-[13px]"
       >
         <svg
           aria-hidden="true"
@@ -187,7 +187,7 @@ exports[`IssueRow/List matches snapshot 1`] = `
       </div>
     </div>
     <div
-      class="border-border flex items-start gap-3 border-b px-4 py-3 last:border-0 hover:bg-muted/30"
+      class="border-border flex items-start gap-3 border-b px-4 py-3.5 last:border-0 hover:bg-muted transition-colors"
     >
       <svg
         aria-hidden="true"
@@ -215,7 +215,7 @@ exports[`IssueRow/List matches snapshot 1`] = `
         class="min-w-0 flex-1"
       >
         <div
-          class="flex flex-wrap items-baseline gap-2"
+          class="flex flex-wrap items-baseline gap-2 leading-6"
         >
           <a
             class="text-foreground hover:text-primary font-medium hover:underline"
@@ -231,7 +231,7 @@ exports[`IssueRow/List matches snapshot 1`] = `
           </span>
         </div>
         <p
-          class="text-muted-foreground mt-0.5 text-xs"
+          class="text-muted-foreground mt-1 text-[13px]"
         >
           #
           d4e5f6
@@ -248,7 +248,7 @@ exports[`IssueRow/List matches snapshot 1`] = `
         </p>
       </div>
       <div
-        class="text-muted-foreground flex shrink-0 items-center gap-1 text-xs"
+        class="text-muted-foreground flex shrink-0 items-center gap-1 text-[13px]"
       >
         <svg
           aria-hidden="true"
@@ -271,7 +271,7 @@ exports[`IssueRow/List matches snapshot 1`] = `
       </div>
     </div>
     <div
-      class="border-border flex items-start gap-3 border-b px-4 py-3 last:border-0 hover:bg-muted/30"
+      class="border-border flex items-start gap-3 border-b px-4 py-3.5 last:border-0 hover:bg-muted transition-colors"
     >
       <svg
         aria-hidden="true"
@@ -301,7 +301,7 @@ exports[`IssueRow/List matches snapshot 1`] = `
         class="min-w-0 flex-1"
       >
         <div
-          class="flex flex-wrap items-baseline gap-2"
+          class="flex flex-wrap items-baseline gap-2 leading-6"
         >
           <a
             class="text-foreground hover:text-primary font-medium hover:underline"
@@ -311,7 +311,7 @@ exports[`IssueRow/List matches snapshot 1`] = `
           </a>
         </div>
         <p
-          class="text-muted-foreground mt-0.5 text-xs"
+          class="text-muted-foreground mt-1 text-[13px]"
         >
           #
           g7h8i9
@@ -335,7 +335,7 @@ exports[`IssueRow/List matches snapshot 1`] = `
 exports[`IssueRow/NoLabelsNoComments matches snapshot 1`] = `
 <div>
   <div
-    class="border-border flex items-start gap-3 border-b px-4 py-3 last:border-0 hover:bg-muted/30"
+    class="border-border flex items-start gap-3 border-b px-4 py-3.5 last:border-0 hover:bg-muted transition-colors"
   >
     <svg
       aria-hidden="true"
@@ -365,7 +365,7 @@ exports[`IssueRow/NoLabelsNoComments matches snapshot 1`] = `
       class="min-w-0 flex-1"
     >
       <div
-        class="flex flex-wrap items-baseline gap-2"
+        class="flex flex-wrap items-baseline gap-2 leading-6"
       >
         <a
           class="text-foreground hover:text-primary font-medium hover:underline"
@@ -375,7 +375,7 @@ exports[`IssueRow/NoLabelsNoComments matches snapshot 1`] = `
         </a>
       </div>
       <p
-        class="text-muted-foreground mt-0.5 text-xs"
+        class="text-muted-foreground mt-1 text-[13px]"
       >
         #
         g7h8i9
@@ -398,7 +398,7 @@ exports[`IssueRow/NoLabelsNoComments matches snapshot 1`] = `
 exports[`IssueRow/OpenIssue matches snapshot 1`] = `
 <div>
   <div
-    class="border-border flex items-start gap-3 border-b px-4 py-3 last:border-0 hover:bg-muted/30"
+    class="border-border flex items-start gap-3 border-b px-4 py-3.5 last:border-0 hover:bg-muted transition-colors"
   >
     <svg
       aria-hidden="true"
@@ -428,7 +428,7 @@ exports[`IssueRow/OpenIssue matches snapshot 1`] = `
       class="min-w-0 flex-1"
     >
       <div
-        class="flex flex-wrap items-baseline gap-2"
+        class="flex flex-wrap items-baseline gap-2 leading-6"
       >
         <a
           class="text-foreground hover:text-primary font-medium hover:underline"
@@ -450,7 +450,7 @@ exports[`IssueRow/OpenIssue matches snapshot 1`] = `
         </span>
       </div>
       <p
-        class="text-muted-foreground mt-0.5 text-xs"
+        class="text-muted-foreground mt-1 text-[13px]"
       >
         #
         a1b2c3
@@ -467,7 +467,7 @@ exports[`IssueRow/OpenIssue matches snapshot 1`] = `
       </p>
     </div>
     <div
-      class="text-muted-foreground flex shrink-0 items-center gap-1 text-xs"
+      class="text-muted-foreground flex shrink-0 items-center gap-1 text-[13px]"
     >
       <svg
         aria-hidden="true"

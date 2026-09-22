@@ -87,7 +87,7 @@ type Story = StoryObj<typeof meta>;
 function BugRow({ bug }: { bug: StoryBug }) {
   const ago = formatDistanceToNow(new Date(bug.createdAt), { addSuffix: true });
   return (
-    <IssueRow.Root className="hover:bg-muted/30">
+    <IssueRow.Root className="hover:bg-muted transition-colors">
       <IssueRow.StatusIcon status={bug.status} />
       <div className="min-w-0 flex-1">
         <IssueRow.TitleArea>
