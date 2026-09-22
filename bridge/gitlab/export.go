@@ -30,6 +30,9 @@ type gitlabExporter struct {
 	// cache identities clients
 	identityClient map[entity.Id]*gitlab.Client
 
+	// fallback client for the default login
+	defaultClient *gitlab.Client
+
 	// gitlab repository ID
 	repositoryID string
 
@@ -67,10 +70,25 @@ func (ge *gitlabExporter) cacheAllClient(repo *cache.RepoCache, baseURL string) 
 	}
 
 	for _, cred := range creds {
+		token, ok := cred.(*auth.Token)
+		if !ok {
+			continue
+		}
+
 		login, ok := cred.GetMetadata(auth.MetaKeyLogin)
 		if !ok {
 			_, _ = fmt.Fprintf(os.Stderr, "credential %s is not tagged with a Gitlab login\n", cred.ID().Human())
 			continue
+		}
+
+		if login == ge.conf[confKeyDefaultLogin] {
+			client, err := buildClient(ge.conf[confKeyGitlabBaseUrl], token)
+
+			if err != nil {
+				return err
+			}
+
+			ge.defaultClient = client
 		}
 
 		user, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGitlabLogin, login)
@@ -78,11 +96,11 @@ func (ge *gitlabExporter) cacheAllClient(repo *cache.RepoCache, baseURL string) 
 			continue
 		}
 		if err != nil {
-			return nil
+			return err
 		}
 
 		if _, ok := ge.identityClient[user.Id()]; !ok {
-			client, err := buildClient(ge.conf[confKeyGitlabBaseUrl], creds[0].(*auth.Token))
+			client, err := buildClient(ge.conf[confKeyGitlabBaseUrl], token)
 			if err != nil {
 				return err
 			}
@@ -94,10 +112,15 @@ func (ge *gitlabExporter) cacheAllClient(repo *cache.RepoCache, baseURL string) 
 }
 
 // getIdentityClient return a gitlab v4 API client configured with the access token of the given identity.
+// fallback to the default client.
 func (ge *gitlabExporter) getIdentityClient(userId entity.Id) (*gitlab.Client, error) {
 	client, ok := ge.identityClient[userId]
 	if ok {
 		return client, nil
+	}
+
+	if ge.defaultClient != nil {
+		return ge.defaultClient, nil
 	}
 
 	return nil, ErrMissingIdentityToken
@@ -137,7 +160,7 @@ func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 					continue
 				}
 
-				if snapshot.HasAnyActor(allIdentitiesIds...) {
+				if ge.defaultClient != nil || snapshot.HasAnyActor(allIdentitiesIds...) {
 					// try to export the bug and it associated events
 					ge.exportBug(ctx, b, out)
 				}
