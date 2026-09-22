@@ -1,10 +1,9 @@
 package cache
 
 import (
+	"fmt"
 	"io"
 	"sync"
-
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
@@ -155,16 +154,21 @@ func (c *RepoCache) Pull(remote string) error {
 		return err
 	}
 
+	var failure error
 	for merge := range c.MergeAll(remote) {
-		if merge.Err != nil {
-			return merge.Err
+		if failure != nil {
+			// keep reading, so that the other entities are merged and
+			// MergeAll's goroutine doesn't block forever
+			continue
 		}
-		if merge.Status == entity.MergeStatusInvalid {
-			return errors.Errorf("merge failure: %s", merge.Reason)
+		if merge.Err != nil {
+			failure = merge.Err
+		} else if merge.Status == entity.MergeStatusInvalid {
+			failure = fmt.Errorf("merge failure: %s", merge.Reason)
 		}
 	}
 
-	return nil
+	return failure
 }
 
 func (c *RepoCache) SetUserIdentity(i *IdentityCache) error {
