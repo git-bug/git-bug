@@ -3,7 +3,7 @@
 exports[`Markdown/BasicFormatting matches snapshot 1`] = `
 <div>
   <div
-    class="prose prose-sm dark:prose-invert max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
+    class="prose max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
   >
     <h1
       id="heading-1"
@@ -144,7 +144,7 @@ exports[`Markdown/BasicFormatting matches snapshot 1`] = `
 exports[`Markdown/CodeBlock matches snapshot 1`] = `
 <div>
   <div
-    class="prose prose-sm dark:prose-invert max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
+    class="prose max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
   >
     <p>
       Here is a code block:
@@ -152,8 +152,8 @@ exports[`Markdown/CodeBlock matches snapshot 1`] = `
     
 
     <pre
-      class="shiki shiki-themes github-light github-dark"
-      style="--shiki-light: #24292e; --shiki-dark: #e1e4e8; --shiki-light-bg: #fff; --shiki-dark-bg: #24292e;"
+      class="shiki shiki-themes github-light github-dark github-dark-dimmed"
+      style="--shiki-light: #24292e; --shiki-dark: #e1e4e8; --shiki-dimmed: #adbac7; --shiki-light-bg: #fff; --shiki-dark-bg: #24292e; --shiki-dimmed-bg: #22272e;"
       tabindex="0"
     >
       <code>
@@ -161,17 +161,17 @@ exports[`Markdown/CodeBlock matches snapshot 1`] = `
           class="line"
         >
           <span
-            style="--shiki-light: #D73A49; --shiki-dark: #F97583;"
+            style="--shiki-light: #D73A49; --shiki-dark: #F97583; --shiki-dimmed: #F47067;"
           >
             interface
           </span>
           <span
-            style="--shiki-light: #6F42C1; --shiki-dark: #B392F0;"
+            style="--shiki-light: #6F42C1; --shiki-dark: #B392F0; --shiki-dimmed: #F69D50;"
           >
              User
           </span>
           <span
-            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
           >
              {
           </span>
@@ -182,22 +182,22 @@ exports[`Markdown/CodeBlock matches snapshot 1`] = `
           class="line"
         >
           <span
-            style="--shiki-light: #E36209; --shiki-dark: #FFAB70;"
+            style="--shiki-light: #E36209; --shiki-dark: #FFAB70; --shiki-dimmed: #F69D50;"
           >
               id
           </span>
           <span
-            style="--shiki-light: #D73A49; --shiki-dark: #F97583;"
+            style="--shiki-light: #D73A49; --shiki-dark: #F97583; --shiki-dimmed: #F47067;"
           >
             :
           </span>
           <span
-            style="--shiki-light: #005CC5; --shiki-dark: #79B8FF;"
+            style="--shiki-light: #005CC5; --shiki-dark: #79B8FF; --shiki-dimmed: #6CB6FF;"
           >
              string
           </span>
           <span
-            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
           >
             ;
           </span>
@@ -208,22 +208,22 @@ exports[`Markdown/CodeBlock matches snapshot 1`] = `
           class="line"
         >
           <span
-            style="--shiki-light: #E36209; --shiki-dark: #FFAB70;"
+            style="--shiki-light: #E36209; --shiki-dark: #FFAB70; --shiki-dimmed: #F69D50;"
           >
               name
           </span>
           <span
-            style="--shiki-light: #D73A49; --shiki-dark: #F97583;"
+            style="--shiki-light: #D73A49; --shiki-dark: #F97583; --shiki-dimmed: #F47067;"
           >
             :
           </span>
           <span
-            style="--shiki-light: #005CC5; --shiki-dark: #79B8FF;"
+            style="--shiki-light: #005CC5; --shiki-dark: #79B8FF; --shiki-dimmed: #6CB6FF;"
           >
              string
           </span>
           <span
-            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
           >
             ;
           </span>
@@ -234,22 +234,22 @@ exports[`Markdown/CodeBlock matches snapshot 1`] = `
           class="line"
         >
           <span
-            style="--shiki-light: #E36209; --shiki-dark: #FFAB70;"
+            style="--shiki-light: #E36209; --shiki-dark: #FFAB70; --shiki-dimmed: #F69D50;"
           >
               email
           </span>
           <span
-            style="--shiki-light: #D73A49; --shiki-dark: #F97583;"
+            style="--shiki-light: #D73A49; --shiki-dark: #F97583; --shiki-dimmed: #F47067;"
           >
             :
           </span>
           <span
-            style="--shiki-light: #005CC5; --shiki-dark: #79B8FF;"
+            style="--shiki-light: #005CC5; --shiki-dark: #79B8FF; --shiki-dimmed: #6CB6FF;"
           >
              string
           </span>
           <span
-            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
           >
             ;
           </span>
@@ -260,7 +260,7 @@ exports[`Markdown/CodeBlock matches snapshot 1`] = `
           class="line"
         >
           <span
-            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
           >
             }
           </span>
@@ -276,52 +276,52 @@ exports[`Markdown/CodeBlock matches snapshot 1`] = `
           class="line"
         >
           <span
-            style="--shiki-light: #D73A49; --shiki-dark: #F97583;"
+            style="--shiki-light: #D73A49; --shiki-dark: #F97583; --shiki-dimmed: #F47067;"
           >
             function
           </span>
           <span
-            style="--shiki-light: #6F42C1; --shiki-dark: #B392F0;"
+            style="--shiki-light: #6F42C1; --shiki-dark: #B392F0; --shiki-dimmed: #DCBDFB;"
           >
              greet
           </span>
           <span
-            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
           >
             (
           </span>
           <span
-            style="--shiki-light: #E36209; --shiki-dark: #FFAB70;"
+            style="--shiki-light: #E36209; --shiki-dark: #FFAB70; --shiki-dimmed: #F69D50;"
           >
             user
           </span>
           <span
-            style="--shiki-light: #D73A49; --shiki-dark: #F97583;"
+            style="--shiki-light: #D73A49; --shiki-dark: #F97583; --shiki-dimmed: #F47067;"
           >
             :
           </span>
           <span
-            style="--shiki-light: #6F42C1; --shiki-dark: #B392F0;"
+            style="--shiki-light: #6F42C1; --shiki-dark: #B392F0; --shiki-dimmed: #F69D50;"
           >
              User
           </span>
           <span
-            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
           >
             )
           </span>
           <span
-            style="--shiki-light: #D73A49; --shiki-dark: #F97583;"
+            style="--shiki-light: #D73A49; --shiki-dark: #F97583; --shiki-dimmed: #F47067;"
           >
             :
           </span>
           <span
-            style="--shiki-light: #005CC5; --shiki-dark: #79B8FF;"
+            style="--shiki-light: #005CC5; --shiki-dark: #79B8FF; --shiki-dimmed: #6CB6FF;"
           >
              string
           </span>
           <span
-            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
           >
              {
           </span>
@@ -332,37 +332,37 @@ exports[`Markdown/CodeBlock matches snapshot 1`] = `
           class="line"
         >
           <span
-            style="--shiki-light: #D73A49; --shiki-dark: #F97583;"
+            style="--shiki-light: #D73A49; --shiki-dark: #F97583; --shiki-dimmed: #F47067;"
           >
               return
           </span>
           <span
-            style="--shiki-light: #032F62; --shiki-dark: #9ECBFF;"
+            style="--shiki-light: #032F62; --shiki-dark: #9ECBFF; --shiki-dimmed: #96D0FF;"
           >
              \`Hello, \${
           </span>
           <span
-            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
           >
             user
           </span>
           <span
-            style="--shiki-light: #032F62; --shiki-dark: #9ECBFF;"
+            style="--shiki-light: #032F62; --shiki-dark: #9ECBFF; --shiki-dimmed: #96D0FF;"
           >
             .
           </span>
           <span
-            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
           >
             name
           </span>
           <span
-            style="--shiki-light: #032F62; --shiki-dark: #9ECBFF;"
+            style="--shiki-light: #032F62; --shiki-dark: #9ECBFF; --shiki-dimmed: #96D0FF;"
           >
             }!\`
           </span>
           <span
-            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
           >
             ;
           </span>
@@ -373,7 +373,7 @@ exports[`Markdown/CodeBlock matches snapshot 1`] = `
           class="line"
         >
           <span
-            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+            style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
           >
             }
           </span>
@@ -387,7 +387,7 @@ exports[`Markdown/CodeBlock matches snapshot 1`] = `
 exports[`Markdown/Comment matches snapshot 1`] = `
 <div>
   <div
-    class="prose prose-sm dark:prose-invert max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
+    class="prose max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
   >
     <p>
       Fixed the issue by updating the query builder.
@@ -404,8 +404,8 @@ exports[`Markdown/Comment matches snapshot 1`] = `
     
 
     <pre
-      class="shiki shiki-themes github-light github-dark"
-      style="--shiki-light: #24292e; --shiki-dark: #e1e4e8; --shiki-light-bg: #fff; --shiki-dark-bg: #24292e;"
+      class="shiki shiki-themes github-light github-dark github-dark-dimmed"
+      style="--shiki-light: #24292e; --shiki-dark: #e1e4e8; --shiki-dimmed: #adbac7; --shiki-light-bg: #fff; --shiki-dark-bg: #24292e; --shiki-dimmed-bg: #22272e;"
       tabindex="0"
     >
       <code>
@@ -413,7 +413,7 @@ exports[`Markdown/Comment matches snapshot 1`] = `
           class="line"
         >
           <span
-            style="--shiki-light: #B31D28; --shiki-dark: #FDAEB7;"
+            style="--shiki-light: #B31D28; --shiki-dark: #FDAEB7; --shiki-dimmed: #FF938A;"
           >
             - const q = \`label:\${name}\`;
           </span>
@@ -424,7 +424,7 @@ exports[`Markdown/Comment matches snapshot 1`] = `
           class="line"
         >
           <span
-            style="--shiki-light: #22863A; --shiki-dark: #85E89D;"
+            style="--shiki-light: #22863A; --shiki-dark: #85E89D; --shiki-dimmed: #8DDB8C;"
           >
             + const q = \`label:"\${name}"\`;
           </span>
@@ -443,7 +443,7 @@ exports[`Markdown/Comment matches snapshot 1`] = `
 exports[`Markdown/GithubFlavored matches snapshot 1`] = `
 <div>
   <div
-    class="prose prose-sm dark:prose-invert max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
+    class="prose max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
   >
     <h2
       id="task-list"
@@ -647,7 +647,7 @@ exports[`Markdown/GithubFlavored matches snapshot 1`] = `
 exports[`Markdown/UnlabeledCodeBlock matches snapshot 1`] = `
 <div>
   <div
-    class="prose prose-sm dark:prose-invert max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
+    class="prose max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
   >
     <p>
       Here is a code block without a language:

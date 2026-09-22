@@ -33,7 +33,7 @@ export function Root({ className, children }: RootProps) {
   return (
     <div
       className={cn(
-        "border-border flex items-start gap-3 border-b px-4 py-3 last:border-0",
+        "border-border flex items-start gap-3 border-b px-4 py-3.5 last:border-0",
         className,
       )}
     >
@@ -64,7 +64,9 @@ interface TitleAreaProps {
 }
 
 export function TitleArea({ children }: TitleAreaProps) {
-  return <div className="flex flex-wrap items-baseline gap-2">{children}</div>;
+  // leading-6 rather than the inherited 1.5: titles wrap often in this list, and
+  // the extra leading is what makes a two-line title readable at a glance.
+  return <div className="flex flex-wrap items-baseline gap-2 leading-6">{children}</div>;
 }
 
 interface MetaProps {
@@ -72,7 +74,9 @@ interface MetaProps {
 }
 
 export function Meta({ children }: MetaProps) {
-  return <p className="text-muted-foreground mt-0.5 text-xs">{children}</p>;
+  // 13px, not text-xs: this line carries the id, age and author of every row,
+  // so it is read as much as the title itself.
+  return <p className="text-muted-foreground mt-1 text-[13px]">{children}</p>;
 }
 
 interface CommentCountProps {
@@ -82,7 +86,7 @@ interface CommentCountProps {
 export function CommentCount({ count }: CommentCountProps) {
   if (count <= 0) return null;
   return (
-    <div className="text-muted-foreground flex shrink-0 items-center gap-1 text-xs">
+    <div className="text-muted-foreground flex shrink-0 items-center gap-1 text-[13px]">
       <MessageSquare className="size-3.5" />
       {count}
     </div>

@@ -77,7 +77,7 @@ exports[`FileContent/MarkdownFile matches snapshot 1`] = `
         class="px-6 py-4"
       >
         <div
-          class="prose prose-sm dark:prose-invert max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
+          class="prose max-w-none [--prose-font-size:1rem] prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
         >
           <h1
             id="project-title"
@@ -149,8 +149,8 @@ exports[`FileContent/MarkdownFile matches snapshot 1`] = `
           
 
           <pre
-            class="shiki shiki-themes github-light github-dark"
-            style="--shiki-light: #24292e; --shiki-dark: #e1e4e8; --shiki-light-bg: #fff; --shiki-dark-bg: #24292e;"
+            class="shiki shiki-themes github-light github-dark github-dark-dimmed"
+            style="--shiki-light: #24292e; --shiki-dark: #e1e4e8; --shiki-dimmed: #adbac7; --shiki-light-bg: #fff; --shiki-dark-bg: #24292e; --shiki-dimmed-bg: #22272e;"
             tabindex="0"
           >
             <code>
@@ -158,32 +158,32 @@ exports[`FileContent/MarkdownFile matches snapshot 1`] = `
                 class="line"
               >
                 <span
-                  style="--shiki-light: #D73A49; --shiki-dark: #F97583;"
+                  style="--shiki-light: #D73A49; --shiki-dark: #F97583; --shiki-dimmed: #F47067;"
                 >
                   export
                 </span>
                 <span
-                  style="--shiki-light: #D73A49; --shiki-dark: #F97583;"
+                  style="--shiki-light: #D73A49; --shiki-dark: #F97583; --shiki-dimmed: #F47067;"
                 >
                    const
                 </span>
                 <span
-                  style="--shiki-light: #005CC5; --shiki-dark: #79B8FF;"
+                  style="--shiki-light: #005CC5; --shiki-dark: #79B8FF; --shiki-dimmed: #6CB6FF;"
                 >
                    answer
                 </span>
                 <span
-                  style="--shiki-light: #D73A49; --shiki-dark: #F97583;"
+                  style="--shiki-light: #D73A49; --shiki-dark: #F97583; --shiki-dimmed: #F47067;"
                 >
                    =
                 </span>
                 <span
-                  style="--shiki-light: #005CC5; --shiki-dark: #79B8FF;"
+                  style="--shiki-light: #005CC5; --shiki-dark: #79B8FF; --shiki-dimmed: #6CB6FF;"
                 >
                    42
                 </span>
                 <span
-                  style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+                  style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
                 >
                   ;
                 </span>
@@ -251,8 +251,8 @@ exports[`FileContent/SourceFile matches snapshot 1`] = `
         class="_code-content_26d040"
       >
         <pre
-          class="shiki shiki-themes github-light github-dark"
-          style="--shiki-light: #24292e; --shiki-dark: #e1e4e8; --shiki-light-bg: #fff; --shiki-dark-bg: #24292e;"
+          class="shiki shiki-themes github-light github-dark github-dark-dimmed"
+          style="--shiki-light: #24292e; --shiki-dark: #e1e4e8; --shiki-dimmed: #adbac7; --shiki-light-bg: #fff; --shiki-dark-bg: #24292e; --shiki-dimmed-bg: #22272e;"
           tabindex="0"
         >
           <code>
@@ -266,12 +266,12 @@ exports[`FileContent/SourceFile matches snapshot 1`] = `
                 1
               </span>
               <span
-                style="--shiki-light: #D73A49; --shiki-dark: #F97583;"
+                style="--shiki-light: #D73A49; --shiki-dark: #F97583; --shiki-dimmed: #F47067;"
               >
                 package
               </span>
               <span
-                style="--shiki-light: #6F42C1; --shiki-dark: #B392F0;"
+                style="--shiki-light: #6F42C1; --shiki-dark: #B392F0; --shiki-dimmed: #F69D50;"
               >
                  main
               </span>
@@ -300,17 +300,17 @@ exports[`FileContent/SourceFile matches snapshot 1`] = `
                 3
               </span>
               <span
-                style="--shiki-light: #D73A49; --shiki-dark: #F97583;"
+                style="--shiki-light: #D73A49; --shiki-dark: #F97583; --shiki-dimmed: #F47067;"
               >
                 func
               </span>
               <span
-                style="--shiki-light: #6F42C1; --shiki-dark: #B392F0;"
+                style="--shiki-light: #6F42C1; --shiki-dark: #B392F0; --shiki-dimmed: #DCBDFB;"
               >
                  main
               </span>
               <span
-                style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+                style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
               >
                 () {
               </span>
@@ -327,22 +327,22 @@ exports[`FileContent/SourceFile matches snapshot 1`] = `
                 4
               </span>
               <span
-                style="--shiki-light: #6F42C1; --shiki-dark: #B392F0;"
+                style="--shiki-light: #6F42C1; --shiki-dark: #B392F0; --shiki-dimmed: #DCBDFB;"
               >
                   println
               </span>
               <span
-                style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+                style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
               >
                 (
               </span>
               <span
-                style="--shiki-light: #032F62; --shiki-dark: #9ECBFF;"
+                style="--shiki-light: #032F62; --shiki-dark: #9ECBFF; --shiki-dimmed: #96D0FF;"
               >
                 "hello"
               </span>
               <span
-                style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+                style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
               >
                 )
               </span>
@@ -359,7 +359,7 @@ exports[`FileContent/SourceFile matches snapshot 1`] = `
                 5
               </span>
               <span
-                style="--shiki-light: #24292E; --shiki-dark: #E1E4E8;"
+                style="--shiki-light: #24292E; --shiki-dark: #E1E4E8; --shiki-dimmed: #ADBAC7;"
               >
                 }
               </span>

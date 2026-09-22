@@ -1,31 +1,37 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/inter";
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:where(.dark, .dark *, .dark-soft, .dark-soft *));
 
+/* The four themes are tuned for comfortable long-form reading rather than for
+   maximum contrast: body text lands at ~15:1 in the light themes and ~8.9:1 in
+   "dark soft", where a naive white-on-black pairing would give 17:1 or more.
+   Note that OKLCH lightness is NOT the hex shorthand — oklch(0.22 …) resolves
+   to #161b21, not #22272e. */
+
 :root {
-  /* Light: pure white canvas, indigo-blue primary for clear action buttons. */
+  /* Light: white canvas, cool neutral greys, indigo-blue primary. */
   --background: oklch(1 0 0);
-  --foreground: oklch(0.148 0.01 268);
+  --foreground: oklch(0.254 0.011 254);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.148 0.01 268);
+  --card-foreground: oklch(0.254 0.011 254);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.148 0.01 268);
+  --popover-foreground: oklch(0.254 0.011 254);
   --primary: oklch(0.47 0.22 264);
   --primary-foreground: oklch(0.98 0.004 264);
-  --secondary: oklch(0.964 0.008 264);
-  --secondary-foreground: oklch(0.148 0.01 268);
-  --muted: oklch(0.964 0.008 264);
-  --muted-foreground: oklch(0.52 0.02 264);
-  --accent: oklch(0.964 0.008 264);
-  --accent-foreground: oklch(0.148 0.01 268);
+  --secondary: oklch(0.978 0.003 248);
+  --secondary-foreground: oklch(0.254 0.011 254);
+  --muted: oklch(0.978 0.003 248);
+  --muted-foreground: oklch(0.495 0.022 251);
+  --accent: oklch(0.955 0.006 248);
+  --accent-foreground: oklch(0.254 0.011 254);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.904 0.012 264);
-  --input: oklch(0.904 0.012 264);
+  --border: oklch(0.881 0.013 244);
+  --input: oklch(0.881 0.013 244);
   --ring: oklch(0.47 0.22 264);
   --radius: 0.625rem;
   --chart-1: oklch(0.47 0.22 264);
@@ -33,36 +39,36 @@
   --chart-3: oklch(0.38 0.14 264);
   --chart-4: oklch(0.75 0.14 200);
   --chart-5: oklch(0.65 0.2 30);
-  --sidebar: oklch(0.978 0.006 264);
-  --sidebar-foreground: oklch(0.148 0.01 268);
+  --sidebar: oklch(0.978 0.003 248);
+  --sidebar-foreground: oklch(0.254 0.011 254);
   --sidebar-primary: oklch(0.47 0.22 264);
   --sidebar-primary-foreground: oklch(0.98 0.004 264);
-  --sidebar-accent: oklch(0.95 0.012 264);
-  --sidebar-accent-foreground: oklch(0.148 0.01 268);
-  --sidebar-border: oklch(0.904 0.012 264);
+  --sidebar-accent: oklch(0.955 0.006 248);
+  --sidebar-accent-foreground: oklch(0.254 0.011 254);
+  --sidebar-border: oklch(0.881 0.013 244);
   --sidebar-ring: oklch(0.47 0.22 264);
 }
 
 .light-soft {
   /* Light soft: off-white page bg, pure white cards — reduces glare. */
-  --background: oklch(0.958 0.012 255);
-  --foreground: oklch(0.148 0.01 268);
+  --background: oklch(0.958 0.006 248);
+  --foreground: oklch(0.254 0.011 254);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.148 0.01 268);
+  --card-foreground: oklch(0.254 0.011 254);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.148 0.01 268);
+  --popover-foreground: oklch(0.254 0.011 254);
   --primary: oklch(0.47 0.22 264);
   --primary-foreground: oklch(0.98 0.004 264);
-  --secondary: oklch(0.932 0.014 255);
-  --secondary-foreground: oklch(0.148 0.01 268);
-  --muted: oklch(0.932 0.014 255);
-  --muted-foreground: oklch(0.52 0.02 264);
-  --accent: oklch(0.932 0.014 255);
-  --accent-foreground: oklch(0.148 0.01 268);
+  --secondary: oklch(0.932 0.008 248);
+  --secondary-foreground: oklch(0.254 0.011 254);
+  --muted: oklch(0.932 0.008 248);
+  --muted-foreground: oklch(0.495 0.022 251);
+  --accent: oklch(0.91 0.01 248);
+  --accent-foreground: oklch(0.254 0.011 254);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.868 0.016 255);
-  --input: oklch(0.868 0.016 255);
+  --border: oklch(0.868 0.012 246);
+  --input: oklch(0.868 0.012 246);
   --ring: oklch(0.47 0.22 264);
   --radius: 0.625rem;
   --chart-1: oklch(0.47 0.22 264);
@@ -70,87 +76,93 @@
   --chart-3: oklch(0.38 0.14 264);
   --chart-4: oklch(0.75 0.14 200);
   --chart-5: oklch(0.65 0.2 30);
-  --sidebar: oklch(0.932 0.014 255);
-  --sidebar-foreground: oklch(0.148 0.01 268);
+  --sidebar: oklch(0.932 0.008 248);
+  --sidebar-foreground: oklch(0.254 0.011 254);
   --sidebar-primary: oklch(0.47 0.22 264);
   --sidebar-primary-foreground: oklch(0.98 0.004 264);
-  --sidebar-accent: oklch(0.906 0.018 255);
-  --sidebar-accent-foreground: oklch(0.148 0.01 268);
-  --sidebar-border: oklch(0.868 0.016 255);
+  --sidebar-accent: oklch(0.91 0.01 248);
+  --sidebar-accent-foreground: oklch(0.254 0.011 254);
+  --sidebar-border: oklch(0.868 0.012 246);
   --sidebar-ring: oklch(0.47 0.22 264);
 }
 
 .dark-soft {
-  /* Dark soft: GitHub dark-dimmed inspired — lifted bg, desaturated text, blue accent. */
-  --background: oklch(0.22 0.014 255);
-  --foreground: oklch(0.84 0.012 250);
-  --card: oklch(0.268 0.014 255);
-  --card-foreground: oklch(0.84 0.012 250);
-  --popover: oklch(0.268 0.014 255);
-  --popover-foreground: oklch(0.84 0.012 250);
-  --primary: oklch(0.62 0.185 258);
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.3 0.014 255);
-  --secondary-foreground: oklch(0.84 0.012 250);
-  --muted: oklch(0.3 0.014 255);
-  --muted-foreground: oklch(0.58 0.014 255);
-  --accent: oklch(0.3 0.014 255);
-  --accent-foreground: oklch(0.84 0.012 250);
-  --destructive: oklch(0.68 0.18 22.216);
+  /* Dark soft: a lifted charcoal canvas. Most of the glare reduction comes
+     from raising the background off near-black, so the body text can stay
+     bright (8.9:1) without the page feeling harsh — dropping the text further
+     only reads as grey.  Borders are opaque greys, so separation does not rely
+     on text contrast alone.  Buttons put the dark canvas colour ON the light
+     blue instead of white, which keeps the label legible without darkening
+     the link colour. */
+  --background: oklch(0.271 0.015 257);
+  --foreground: oklch(0.83 0.023 248);
+  --card: oklch(0.319 0.017 256);
+  --card-foreground: oklch(0.83 0.023 248);
+  --popover: oklch(0.319 0.017 256);
+  --popover-foreground: oklch(0.83 0.023 248);
+  --primary: oklch(0.684 0.152 255);
+  --primary-foreground: oklch(0.271 0.015 257);
+  --secondary: oklch(0.319 0.017 256);
+  --secondary-foreground: oklch(0.83 0.023 248);
+  --muted: oklch(0.319 0.017 256);
+  --muted-foreground: oklch(0.67 0.025 248);
+  --accent: oklch(0.361 0.018 255);
+  --accent-foreground: oklch(0.83 0.023 248);
+  --destructive: oklch(0.637 0.183 27);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 13%);
-  --ring: oklch(0.62 0.185 258);
+  --border: oklch(0.413 0.02 254);
+  --input: oklch(0.413 0.02 254);
+  --ring: oklch(0.684 0.152 255);
   --radius: 0.625rem;
-  --chart-1: oklch(0.62 0.185 258);
-  --chart-2: oklch(0.75 0.14 200);
-  --chart-3: oklch(0.7 0.16 150);
-  --chart-4: oklch(0.75 0.15 50);
-  --chart-5: oklch(0.68 0.18 22);
-  --sidebar: oklch(0.268 0.014 255);
-  --sidebar-foreground: oklch(0.84 0.012 250);
-  --sidebar-primary: oklch(0.62 0.185 258);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.318 0.014 255);
-  --sidebar-accent-foreground: oklch(0.84 0.012 250);
-  --sidebar-border: oklch(1 0 0 / 9%);
-  --sidebar-ring: oklch(0.62 0.185 258);
+  --chart-1: oklch(0.684 0.152 255);
+  --chart-2: oklch(0.72 0.12 200);
+  --chart-3: oklch(0.669 0.142 144);
+  --chart-4: oklch(0.75 0.13 60);
+  --chart-5: oklch(0.698 0.16 301);
+  --sidebar: oklch(0.319 0.017 256);
+  --sidebar-foreground: oklch(0.83 0.023 248);
+  --sidebar-primary: oklch(0.684 0.152 255);
+  --sidebar-primary-foreground: oklch(0.271 0.015 257);
+  --sidebar-accent: oklch(0.361 0.018 255);
+  --sidebar-accent-foreground: oklch(0.83 0.023 248);
+  --sidebar-border: oklch(0.413 0.02 254);
+  --sidebar-ring: oklch(0.684 0.152 255);
 }
 
 .dark {
-  /* Dark: high-contrast — near-black bg, near-white text, bright blue accent. */
-  --background: oklch(0.132 0.008 268);
-  --foreground: oklch(0.958 0.004 264);
-  --card: oklch(0.196 0.01 268);
-  --card-foreground: oklch(0.958 0.004 264);
-  --popover: oklch(0.196 0.01 268);
-  --popover-foreground: oklch(0.958 0.004 264);
-  --primary: oklch(0.655 0.195 258);
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.256 0.01 268);
-  --secondary-foreground: oklch(0.958 0.004 264);
-  --muted: oklch(0.256 0.01 268);
-  --muted-foreground: oklch(0.67 0.014 264);
-  --accent: oklch(0.256 0.01 268);
-  --accent-foreground: oklch(0.958 0.004 264);
-  --destructive: oklch(0.704 0.191 22.216);
+  /* Dark: the high-contrast option — near-black canvas, 16:1 body text. */
+  --background: oklch(0.176 0.014 258);
+  --foreground: oklch(0.943 0.011 244);
+  --card: oklch(0.22 0.018 256);
+  --card-foreground: oklch(0.943 0.011 244);
+  --popover: oklch(0.22 0.018 256);
+  --popover-foreground: oklch(0.943 0.011 244);
+  --primary: oklch(0.663 0.169 256);
+  --primary-foreground: oklch(0.176 0.014 258);
+  --secondary: oklch(0.22 0.018 256);
+  --secondary-foreground: oklch(0.943 0.011 244);
+  --muted: oklch(0.22 0.018 256);
+  --muted-foreground: oklch(0.677 0.016 255);
+  --accent: oklch(0.267 0.017 256);
+  --accent-foreground: oklch(0.943 0.011 244);
+  --destructive: oklch(0.653 0.2 27);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(1 0 0 / 11%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.655 0.195 258);
-  --chart-1: oklch(0.655 0.195 258);
-  --chart-2: oklch(0.75 0.14 200);
-  --chart-3: oklch(0.7 0.16 150);
-  --chart-4: oklch(0.75 0.15 50);
-  --chart-5: oklch(0.68 0.18 22);
-  --sidebar: oklch(0.196 0.01 268);
-  --sidebar-foreground: oklch(0.958 0.004 264);
-  --sidebar-primary: oklch(0.655 0.195 258);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.256 0.01 268);
-  --sidebar-accent-foreground: oklch(0.958 0.004 264);
-  --sidebar-border: oklch(1 0 0 / 11%);
-  --sidebar-ring: oklch(0.655 0.195 258);
+  --border: oklch(0.384 0.018 255);
+  --input: oklch(0.384 0.018 255);
+  --ring: oklch(0.663 0.169 256);
+  --chart-1: oklch(0.663 0.169 256);
+  --chart-2: oklch(0.72 0.12 200);
+  --chart-3: oklch(0.669 0.142 144);
+  --chart-4: oklch(0.75 0.13 60);
+  --chart-5: oklch(0.698 0.16 301);
+  --sidebar: oklch(0.22 0.018 256);
+  --sidebar-foreground: oklch(0.943 0.011 244);
+  --sidebar-primary: oklch(0.663 0.169 256);
+  --sidebar-primary-foreground: oklch(0.176 0.014 258);
+  --sidebar-accent: oklch(0.267 0.017 256);
+  --sidebar-accent-foreground: oklch(0.943 0.011 244);
+  --sidebar-border: oklch(0.384 0.018 255);
+  --sidebar-ring: oklch(0.663 0.169 256);
 }
 
 @theme inline {
@@ -178,7 +190,9 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
-  --font-sans: "Geist Variable", sans-serif;
+  --font-sans:
+    "Inter Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial,
+    sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
@@ -230,7 +244,73 @@ body {
   color: var(--foreground);
 }
 
-/* ── Shiki dual-theme (defaultColor: false) ──────────────────────────────── */
+/* ── Rendered Markdown ───────────────────────────────────────────────────────
+   @tailwindcss/typography ships its own grey ramp and hardcodes white
+   headings/links/bold in `prose-invert`, so Markdown would ignore the active
+   theme entirely (white headings read at 17:1 on "dark soft").  Binding the
+   --tw-prose-* variables to the theme tokens makes one set of rules work in
+   all four themes, which is why <Markdown> carries no `dark:prose-invert`.
+
+   These rules are deliberately unlayered: Tailwind emits `.prose` into
+   @layer utilities, and unlayered declarations win over any layered one. */
+.prose {
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--foreground);
+  --tw-prose-lead: var(--muted-foreground);
+  --tw-prose-links: var(--primary);
+  --tw-prose-bold: var(--foreground);
+  --tw-prose-counters: var(--muted-foreground);
+  --tw-prose-bullets: var(--muted-foreground);
+  --tw-prose-hr: var(--border);
+  --tw-prose-quotes: var(--muted-foreground);
+  --tw-prose-quote-borders: var(--border);
+  --tw-prose-captions: var(--muted-foreground);
+  --tw-prose-kbd: var(--foreground);
+  --tw-prose-kbd-shadows: var(--border);
+  --tw-prose-code: var(--foreground);
+  --tw-prose-pre-code: var(--foreground);
+  --tw-prose-pre-bg: var(--muted);
+  --tw-prose-th-borders: var(--border);
+  --tw-prose-td-borders: var(--border);
+
+  /* Default to the comment metric: 14px, matching the surrounding chrome in a
+     timeline, but at 1.6 rather than the 1.71 of `prose-sm`.  <Markdown
+     size="document"> raises this to 16px for a README or a .md file rendered
+     as a page of its own. */
+  font-size: var(--prose-font-size, 0.875rem);
+  line-height: 1.6;
+
+  /* A pasted URL, a hash or a long path has no break opportunity, and the
+     typography plugin sets no wrapping rule at all — one autolinked mail
+     notification link is enough to push a comment past its card.  This is
+     inherited, so it reaches links, list items and blockquotes; `pre` keeps
+     white-space: pre and so scrolls horizontally instead of wrapping. */
+  overflow-wrap: break-word;
+}
+
+/* `prose` scales headings for article layouts; in a comment thread a 36px h1
+   shouts, so these are sized for a comment first. */
+.prose :is(h1, h2, h3, h4, h5, h6) {
+  line-height: 1.25;
+}
+.prose h1 {
+  font-size: 1.75em;
+}
+.prose h2 {
+  font-size: 1.375em;
+}
+.prose h3 {
+  font-size: 1.125em;
+}
+.prose :is(h4, h5, h6) {
+  font-size: 1em;
+}
+
+/* ── Shiki triple-theme (defaultColor: false) ────────────────────────────────
+   Each theme in SHIKI_THEMES gets its own --shiki-<key> custom property, so
+   "dark soft" can use a dimmed highlighting theme while "dark" keeps the
+   darker one — a #0d1117 code block on a #22272e page is a hole, not a
+   highlight. */
 .shiki {
   color: var(--shiki-light);
   background-color: var(--shiki-light-bg);
@@ -243,18 +323,28 @@ body {
   text-decoration: var(--shiki-light-text-decoration);
 }
 
-.dark .shiki,
-.dark-soft .shiki {
+.dark .shiki {
   color: var(--shiki-dark);
   background-color: var(--shiki-dark-bg);
 }
 
-.dark .shiki span,
-.dark-soft .shiki span {
+.dark .shiki span {
   color: var(--shiki-dark);
   font-style: var(--shiki-dark-font-style);
   font-weight: var(--shiki-dark-font-weight);
   text-decoration: var(--shiki-dark-text-decoration);
+}
+
+.dark-soft .shiki {
+  color: var(--shiki-dimmed);
+  background-color: var(--shiki-dimmed-bg);
+}
+
+.dark-soft .shiki span {
+  color: var(--shiki-dimmed);
+  font-style: var(--shiki-dimmed-font-style);
+  font-weight: var(--shiki-dimmed-font-weight);
+  text-decoration: var(--shiki-dimmed-text-decoration);
 }
 
 @layer base {
@@ -266,5 +356,11 @@ body {
   }
   html {
     @apply font-sans;
+    /* Inter alternates: l with a tail and I with serifs, so the humanId /
+       hash / label strings all over this UI stay unambiguous. */
+    font-feature-settings:
+      "cv05" 1,
+      "cv08" 1;
+    font-optical-sizing: auto;
   }
 }

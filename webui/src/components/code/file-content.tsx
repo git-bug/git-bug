@@ -56,6 +56,7 @@ export function FileContent({ blob: blobProp, repo, gitRef }: FileContentProps) 
           <div className="px-6 py-4">
             <Markdown
               content={text}
+              size="document"
               repoContext={{ repo, ref: gitRef, basePath: dirname(blob.path) }}
             />
           </div>

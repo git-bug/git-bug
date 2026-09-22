@@ -133,6 +133,7 @@ function TreeView() {
           <div className="px-6 py-4">
             <Markdown
               content={readme}
+              size="document"
               repoContext={{ repo, ref: currentRef, basePath: currentPath }}
             />
           </div>

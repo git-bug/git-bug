@@ -9,7 +9,11 @@ let highlighterPromise: Promise<HighlighterCore> | null = null;
 export function getHighlighter(): Promise<HighlighterCore> {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighterCore({
-      themes: [import("@shikijs/themes/github-light"), import("@shikijs/themes/github-dark")],
+      themes: [
+        import("@shikijs/themes/github-light"),
+        import("@shikijs/themes/github-dark"),
+        import("@shikijs/themes/github-dark-dimmed"),
+      ],
       // Pre-load common languages for Markdown code blocks.
       // FileViewer also loads additional languages on demand via loadLanguage().
       langs: [
@@ -36,4 +40,11 @@ export function getHighlighter(): Promise<HighlighterCore> {
   return highlighterPromise;
 }
 
-export const SHIKI_THEMES = { light: "github-light", dark: "github-dark" } as const;
+// One entry per CSS theme class: with `defaultColor: false` Shiki emits a
+// --shiki-<key> custom property per theme, and index.css picks the right one.
+// "dimmed" is the lower-contrast variant, matched to the "dark soft" canvas.
+export const SHIKI_THEMES = {
+  light: "github-light",
+  dark: "github-dark",
+  dimmed: "github-dark-dimmed",
+} as const;
