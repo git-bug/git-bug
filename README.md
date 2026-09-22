@@ -9,7 +9,6 @@
 [![Sponsors on Open Collective][sponsors/badge]][oc]
 [![GPL v3 License][license/badge]][license/url]
 [![GoDoc][godoc/badge]][godoc/url]
-[![Go Report Card][report-card/badge]][report-card/url]
 [![Matrix][matrix/badge]][matrix/url]
 
 [Issues] - [Documentation][doc] - [Discussions][discuss]
@@ -244,7 +243,5 @@ The git-bug logo by [Viktor Teplov][gh/vandesign] is released under the [Creativ
 [matrix/badge]: https://img.shields.io/badge/chat%20on%20matrix-%23238636
 [matrix/url]: https://matrix.to/#/#git-bug:matrix.org
 [oc]: https://opencollective.com/git-bug
-[report-card/badge]: https://goreportcard.com/badge/github.com/git-bug/git-bug
-[report-card/url]: https://goreportcard.com/report/github.com/git-bug/git-bug
 [spec]: https://github.com/git-bug/spec
 [sponsors/badge]: https://opencollective.com/git-bug/sponsors/badge.svg
