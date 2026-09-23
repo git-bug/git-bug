@@ -32,6 +32,7 @@ var _ repository.RepoKeyring = &RepoCache{}
 // cacheMgmt is the expected interface for a sub-cache.
 type cacheMgmt interface {
 	Typename() string
+	EnsureClocks() error
 	Load() error
 	Build() <-chan BuildEvent
 	SetCacheSize(size int)
@@ -116,6 +117,16 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan 
 		if err != nil {
 			events <- BuildEvent{Err: err}
 			return
+		}
+
+		// Reading entities doesn't create their clocks, and an identity version
+		// records every clock: make sure they all exist before anything is written.
+		for _, subcache := range c.subcaches {
+			err = subcache.EnsureClocks()
+			if err != nil {
+				events <- BuildEvent{Err: err}
+				return
+			}
 		}
 
 		err = c.load()

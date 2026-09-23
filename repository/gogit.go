@@ -23,7 +23,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage"
 	lru "github.com/hashicorp/golang-lru/v2"
-	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
 	"golang.org/x/sys/execabs"
 
@@ -80,7 +79,7 @@ type GoGitRepo struct {
 // with the specified LocalStorage namespace.  Given a repository path
 // of "~/myrepo" and a namespace of "git-bug", local storage for the
 // GoGitRepo will be configured at "~/myrepo/.git/git-bug".
-func OpenGoGitRepo(path, namespace string, clockLoaders []ClockLoader) (*GoGitRepo, error) {
+func OpenGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 	path, err := detectGitPath(path, 0)
 	if err != nil {
 		return nil, err
@@ -104,33 +103,6 @@ func OpenGoGitRepo(path, namespace string, clockLoaders []ClockLoader) (*GoGitRe
 		lastCommitCache: must(lru.New[string, map[string]CommitMeta](lastCommitCacheSize)),
 		keyring:         k,
 		localStorage:    billyLocalStorage{Filesystem: osfs.New(filepath.Join(path, namespace))},
-	}
-
-	loaderToRun := make([]ClockLoader, 0, len(clockLoaders))
-	for _, loader := range clockLoaders {
-		loader := loader
-		allExist := true
-		for _, name := range loader.Clocks {
-			if _, err := repo.getClock(name); err != nil {
-				allExist = false
-			}
-		}
-
-		if !allExist {
-			loaderToRun = append(loaderToRun, loader)
-		}
-	}
-
-	var errG errgroup.Group
-	for _, loader := range loaderToRun {
-		loader := loader
-		errG.Go(func() error {
-			return loader.Witnesser(repo)
-		})
-	}
-	err = errG.Wait()
-	if err != nil {
-		return nil, err
 	}
 
 	return repo, nil
@@ -902,6 +874,11 @@ func (repo *GoGitRepo) AllClocks() (map[string]lamport.Clock, error) {
 			result[name] = c
 		} else {
 			c, err := lamport.LoadPersistedClock(repo.LocalStorage(), filepath.Join(clockPath, name))
+			if errors.Is(err, lamport.ErrClockNotExist) {
+				// an empty file: another process is creating it, or died
+				// doing so. Not a clock yet.
+				continue
+			}
 			if err != nil {
 				return nil, err
 			}
@@ -913,21 +890,17 @@ func (repo *GoGitRepo) AllClocks() (map[string]lamport.Clock, error) {
 	return result, nil
 }
 
-// GetOrCreateClock return a Lamport clock stored in the Repo.
-// If the clock doesn't exist, it's created.
-func (repo *GoGitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
+// GetClock return a Lamport clock stored in the Repo, or ErrClockNotExist if
+// there is none.
+func (repo *GoGitRepo) GetClock(name string) (lamport.Clock, error) {
 	repo.clocksMutex.Lock()
 	defer repo.clocksMutex.Unlock()
 
-	c, err := repo.getClock(name)
-	if err == nil {
+	if c, ok := repo.clocks[name]; ok {
 		return c, nil
 	}
-	if err != ErrClockNotExist {
-		return nil, err
-	}
 
-	c, err = lamport.NewPersistedClock(repo.LocalStorage(), filepath.Join(clockPath, name))
+	c, err := lamport.LoadPersistedClock(repo.LocalStorage(), filepath.Join(clockPath, name))
 	if err != nil {
 		return nil, err
 	}
@@ -936,34 +909,40 @@ func (repo *GoGitRepo) GetOrCreateClock(name string) (lamport.Clock, error) {
 	return c, nil
 }
 
-func (repo *GoGitRepo) getClock(name string) (lamport.Clock, error) {
-	if c, ok := repo.clocks[name]; ok {
-		return c, nil
+// GetOrCreateClock return a Lamport clock stored in the Repo, creating it at the
+// initial time if there is none, or if the existing one is corrupted. See
+// lamport.GetOrCreatePersistedClock for what the initial time must hold.
+func (repo *GoGitRepo) GetOrCreateClock(name string, initial lamport.Time) (lamport.Clock, error) {
+	repo.clocksMutex.Lock()
+	defer repo.clocksMutex.Unlock()
+
+	// goes to the file even with a clock cached: it's the file that may be
+	// missing or corrupted
+	c, err := lamport.GetOrCreatePersistedClock(repo.LocalStorage(), filepath.Join(clockPath, name), initial)
+	if err != nil {
+		return nil, err
 	}
 
-	c, err := lamport.LoadPersistedClock(repo.LocalStorage(), filepath.Join(clockPath, name))
-	if err == nil {
-		repo.clocks[name] = c
-		return c, nil
+	if cached, ok := repo.clocks[name]; ok {
+		return cached, nil
 	}
-	if err == lamport.ErrClockNotExist {
-		return nil, ErrClockNotExist
-	}
-	return nil, err
+
+	repo.clocks[name] = c
+	return c, nil
 }
 
-// Increment is equivalent to c = GetOrCreateClock(name) + c.Increment()
+// Increment is equivalent to c = GetClock(name) + c.Increment()
 func (repo *GoGitRepo) Increment(name string) (lamport.Time, error) {
-	c, err := repo.GetOrCreateClock(name)
+	c, err := repo.GetClock(name)
 	if err != nil {
 		return lamport.Time(0), err
 	}
 	return c.Increment()
 }
 
-// Witness is equivalent to c = GetOrCreateClock(name) + c.Witness(time)
+// Witness is equivalent to c = GetClock(name) + c.Witness(time)
 func (repo *GoGitRepo) Witness(name string, time lamport.Time) error {
-	c, err := repo.GetOrCreateClock(name)
+	c, err := repo.GetClock(name)
 	if err != nil {
 		return err
 	}

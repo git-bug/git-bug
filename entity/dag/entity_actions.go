@@ -205,7 +205,7 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 			"%s %s has diverged and requires a merge commit", def.Typename, id.Human()), id)
 	}
 
-	editTime, err := repo.Increment(fmt.Sprintf(editClockPattern, def.Namespace))
+	editTime, err := incrementClock(def, repo, editClockPattern)
 	if err != nil {
 		return entity.NewMergeError(err, id)
 	}

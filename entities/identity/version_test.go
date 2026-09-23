@@ -16,14 +16,10 @@ import (
 func makeIdentityTestRepo(t *testing.T) repository.ClockedRepo {
 	repo := repository.NewMockRepo()
 
-	clock1, err := repo.GetOrCreateClock("foo")
-	require.NoError(t, err)
-	err = clock1.Witness(42)
+	_, err := repo.GetOrCreateClock("foo", 42)
 	require.NoError(t, err)
 
-	clock2, err := repo.GetOrCreateClock("bar")
-	require.NoError(t, err)
-	err = clock2.Witness(34)
+	_, err = repo.GetOrCreateClock("bar", 34)
 	require.NoError(t, err)
 
 	return repo

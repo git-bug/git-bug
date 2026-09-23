@@ -8,8 +8,11 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/go-git/go-billy/v5/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/git-bug/git-bug/util/lamport"
 )
 
 func TestNewGoGitRepo(t *testing.T) {
@@ -47,7 +50,7 @@ func TestNewGoGitRepo(t *testing.T) {
 	}
 
 	for i, tc := range tests {
-		r, err := OpenGoGitRepo(tc.inPath, namespace, nil)
+		r, err := OpenGoGitRepo(tc.inPath, namespace)
 
 		if tc.err {
 			require.Error(t, err, i)
@@ -161,4 +164,56 @@ func TestGoGit_DetectsSubmodules(t *testing.T) {
 	result, err := detectGitPath(d, 0)
 	assert.Empty(t, err)
 	assert.Equal(t, expected, result)
+}
+
+// An empty clock file is one being created, or whose creation was interrupted:
+// not a clock yet, and not a reason to fail listing the others.
+func TestGoGitRepo_AllClocksSkipsEmpty(t *testing.T) {
+	repo := CreateGoGitTestRepo(t, false)
+
+	foo, err := repo.GetOrCreateClock("foo", 1)
+	require.NoError(t, err)
+
+	f, err := repo.LocalStorage().Create(filepath.Join(clockPath, "empty"))
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+
+	allClocks, err := repo.AllClocks()
+	require.NoError(t, err)
+	require.Equal(t, map[string]lamport.Clock{"foo": foo}, allClocks)
+}
+
+// A corrupted clock is listed and handed out, but can't be used until it's
+// created again, at a value the caller vouches for.
+func TestGoGitRepo_CorruptedClock(t *testing.T) {
+	repo := CreateGoGitTestRepo(t, false)
+
+	clockFile := filepath.Join(clockPath, "foo")
+	require.NoError(t, util.WriteFile(repo.LocalStorage(), clockFile, []byte("garbage"), 0644))
+
+	// listed, for the caller to decide what to do with it
+	allClocks, err := repo.AllClocks()
+	require.NoError(t, err)
+	require.Contains(t, allClocks, "foo")
+	_, err = allClocks["foo"].Time()
+	require.ErrorIs(t, err, lamport.ErrClockCorrupt)
+
+	_, err = repo.Increment("foo")
+	require.ErrorIs(t, err, lamport.ErrClockCorrupt)
+	require.ErrorIs(t, repo.Witness("foo", 10), lamport.ErrClockCorrupt)
+
+	clock, err := repo.GetOrCreateClock("foo", 10)
+	require.NoError(t, err)
+	time, err := clock.Time()
+	require.NoError(t, err)
+	require.Equal(t, lamport.Time(10), time)
+
+	// the clock listed earlier is the same one
+	time, err = allClocks["foo"].Time()
+	require.NoError(t, err)
+	require.Equal(t, lamport.Time(10), time)
+
+	time, err = repo.Increment("foo")
+	require.NoError(t, err)
+	require.Equal(t, lamport.Time(11), time)
 }

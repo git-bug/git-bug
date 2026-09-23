@@ -16,7 +16,7 @@ var (
 	// ErrNotARepo is the error returned when the git repo root can't be found
 	ErrNotARepo = errors.New("not a git repository")
 	// ErrClockNotExist is the error returned when a clock can't be found
-	ErrClockNotExist = errors.New("clock doesn't exist")
+	ErrClockNotExist = lamport.ErrClockNotExist
 	// ErrNotFound is the error returned when a git object can't be found
 	ErrNotFound = errors.New("ref not found")
 	// ErrRefChanged is the error returned when a ref doesn't have the expected value anymore
@@ -208,14 +208,20 @@ type RepoClock interface {
 	// AllClocks return all the known clocks
 	AllClocks() (map[string]lamport.Clock, error)
 
-	// GetOrCreateClock return a Lamport clock stored in the Repo.
-	// If the clock doesn't exist, it's created.
-	GetOrCreateClock(name string) (lamport.Clock, error)
+	// GetClock return a Lamport clock stored in the Repo, or ErrClockNotExist
+	// if there is none.
+	GetClock(name string) (lamport.Clock, error)
 
-	// Increment is equivalent to c = GetOrCreateClock(name) + c.Increment()
+	// GetOrCreateClock return a Lamport clock stored in the Repo, creating it
+	// at the initial time if there is none, or if the existing one is corrupted.
+	// The initial time must be at least every time already issued or witnessed
+	// for that clock: see lamport.GetOrCreatePersistedClock.
+	GetOrCreateClock(name string, initial lamport.Time) (lamport.Clock, error)
+
+	// Increment is equivalent to c = GetClock(name) + c.Increment()
 	Increment(name string) (lamport.Time, error)
 
-	// Witness is equivalent to c = GetOrCreateClock(name) + c.Witness(time)
+	// Witness is equivalent to c = GetClock(name) + c.Witness(time)
 	Witness(name string, time lamport.Time) error
 }
 
@@ -273,18 +279,6 @@ type RepoBrowse interface {
 	// Returns ErrNotFound if HEAD cannot be resolved to a commit, including
 	// for an empty (unborn) repository.
 	Head() (RefMeta, error)
-}
-
-// ClockLoader hold which logical clock need to exist for an entity and
-// how to create them if they don't.
-type ClockLoader struct {
-	// Clocks hold the name of all the clocks this loader deals with.
-	// Those clocks will be checked when the repo loads. If not present or broken,
-	// Witnesser will be used to create them.
-	Clocks []string
-	// Witnesser is a function that will initialize the clocks of a repo
-	// from scratch
-	Witnesser func(repo ClockedRepo) error
 }
 
 // TestedRepo is an extended ClockedRepo with functions for testing only

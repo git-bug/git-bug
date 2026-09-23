@@ -64,8 +64,8 @@ func NewMemClockWithTime(time uint64) *MemClock {
 }
 
 // Time is used to return the current value of the lamport clock
-func (mc *MemClock) Time() Time {
-	return Time(atomic.LoadUint64(&mc.counter))
+func (mc *MemClock) Time() (Time, error) {
+	return Time(atomic.LoadUint64(&mc.counter)), nil
 }
 
 // Increment is used to return the value of the lamport clock and increment it afterwards

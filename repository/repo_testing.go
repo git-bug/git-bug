@@ -398,22 +398,50 @@ func RepoClockTest(t *testing.T, repo RepoClock) {
 	require.NoError(t, err)
 	require.Len(t, allClocks, 0)
 
-	clock, err := repo.GetOrCreateClock("foo")
+	requireTime := func(expected lamport.Time, clock lamport.Clock) {
+		t.Helper()
+		actual, err := clock.Time()
+		require.NoError(t, err)
+		require.Equal(t, expected, actual)
+	}
+
+	// nothing creates a clock on the side
+	_, err = repo.GetClock("foo")
+	require.ErrorIs(t, err, ErrClockNotExist)
+	_, err = repo.Increment("foo")
+	require.ErrorIs(t, err, ErrClockNotExist)
+	err = repo.Witness("foo", 42)
+	require.ErrorIs(t, err, ErrClockNotExist)
+
+	clock, err := repo.GetOrCreateClock("foo", 1)
 	require.NoError(t, err)
-	require.Equal(t, lamport.Time(1), clock.Time())
+	requireTime(1, clock)
 
 	time, err := clock.Increment()
 	require.NoError(t, err)
 	require.Equal(t, lamport.Time(2), time)
-	require.Equal(t, lamport.Time(2), clock.Time())
+	requireTime(2, clock)
 
-	clock2, err := repo.GetOrCreateClock("foo")
+	// an existing clock is left as it is
+	clock2, err := repo.GetOrCreateClock("foo", 10)
 	require.NoError(t, err)
-	require.Equal(t, lamport.Time(2), clock2.Time())
+	requireTime(2, clock2)
+	requireTime(2, clock)
 
-	clock3, err := repo.GetOrCreateClock("bar")
+	clock3, err := repo.GetOrCreateClock("bar", 5)
 	require.NoError(t, err)
-	require.Equal(t, lamport.Time(1), clock3.Time())
+	requireTime(5, clock3)
+
+	time, err = repo.Increment("bar")
+	require.NoError(t, err)
+	require.Equal(t, lamport.Time(6), time)
+	err = repo.Witness("bar", 42)
+	require.NoError(t, err)
+	requireTime(42, clock3)
+
+	clock4, err := repo.GetClock("bar")
+	require.NoError(t, err)
+	requireTime(42, clock4)
 
 	allClocks, err = repo.AllClocks()
 	require.NoError(t, err)

@@ -42,6 +42,8 @@ func NewRepoCacheIdentity(repo repository.ClockedRepo,
 		MergeAll: func(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult {
 			return identity.MergeAll(repo, remote)
 		},
+		// identities carry no clock of their own, they record the others'
+		EnsureClocks: func(repo repository.ClockedRepo) error { return nil },
 	}
 
 	sc := NewSubCache[*identity.Identity, *IdentityExcerpt, *IdentityCache](

@@ -41,6 +41,7 @@ func NewRepoCacheBug(repo repository.ClockedRepo,
 		Remove:              bug.Remove,
 		RemoveAll:           bug.RemoveAll,
 		MergeAll:            bug.MergeAll,
+		EnsureClocks:        bug.EnsureClocks,
 	}
 
 	sc := NewSubCache[*bug.Bug, *BugExcerpt, *BugCache](
