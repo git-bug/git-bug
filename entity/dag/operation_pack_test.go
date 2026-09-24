@@ -52,7 +52,7 @@ func TestOperationPackSignedReadWrite(t *testing.T) {
 		repo, author, _, resolver, def := maker()
 
 		err := author.(*identity.Identity).Mutate(repo, func(orig *identity.Mutator) {
-			orig.Keys = append(orig.Keys, identity.GenerateKey())
+			orig.Keys = append(orig.Keys, identity.GenerateKey(author))
 		})
 		require.NoError(t, err)
 
