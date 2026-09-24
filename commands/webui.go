@@ -144,7 +144,13 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	}
 
 	addr := net.JoinHostPort(opts.bind, strconv.Itoa(opts.port))
-	server := &http.Server{Addr: addr, Handler: router}
+	server := &http.Server{
+		Addr:              addr,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
 	baseURL := "http://" + addr
 
 	env.Out.Printf("Web UI: %s\n", baseURL)
