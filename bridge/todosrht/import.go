@@ -162,9 +162,17 @@ func (ji *todosrhtImporter) ensurePerson(repo *cache.RepoCache, entities Entity)
 		return nil, fmt.Errorf("unknown entity type %T", entities)
 	}
 
+	// The login stored on the identity must match the login used to configure
+	// the bridge (a plain username, without the "~" of the canonical name),
+	// otherwise the exporter can't map credentials to imported identities.
+	login := canonicalName
+	if _, ok := entities.(*User); ok && username != "" {
+		login = username
+	}
+
 	// Look first in the cache
 	i, err := repo.Identities().ResolveIdentityImmutableMetadata(
-		metaKeyTodoSourceHutLogin, canonicalName)
+		metaKeyTodoSourceHutLogin, login)
 	if err == nil {
 		return i, nil
 	}
@@ -174,7 +182,7 @@ func (ji *todosrhtImporter) ensurePerson(repo *cache.RepoCache, entities Entity)
 
 	// If not found, create a new identity
 	metadata := map[string]string{
-		metaKeyTodoSourceHutLogin: canonicalName,
+		metaKeyTodoSourceHutLogin: login,
 	}
 	if externalId != "" {
 		metadata[metaKeyTodoSourceHutUser] = externalId
@@ -290,15 +298,9 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 			if err != nil {
 				return err
 			}
-			// Mark this event ID as processed
-			if len(b.Snapshot().Operations) > 0 {
-				_, err = b.SetMetadata(b.Snapshot().Operations[0].Id(), map[string]string{
-					metaKeyTodoSourceHutId: fmt.Sprintf("%d", event.Id),
-				})
-				if err != nil {
-					return err
-				}
-			}
+			// Nothing else to do: the create operation already carries the
+			// ticket ID in its (immutable) metadata, and this event creates no
+			// new operation, so processing it again is harmless.
 
 		case *Comment:
 			authorEntity, err := UnmarshalEntity(c.Author)
@@ -404,6 +406,10 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 			if err != nil {
 				return err
 			}
+			if assignerEntity == nil {
+				ji.out <- core.NewImportWarning(fmt.Errorf("assigner is unknown for event %d, skipping", event.Id), b.Id())
+				continue
+			}
 			assigner, err := ji.ensurePerson(repo, assignerEntity)
 			if err != nil {
 				return err
@@ -411,6 +417,10 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 			assigneeEntity, err := UnmarshalEntity(c.Assignee)
 			if err != nil {
 				return err
+			}
+			if assigneeEntity == nil {
+				ji.out <- core.NewImportWarning(fmt.Errorf("assignee is unknown for event %d, skipping", event.Id), b.Id())
+				continue
 			}
 			assignee, err := ji.ensurePerson(repo, assigneeEntity)
 			if err != nil {
@@ -427,6 +437,10 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 			if err != nil {
 				return err
 			}
+			if authorEntity == nil {
+				ji.out <- core.NewImportWarning(fmt.Errorf("mention author is unknown for event %d, skipping", event.Id), b.Id())
+				continue
+			}
 			author, err := ji.ensurePerson(repo, authorEntity)
 			if err != nil {
 				return err
@@ -434,6 +448,10 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 			mentionedEntity, err := UnmarshalEntity(c.Mentioned)
 			if err != nil {
 				return err
+			}
+			if mentionedEntity == nil {
+				ji.out <- core.NewImportWarning(fmt.Errorf("mentioned user is unknown for event %d, skipping", event.Id), b.Id())
+				continue
 			}
 			mentioned, err := ji.ensurePerson(repo, mentionedEntity)
 			if err != nil {
@@ -448,6 +466,10 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 			authorEntity, err := UnmarshalEntity(c.Author)
 			if err != nil {
 				return err
+			}
+			if authorEntity == nil {
+				ji.out <- core.NewImportWarning(fmt.Errorf("mention author is unknown for event %d, skipping", event.Id), b.Id())
+				continue
 			}
 			author, err := ji.ensurePerson(repo, authorEntity)
 			if err != nil {

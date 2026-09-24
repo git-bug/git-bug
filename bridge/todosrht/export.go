@@ -37,6 +37,9 @@ type todosrhtExporter struct {
 	// cache labels used to speed up exporting labels events
 	cachedLabels map[string]string
 
+	// client of the default login, used for tracker-wide operations
+	defaultClient TodosrhtClient
+
 	// store TODOSRHT tracker information
 	tracker *Tracker
 }
@@ -57,26 +60,21 @@ func (je *todosrhtExporter) Init(ctx context.Context, repo *cache.RepoCache, con
 		return fmt.Errorf("no credentials for this bridge")
 	}
 
-	// Use the client associated with the default login for general tracker operations
+	// Use the client of the default login for tracker-wide operations. Picking
+	// any other stored credential could resolve the tracker name against the
+	// wrong user's trackers.
 	defaultLogin := je.conf[confKeyDefaultLogin]
-	var defaultClient *TodoSClient
-	for _, client := range je.identityClient {
-		// We don't have a direct way to map a client back to its login here without iterating metadata again
-		// For now, assume the first client in the map is sufficient for initial tracker lookup
-		// A more robust solution might involve storing the default client by ID or login in the exporter struct.
-		defaultClient = client.(*TodoSClient)
-		break
+	if je.defaultClient == nil {
+		return fmt.Errorf("no credentials found for the default login: %s", defaultLogin)
 	}
-	if defaultClient == nil {
-		return fmt.Errorf("could not find a client for the default login: %s", defaultLogin)
-	}
-
-	// Get tracker information
 
 	trackerName := je.conf[confKeyTrackerName]
-	tracker, err := defaultClient.GetTracker(ctx, trackerName)
+	tracker, err := je.defaultClient.GetTracker(ctx, trackerName)
 	if err != nil {
 		return fmt.Errorf("failed to get tracker '%s': %w", trackerName, err)
+	}
+	if tracker == nil {
+		return fmt.Errorf("tracker '%s' not found for login %s", trackerName, defaultLogin)
 	}
 	je.tracker = tracker
 
@@ -98,6 +96,14 @@ func (je *todosrhtExporter) cacheAllClient(ctx context.Context, repo *cache.Repo
 		if !ok {
 			_, _ = fmt.Fprintf(os.Stderr, "credential %s is not tagged with a SourceHut login\n", cred.ID().Human())
 			continue
+		}
+
+		if login == je.conf[confKeyDefaultLogin] && je.defaultClient == nil {
+			tokenCred, ok := cred.(*auth.Token)
+			if !ok {
+				return fmt.Errorf("expected token credential, got %T", cred)
+			}
+			je.defaultClient = NewTodoSClient(ctx, je.conf[confKeyBaseUrl], tokenCred.Value)
 		}
 
 		user, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyTodoSourceHutLogin, login)
@@ -213,6 +219,14 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 		return nil
 	}
 
+	// skip bug if it is associated with another SourceHut instance
+	baseURLMeta, ok := snapshot.GetCreateMetadata(metaKeyTodoSourceHutBaseUrl)
+	if ok && baseURLMeta != je.conf[confKeyBaseUrl] {
+		out <- core.NewExportNothing(
+			b.Id(), fmt.Sprintf("issue tagged with base URL: %s", baseURLMeta))
+		return nil
+	}
+
 	// get todosrht bug ID
 	todosrhtIDStr, ok := snapshot.GetCreateMetadata(metaKeyTodoSourceHutId)
 	if ok {
@@ -246,6 +260,11 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 		// mark bug creation operation as exported
 		err = markOperationAsExported(
 			b, createOp.Id(), fmt.Sprintf("%d", ticket.Id), je.tracker.Name, ticket.Created.Unix())
+		if err == nil {
+			_, err = b.SetMetadata(createOp.Id(), map[string]string{
+				metaKeyTodoSourceHutBaseUrl: je.conf[confKeyBaseUrl],
+			})
+		}
 		if err != nil {
 			err := errors.Wrap(err, "marking operation as exported")
 			out <- core.NewExportError(err, b.Id())
