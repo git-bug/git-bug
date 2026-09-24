@@ -20,7 +20,7 @@ import (
 )
 
 var (
-        ErrBadProjectURL = errors.New("bad project url")
+	ErrBadProjectURL = errors.New("bad project url")
 )
 
 func (g *Gitea) ValidParams() map[string]interface{} {
@@ -238,36 +238,79 @@ func promptURL(repo repository.RepoCommon) (string, string, string, error) {
 	return splitURL(url)
 }
 
+// repoPageSegments are path segments Gitea and Forgejo put after
+// /{owner}/{repo} in web URLs, such as /owner/repo/issues/12.
+var repoPageSegments = map[string]bool{
+	"issues": true, "pulls": true, "src": true, "commits": true,
+	"commit": true, "branches": true, "tags": true, "releases": true,
+	"wiki": true, "milestones": true, "labels": true, "projects": true,
+	"actions": true, "activity": true, "settings": true, "compare": true,
+	"-": true,
+}
+
+// scpURL matches scp-like git remotes such as git@gitea.com:owner/repo.git.
+var scpURL = regexp.MustCompile(`^[^@/]+@([^:/]+):(.+)$`)
+
+// splitURL splits a Gitea/Forgejo repository URL into the instance base URL
+// (with a trailing slash), the owner and the repository name.
+//
+// It accepts web URLs, including repository pages like /owner/repo/issues/1,
+// instances served under a subpath (https://host/gitea/owner/repo), clone URLs
+// ending in .git, and git://, ssh:// and scp-like remotes. Remote protocols are
+// mapped to https on the same host, since that is where the API lives.
 func splitURL(rawUrl string) (baseURL, owner, project string, err error) {
-	parsedURL, err := url.Parse(rawUrl)
-	// url.Parse basically never returns an error.
-	// Check its work.
-	if err == nil && parsedURL.Scheme == "" {
-		err = ErrBadProjectURL
-	}
+	var scheme, host, urlPath string
 
-	if err != nil {
-		// This might be a `git@` SCP URL.
-		scp := regexp.MustCompile(`^[^@]+@([^:]+):([^/]+)/(.+?)(?:\.git)?$`)
-		if m := scp.FindStringSubmatch(rawUrl); m != nil {
-			err = nil
-			var host string
-			host, owner, project = m[1], m[2], m[3]
-			baseURL = "https://" + host + "/"
-			return
+	if m := scpURL.FindStringSubmatch(rawUrl); m != nil && !strings.Contains(rawUrl, "://") {
+		scheme, host, urlPath = "https", m[1], m[2]
+	} else {
+		parsed, perr := url.Parse(rawUrl)
+		if perr != nil || parsed.Host == "" {
+			return "", "", "", ErrBadProjectURL
 		}
-
-		return "", "", "", err
+		switch parsed.Scheme {
+		case "http", "https":
+			scheme, host = parsed.Scheme, parsed.Host
+		case "ssh", "git", "git+ssh", "ssh+git":
+			// The SSH/git port says nothing about where the web API is served.
+			scheme, host = "https", parsed.Hostname()
+		default:
+			return "", "", "", ErrBadProjectURL
+		}
+		urlPath = parsed.Path
 	}
 
-	path := strings.Split(parsedURL.Path, "/")
-	owner = path[1]
-	project = strings.TrimSuffix(path[2], ".git")
+	var segments []string
+	for _, seg := range strings.Split(urlPath, "/") {
+		if seg != "" {
+			segments = append(segments, seg)
+		}
+	}
 
-	parsedURL.Path = "/"
-	parsedURL.Scheme = "https"
-	baseURL = parsedURL.String()
-	return
+	// The repository is the pair right before the first repository page
+	// segment, or the last two segments when there is none.
+	repoEnd := len(segments)
+	for i := 2; i < len(segments); i++ {
+		if repoPageSegments[segments[i]] {
+			repoEnd = i
+			break
+		}
+	}
+	if repoEnd < 2 {
+		return "", "", "", ErrBadProjectURL
+	}
+
+	owner = segments[repoEnd-2]
+	project = strings.TrimSuffix(segments[repoEnd-1], ".git")
+	if owner == "" || project == "" {
+		return "", "", "", ErrBadProjectURL
+	}
+
+	base := url.URL{Scheme: scheme, Host: host, Path: "/"}
+	if prefix := segments[:repoEnd-2]; len(prefix) > 0 {
+		base.Path = "/" + strings.Join(prefix, "/") + "/"
+	}
+	return base.String(), owner, project, nil
 }
 
 func getRemoteURLs(repo repository.RepoCommon) ([]string, error) {

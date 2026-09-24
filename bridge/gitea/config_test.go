@@ -85,6 +85,36 @@ func TestSplitURL(t *testing.T) {
 			},
 		},
 		{
+			name: "issue page url",
+			args: args{url: "https://codeberg.org/forgejo/forgejo/issues/123"},
+			want: want{baseURL: "https://codeberg.org/", owner: "forgejo", project: "forgejo"},
+		},
+		{
+			name: "plain http with port is kept",
+			args: args{url: "http://localhost:3000/owner/repo"},
+			want: want{baseURL: "http://localhost:3000/", owner: "owner", project: "repo"},
+		},
+		{
+			name: "instance under a subpath",
+			args: args{url: "https://example.com/gitea/owner/repo/pulls"},
+			want: want{baseURL: "https://example.com/gitea/", owner: "owner", project: "repo"},
+		},
+		{
+			name: "ssh url with port",
+			args: args{url: "ssh://git@gitea.com:2222/git-bug/git-bug.git"},
+			want: want{baseURL: "https://gitea.com/", owner: "git-bug", project: "git-bug"},
+		},
+		{
+			name: "owner only",
+			args: args{url: "https://gitea.com/git-bug"},
+			want: want{err: ErrBadProjectURL},
+		},
+		{
+			name: "unsupported scheme",
+			args: args{url: "ftp://gitea.com/git-bug/git-bug"},
+			want: want{err: ErrBadProjectURL},
+		},
+		{
 			name: "bad url",
 			args: args{
 				url: "xxx",
