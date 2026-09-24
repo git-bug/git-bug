@@ -5,10 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"os"
-
 	"strings"
 	"time"
 
@@ -22,18 +22,35 @@ type TodoSClient struct {
 	client  *http.Client
 }
 
-// debuggingTransport is a http.RoundTripper that prints out the request
-// and response details.
+// maxResponseSize limits how much of a server response is read, to protect
+// against a hostile or broken server exhausting memory.
+const maxResponseSize = 32 << 20 // 32 MiB
+
+// maxDebugBodySize limits how much of a response body is printed in debug mode.
+const maxDebugBodySize = 4096
+
+// debuggingTransport is a http.RoundTripper that prints request and response
+// details to stderr. The Authorization header is redacted and response bodies
+// are truncated, as they may contain personal data such as email addresses.
 type debuggingTransport struct {
 	base http.RoundTripper
 }
 
 func (t *debuggingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	dump, err := httputil.DumpRequestOut(req, true)
+	redacted := req.Clone(req.Context())
+	if redacted.Header.Get("Authorization") != "" {
+		redacted.Header.Set("Authorization", "Bearer [REDACTED]")
+	}
+	if req.GetBody != nil {
+		if body, err := req.GetBody(); err == nil {
+			redacted.Body = body
+		}
+	}
+	dump, err := httputil.DumpRequestOut(redacted, true)
 	if err != nil {
-		fmt.Printf("failed to dump request: %v\n", err)
+		fmt.Fprintf(os.Stderr, "failed to dump request: %v\n", err)
 	} else {
-		fmt.Printf("--- Request ---\n%s\n", string(dump))
+		fmt.Fprintf(os.Stderr, "--- Request ---\n%s\n", string(dump))
 	}
 
 	resp, err := t.base.RoundTrip(req)
@@ -42,12 +59,26 @@ func (t *debuggingTransport) RoundTrip(req *http.Request) (*http.Response, error
 		return nil, err
 	}
 
-	dump, err = httputil.DumpResponse(resp, true)
+	dump, err = httputil.DumpResponse(resp, false)
 	if err != nil {
-		fmt.Printf("failed to dump response: %v\n", err)
-	} else {
-		fmt.Printf("--- Response ---\n%s\n", string(dump))
+		fmt.Fprintf(os.Stderr, "failed to dump response: %v\n", err)
+		return resp, nil
 	}
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseSize))
+	_ = resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	resp.Body = io.NopCloser(bytes.NewReader(body))
+
+	shown := body
+	suffix := ""
+	if len(shown) > maxDebugBodySize {
+		shown = shown[:maxDebugBodySize]
+		suffix = fmt.Sprintf("\n[... %d bytes truncated]", len(body)-maxDebugBodySize)
+	}
+	fmt.Fprintf(os.Stderr, "--- Response ---\n%s%s%s\n", string(dump), string(shown), suffix)
 
 	return resp, nil
 }
@@ -974,7 +1005,7 @@ func (c *TodoSClient) executeRequest(ctx context.Context, query string, variable
 	}
 
 	var response GraphQLResponse
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxResponseSize)).Decode(&response); err != nil {
 		return errors.Wrap(err, "failed to decode response")
 	}
 
@@ -1077,7 +1108,7 @@ func (c *TodoSClient) TrackerExists(ctx context.Context, name string) (bool, err
 	}
 
 	var response GraphQLResponse
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxResponseSize)).Decode(&response); err != nil {
 		return false, errors.Wrap(err, "failed to decode response")
 	}
 

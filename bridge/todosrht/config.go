@@ -3,6 +3,7 @@ package todosrht
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/url"
 	"strings"
 
@@ -17,7 +18,7 @@ const moreConfigText = `
 NOTE: There are a few optional configuration values that you can additionally
 set in your git configuration to influence the behavior of the bridge. Please
 see the notes at:
-https://github.com/git-bug/git-bug/blob/master/doc/todosrht_bridge.md
+https://github.com/git-bug/git-bug/blob/trunk/doc/usage/todosrht.md
 `
 
 // parseTodoURL extracts base URL and tracker name from a full todo.sr.ht URL
@@ -30,6 +31,10 @@ func parseTodoURL(fullURL string) (baseURL, trackerName string, err error) {
 	parsed, err := url.Parse(fullURL)
 	if err != nil {
 		return "", "", fmt.Errorf("invalid URL format: %v", err)
+	}
+
+	if err := checkBaseURL(parsed); err != nil {
+		return "", "", err
 	}
 
 	// Extract base URL
@@ -54,6 +59,43 @@ func parseTodoURL(fullURL string) (baseURL, trackerName string, err error) {
 	trackerName = parts[1] // Use only the tracker-name part
 
 	return baseURL, trackerName, nil
+}
+
+// checkBaseURL makes sure the bridge only talks to a server over HTTPS, so the
+// access token is never sent in clear text. Plain HTTP is accepted only for
+// loopback hosts, which is useful for testing against a local instance.
+func checkBaseURL(u *url.URL) error {
+	if u.Host == "" {
+		return fmt.Errorf("URL %q has no host", u.String())
+	}
+	switch u.Scheme {
+	case "https":
+		return nil
+	case "http":
+		host := u.Hostname()
+		if host == "localhost" {
+			return nil
+		}
+		if ip := net.ParseIP(host); ip != nil && ip.IsLoopback() {
+			return nil
+		}
+		return fmt.Errorf("refusing to send credentials over plain HTTP to %s, use https", host)
+	default:
+		return fmt.Errorf("unsupported URL scheme %q, use https", u.Scheme)
+	}
+}
+
+// validateBaseURL parses and checks a server base URL, and returns it without
+// a trailing slash.
+func validateBaseURL(raw string) (string, error) {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL format: %v", err)
+	}
+	if err := checkBaseURL(u); err != nil {
+		return "", err
+	}
+	return strings.TrimSuffix(u.String(), "/"), nil
 }
 
 func (*TodoSourceHut) ValidParams() map[string]interface{} {
@@ -94,6 +136,11 @@ func (j *TodoSourceHut) Configure(repo *cache.RepoCache, params core.BridgeParam
 				return nil, err
 			}
 		}
+	}
+
+	baseURL, err = validateBaseURL(baseURL)
+	if err != nil {
+		return nil, err
 	}
 
 	if trackerName == "" {
@@ -184,14 +231,11 @@ func (j *TodoSourceHut) Configure(repo *cache.RepoCache, params core.BridgeParam
 	}
 
 	// Then verify access to the tracker with credentials
-	tokenPreview := ""
-	if len(tokenCred.Value) > 6 {
-		tokenPreview = tokenCred.Value[:6] + "..."
-	} else {
-		tokenPreview = tokenCred.Value
+	fmt.Printf("Verifying authentication credentials ...\n")
+	tracker, err := client.GetTracker(context.TODO(), trackerName)
+	if err == nil && tracker == nil {
+		err = fmt.Errorf("tracker not found")
 	}
-	fmt.Printf("Verifying authentication credentials (token: %s) ...\n", tokenPreview)
-	_, err = client.GetTracker(context.TODO(), trackerName)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"Authentication credentials for (%s) are invalid or insufficient to access tracker %s.\nFor more details, set GIT_BUG_DEBUG=1 and try again",
