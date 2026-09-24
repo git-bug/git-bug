@@ -21,7 +21,7 @@ type Iterator struct {
 	// sticky error
 	err error
 
-	issue *pageIterator[gitea.Issue]
+	issue    *pageIterator[gitea.Issue]
 	timeline *pageIterator[TimelineEvent]
 }
 
@@ -61,42 +61,48 @@ type pageIterator[T any] struct {
 type TimelineEvent interface{ sealed() }
 
 type CommentEvent struct {
-	ID int64;
-	Body string;
-	Poster *gitea.User;
-	Created, Updated time.Time;
+	ID               int64
+	Body             string
+	Poster           *gitea.User
+	Created, Updated time.Time
 }
-func (*CommentEvent) sealed () {}
+
+func (*CommentEvent) sealed() {}
 
 type RenameEvent struct {
-	NewName string;
-	Poster *gitea.User;
-	Updated time.Time;
+	ID      int64
+	NewName string
+	Poster  *gitea.User
+	Updated time.Time
 }
-func (*RenameEvent) sealed () {}
 
-type ReopenEvent struct {
-}
-func (*ReopenEvent) sealed () {}
+func (*RenameEvent) sealed() {}
 
-type CloseEvent struct {
+// StatusEvent is a close or reopen of the issue.
+type StatusEvent struct {
+	ID      int64
+	Closed  bool
+	Poster  *gitea.User
+	Created time.Time
 }
-func (*CloseEvent) sealed () {}
+
+func (*StatusEvent) sealed() {}
 
 type LabelEvent struct {
-	Label *gitea.Label;
-	Poster *gitea.User;
-	UpdatedAt time.Time;
-	ID int;
-	Kind LabelEventKind;
+	Label     *gitea.Label
+	Poster    *gitea.User
+	UpdatedAt time.Time
+	ID        int
+	Kind      LabelEventKind
 }
-func (*LabelEvent) sealed () {}
+
+func (*LabelEvent) sealed() {}
 
 type LabelEventKind int
 
 const (
-    LabelAdded LabelEventKind = iota
-    LabelRemoved
+	LabelAdded LabelEventKind = iota
+	LabelRemoved
 )
 
 func NewIterator(ctx context.Context, client *gitea.Client, capacity int, owner, project string, timeout time.Duration, since time.Time) *Iterator {
@@ -110,7 +116,7 @@ func NewIterator(ctx context.Context, client *gitea.Client, capacity int, owner,
 			project:  project,
 			capacity: capacity,
 		},
-		issue: newPageIterator[gitea.Issue](fetchIssues),
+		issue:    newPageIterator[gitea.Issue](fetchIssues),
 		timeline: newPageIterator[TimelineEvent](fetchTimeline),
 	}
 }
@@ -288,35 +294,46 @@ func fetchTimeline(ctx context.Context, conf config, issue *gitea.Issue, page in
 	for _, rawEvent := range rawEvents {
 		var event TimelineEvent
 		switch rawEvent.Type {
-			case "comment":
-				event = &CommentEvent{
-					Body: rawEvent.Body,
-					// FIXME: Forgejo's API doesn't expose whether someone besides the author
-					// edited this comment.
-					Poster: rawEvent.Poster,
-					// We need both of those to be able to distinguish new comments from
-					// edits. We also have a policy decision to make: what to do if we see
-					// an edit but never the original. We leave that up to the import
-					// module.
-					Created: rawEvent.Created,
-					Updated: rawEvent.Updated,
-				}
-			case "label":
-				var kind LabelEventKind
-				if rawEvent.Body == "1" {
-					kind = LabelAdded
-				} else {
-					kind = LabelRemoved
-				}
-				event = &LabelEvent{Kind: kind, Label: rawEvent.Label, Poster: rawEvent.Poster}
-			case "close":
-				panic("todo")
-			case "reopen":
-				panic("todo")
-			case "rename":
-				event = &RenameEvent{NewName: rawEvent.Body, Poster: rawEvent.Poster}
-			default:
-				continue
+		case "comment":
+			event = &CommentEvent{
+				ID:   rawEvent.ID,
+				Body: rawEvent.Body,
+				// FIXME: Forgejo's API doesn't expose whether someone besides the author
+				// edited this comment.
+				Poster: rawEvent.Poster,
+				// We need both of those to be able to distinguish new comments from
+				// edits. We also have a policy decision to make: what to do if we see
+				// an edit but never the original. We leave that up to the import
+				// module.
+				Created: rawEvent.Created,
+				Updated: rawEvent.Updated,
+			}
+		case "label":
+			var kind LabelEventKind
+			if rawEvent.Body == "1" {
+				kind = LabelAdded
+			} else {
+				kind = LabelRemoved
+			}
+			event = &LabelEvent{Kind: kind, Label: rawEvent.Label, Poster: rawEvent.Poster, UpdatedAt: rawEvent.Created, ID: int(rawEvent.ID)}
+		case "close", "reopen":
+			event = &StatusEvent{
+				ID:      rawEvent.ID,
+				Closed:  rawEvent.Type == "close",
+				Poster:  rawEvent.Poster,
+				Created: rawEvent.Created,
+			}
+		case "change_title":
+			// Gitea and Forgejo report renames as "change_title" with the
+			// new title in NewTitle; Body is empty for this event type.
+			event = &RenameEvent{
+				ID:      rawEvent.ID,
+				NewName: rawEvent.NewTitle,
+				Poster:  rawEvent.Poster,
+				Updated: rawEvent.Created,
+			}
+		default:
+			continue
 		}
 		events = append(events, &event)
 	}

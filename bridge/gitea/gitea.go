@@ -12,8 +12,11 @@ import (
 const (
 	target = "gitea"
 
-	metaKeyGiteaID      = "gitea-id"
+	metaKeyGiteaID        = "gitea-id"
 	metaKeyGiteaCommentID = "gitea-comment-id"
+	// metaKeyGiteaEvent identifies the timeline event an operation was
+	// imported from, so re-imports don't duplicate it.
+	metaKeyGiteaEvent   = "gitea-timeline-event"
 	metaKeyGiteaLogin   = "gitea-login"
 	metaKeyGiteaOwner   = "gitea-owner"
 	metaKeyGiteaProject = "gitea-project"

@@ -75,8 +75,6 @@ func writeJSON(w http.ResponseWriter, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-
-
 func parsePagination(r *http.Request) (page, limit int) {
 	page, limit = 1, 10
 	if p := r.URL.Query().Get("page"); p != "" {
@@ -343,7 +341,17 @@ func (fa *FakeAPI) listIssues(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Total-Count", strconv.Itoa(len(issues)))
 
 	start, end := pageSlice(page, limit, len(issues))
-	writeJSON(w, issues[start:end])
+	// Real Gitea embeds each issue's current labels in the listing.
+	pageIssues := make([]*gitea.Issue, 0, end-start)
+	for _, issue := range issues[start:end] {
+		if labels := fa.labelsFor(issue.Index); labels != nil {
+			withLabels := *issue
+			withLabels.Labels = labels
+			issue = &withLabels
+		}
+		pageIssues = append(pageIssues, issue)
+	}
+	writeJSON(w, pageIssues)
 }
 
 func (fa *FakeAPI) handleIssueSubresource(issuesPrefix string) http.HandlerFunc {
@@ -491,7 +499,6 @@ func (fa *FakeAPI) replaceIssueLabels(w http.ResponseWriter, r *http.Request, id
 	fa.setIssueLabels(idx, labels)
 	writeJSON(w, labels)
 }
-
 
 func (fa *FakeAPI) handleRepoLabels(labelsPath string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
