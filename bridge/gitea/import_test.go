@@ -18,6 +18,7 @@ import (
 	bugpkg "github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/text"
 )
 
 func setupImporterOnExistingBackend(t *testing.T, serverURL string, backend *cache.RepoCache) *giteaImporter {
@@ -237,7 +238,7 @@ func TestImportTitleChangeIdempotent(t *testing.T) {
 		Owner: "owner", Project: "project",
 		Issues: []*gitea.Issue{issue},
 		TimelineByIssue: map[int64][]*gitea.TimelineComment{
-			1: {{Type: "rename", OldTitle: "original", NewTitle: "updated", Poster: poster, Created: renamed, Updated: renamed}},
+			1: {{Type: "change_title", OldTitle: "original", NewTitle: "updated", Poster: poster, Created: renamed, Updated: renamed}},
 		},
 	}
 	srv := fa.NewServer(t)
@@ -529,11 +530,10 @@ func TestImportTitleUnsafeAfterCleanup(t *testing.T) {
 	require.NotPanics(t, func() {
 		results = runImport(t, gi, backend)
 	})
-	errs := collectErrors(results)
-	require.NotEmpty(t, errs)
-	assert.Contains(t, errs[0].Error(), "title")
-	assert.Empty(t, backend.Bugs().AllIds(),
-		"invalid title import must not leave a half-created bug")
+	// A title that is empty after cleanup gets the same placeholder as the
+	// zero-width and whitespace cases, rather than dropping the issue.
+	require.Empty(t, collectErrors(results))
+	assert.Equal(t, EmptyTitlePlaceholder, onlyBug(t, backend).Snapshot().Title)
 }
 
 func TestImportBodyControlCharacters(t *testing.T) {
@@ -595,7 +595,6 @@ func TestImportSinceSentOnIssuesRequest(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, since, parsed.UTC())
 }
-
 
 func TestImportSinceSecondRunMovesForward(t *testing.T) {
 	fa := &giteatest.FakeAPI{
@@ -998,7 +997,7 @@ func TestImportPropagatesIssueTitleUpdates(t *testing.T) {
 		Issues: []*gitea.Issue{issue},
 		TimelineByIssue: map[int64][]*gitea.TimelineComment{
 			1: {{
-				Type: "rename",
+				Type:     "change_title",
 				OldTitle: "original title", NewTitle: "updated title",
 				Poster:  &gitea.User{UserName: "testuser"},
 				Created: renamed, Updated: renamed,
@@ -1632,4 +1631,43 @@ func TestImportClosesOutputChannel(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("channel was not closed within 1s of draining — ImportAll likely missing `defer close`")
 	}
+}
+
+func TestImportMultipleCommentsKeepDescription(t *testing.T) {
+	issue := testIssue()
+	srv := (&giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues: []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {testTimelineComment(1, "first"), testTimelineComment(2, "second")},
+		},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	require.Empty(t, collectErrors(runImport(t, gi, backend)))
+
+	comments := onlyBug(t, backend).Snapshot().Comments
+	require.Len(t, comments, 3, "description plus two comments")
+	assert.Equal(t, text.Cleanup(issue.Body), comments[0].Message,
+		"a new comment must not be applied as an edit of the description")
+	assert.Equal(t, "first", comments[1].Message)
+	assert.Equal(t, "second", comments[2].Message)
+}
+
+func TestImportLabelEventForDeletedLabel(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	srv := (&giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues: []*gitea.Issue{testIssue()},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			// Gitea omits the label object once the label is deleted.
+			1: {{ID: 7, Type: "label", Body: "1", Created: ts, Poster: &gitea.User{UserName: "testuser"}}},
+		},
+	}).NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+
+	require.NotPanics(t, func() {
+		assert.Empty(t, collectErrors(runImport(t, gi, backend)))
+	})
+	assert.Empty(t, onlyBug(t, backend).Snapshot().Labels)
 }

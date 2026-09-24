@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	gitea "gitea.dev/sdk"
@@ -12,11 +13,11 @@ import (
 	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/bridge/gitea/iterator"
 	"github.com/git-bug/git-bug/cache"
+	bugpkg "github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/text"
-	"github.com/pkg/errors"
 )
 
 // implements the Importer interface
@@ -83,7 +84,7 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 
 			// update status/title/body
 			if err = gi.updateIssue(ctx, repo, b, issue); err != nil {
-				gi.reportError(ctx, err, "issue update")
+				gi.reportBugError(ctx, err, "issue update", b.Id())
 				return
 			}
 
@@ -92,23 +93,26 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 			// The Github/Gitlab backends already do this. But maybe that's premature
 			// optimization.
 			for gi.iterator.NextEvent() {
-				if err = gi.iterator.Error(); err != nil {
-					gi.reportError(ctx, err, "fetch labels")
-					return
-				}
 				if err = gi.importEvent(ctx, repo, b, gi.iterator.EventValue()); err != nil {
-					gi.reportError(ctx, err, "update label")
+					gi.reportBugError(ctx, err, "import timeline event", b.Id())
 					return
 				}
 			}
+			if err = gi.iterator.Error(); err != nil {
+				gi.reportBugError(ctx, err, "fetch timeline", b.Id())
+				return
+			}
 
-			// Update issue title and description
+			if err = gi.reconcileLabels(ctx, repo, b, issue); err != nil {
+				gi.reportBugError(ctx, err, "reconcile labels", b.Id())
+				return
+			}
 
 			if !b.NeedCommit() {
 				gi.sendImportResult(ctx, core.NewImportNothing(b.Id(), "no imported operation"))
 			} else if err := b.Commit(); err != nil {
 				// commit bug state
-				gi.reportError(ctx, err, "bug commit")
+				gi.reportBugError(ctx, err, "bug commit", b.Id())
 				return
 			}
 		}
@@ -122,14 +126,19 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 }
 
 func (gi *giteaImporter) reportError(ctx context.Context, err error, when string) {
-	gi.sendImportResult(ctx, core.NewImportError(fmt.Errorf("%s: %v", when, err), ""))
+	gi.reportBugError(ctx, err, when, "")
+}
+
+// reportBugError reports an error that concerns an already-created bug.
+func (gi *giteaImporter) reportBugError(ctx context.Context, err error, when string, id entity.Id) {
+	gi.sendImportResult(ctx, core.NewImportError(fmt.Errorf("%s: %v", when, err), id))
 }
 
 func (gi *giteaImporter) sendImportResult(ctx context.Context, result core.ImportResult) {
 	select {
 	case gi.out <- result:
 	// Handle cancellation.
-	case <- ctx.Done():
+	case <-ctx.Done():
 	}
 }
 
@@ -151,8 +160,28 @@ func (gi *giteaImporter) importEvent(ctx context.Context, repo *cache.RepoCache,
 		return gi.importComment(ctx, repo, bug, e)
 	case *iterator.RenameEvent:
 		return gi.importRename(ctx, repo, bug, e)
+	case *iterator.StatusEvent:
+		return gi.importStatus(ctx, repo, bug, e)
 	}
-	return errors.New("bruh wat")
+	return fmt.Errorf("unsupported timeline event %T", event)
+}
+
+// timelineEventKey identifies a timeline event across imports. Gitea event IDs
+// are unique, but the type and time are included so events without an ID
+// (as some servers and test fixtures send) still get distinct keys.
+func timelineEventKey(kind string, id int64, at time.Time) string {
+	return fmt.Sprintf("%s:%d:%d", kind, id, at.Unix())
+}
+
+// alreadyImported reports whether an operation carrying the given timeline
+// event key exists on the bug.
+func alreadyImported(bug *cache.BugCache, key string) bool {
+	for _, op := range bug.Snapshot().Operations {
+		if v, ok := op.GetMetadata(metaKeyGiteaEvent); ok && v == key {
+			return true
+		}
+	}
+	return false
 }
 
 func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, remoteComment *iterator.CommentEvent) error {
@@ -165,14 +194,16 @@ func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCach
 	giteaId := strconv.FormatInt(remoteComment.ID, 10)
 	metadata := map[string]string{metaKeyGiteaCommentID: giteaId}
 
-	// Check if we've already imported this comment.
+	// Check if we've already imported this comment. Only comment creations
+	// count: edits carry the same metadata but aren't comments themselves.
 	// This isn't as slow as it looks, we're only iterating events on the current issue.
-	var existingId string;
 	var op dag.Operation
-	for _, op = range bug.Snapshot().Operations {
-		var ok bool
-		existingId, ok = op.GetMetadata(metaKeyGiteaCommentID)
-		if ok && giteaId == existingId {
+	for _, candidate := range bug.Snapshot().Operations {
+		if _, isAdd := candidate.(*bugpkg.AddCommentOperation); !isAdd {
+			continue
+		}
+		if existingId, ok := candidate.GetMetadata(metaKeyGiteaCommentID); ok && existingId == giteaId {
+			op = candidate
 			break
 		}
 	}
@@ -216,18 +247,37 @@ func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCach
 }
 
 func (gi *giteaImporter) importLabel(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, event *iterator.LabelEvent) error {
-	labelID := strconv.FormatInt(event.Label.ID, 10)
+	// Gitea sends no label object when the label has since been deleted.
+	// There is no name to apply; reconcileLabels handles the current state.
+	if event.Label == nil {
+		return nil
+	}
+
+	kind := "label-remove"
+	if event.Kind == iterator.LabelAdded {
+		kind = "label-add"
+	}
+	key := timelineEventKey(kind, int64(event.ID), event.UpdatedAt)
+	if alreadyImported(bug, key) {
+		return nil
+	}
+
+	// Compare names case-insensitively, so an upstream "Bug" does not end
+	// up next to an existing local "bug".
+	local, present := findLabelFold(bug, event.Label.Name)
+	var added, removed []string
+	switch {
+	case event.Kind == iterator.LabelAdded && !present:
+		added = []string{event.Label.Name}
+	case event.Kind == iterator.LabelRemoved && present:
+		removed = []string{local}
+	default:
+		return nil
+	}
+
 	author, err := gi.ensurePerson(ctx, repo, event.Poster)
 	if err != nil {
 		return err
-	}
-
-	var added, removed []string
-	switch event.Kind {
-	case iterator.LabelAdded:
-		added = []string{event.Label.Name}
-	case iterator.LabelRemoved:
-		removed = []string{event.Label.Name}
 	}
 
 	_, err = bug.ForceChangeLabelsRaw(
@@ -236,13 +286,92 @@ func (gi *giteaImporter) importLabel(ctx context.Context, repo *cache.RepoCache,
 		added,
 		removed,
 		map[string]string{
-			metaKeyGiteaID: labelID,
+			metaKeyGiteaID:    strconv.FormatInt(event.Label.ID, 10),
+			metaKeyGiteaEvent: key,
 		},
 	)
 	return err
 }
 
+// findLabelFold returns the bug's label equal to name ignoring case.
+func findLabelFold(bug *cache.BugCache, name string) (string, bool) {
+	for _, l := range bug.Snapshot().Labels {
+		if strings.EqualFold(string(l), name) {
+			return string(l), true
+		}
+	}
+	return "", false
+}
+
+// reconcileLabels brings the bug's labels in line with the issue's current
+// upstream labels. Timeline events report labels under their current name, so
+// replaying them misses renames; this catches renames and any other drift.
+//
+// Only labels that a Gitea import added are removed, so labels added locally
+// in git-bug survive. A nil label list means the server didn't report labels
+// (Gitea always sends an array), so nothing is reconciled.
+func (gi *giteaImporter) reconcileLabels(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, issue *gitea.Issue) error {
+	if issue.Labels == nil {
+		return nil
+	}
+
+	imported := map[string]bool{}
+	for _, op := range bug.Snapshot().Operations {
+		labelOp, ok := op.(*bugpkg.LabelChangeOperation)
+		if !ok {
+			continue
+		}
+		if _, fromGitea := op.GetMetadata(metaKeyGiteaID); !fromGitea {
+			continue
+		}
+		for _, l := range labelOp.Added {
+			imported[strings.ToLower(string(l))] = true
+		}
+	}
+
+	upstream := map[string]bool{}
+	var added []string
+	for _, l := range issue.Labels {
+		if l == nil {
+			continue
+		}
+		upstream[strings.ToLower(l.Name)] = true
+		if _, present := findLabelFold(bug, l.Name); !present {
+			added = append(added, l.Name)
+		}
+	}
+	var removed []string
+	for _, l := range bug.Snapshot().Labels {
+		folded := strings.ToLower(string(l))
+		if !upstream[folded] && imported[folded] {
+			removed = append(removed, string(l))
+		}
+	}
+	if len(added) == 0 && len(removed) == 0 {
+		return nil
+	}
+
+	// The timeline doesn't say who caused the drift (for example a label
+	// rename), so attribute the change to the issue author.
+	author, err := gi.ensurePerson(ctx, repo, issue.Poster)
+	if err != nil {
+		return err
+	}
+	at := issue.Updated
+	if at.IsZero() {
+		at = time.Now()
+	}
+	_, err = bug.ForceChangeLabelsRaw(author, at.Unix(), added, removed,
+		map[string]string{metaKeyGiteaID: "reconcile"})
+	return err
+}
+
 func (gi *giteaImporter) importRename(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, rename *iterator.RenameEvent) error {
+	key := timelineEventKey("change_title", rename.ID, rename.Updated)
+	if alreadyImported(bug, key) {
+		return nil
+	}
+
 	author, err := gi.ensurePerson(ctx, repo, rename.Poster)
 	if err != nil {
 		return err
@@ -251,10 +380,46 @@ func (gi *giteaImporter) importRename(ctx context.Context, repo *cache.RepoCache
 	_, err = bug.SetTitleRaw(
 		author,
 		rename.Updated.Unix(),
-		rename.NewName,
-		make(map[string]string),
+		cleanTitle(rename.NewName),
+		map[string]string{metaKeyGiteaEvent: key},
 	)
 	return err
+}
+
+func (gi *giteaImporter) importStatus(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, event *iterator.StatusEvent) error {
+	kind := "reopen"
+	if event.Closed {
+		kind = "close"
+	}
+	key := timelineEventKey(kind, event.ID, event.Created)
+	if alreadyImported(bug, key) {
+		return nil
+	}
+
+	author, err := gi.ensurePerson(ctx, repo, event.Poster)
+	if err != nil {
+		return err
+	}
+
+	metadata := map[string]string{metaKeyGiteaEvent: key}
+	if event.Closed {
+		_, err = bug.CloseRaw(author, event.Created.Unix(), metadata)
+	} else {
+		_, err = bug.OpenRaw(author, event.Created.Unix(), metadata)
+	}
+	return err
+}
+
+// EmptyTitlePlaceholder replaces titles that are empty after cleanup, since
+// git-bug rejects empty titles. Matches the GitHub bridge.
+const EmptyTitlePlaceholder = "<empty string>"
+
+func cleanTitle(title string) string {
+	title = text.CleanupOneLine(title)
+	if text.Empty(title) {
+		return EmptyTitlePlaceholder
+	}
+	return title
 }
 
 func (gi *giteaImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache, issue *gitea.Issue) (*cache.BugCache, error) {
@@ -284,7 +449,7 @@ func (gi *giteaImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache,
 	b, _, err = repo.Bugs().NewRaw(
 		author,
 		issue.Created.Unix(),
-		text.CleanupOneLine(issue.Title),
+		cleanTitle(issue.Title),
 		text.Cleanup(issue.Body),
 		nil,
 		map[string]string{
@@ -323,7 +488,7 @@ func (gi *giteaImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache
 
 	user, resp, err := gi.client.Users.GetUserInfo(ctx, username)
 	if resp != nil && resp.StatusCode == 404 {
-		user = &gitea.User { FullName: username, UserName: username }
+		user = &gitea.User{FullName: username, UserName: username}
 	} else if err != nil {
 		return nil, err
 	}
