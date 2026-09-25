@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -105,9 +106,12 @@ func (pc *PersistedClock) Time() (Time, error) {
 func (pc *PersistedClock) Increment() (Time, error) {
 	var incremented Time
 
-	err := pc.update(func(current Time) Time {
+	err := pc.update(func(current Time) (Time, error) {
+		if current == math.MaxUint64 {
+			return 0, ErrClockOverflow
+		}
 		incremented = current + 1
-		return incremented
+		return incremented, nil
 	})
 	if err != nil {
 		return 0, err
@@ -119,12 +123,12 @@ func (pc *PersistedClock) Increment() (Time, error) {
 // Witness is called to update our local clock if necessary after
 // witnessing a clock value received from another process
 func (pc *PersistedClock) Witness(time Time) error {
-	return pc.update(func(current Time) Time {
+	return pc.update(func(current Time) (Time, error) {
 		if time <= current {
 			// already past that value, update() writes nothing
-			return current
+			return current, nil
 		}
-		return time
+		return time, nil
 	})
 }
 
@@ -143,18 +147,24 @@ func (pc *PersistedClock) create(initial Time) error {
 // update runs a mutation with the file locked, so that the whole
 // read-modify-write cycle is atomic against the other processes doing the same.
 // mutate gets the value read from the file and returns the new one, which must
-// not be lower; returning it unchanged writes nothing. A clock that is missing
-// or corrupted fails, and is left as it is.
-func (pc *PersistedClock) update(mutate func(current Time) Time) error {
+// not be lower - update panics otherwise; returning it unchanged writes nothing. A clock that is missing
+// or corrupted fails, and is left as it is, as does a failing mutate.
+func (pc *PersistedClock) update(mutate func(current Time) (Time, error)) error {
 	return pc.locked(os.O_RDWR, func(f billy.File) error {
 		current, err := readClock(f)
 		if err != nil {
 			return err
 		}
 
-		value := mutate(current)
+		value, err := mutate(current)
+		if err != nil {
+			return err
+		}
 		if value == current {
 			return nil
+		}
+		if value < current {
+			panic(fmt.Sprintf("lamport: clock going from %d back to %d", current, value))
 		}
 
 		return writeClock(f, value)

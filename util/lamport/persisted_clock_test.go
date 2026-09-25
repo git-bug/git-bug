@@ -1,6 +1,7 @@
 package lamport
 
 import (
+	"math"
 	"os"
 	"sync"
 	"testing"
@@ -376,4 +377,24 @@ func TestPersistedClockBareValue(t *testing.T) {
 	content, err := util.ReadFile(root, "test-clock")
 	require.NoError(t, err)
 	require.Equal(t, formatClock(42), content)
+}
+
+// At the highest Time there is no next value: Increment must fail rather than
+// wrap to 0, which would store a clock that reads as corrupted.
+func TestPersistedClockOverflow(t *testing.T) {
+	root := osfs.New(t.TempDir())
+
+	c, err := GetOrCreatePersistedClock(root, "test-clock", math.MaxUint64-1)
+	require.NoError(t, err)
+
+	value, err := c.Increment()
+	require.NoError(t, err)
+	require.Equal(t, Time(math.MaxUint64), value)
+
+	_, err = c.Increment()
+	require.ErrorIs(t, err, ErrClockOverflow)
+	requireTime(t, c, math.MaxUint64)
+
+	require.NoError(t, c.Witness(42))
+	requireTime(t, c, math.MaxUint64)
 }
