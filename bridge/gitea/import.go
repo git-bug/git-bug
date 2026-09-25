@@ -14,6 +14,7 @@ import (
 	"github.com/git-bug/git-bug/bridge/gitea/iterator"
 	"github.com/git-bug/git-bug/cache"
 	bugpkg "github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/git-bug/git-bug/repository"
@@ -82,12 +83,6 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 				return
 			}
 
-			// update status/title/body
-			if err = gi.updateIssue(ctx, repo, b, issue); err != nil {
-				gi.reportBugError(ctx, err, "issue update", b.Id())
-				return
-			}
-
 			// Loop over all events
 			// TODO: make this a goroutine so we can import issues and events in parallel?
 			// The Github/Gitlab backends already do this. But maybe that's premature
@@ -105,6 +100,11 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 
 			if err = gi.reconcileLabels(ctx, repo, b, issue); err != nil {
 				gi.reportBugError(ctx, err, "reconcile labels", b.Id())
+				return
+			}
+
+			if err = gi.reconcileStatus(ctx, repo, b, issue); err != nil {
+				gi.reportBugError(ctx, err, "reconcile status", b.Id())
 				return
 			}
 
@@ -140,16 +140,6 @@ func (gi *giteaImporter) sendImportResult(ctx context.Context, result core.Impor
 	// Handle cancellation.
 	case <-ctx.Done():
 	}
-}
-
-func (gi *giteaImporter) updateIssue(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, issue *gitea.Issue) error {
-	switch issue.State {
-	case gitea.StateOpen:
-		// b.OpenRaw()
-	case gitea.StateClosed:
-		// b.CloseRaw()
-	}
-	return nil
 }
 
 func (gi *giteaImporter) importEvent(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, event iterator.TimelineEvent) error {
@@ -363,6 +353,52 @@ func (gi *giteaImporter) reconcileLabels(ctx context.Context, repo *cache.RepoCa
 	}
 	_, err = bug.ForceChangeLabelsRaw(author, at.Unix(), added, removed,
 		map[string]string{metaKeyGiteaID: "reconcile"})
+	return err
+}
+
+// reconcileStatus brings the bug's status in line with the issue's current
+// upstream State. If an issue was closed or reopened without a corresponding
+// timeline event (for example, closed by a commit or migrated from an
+// external tracker), this reconciles the bug's status with upstream.
+func (gi *giteaImporter) reconcileStatus(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, issue *gitea.Issue) error {
+	var targetStatus common.Status
+	switch issue.State {
+	case gitea.StateClosed:
+		targetStatus = common.ClosedStatus
+	case gitea.StateOpen:
+		targetStatus = common.OpenStatus
+	default:
+		return nil
+	}
+
+	if bug.Snapshot().Status == targetStatus {
+		return nil
+	}
+
+	// The timeline doesn't say who changed the status, so attribute the
+	// change to the issue author.
+	author, err := gi.ensurePerson(ctx, repo, issue.Poster)
+	if err != nil {
+		return err
+	}
+
+	at := issue.Updated
+	if targetStatus == common.ClosedStatus && issue.Closed != nil && !issue.Closed.IsZero() {
+		at = *issue.Closed
+	}
+	if at.IsZero() {
+		at = issue.Created
+	}
+	if at.IsZero() {
+		at = time.Now()
+	}
+
+	metadata := map[string]string{metaKeyGiteaID: "reconcile"}
+	if targetStatus == common.ClosedStatus {
+		_, err = bug.CloseRaw(author, at.Unix(), metadata)
+	} else {
+		_, err = bug.OpenRaw(author, at.Unix(), metadata)
+	}
 	return err
 }
 

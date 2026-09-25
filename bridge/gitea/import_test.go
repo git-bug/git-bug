@@ -1671,3 +1671,76 @@ func TestImportLabelEventForDeletedLabel(t *testing.T) {
 	})
 	assert.Empty(t, onlyBug(t, backend).Snapshot().Labels)
 }
+
+func TestImportClosedIssueWithoutTimelineEvents(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	closed := ts.Add(time.Hour)
+	author := &gitea.User{UserName: "alice", FullName: "Alice", Email: "alice@example.com"}
+	issue := &gitea.Issue{
+		ID: 1, Index: 1, Title: "closed without timeline event", Body: "body",
+		State: gitea.StateClosed, Poster: author,
+		Created: ts, Closed: &closed, Updated: closed,
+	}
+	srv := (&giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues:          []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{},
+	}).NewServer(t)
+
+	gi, backend := setupImporter(t, srv.URL)
+	require.Empty(t, collectErrors(runImport(t, gi, backend)))
+
+	b := onlyBug(t, backend)
+	assert.Equal(t, common.ClosedStatus, b.Snapshot().Status,
+		"issue with state=closed and no timeline events must be imported as closed")
+
+	// Idempotent re-import
+	gi2 := setupImporterOnExistingBackend(t, srv.URL, backend)
+	require.Empty(t, collectErrors(runImport(t, gi2, backend)))
+	b = onlyBug(t, backend)
+	assert.Equal(t, common.ClosedStatus, b.Snapshot().Status)
+	assert.Equal(t, 1, countStatusOps(b),
+		"re-importing must not duplicate SetStatus operations")
+}
+
+func TestImportReconcilesStatusDrift(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	author := &gitea.User{UserName: "alice", FullName: "Alice", Email: "alice@example.com"}
+	issue := &gitea.Issue{
+		ID: 1, Index: 1, Title: "title", Body: "body",
+		State: gitea.StateOpen, Poster: author,
+		Created: ts, Updated: ts,
+	}
+	fa := &giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues:          []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{},
+	}
+	srv := fa.NewServer(t)
+
+	gi, backend := setupImporter(t, srv.URL)
+	require.Empty(t, collectErrors(runImport(t, gi, backend)))
+	require.Equal(t, common.OpenStatus, onlyBug(t, backend).Snapshot().Status)
+
+	// Upstream closes the issue without generating a timeline event (e.g. via commit)
+	closed := ts.Add(2 * time.Hour)
+	issue.State = gitea.StateClosed
+	issue.Closed = &closed
+	issue.Updated = closed
+
+	gi2 := setupImporterOnExistingBackend(t, srv.URL, backend)
+	require.Empty(t, collectErrors(runImport(t, gi2, backend)))
+	assert.Equal(t, common.ClosedStatus, onlyBug(t, backend).Snapshot().Status,
+		"re-importing should reconcile closed status even without timeline events")
+
+	// Upstream reopens the issue without generating a timeline event
+	reopened := ts.Add(4 * time.Hour)
+	issue.State = gitea.StateOpen
+	issue.Closed = nil
+	issue.Updated = reopened
+
+	gi3 := setupImporterOnExistingBackend(t, srv.URL, backend)
+	require.Empty(t, collectErrors(runImport(t, gi3, backend)))
+	assert.Equal(t, common.OpenStatus, onlyBug(t, backend).Snapshot().Status,
+		"re-importing should reconcile open status even without timeline events")
+}
