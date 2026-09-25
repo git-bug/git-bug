@@ -34,12 +34,13 @@ func newBridgeNewCommand(env *execenv.Env) *cobra.Command {
 		Short: "Configure a new bridge",
 		Long:  "Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.",
 		Example: `# Interactive example
-[1]: github
-[2]: gitlab
-[3]: jira
-[4]: launchpad-preview
+[1]: gitea
+[2]: github
+[3]: gitlab
+[4]: jira
+[5]: launchpad-preview
 
-target: 1
+target: 2
 name [default]: default
 
 Detected projects:
@@ -110,7 +111,30 @@ git bug bridge new \
 #       (sent along with your username), and permission to view and edit
 #       issues in the project.
 #     - Jira Data Center / Server: a username and password (session
-#       authentication), or an API token, with the same project permissions.`,
+#       authentication), or an API token, with the same project permissions.
+git bug bridge new \
+    --name=default \
+    --target=jira \
+    --base-url=https://jira.example.com \
+    --project=EXMPL \
+    --login=$LOGIN \
+    --token=$TOKEN
+
+# For Gitea (or a compatible Forgejo instance; personal access token, created
+#   at $BASE_URL/user/settings/applications, e.g.
+#   https://codeberg.org/user/settings/applications)
+#   The bridge is pull-only at present, so the token needs read access only.
+#   With fine-grained scopes the minimum set is:
+#     - 'read:issue' (issue list and timelines: comments, labels, status,
+#       title changes), 'read:repository' (repository access check) and
+#       'read:user' (identify the token's owner account). On instances
+#       without fine-grained scopes, any token with read-only permission
+#       works.
+git bug bridge new \
+    --name=default \
+    --target=gitea \
+    --url=https://codeberg.org/example-owner/example-repo \
+    --token=$TOKEN`,
 		PreRunE: execenv.LoadBackend(env),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBridgeNew(env, options)

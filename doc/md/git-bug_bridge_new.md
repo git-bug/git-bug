@@ -14,12 +14,13 @@ git-bug bridge new [flags]
 
 ```
 # Interactive example
-[1]: github
-[2]: gitlab
-[3]: jira
-[4]: launchpad-preview
+[1]: gitea
+[2]: github
+[3]: gitlab
+[4]: jira
+[5]: launchpad-preview
 
-target: 1
+target: 2
 name [default]: default
 
 Detected projects:
@@ -91,6 +92,29 @@ git bug bridge new \
 #       issues in the project.
 #     - Jira Data Center / Server: a username and password (session
 #       authentication), or an API token, with the same project permissions.
+git bug bridge new \
+    --name=default \
+    --target=jira \
+    --base-url=https://jira.example.com \
+    --project=EXMPL \
+    --login=$LOGIN \
+    --token=$TOKEN
+
+# For Gitea (or a compatible Forgejo instance; personal access token, created
+#   at $BASE_URL/user/settings/applications, e.g.
+#   https://codeberg.org/user/settings/applications)
+#   The bridge is pull-only at present, so the token needs read access only.
+#   With fine-grained scopes the minimum set is:
+#     - 'read:issue' (issue list and timelines: comments, labels, status,
+#       title changes), 'read:repository' (repository access check) and
+#       'read:user' (identify the token's owner account). On instances
+#       without fine-grained scopes, any token with read-only permission
+#       works.
+git bug bridge new \
+    --name=default \
+    --target=gitea \
+    --url=https://codeberg.org/example-owner/example-repo \
+    --token=$TOKEN
 ```
 
 ### Options

@@ -13,6 +13,7 @@ from third-party platforms.
   - [GitLab](#gitlab)
   - [Jira](#jira)
   - [Launchpad](#launchpad)
+  - [Gitea](#gitea)
 - [Interacting with the bridge](#interacting-with-the-bridge)
 
 <!-- mdformat-toc end -->
@@ -85,8 +86,9 @@ API operations, which determine the minimum permissions a token needs:
 
 - **pull**: read the issue list, issue bodies, comments, labels and
   status/title change events
-- **push** (GitHub, GitLab and Jira only): create issues, edit title and body,
-  add and edit comments, change labels and toggle the status (open/close)
+- **push** (GitHub, GitLab and Jira only; the Gitea bridge is pull-only for
+  now): create issues, edit title and body, add and edit comments, change
+  labels and toggle the status (open/close)
 
 ### GitHub<a name="github"></a>
 
@@ -148,6 +150,30 @@ the account must also be allowed to perform those transitions.
 No token or credentials are required. The Launchpad bridge is still
 experimental (`launchpad-preview`) and read-only: it only queries the public
 Launchpad API to import bugs and messages.
+
+### Gitea<a name="gitea"></a>
+
+The Gitea bridge works with any Gitea or Forgejo instance (specify the
+instance with the `--url` flag of the project, which is parsed into the base
+URL). Personal access tokens are created at
+`$BASE_URL/user/settings/applications` (e.g. `https://codeberg.org/user/settings/applications`; on
+GitHub Enterprise–like instances it may also be listed as
+`$BASE_URL/settings/tokens`).
+
+The bridge is pull-only for now, so the token only needs **read** access to
+the repository and its issues:
+
+- **Fine-grained scopes** (Gitea 1.22+ / Forgejo 15+ — the
+  `read:<category>` token model): `read:issue` to list issues and their
+timelines (comments, labels, status and title changes), `read:repository`
+to access the repository itself, and `read:user` to identify the account
+the token belongs to.
+- **Instances without fine-grained scopes** (older Gitea): any personal
+access token with read access to the repository (the classic `read-only`
+token, or a `all`-scoped one) is sufficient.
+
+No write scope is used or required, and the token owner simply needs read
+access to the repository (any role, or public repository visibility).
 
 ## Interacting with the bridge<a name="interacting-with-the-bridge"></a>
 
