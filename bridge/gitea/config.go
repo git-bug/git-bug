@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"path"
 	"regexp"
 	"sort"
 	"strings"
@@ -185,8 +184,16 @@ func promptTokenOptions(repo repository.RepoKeyring, login, baseURL string) (aut
 	}
 }
 
+func tokenURL(baseURL string) string {
+	u, err := url.JoinPath(baseURL, "user/settings/applications")
+	if err != nil {
+		return strings.TrimSuffix(baseURL, "/") + "/user/settings/applications"
+	}
+	return u
+}
+
 func promptToken(baseURL string) (*auth.Token, error) {
-	fmt.Printf("You can generate a new token by visiting %s.\n", path.Join(baseURL, "user/settings/applications"))
+	fmt.Printf("You can generate a new token by visiting %s.\n", tokenURL(baseURL))
 	fmt.Println()
 
 	re := regexp.MustCompile(`^[a-z0-9]{40}$`)

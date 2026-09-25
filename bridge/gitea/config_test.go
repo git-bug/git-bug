@@ -193,3 +193,43 @@ func TestValidateProjectServerError(t *testing.T) {
 	assert.False(t, ok, "a 500 from the repo endpoint must not be reported as a valid project")
 	assert.Error(t, err, "a 500 from the repo endpoint must surface as a non-nil error")
 }
+
+func TestTokenURL(t *testing.T) {
+	tests := []struct {
+		name     string
+		baseURL  string
+		expected string
+	}{
+		{
+			name:     "standard URL without trailing slash",
+			baseURL:  "https://codefloe.com",
+			expected: "https://codefloe.com/user/settings/applications",
+		},
+		{
+			name:     "standard URL with trailing slash",
+			baseURL:  "https://codefloe.com/",
+			expected: "https://codefloe.com/user/settings/applications",
+		},
+		{
+			name:     "URL with subpath without trailing slash",
+			baseURL:  "https://example.com/gitea",
+			expected: "https://example.com/gitea/user/settings/applications",
+		},
+		{
+			name:     "URL with subpath and trailing slash",
+			baseURL:  "https://example.com/gitea/",
+			expected: "https://example.com/gitea/user/settings/applications",
+		},
+		{
+			name:     "HTTP URL with port",
+			baseURL:  "http://localhost:3000",
+			expected: "http://localhost:3000/user/settings/applications",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tokenURL(tt.baseURL))
+		})
+	}
+}
