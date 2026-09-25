@@ -8,6 +8,11 @@ from third-party platforms.
 - [Overview](#overview)
 - [Supported bridges](#supported-bridges)
 - [Getting started](#getting-started)
+- [Tokens and required permissions](#tokens-and-required-permissions)
+  - [GitHub](#github)
+  - [GitLab](#gitlab)
+  - [Jira](#jira)
+  - [Launchpad](#launchpad)
 - [Interacting with the bridge](#interacting-with-the-bridge)
 
 <!-- mdformat-toc end -->
@@ -64,10 +69,84 @@ _For a full list of the features enabled for each bridge, see the
    appropriate URL for the remote project: something like
    `https://github.com/git-bug/git-bug`
 5. Create an access token. You can either use the interactive token creation,
-   enter it on your own token, or use an existing token if you already have one
+   enter it on your own token, or use an existing token if you already have one.
+   The [permissions required for each service](#tokens-and-required-permissions)
+   differ, check the details for your platform below.
 
 That's it! Once you've completed the wizard, you'll have successfully configured
 a bridge.
+
+## Tokens and required permissions<a name="tokens-and-required-permissions"></a>
+
+Bridges authenticate against their platform with a token (except Launchpad,
+which currently does not need one). Every bridge performs at least the following
+API operations, which determine the minimum permissions a token needs:
+
+- **pull**: read the issue list, issue bodies, comments, labels and
+  status/title change events
+- **push** (GitHub, GitLab and Jira only): create issues, edit title and body,
+  add and edit comments, change labels and toggle the status (open/close)
+
+### GitHub<a name="github"></a>
+
+Tokens are created at <https://github.com/settings/tokens>, or via the
+interactive OAuth device flow offered by the `git bug bridge new` wizard.
+
+The bridge accepts classic personal access tokens (legacy 40-character tokens
+and ones starting with `ghp_`, `gho_`, `ghu_`, `ghs_` or `ghr_`). Fine-grained
+tokens (starting with `github_pat_`) are currently rejected when pasted
+manually.
+
+Required scopes (classic tokens): `public_repo` is enough for public
+repositories; the full `repo` scope is required for private repositories.
+These scopes grant read and write access to issues, comments and labels, which
+is what the bridge needs in both directions. No other scope (code, branches,
+pull requests) is used or required.
+
+The interactive device flow creates a token with a single scope, chosen
+according to the repository visibility: `public_repo` for public repositories
+and `repo` for private ones.
+
+### GitLab<a name="gitlab"></a>
+
+Personal access tokens are created on the GitLab instance you want to bridge,
+at `$BASE_URL/-/user_settings/personal_access_tokens` (specify the instance
+with `--base-url`; defaults to `gitlab.com`).
+
+- **Scopes**: the `api` scope (read and write) is required so the bridge can
+  import issues and push changes back. If you only plan to pull issues, the
+  `read_api` scope is enough.
+- **Project role**: the token owner needs read access to the project to pull
+  (any member role, or public project visibility), and at least the *Developer*
+  role to push, since pushing creates issues, comments and label/status
+  changes on your behalf.
+
+### Jira<a name="jira"></a>
+
+The Jira bridge does not use a scoped token; it authenticates as your user so
+the required permissions are the ones of a normal Jira participant:
+
+- **Jira Cloud**: an [API token][jira-cloud-api-token] generated from your
+  Atlassian profile, sent together with your account email as username. The
+  token inherits your account permissions.
+- **Jira Data Center / Server**: an API token generated from your user profile
+  (Data Center 8.0.0 and later, sent the same way as the Cloud token), or
+  username and password ("session" authentication), which is the only option
+  on older servers.
+
+In all cases the account needs permission to view the project, and to create
+and edit issues in it (view, comment and transition), typically through the
+*Jira Software* project role or by being a participant in the project. Note
+that closing/reopening issues is done by executing workflow *transitions*, so
+the account must also be allowed to perform those transitions.
+
+[jira-cloud-api-token]: https://id.atlassian.com/manage-profile/security/api-tokens
+
+### Launchpad<a name="launchpad"></a>
+
+No token or credentials are required. The Launchpad bridge is still
+experimental (`launchpad-preview`) and read-only: it only queries the public
+Launchpad API to import bugs and messages.
 
 ## Interacting with the bridge<a name="interacting-with-the-bridge"></a>
 
