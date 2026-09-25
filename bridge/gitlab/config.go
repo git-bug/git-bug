@@ -109,7 +109,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 		if !interactive {
 			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the access token via the --token option.")
 		}
-		cred, err = promptTokenOptions(repo, login, baseUrl)
+		cred, err = promptTokenOptions(repo, login, baseUrl, projectURL)
 		if err != nil {
 			return nil, err
 		}
@@ -118,6 +118,12 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 	token, ok := cred.(*auth.Token)
 	if !ok {
 		return nil, fmt.Errorf("the Gitlab bridge only handle token credentials")
+	}
+
+	// use the credential login, which can differ from the provided one when using project access tokens.
+	login, ok = cred.GetMetadata(auth.MetaKeyLogin)
+	if !ok {
+		return nil, fmt.Errorf("credential doesn't have a login")
 	}
 
 	// validate project url and get its ID
@@ -167,7 +173,7 @@ func (g *Gitlab) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-func promptTokenOptions(repo repository.RepoKeyring, login, baseUrl string) (auth.Credential, error) {
+func promptTokenOptions(repo repository.RepoKeyring, login, baseUrl, projectUrl string) (auth.Credential, error) {
 	creds, err := auth.List(repo,
 		auth.WithTarget(target),
 		auth.WithKind(auth.KindToken),
@@ -187,20 +193,28 @@ func promptTokenOptions(repo repository.RepoKeyring, login, baseUrl string) (aut
 	case cred != nil:
 		return cred, nil
 	case index == 0:
-		return promptToken(baseUrl)
+		return promptToken(baseUrl, projectUrl)
 	default:
 		panic("missed case")
 	}
 }
 
-func promptToken(baseUrl string) (*auth.Token, error) {
+func promptToken(baseUrl, projectUrl string) (*auth.Token, error) {
+	projectPath, err := getProjectPath(baseUrl, projectUrl)
+	if err != nil {
+		return nil, err
+	}
+
 	fmt.Printf("You can generate a new token by visiting %s.\n", strings.TrimSuffix(baseUrl, "/")+"/-/user_settings/personal_access_tokens")
 	fmt.Println("Choose 'Create personal access token' and set the necessary access scope for your repository.")
+	fmt.Println()
+	fmt.Printf("Alternatively, you can create a 'Project access token' by visiting %s.\n", strings.TrimSuffix(baseUrl, "/")+"/"+strings.TrimSuffix(projectPath, "/")+"/-/settings/access_tokens")
+	fmt.Println("Choose 'Add new token' and set the necessary access scope. This token is automatically limited to this repository only.")
 	fmt.Println()
 	fmt.Println("'api' access scope: to be able to make api calls")
 	fmt.Println()
 
-	re := regexp.MustCompile(`^(glpat-)?[a-zA-Z0-9\-\_]{20}$`)
+	re := regexp.MustCompile(`^(glpat-)?[a-zA-Z0-9\-\_\.]{20,64}$`)
 
 	var login string
 
