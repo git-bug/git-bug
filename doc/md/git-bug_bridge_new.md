@@ -45,26 +45,52 @@ Private:
 Enter token: 87cf5c03b64029f18ea5f9ca5679daa08ccbd700
 Successfully configured bridge: default
 
-# For GitHub
+# For GitHub (classic personal access token, see https://github.com/settings/tokens;
+#   fine-grained tokens starting with 'github_pat_' are not supported)
+#   Required scopes:
+#     - Read/write repository content ('repo' for private or 'public_repo' for
+#       public repos) is needed to import issues and to edit, comment on and
+#       push them back.
+#
+#   No other scope (code, branches, pull request) is needed or used.
 git bug bridge new \
     --name=default \
     --target=github \
-    --owner=example-owner
+    --owner=example-owner \
     --project=example-repo \
     --token=$TOKEN
 
 # For Launchpad
+#   No token required: the Launchpad bridge is read-only and currently uses
+#   the public Launchpad API without any authentication.
 git bug bridge new \
     --name=default \
     --target=launchpad-preview \
     --url=https://bugs.launchpad.net/ubuntu/
 
-# For Gitlab
+# For Gitlab (personal access token, create one at
+#   $BASE_URL/-/user_settings/personal_access_tokens, e.g.
+#   https://gitlab.com/-/user_settings/personal_access_tokens)
+#   Required scopes:
+#     - 'api' (read/write) to import issues and push changes (issues,
+#       comments, labels, status). 'read_api' is enough if you only pull.
+#     - Read access to the project (at least 'Reporter' role, or the
+#       project/repository visibility set to 'public') is required.
 git bug bridge new \
     --name=default \
     --target=gitlab \
-    --url=https://github.com/example-org/example-repo \
+    --url=https://gitlab.example.com/example-org/example-repo \
     --token=$TOKEN
+
+# For Jira
+#   No project-specific scope is needed: the bridge authenticates with your
+#   user account and only requires:
+#     - Jira Cloud: an API token generated at
+#       https://id.atlassian.com/manage-profile/security/api-tokens
+#       (sent along with your username), and permission to view and edit
+#       issues in the project.
+#     - Jira Data Center / Server: a username and password (session
+#       authentication), or an API token, with the same project permissions.
 ```
 
 ### Options
