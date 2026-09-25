@@ -18,19 +18,34 @@ Hopefully the bridge will be able to enable synchronization of these soon.
 
 ### Credentials
 
-JIRA does not support user/personal access tokens. They have experimental
-3-legged oauth support but that requires an API token for the app configured by
-the server administrator. The only reliable authentication mechanism then is the
-username/password and session-token mechanism. We can acquire a session token
-programmatically from the username/password but these are very short lived (i.e.
-hours or less). As such the bridge currently requires an actual username and
-password as user credentials. It supports three options:
+JIRA does not support user/personal access tokens on older servers. Jira
+Cloud and Jira Data Center/Server 8.0.0+ can create user API tokens (Jira
+Cloud at
+<https://id.atlassian.com/manage-profile/security/api-tokens>, Data Center
+from the user profile), which the bridge sends as the password part of the
+`username:api-token` Basic auth header (the "TOKEN" authentication type).
+Older servers (pre October 2019) only support "SESSION" authentication,
+whereby the REST client logs in with an actual username and password, is
+assigned a session, and passes the session cookie with each request. A
+session token can be acquired programmatically from the username/password but
+these are very short lived (i.e. hours or less), so the credentials must be
+stored or re-entered. The bridge supports both mechanism and three ways of
+holding the credentials:
 
 1. Storing both username and password in a separate file referred to by the
    `git-config` (I like to use `.git/jira-credentials.json`)
 2. Storing the username and password in clear-text in the git config
 3. Storing the username only in the git config and asking for the password on
    each `push` or `pull`.
+
+Whichever mechanism is used, the credentials are scoped to a user account (the
+API token is), so the permissions that matter are the ones of the account
+itself, not the token. The account needs to be able to:
+
+- browse the project and its issues (view permission on the project)
+- create, comment on, edit (title/description/labels) and transition issues,
+  for push to work; transitions require additionally that the account is
+  allowed to move issues between the mapped statuses
 
 ### Issue Creation Defaults
 
