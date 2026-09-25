@@ -91,7 +91,17 @@ sudo pacman -U ./git-bug_<version>_linux_amd64.pkg.tar.zst          # Arch
 
 ### Arch Linux<a name="arch-linux"></a>
 
-`git-bug` is available in the [Arch Linux User Repository (AUR)][p/aur].
+`git-bug` is available in the [official Arch Linux Package Repository][p/arch-repo]
+
+<details><summary>Using <strong>pacman</strong></summary>
+
+```sh
+sudo pacman -S git-bug
+```
+
+</details>
+
+`git-bug` is also available in the [Arch Linux User Repository (AUR)][p/aur], though may be outdated or orphaned.
 
 Below, you'll find a **non-exhaustive** list of commands that use common third
 party tools for installing packages from the AUR.
@@ -364,6 +374,7 @@ ______________________________________________________________________
 [brew.sh]: https://brew.sh
 [cosign]: https://docs.sigstore.dev/cosign/system_config/installation/
 [docs/home]: ./doc
+[p/arch-repo]: https://archlinux.org/packages/extra/x86_64/git-bug/
 [p/aur]: https://aur.archlinux.org/packages/git-bug-bin
 [p/nix]: https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/applications/version-management/git-bug/default.nix
 [pkg/linux_amd64.apk]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_amd64.apk
