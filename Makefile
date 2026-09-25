@@ -30,7 +30,14 @@ install: build-webui
 	go install -tags webui -ldflags "$(LDFLAGS)" .
 
 .PHONY: secure
-secure:
+secure: secure-practices secure-vulnerabilities
+
+.PHONY: secure-practices
+secure-practices:
+	go tool gosec ./...
+
+.PHONY: secure-vulnerabilities
+secure-vulnerabilities:
 	go tool govulncheck ./...
 
 .PHONY: test

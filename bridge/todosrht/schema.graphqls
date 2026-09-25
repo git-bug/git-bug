@@ -1,0 +1,1001 @@
+# This schema definition is available in the public domain, or under the terms
+# of CC-0, at your choice.
+scalar Cursor
+scalar Time
+scalar URL
+scalar Upload
+
+"Used to provide a human-friendly description of an access scope"
+directive @scopehelp(details: String!) on ENUM_VALUE
+
+"""
+This is used to decorate fields which are only accessible with a personal
+access token, and are not available to clients using OAuth 2.0 access tokens.
+"""
+directive @private on FIELD_DEFINITION
+
+"""
+This is used to decorate fields which are for internal use, and are not
+available to normal API users.
+"""
+directive @internal on FIELD_DEFINITION
+
+enum AccessScope {
+  PROFILE       @scopehelp(details: "profile information")
+  TRACKERS      @scopehelp(details: "trackers")
+  TICKETS       @scopehelp(details: "tickets")
+  ACLS          @scopehelp(details: "access control lists")
+  EVENTS        @scopehelp(details: "events")
+  SUBSCRIPTIONS @scopehelp(details: "tracker & ticket subscriptions")
+}
+
+enum AccessKind {
+  RO @scopehelp(details: "read")
+  RW @scopehelp(details: "read and write")
+}
+
+"""
+Decorates fields for which access requires a particular OAuth 2.0 scope with
+read or write access.
+"""
+directive @access(scope: AccessScope!, kind: AccessKind!) on FIELD_DEFINITION
+
+# https://semver.org
+type Version {
+  major: Int!
+  minor: Int!
+  patch: Int!
+
+  """
+  If this API version is scheduled for deprecation, this is the date on which
+  it will stop working; or null if this API version is not scheduled for
+  deprecation.
+  """
+  deprecationDate: Time
+}
+
+interface Entity {
+  canonicalName: String!
+}
+
+type User implements Entity {
+  id: Int!
+  created: Time!
+  updated: Time!
+  canonicalName: String!
+  username: String!
+  email: String!
+  url: String
+  location: String
+  bio: String
+
+  "Returns a specific tracker."
+  tracker(name: String!): Tracker @access(scope: TRACKERS, kind: RO)
+
+  trackers(cursor: Cursor): TrackerCursor! @access(scope: TRACKERS, kind: RO)
+}
+
+type EmailAddress implements Entity {
+  canonicalName: String!
+
+  """
+  "jdoe@example.org" of "Jane Doe <jdoe@example.org>"
+  """
+  mailbox: String!
+  """
+  "Jane Doe" of "Jane Doe <jdoe@example.org>"
+  """
+  name: String
+}
+
+type ExternalUser implements Entity {
+  canonicalName: String!
+
+  """
+  <service>:<service specific details...>
+  e.g. github:ddevault
+  """
+  externalId: String!
+  "The canonical external URL for this user, e.g. https://github.com/ddevault"
+  externalUrl: String
+}
+
+enum Visibility {
+  PUBLIC
+  UNLISTED
+  PRIVATE
+}
+
+type Tracker {
+  id: Int!
+  created: Time!
+  updated: Time!
+  owner: Entity! @access(scope: PROFILE, kind: RO)
+  name: String!
+  description: String
+  visibility: Visibility!
+
+  ticket(id: Int!): Ticket @access(scope: TICKETS, kind: RO)
+  tickets(cursor: Cursor): TicketCursor! @access(scope: TICKETS, kind: RO)
+  label(name: String!): Label
+  labels(cursor: Cursor): LabelCursor!
+
+  """
+  If the authenticated user is subscribed to this tracker, this is that
+  subscription.
+  """
+  subscription: TrackerSubscription @access(scope: SUBSCRIPTIONS, kind: RO)
+
+  """
+  The access control list entry (or the default ACL) which describes the
+  authenticated user's permissions with respect to this tracker.
+  """
+  acl: ACL
+
+  # Only available to the tracker owner:
+  defaultACL: DefaultACL!
+  acls(cursor: Cursor): ACLCursor! @access(scope: ACLS, kind: RO)
+
+  """
+  Returns a URL from which the tracker owner may download a gzipped JSON
+  archive of the tracker.
+  """
+  export: URL!
+
+  """
+  Returns a list of tracker webhook subscriptions. For clients
+  authenticated with a personal access token, this returns all webhooks
+  configured by all GraphQL clients for your account. For clients
+  authenticated with an OAuth 2.0 access token, this returns only webhooks
+  registered for your client.
+  """
+  webhooks(cursor: Cursor): WebhookSubscriptionCursor!
+
+  "Returns details of a tracker webhook subscription by its ID."
+  webhook(id: Int!): WebhookSubscription
+}
+
+type OAuthClient {
+  uuid: String!
+}
+
+enum WebhookEvent {
+  TRACKER_CREATED
+  TRACKER_UPDATE
+  TRACKER_DELETED
+  TICKET_CREATED
+  TICKET_UPDATE
+  TICKET_DELETED
+  LABEL_CREATED
+  LABEL_UPDATE
+  LABEL_DELETED
+  EVENT_CREATED
+}
+
+interface WebhookSubscription {
+  id: Int!
+  events: [WebhookEvent!]!
+  query: String!
+  url: String!
+
+  """
+  If this webhook was registered by an authorized OAuth 2.0 client, this
+  field is non-null.
+  """
+  client: OAuthClient @private
+
+  "All deliveries which have been sent to this webhook."
+  deliveries(cursor: Cursor): WebhookDeliveryCursor!
+
+  "Returns a sample payload for this subscription, for testing purposes"
+  sample(event: WebhookEvent!): String!
+}
+
+type UserWebhookSubscription implements WebhookSubscription {
+  id: Int!
+  events: [WebhookEvent!]!
+  query: String!
+  url: String!
+  client: OAuthClient @private
+  deliveries(cursor: Cursor): WebhookDeliveryCursor!
+  sample(event: WebhookEvent!): String!
+}
+
+type TrackerWebhookSubscription implements WebhookSubscription {
+  id: Int!
+  events: [WebhookEvent!]!
+  query: String!
+  url: String!
+  client: OAuthClient @private
+  deliveries(cursor: Cursor): WebhookDeliveryCursor!
+  sample(event: WebhookEvent!): String!
+
+  tracker: Tracker!
+}
+
+type TicketWebhookSubscription implements WebhookSubscription {
+  id: Int!
+  events: [WebhookEvent!]!
+  query: String!
+  url: String!
+  client: OAuthClient @private
+  deliveries(cursor: Cursor): WebhookDeliveryCursor!
+  sample(event: WebhookEvent!): String!
+
+  ticket: Ticket!
+}
+
+type WebhookDelivery {
+  uuid: String!
+  date: Time!
+  event: WebhookEvent!
+  subscription: WebhookSubscription!
+  requestBody: String!
+
+  """
+  These details are provided only after a response is received from the
+  remote server. If a response is sent whose Content-Type is not text/*, or
+  cannot be decoded as UTF-8, the response body will be null. It will be
+  truncated after 64 KiB.
+  """
+  responseBody: String
+  responseHeaders: String
+  responseStatus: Int
+}
+
+interface WebhookPayload {
+  uuid: String!
+  event: WebhookEvent!
+  date: Time!
+}
+
+type TrackerEvent implements WebhookPayload {
+  uuid: String!
+  event: WebhookEvent!
+  date: Time!
+
+  tracker: Tracker!
+}
+
+type TicketEvent implements WebhookPayload {
+  uuid: String!
+  event: WebhookEvent!
+  date: Time!
+
+  ticket: Ticket!
+}
+
+type TicketDeletedEvent implements WebhookPayload {
+  uuid: String!
+  event: WebhookEvent!
+  date: Time!
+
+  trackerId: Int!
+  ticketId: Int!
+}
+
+type EventCreated implements WebhookPayload {
+  uuid: String!
+  event: WebhookEvent!
+  date: Time!
+
+  newEvent: Event!
+}
+
+type LabelEvent implements WebhookPayload {
+  uuid: String!
+  event: WebhookEvent!
+  date: Time!
+
+  label: Label!
+}
+
+enum TicketStatus {
+  REPORTED
+  CONFIRMED
+  IN_PROGRESS
+  PENDING
+  RESOLVED
+}
+
+enum TicketResolution {
+  UNRESOLVED
+  CLOSED
+  FIXED
+  IMPLEMENTED
+  WONT_FIX
+  BY_DESIGN
+  INVALID
+  DUPLICATE
+  NOT_OUR_BUG
+}
+
+enum Authenticity {
+  """
+  The server vouches for this information as entered verbatim by the
+  attributed entity.
+  """
+  AUTHENTIC
+  """
+  The server does not vouch for this information as entered by the attributed
+  entity, no authentication was provided.
+  """
+  UNAUTHENTICATED
+  """
+  The server has evidence that the information has likely been manipulated by
+  a third party.
+  """
+  TAMPERED
+}
+
+type Ticket {
+  """
+  The ticket ID is unique within each tracker, but is not globally unique.
+  The first ticket opened on a given tracker will have ID 1, then 2, and so
+  on.
+  """
+  id: Int!
+
+  created: Time!
+  updated: Time!
+  submitter: Entity! @access(scope: PROFILE, kind: RO)
+  tracker: Tracker! @access(scope: TRACKERS, kind: RO)
+
+  """
+  Canonical ticket reference string; may be used in comments to identify the
+  ticket from anywhere.
+  """
+  ref: String!
+
+  subject: String!
+  body: String
+  status: TicketStatus!
+  resolution: TicketResolution!
+  authenticity: Authenticity!
+
+  labels: [Label!]!
+  assignees: [Entity!]! @access(scope: PROFILE, kind: RO)
+  events(cursor: Cursor): EventCursor! @access(scope: EVENTS, kind: RO)
+
+  """
+  If the authenticated user is subscribed to this ticket, this is that
+  subscription.
+  """
+  subscription: TicketSubscription @access(scope: SUBSCRIPTIONS, kind: RO)
+
+  """
+  Returns a list of ticket webhook subscriptions. For clients
+  authenticated with a personal access token, this returns all webhooks
+  configured by all GraphQL clients for your account. For clients
+  authenticated with an OAuth 2.0 access token, this returns only webhooks
+  registered for your client.
+  """
+  webhooks(cursor: Cursor): WebhookSubscriptionCursor!
+
+  "Returns details of a ticket webhook subscription by its ID."
+  webhook(id: Int!): WebhookSubscription
+}
+
+interface ACL {
+  "Permission to view tickets"
+  browse: Boolean!
+  "Permission to submit tickets"
+  submit: Boolean!
+  "Permission to comment on tickets"
+  comment: Boolean!
+  "Permission to edit tickets"
+  edit: Boolean!
+  "Permission to resolve, re-open, transfer, or label tickets"
+  triage: Boolean!
+}
+
+"""
+These ACLs are configured for specific entities, and may be used to expand or
+constrain the rights of a participant.
+"""
+type TrackerACL implements ACL {
+  id: Int!
+  created: Time!
+  tracker: Tracker! @access(scope: TRACKERS, kind: RO)
+  entity: Entity! @access(scope: PROFILE, kind: RO)
+
+  browse: Boolean!
+  submit: Boolean!
+  comment: Boolean!
+  edit: Boolean!
+  triage: Boolean!
+}
+
+"""
+These ACL policies are applied non-specifically, e.g. the default ACL for all
+authenticated users.
+"""
+type DefaultACL implements ACL {
+  browse: Boolean!
+  submit: Boolean!
+  comment: Boolean!
+  edit: Boolean!
+  triage: Boolean!
+}
+
+type Label {
+  id: Int!
+  created: Time!
+  name: String!
+  tracker: Tracker! @access(scope: TRACKERS, kind: RO)
+
+  "In CSS hexadecimal format"
+  backgroundColor: String!
+  foregroundColor: String!
+
+  tickets(cursor: Cursor): TicketCursor! @access(scope: TICKETS, kind: RO)
+}
+
+enum EventType {
+  CREATED
+  COMMENT
+  STATUS_CHANGE
+  LABEL_ADDED
+  LABEL_REMOVED
+  ASSIGNED_USER
+  UNASSIGNED_USER
+  USER_MENTIONED
+  TICKET_MENTIONED
+}
+
+"""
+Represents an event which affects a ticket. Multiple changes can occur in a
+single event, and are enumerated in the "changes" field.
+"""
+type Event {
+  id: Int!
+  created: Time!
+  changes: [EventDetail!]!
+
+  ticket: Ticket! @access(scope: TICKETS, kind: RO)
+}
+
+interface EventDetail {
+  eventType: EventType!
+  ticket: Ticket! @access(scope: TICKETS, kind: RO)
+}
+
+type Created implements EventDetail {
+  eventType: EventType!
+  ticket: Ticket! @access(scope: TICKETS, kind: RO)
+  author: Entity! @access(scope: PROFILE, kind: RO)
+}
+
+type Assignment implements EventDetail {
+  eventType: EventType!
+  ticket: Ticket! @access(scope: TICKETS, kind: RO)
+
+  assigner: Entity! @access(scope: PROFILE, kind: RO)
+  assignee: Entity! @access(scope: PROFILE, kind: RO)
+}
+
+type Comment implements EventDetail {
+  eventType: EventType!
+  ticket: Ticket! @access(scope: TICKETS, kind: RO)
+  author: Entity! @access(scope: PROFILE, kind: RO)
+
+  text: String!
+  authenticity: Authenticity!
+
+  "If this comment has been edited, this field points to the new revision."
+  supersededBy: Comment
+}
+
+type LabelUpdate implements EventDetail {
+  eventType: EventType!
+  ticket: Ticket! @access(scope: TICKETS, kind: RO)
+  labeler: Entity! @access(scope: PROFILE, kind: RO)
+  label: Label!
+}
+
+type StatusChange implements EventDetail {
+  eventType: EventType!
+  ticket: Ticket! @access(scope: TICKETS, kind: RO)
+  editor: Entity! @access(scope: PROFILE, kind: RO)
+
+  oldStatus: TicketStatus!
+  newStatus: TicketStatus!
+  oldResolution: TicketResolution!
+  newResolution: TicketResolution!
+}
+
+type UserMention implements EventDetail {
+  eventType: EventType!
+  ticket: Ticket! @access(scope: TICKETS, kind: RO)
+  author: Entity! @access(scope: PROFILE, kind: RO)
+  mentioned: Entity! @access(scope: PROFILE, kind: RO)
+}
+
+type TicketMention implements EventDetail {
+  eventType: EventType!
+  ticket: Ticket! @access(scope: TICKETS, kind: RO)
+  author: Entity! @access(scope: PROFILE, kind: RO)
+  mentioned: Ticket! @access(scope: TICKETS, kind: RO)
+}
+
+interface ActivitySubscription {
+  id: Int!
+  created: Time!
+}
+
+"""
+A tracker subscription will notify a participant of all activity for a
+tracker, including all new tickets and their events.
+"""
+type TrackerSubscription implements ActivitySubscription {
+  id: Int!
+  created: Time!
+  tracker: Tracker! @access(scope: TRACKERS, kind: RO)
+}
+
+"""
+A ticket subscription will notify a participant when activity occurs on a
+ticket.
+"""
+type TicketSubscription implements ActivitySubscription {
+  id: Int!
+  created: Time!
+  ticket: Ticket! @access(scope: TICKETS, kind: RO)
+}
+
+"""
+A cursor for enumerating trackers
+
+If there are additional results available, the cursor object may be passed
+back into the same endpoint to retrieve another page. If the cursor is null,
+there are no remaining results to return.
+"""
+type TrackerCursor {
+  results: [Tracker!]!
+  cursor: Cursor
+}
+
+"""
+A cursor for enumerating tickets
+
+If there are additional results available, the cursor object may be passed
+back into the same endpoint to retrieve another page. If the cursor is null,
+there are no remaining results to return.
+"""
+type TicketCursor {
+  results: [Ticket!]!
+  cursor: Cursor
+}
+
+"""
+A cursor for enumerating labels
+
+If there are additional results available, the cursor object may be passed
+back into the same endpoint to retrieve another page. If the cursor is null,
+there are no remaining results to return.
+"""
+type LabelCursor {
+  results: [Label!]!
+  cursor: Cursor
+}
+
+"""
+A cursor for enumerating access control list entries
+
+If there are additional results available, the cursor object may be passed
+back into the same endpoint to retrieve another page. If the cursor is null,
+there are no remaining results to return.
+"""
+type ACLCursor {
+  results: [TrackerACL!]!
+  cursor: Cursor
+}
+
+"""
+A cursor for enumerating events
+
+If there are additional results available, the cursor object may be passed
+back into the same endpoint to retrieve another page. If the cursor is null,
+there are no remaining results to return.
+"""
+type EventCursor {
+  results: [Event!]!
+  cursor: Cursor
+}
+
+"""
+A cursor for enumerating subscriptions
+
+If there are additional results available, the cursor object may be passed
+back into the same endpoint to retrieve another page. If the cursor is null,
+there are no remaining results to return.
+"""
+type ActivitySubscriptionCursor {
+  results: [ActivitySubscription!]!
+  cursor: Cursor
+}
+
+"""
+A cursor for enumerating a list of webhook deliveries
+
+If there are additional results available, the cursor object may be passed
+back into the same endpoint to retrieve another page. If the cursor is null,
+there are no remaining results to return.
+"""
+type WebhookDeliveryCursor {
+  results: [WebhookDelivery!]!
+  cursor: Cursor
+}
+
+"""
+A cursor for enumerating a list of webhook subscriptions
+
+If there are additional results available, the cursor object may be passed
+back into the same endpoint to retrieve another page. If the cursor is null,
+there are no remaining results to return.
+"""
+type WebhookSubscriptionCursor {
+  results: [WebhookSubscription!]!
+  cursor: Cursor
+}
+
+type Query {
+  "Returns API version information."
+  version: Version!
+
+  "Returns the authenticated user."
+  me: User! @access(scope: PROFILE, kind: RO)
+
+  "Returns a specific user."
+  user(username: String!): User @access(scope: PROFILE, kind: RO)
+
+  """
+  Returns trackers that the authenticated user has access to.
+
+  NOTE: in this version of the API, only trackers owned by the authenticated
+  user are returned, but in the future the default behavior will be to return
+  all trackers that the user either (1) has been given explicit access to via
+  ACLs or (2) has implicit access to either by ownership or group membership.
+  """
+  trackers(cursor: Cursor): TrackerCursor @access(scope: TRACKERS, kind: RO)
+
+  """
+  List of events which the authenticated user is subscribed to or implicated
+  in, ordered by the event date (recent events first).
+  """
+  events(cursor: Cursor): EventCursor @access(scope: EVENTS, kind: RO)
+
+  "List of subscriptions of the authenticated user."
+  subscriptions(cursor: Cursor): ActivitySubscriptionCursor @access(scope: SUBSCRIPTIONS, kind: RO)
+
+  """
+  Returns a list of user webhook subscriptions. For clients
+  authenticated with a personal access token, this returns all webhooks
+  configured by all GraphQL clients for your account. For clients
+  authenticated with an OAuth 2.0 access token, this returns only webhooks
+  registered for your client.
+  """
+  userWebhooks(cursor: Cursor): WebhookSubscriptionCursor!
+
+  "Returns details of a user webhook subscription by its ID."
+  userWebhook(id: Int!): WebhookSubscription
+
+  """
+  Returns information about the webhook currently being processed. This is
+  not valid during normal queries over HTTP, and will return an error if used
+  outside of a webhook context.
+  """
+  webhook: WebhookPayload!
+}
+
+"You may omit any fields to leave them unchanged."
+input TrackerInput {
+  name: String
+  description: String
+  visibility: Visibility
+}
+
+"You may omit any fields to leave them unchanged."
+input UpdateLabelInput {
+  name: String
+  foregroundColor: String
+  backgroundColor: String
+}
+
+input ACLInput {
+  "Permission to view tickets"
+  browse: Boolean!
+  "Permission to submit tickets"
+  submit: Boolean!
+  "Permission to comment on tickets"
+  comment: Boolean!
+  "Permission to edit tickets"
+  edit: Boolean!
+  "Permission to resolve, re-open, transfer, or label tickets"
+  triage: Boolean!
+}
+
+"""
+This is used for importing tickets from third-party services, and may only be
+used by the tracker owner. It causes a ticket submission, update, or comment
+to be attributed to an external user and appear as if it were submitted at a
+specific time.
+"""
+input ImportInput {
+  created: Time!
+  """
+  External user ID. By convention this should be "service:username", e.g.
+  "codeberg:ddevault".
+  """
+  externalId: String!
+  """
+  A URL at which the user's external profile may be found, e.g.
+  "https://codeberg.org/ddevault".
+  """
+  externalUrl: String!
+}
+
+input SubmitTicketInput {
+  subject: String!
+  body: String
+
+  # These fields are meant for use when importing tickets from third-party
+  # services, and may only be used by the tracker owner.
+  # TODO: Use ImportInput here
+  created: Time
+  externalId: String
+  externalUrl: String
+}
+
+# For internal use only.
+input SubmitTicketEmailInput {
+  subject: String!
+  body: String
+  senderId: Int!
+  messageId: String!
+}
+
+# For internal use only.
+enum EmailCmd {
+  RESOLVE
+  REOPEN
+  LABEL
+  UNLABEL
+}
+
+# For internal use only.
+input SubmitCommentEmailInput {
+  text: String!
+  senderId: Int!
+  cmd: EmailCmd
+  resolution: TicketResolution
+  labelIds: [Int!]
+  messageId: String!
+}
+
+"""
+You may omit any fields to leave them unchanged. To remove the ticket body,
+set it to null.
+"""
+input UpdateTicketInput {
+  subject: String
+  body: String
+
+  "For use by the tracker owner only"
+  import: ImportInput
+}
+
+"""
+You may omit the status or resolution fields to leave them unchanged (or if
+you do not have permission to change them). "resolution" is required if
+status is RESOLVED.
+"""
+input SubmitCommentInput {
+  text: String!
+  status: TicketStatus
+  resolution: TicketResolution
+
+  "For use by the tracker owner only"
+  import: ImportInput
+}
+
+"""
+"resolution" is required if status is RESOLVED.
+"""
+input UpdateStatusInput {
+  status: TicketStatus!
+  resolution: TicketResolution
+
+  "For use by the tracker owner only"
+  import: ImportInput
+}
+
+input UserWebhookInput {
+  url: String!
+  events: [WebhookEvent!]!
+  query: String!
+}
+
+input TrackerWebhookInput {
+  url: String!
+  events: [WebhookEvent!]!
+  query: String!
+}
+
+input TicketWebhookInput {
+  url: String!
+  events: [WebhookEvent!]!
+  query: String!
+}
+
+type Mutation {
+  """
+  Creates a new bug tracker. If specified, the 'import' field specifies a
+  gzipped dump of a tracker to populate tickets from; see Tracker.export.
+  """
+  createTracker(
+    name: String!,
+    description: String,
+    visibility: Visibility!,
+    importUpload: Upload): Tracker! @access(scope: TRACKERS, kind: RW)
+
+  "Updates an existing bug tracker"
+  updateTracker(
+    id: Int!,
+    input: TrackerInput!): Tracker! @access(scope: TRACKERS, kind: RW)
+
+  "Deletes a bug tracker"
+  deleteTracker(id: Int!): Tracker! @access(scope: TRACKERS, kind: RW)
+
+  "Adds or updates the ACL for a specific user on a bug tracker"
+  updateUserACL(
+    trackerId: Int!,
+    userId: Int!,
+    input: ACLInput!): TrackerACL! @access(scope: ACLS, kind: RW)
+
+  # "Adds or updates the ACL for an email address on a bug tracker"
+  # TODO: This requires internal changes
+  #updateSenderACL(
+  #  trackerId: Int!,
+  #  address: String!,
+  #  input: ACLInput!): TrackerACL! @access(scope: ACLS, kind: RW)
+
+  """
+  Updates the default ACL for a bug tracker, which applies to users and
+  senders for whom a more specific ACL does not exist.
+  """
+  updateTrackerACL(
+    trackerId: Int!,
+    input: ACLInput!): DefaultACL! @access(scope: ACLS, kind: RW)
+
+  """
+  Removes a tracker ACL. Following this change, the default tracker ACL will
+  apply to this user.
+  """
+  deleteACL(id: Int!): TrackerACL! @access(scope: ACLS, kind: RW)
+
+  "Subscribes to all email notifications for a tracker"
+  trackerSubscribe(
+    trackerId: Int!): TrackerSubscription! @access(scope: SUBSCRIPTIONS, kind: RW)
+
+  """
+  Unsubscribes from email notifications for a tracker. If "tickets" is true,
+  also unsubscribe from all tickets on this tracker.
+  """
+  trackerUnsubscribe(
+    trackerId: Int!,
+    tickets: Boolean!): TrackerSubscription! @access(scope: SUBSCRIPTIONS, kind: RW)
+
+  "Subscribes to all email notifications for a ticket"
+  ticketSubscribe(
+    trackerId: Int!,
+    ticketId: Int!): TicketSubscription! @access(scope: SUBSCRIPTIONS, kind: RW)
+
+  "Unsubscribes from email notifications for a ticket"
+  ticketUnsubscribe(
+    trackerId: Int!,
+    ticketId: Int!): TicketSubscription! @access(scope: SUBSCRIPTIONS, kind: RW)
+
+  """
+  Creates a new ticket label for a tracker. The colors must be in CSS
+  hexadecimal RGB format "#RRGGBB", i.e. "#000000" for black and "#FF0000" for
+  red.
+  """
+  createLabel(trackerId: Int!, name: String!,
+    foregroundColor: String!, backgroundColor: String!): Label! @access(scope: TRACKERS, kind: RW)
+
+  "Changes the name or colors for a label."
+  updateLabel(id: Int!, input: UpdateLabelInput!): Label! @access(scope: TRACKERS, kind: RW)
+
+  """
+  Deletes a label, removing it from any tickets which currently have it
+  applied.
+  """
+  deleteLabel(id: Int!): Label! @access(scope: TRACKERS, kind: RW)
+
+  "Creates a new ticket."
+  submitTicket(trackerId: Int!,
+    input: SubmitTicketInput!): Ticket! @access(scope: TICKETS, kind: RW)
+
+  "Deletes a ticket."
+  deleteTicket(trackerId: Int!, ticketId: Int!): Ticket! @access(scope: TICKETS, kind: RW)
+
+  # Creates a new ticket from an incoming email. (For internal use only)
+  submitTicketEmail(trackerId: Int!,
+    input: SubmitTicketEmailInput!): Ticket! @internal
+
+  # Creates a new comment from an incoming email. (For internal use only)
+  submitCommentEmail(trackerId: Int!, ticketId: Int!,
+    input: SubmitCommentEmailInput!): Event! @internal
+
+  "Updates a ticket's subject or body"
+  updateTicket(trackerId: Int!, ticketId: Int!,
+    input: UpdateTicketInput!): Ticket! @access(scope: TICKETS, kind: RW)
+
+  "Updates the status or resolution of a ticket"
+  updateTicketStatus(trackerId: Int!, ticketId: Int!,
+    input: UpdateStatusInput!): Event! @access(scope: TICKETS, kind: RW)
+
+  "Submits a comment for a ticket"
+  submitComment(trackerId: Int!, ticketId: Int!,
+    input: SubmitCommentInput!): Event! @access(scope: TICKETS, kind: RW)
+
+  "Adds a user to the list of assigned users for a ticket"
+  assignUser(trackerId: Int!, ticketId: Int!,
+    userId: Int!): Event! @access(scope: TICKETS, kind: RW)
+
+  "Removes a user from the list of assigned users for a ticket"
+  unassignUser(trackerId: Int!, ticketId: Int!,
+    userId: Int!): Event! @access(scope: TICKETS, kind: RW)
+
+  "Adds a label to the list of labels for a ticket"
+  labelTicket(trackerId: Int!, ticketId: Int!,
+    labelId: Int!): Event! @access(scope: TICKETS, kind: RW)
+
+  "Removes a list from the list of labels for a ticket"
+  unlabelTicket(trackerId: Int!, ticketId: Int!,
+    labelId: Int!): Event! @access(scope: TICKETS, kind: RW)
+
+  "Imports a gzipped JSON dump of tracker data"
+  importTrackerDump(trackerId: Int!, dump: Upload!): Boolean! @access(scope: TRACKERS, kind: RW)
+
+  """
+  Creates a new user webhook subscription. When an event from the
+  provided list of events occurs, the 'query' parameter (a GraphQL query)
+  will be evaluated and the results will be sent to the provided URL as the
+  body of an HTTP POST request. The list of events must include at least one
+  event, and no duplicates.
+
+  This query is evaluated in the webhook context, such that query { webhook }
+  may be used to access details of the event which triggered the webhook. The
+  query may not make any mutations.
+  """
+  createUserWebhook(config: UserWebhookInput!): WebhookSubscription!
+
+  """
+  Deletes a user webhook. Any events already queued may still be
+  delivered after this request completes. Clients authenticated with a
+  personal access token may delete any webhook registered for their account,
+  but authorized OAuth 2.0 clients may only delete their own webhooks.
+  Manually deleting a webhook configured by a third-party client may cause
+  unexpected behavior with the third-party integration.
+  """
+  deleteUserWebhook(id: Int!): WebhookSubscription!
+
+  "Creates a new tracker webhook."
+  createTrackerWebhook(trackerId: Int!, config: TrackerWebhookInput!): WebhookSubscription!
+
+  "Deletes a tracker webhook."
+  deleteTrackerWebhook(id: Int!): WebhookSubscription!
+
+  "Creates a new ticket webhook."
+  createTicketWebhook(trackerId: Int!, ticketId: Int!, config: TicketWebhookInput!): WebhookSubscription!
+
+  "Deletes a ticket webhook."
+  deleteTicketWebhook(id: Int!): WebhookSubscription!
+
+  """
+  Deletes the authenticated user's account. Internal use only.
+  """
+  deleteUser: Int! @internal
+}
