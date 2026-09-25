@@ -9,7 +9,8 @@ git-bug pull [REMOTE] [flags]
 ### Options
 
 ```
-  -h, --help   help for pull
+  -h, --help      help for pull
+  -v, --verbose   log each operation to stderr
 ```
 
 ### SEE ALSO
