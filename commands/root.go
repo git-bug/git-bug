@@ -45,10 +45,12 @@ the same git remote you are already using to collaborate with other people.
 	const entityGroup = "entity"
 	const uiGroup = "ui"
 	const remoteGroup = "remote"
+	const maintenanceGroup = "maintenance"
 
 	cmd.AddGroup(&cobra.Group{ID: entityGroup, Title: "Entities"})
 	cmd.AddGroup(&cobra.Group{ID: uiGroup, Title: "Interactive interfaces"})
 	cmd.AddGroup(&cobra.Group{ID: remoteGroup, Title: "Interaction with the outside world"})
+	cmd.AddGroup(&cobra.Group{ID: maintenanceGroup, Title: "Maintenance"})
 
 	addCmdWithGroup := func(child *cobra.Command, groupID string) {
 		cmd.AddCommand(child)
@@ -68,8 +70,10 @@ the same git remote you are already using to collaborate with other people.
 	addCmdWithGroup(newPushCommand(env), remoteGroup)
 	addCmdWithGroup(bridgecmd.NewBridgeCommand(env), remoteGroup)
 
+	addCmdWithGroup(newCacheCommand(env), maintenanceGroup)
+	addCmdWithGroup(newWipeCommand(env), maintenanceGroup)
+
 	cmd.AddCommand(newVersionCommand(env))
-	cmd.AddCommand(newWipeCommand(env))
 
 	return cmd
 }

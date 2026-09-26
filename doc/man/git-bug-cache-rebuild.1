@@ -1,0 +1,25 @@
+.nh
+.TH "GIT-BUG" "1" "Apr 2019" "Generated from git-bug's source code" ""
+
+.SH NAME
+git-bug-cache-rebuild - Rebuild the local cache from the git data
+
+
+.SH SYNOPSIS
+\fBgit-bug cache rebuild [flags]\fP
+
+
+.SH DESCRIPTION
+Rebuild the local cache from the git data.
+
+.PP
+The cache is not aware of changes made to git-bug's references by other tools, for example when fetching or pushing them with git directly. Use this command to make git-bug reflect them.
+
+
+.SH OPTIONS
+\fB-h\fP, \fB--help\fP[=false]
+	help for rebuild
+
+
+.SH SEE ALSO
+\fBgit-bug-cache(1)\fP
