@@ -1,9 +1,6 @@
 package identity
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/entity"
@@ -48,24 +45,21 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 	go func() {
 		defer close(out)
 
-		remoteRefSpec := fmt.Sprintf(identityRemoteRefPattern, remote)
-		remoteRefs, err := repo.ListRefs(remoteRefSpec)
+		remoteRefs, err := repo.ListTrackingRefs(remote, Namespace)
 
 		if err != nil {
 			out <- entity.NewMergeError(err, "")
 			return
 		}
 
-		for _, remoteRef := range remoteRefs {
-			refSplit := strings.Split(remoteRef, "/")
-			id := entity.Id(refSplit[len(refSplit)-1])
-
+		for key, remoteCommit := range remoteRefs {
+			id := entity.Id(key)
 			if err := id.Validate(); err != nil {
 				out <- entity.NewMergeInvalidStatus(id, errors.Wrap(err, "invalid ref").Error())
 				continue
 			}
 
-			remoteIdentity, err := read(repo, remoteRef)
+			remoteIdentity, err := read(repo, id, remoteCommit)
 
 			if err != nil {
 				out <- entity.NewMergeInvalidStatus(id, errors.Wrap(err, "remote identity is not readable").Error())
@@ -78,17 +72,11 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 				continue
 			}
 
-			localRef := identityRefPattern + remoteIdentity.Id().String()
-			localExist, err := repo.RefExist(localRef)
+			localCommit, err := repo.ResolveRef(Namespace, id.String())
 
-			if err != nil {
-				out <- entity.NewMergeError(err, id)
-				continue
-			}
-
-			// the identity is not local yet, simply create the reference
-			if !localExist {
-				err := repo.CopyRef(remoteRef, localRef)
+			// the identity is not local yet, simply create it
+			if errors.Is(err, repository.ErrNotFound) {
+				err := repo.UpdateRef(Namespace, id.String(), "", remoteCommit)
 
 				if err != nil {
 					out <- entity.NewMergeError(err, id)
@@ -99,7 +87,12 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 				continue
 			}
 
-			localIdentity, err := read(repo, localRef)
+			if err != nil {
+				out <- entity.NewMergeError(err, id)
+				continue
+			}
+
+			localIdentity, err := read(repo, id, localCommit)
 
 			if err != nil {
 				out <- entity.NewMergeError(errors.Wrap(err, "local identity is not readable"), id)
@@ -129,52 +122,59 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 // linked from another entity, otherwise it would break it.
 // Remove is idempotent.
 func Remove(repo repository.ClockedRepo, id entity.Id) error {
-	var fullMatches []string
-
-	refs, err := repo.ListRefs(identityRefPattern + id.String())
+	found, err := existAnywhere(repo, id)
 	if err != nil {
 		return err
 	}
-	if len(refs) > 1 {
-		return entity.NewErrMultipleMatch(Typename, entity.RefsToIds(refs))
+	if !found {
+		return entity.NewErrNotFound(Typename)
 	}
-	if len(refs) == 1 {
-		// we have the identity locally
-		fullMatches = append(fullMatches, refs[0])
+
+	err = repo.RemoveRef(Namespace, id.String())
+	if err != nil {
+		return err
 	}
 
 	remotes, err := repo.GetRemotes()
 	if err != nil {
 		return err
 	}
-
 	for remote := range remotes {
-		remotePrefix := fmt.Sprintf(identityRemoteRefPattern+id.String(), remote)
-		remoteRefs, err := repo.ListRefs(remotePrefix)
-		if err != nil {
-			return err
-		}
-		if len(remoteRefs) > 1 {
-			return entity.NewErrMultipleMatch(Typename, entity.RefsToIds(refs))
-		}
-		if len(remoteRefs) == 1 {
-			// found the identity in a remote
-			fullMatches = append(fullMatches, remoteRefs[0])
-		}
-	}
-
-	if len(fullMatches) == 0 {
-		return entity.NewErrNotFound(Typename)
-	}
-
-	for _, ref := range fullMatches {
-		err = repo.RemoveRef(ref)
+		err = repo.RemoveTrackingRef(remote, Namespace, id.String())
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// existAnywhere tells if an identity exists locally or in any remote.
+func existAnywhere(repo repository.ClockedRepo, id entity.Id) (bool, error) {
+	_, err := repo.ResolveRef(Namespace, id.String())
+	if err == nil {
+		return true, nil
+	}
+	if !errors.Is(err, repository.ErrNotFound) {
+		return false, err
+	}
+
+	remotes, err := repo.GetRemotes()
+	if err != nil {
+		return false, err
+	}
+
+	for remote := range remotes {
+		_, err := repo.ResolveTrackingRef(remote, Namespace, id.String())
+		if err == nil {
+			return true, nil
+		}
+		if !errors.Is(err, repository.ErrNotFound) {
+			return false, err
+		}
+	}
+
+	return false, nil
 }
 
 // RemoveAll will remove all local identities.

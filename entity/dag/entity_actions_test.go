@@ -1,8 +1,9 @@
 package dag
 
 import (
+	"maps"
+	"slices"
 	"sort"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -132,75 +133,31 @@ func assertMergeResults(t *testing.T, expected []entity.MergeResult, results <-c
 	}
 }
 
-func assertEqualRefs(t *testing.T, repoA, repoB repository.RepoData, prefix string) {
+func assertEqualRefs(t *testing.T, repoA, repoB repository.RepoData, namespace string) {
 	t.Helper()
 
-	refsA, err := repoA.ListRefs("")
+	refsA, err := repoA.ListRefs(namespace)
+	require.NoError(t, err)
+	refsB, err := repoB.ListRefs(namespace)
 	require.NoError(t, err)
 
-	var refsAFiltered []string
-	for _, ref := range refsA {
-		if strings.HasPrefix(ref, prefix) {
-			refsAFiltered = append(refsAFiltered, ref)
-		}
-	}
-
-	refsB, err := repoB.ListRefs("")
-	require.NoError(t, err)
-
-	var refsBFiltered []string
-	for _, ref := range refsB {
-		if strings.HasPrefix(ref, prefix) {
-			refsBFiltered = append(refsBFiltered, ref)
-		}
-	}
-
-	require.NotEmpty(t, refsAFiltered)
-	require.Equal(t, refsAFiltered, refsBFiltered)
-
-	for _, ref := range refsAFiltered {
-		commitA, err := repoA.ResolveRef(ref)
-		require.NoError(t, err)
-		commitB, err := repoB.ResolveRef(ref)
-		require.NoError(t, err)
-
-		require.Equal(t, commitA, commitB)
-	}
+	require.NotEmpty(t, refsA)
+	require.Equal(t, refsA, refsB)
 }
 
-func assertNotEqualRefs(t *testing.T, repoA, repoB repository.RepoData, prefix string) {
+func assertNotEqualRefs(t *testing.T, repoA, repoB repository.RepoData, namespace string) {
 	t.Helper()
 
-	refsA, err := repoA.ListRefs("")
+	refsA, err := repoA.ListRefs(namespace)
+	require.NoError(t, err)
+	refsB, err := repoB.ListRefs(namespace)
 	require.NoError(t, err)
 
-	var refsAFiltered []string
-	for _, ref := range refsA {
-		if strings.HasPrefix(ref, prefix) {
-			refsAFiltered = append(refsAFiltered, ref)
-		}
-	}
+	require.NotEmpty(t, refsA)
+	require.ElementsMatch(t, slices.Collect(maps.Keys(refsA)), slices.Collect(maps.Keys(refsB)))
 
-	refsB, err := repoB.ListRefs("")
-	require.NoError(t, err)
-
-	var refsBFiltered []string
-	for _, ref := range refsB {
-		if strings.HasPrefix(ref, prefix) {
-			refsBFiltered = append(refsBFiltered, ref)
-		}
-	}
-
-	require.NotEmpty(t, refsAFiltered)
-	require.Equal(t, refsAFiltered, refsBFiltered)
-
-	for _, ref := range refsAFiltered {
-		commitA, err := repoA.ResolveRef(ref)
-		require.NoError(t, err)
-		commitB, err := repoB.ResolveRef(ref)
-		require.NoError(t, err)
-
-		require.NotEqual(t, commitA, commitB)
+	for id, commitA := range refsA {
+		require.NotEqual(t, commitA, refsB[id])
 	}
 }
 
@@ -242,7 +199,7 @@ func TestMerge(t *testing.T) {
 		},
 	}, results)
 
-	assertEqualRefs(t, repoA, repoB, "refs/"+def.Namespace)
+	assertEqualRefs(t, repoA, repoB, def.Namespace)
 
 	// SCENARIO 2
 	// if the remote and local Entity have the same state, nothing is changed
@@ -260,7 +217,7 @@ func TestMerge(t *testing.T) {
 		},
 	}, results)
 
-	assertEqualRefs(t, repoA, repoB, "refs/"+def.Namespace)
+	assertEqualRefs(t, repoA, repoB, def.Namespace)
 
 	// SCENARIO 3
 	// if the local Entity has new commits but the remote don't, nothing is changed
@@ -286,7 +243,7 @@ func TestMerge(t *testing.T) {
 		},
 	}, results)
 
-	assertNotEqualRefs(t, repoA, repoB, "refs/"+def.Namespace)
+	assertNotEqualRefs(t, repoA, repoB, def.Namespace)
 
 	// SCENARIO 4
 	// if the remote has new commit, the local bug is updated to match the same history
@@ -311,7 +268,7 @@ func TestMerge(t *testing.T) {
 		},
 	}, results)
 
-	assertEqualRefs(t, repoA, repoB, "refs/"+def.Namespace)
+	assertEqualRefs(t, repoA, repoB, def.Namespace)
 
 	// SCENARIO 5
 	// if both local and remote Entity have new commits (that is, we have a concurrent edition),
@@ -358,7 +315,7 @@ func TestMerge(t *testing.T) {
 		},
 	}, results)
 
-	assertNotEqualRefs(t, repoA, repoB, "refs/"+def.Namespace)
+	assertNotEqualRefs(t, repoA, repoB, def.Namespace)
 
 	_, err = Push(def, repoB, "remote")
 	require.NoError(t, err)
@@ -381,7 +338,7 @@ func TestMerge(t *testing.T) {
 
 	// make sure that the graphs become stable over multiple repo, due to the
 	// fast-forward
-	assertEqualRefs(t, repoA, repoB, "refs/"+def.Namespace)
+	assertEqualRefs(t, repoA, repoB, def.Namespace)
 }
 
 // Merging without an author must work, except when a merge commit is required.
@@ -422,8 +379,7 @@ func TestMergeWithoutAuthor(t *testing.T) {
 	_, err = Fetch(def, repoB, "remote")
 	require.NoError(t, err)
 
-	localRef := "refs/" + def.Namespace + "/" + eA.Id().String()
-	before, err := repoB.ResolveRef(localRef)
+	before, err := repoB.ResolveRef(def.Namespace, eA.Id().String())
 	require.NoError(t, err)
 
 	// merge commit required: error, and the local entity is left untouched
@@ -436,7 +392,7 @@ func TestMergeWithoutAuthor(t *testing.T) {
 	require.Equal(t, eA.Id(), all[0].Id)
 	require.ErrorIs(t, all[0].Err, identity.ErrNoIdentitySet)
 
-	after, err := repoB.ResolveRef(localRef)
+	after, err := repoB.ResolveRef(def.Namespace, eA.Id().String())
 	require.NoError(t, err)
 	require.Equal(t, before, after)
 
@@ -539,8 +495,6 @@ func TestMergeInvalidRemote(t *testing.T) {
 				require.NoError(t, eB.Commit(repoB))
 			}
 
-			localRef := "refs/" + def.Namespace + "/" + eA.Id().String()
-
 			// A adds a commit whose edit time isn't after its parent's, which is
 			// illegal for any entity. Entity.Commit always takes a fresh edit time,
 			// so the operationPack is written directly.
@@ -551,7 +505,7 @@ func TestMergeInvalidRemote(t *testing.T) {
 			}
 			forged, err := opp.Write(def, repoA, eA.lastCommit)
 			require.NoError(t, err)
-			require.NoError(t, repoA.UpdateRef(localRef, eA.lastCommit, forged))
+			require.NoError(t, repoA.UpdateRef(def.Namespace, eA.Id().String(), eA.lastCommit, forged))
 
 			_, err = Push(def, repoA, "remote")
 			require.NoError(t, err)
@@ -559,7 +513,7 @@ func TestMergeInvalidRemote(t *testing.T) {
 			require.NoError(t, err)
 
 			resolveLocal := func() repository.Hash {
-				hash, err := repoB.ResolveRef(localRef)
+				hash, err := repoB.ResolveRef(def.Namespace, eA.Id().String())
 				if err == repository.ErrNotFound {
 					return ""
 				}
@@ -644,13 +598,18 @@ func TestRemove(t *testing.T) {
 	_, err := Push(def, repoA, "remote")
 	require.NoError(t, err)
 
+	// the push created the remote-tracking ref, so the remote copy is readable,
+	// which makes the check below after the removal meaningful
+	_, err = readTracking(def, wrapper, repoA, resolvers, "remote", e.Id())
+	require.NoError(t, err)
+
 	err = Remove(def, repoA, e.Id())
 	require.NoError(t, err)
 
 	_, err = Read(def, wrapper, repoA, resolvers, e.Id())
 	require.Error(t, err)
 
-	_, err = readRemote(def, wrapper, repoA, resolvers, "remote", e.Id())
+	_, err = readTracking(def, wrapper, repoA, resolvers, "remote", e.Id())
 	require.Error(t, err)
 
 	// Remove is idempotent
@@ -680,7 +639,7 @@ func TestRemoveAll(t *testing.T) {
 		_, err = Read(def, wrapper, repoA, resolvers, id)
 		require.Error(t, err)
 
-		_, err = readRemote(def, wrapper, repoA, resolvers, "remote", id)
+		_, err = readTracking(def, wrapper, repoA, resolvers, "remote", id)
 		require.Error(t, err)
 	}
 

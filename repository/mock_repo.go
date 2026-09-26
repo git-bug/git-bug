@@ -34,15 +34,16 @@ type mockRepo struct {
 func (m *mockRepo) Close() error { return nil }
 
 func NewMockRepo() *mockRepo {
+	data := newMockRepoDataBrowse()
 	return &mockRepo{
 		mockRepoConfig:     NewMockRepoConfig(),
 		mockRepoKeyring:    NewMockRepoKeyring(),
 		mockRepoCommon:     NewMockRepoCommon(),
 		mockRepoStorage:    NewMockRepoStorage(),
 		mockRepoIndex:      newMockRepoIndex(),
-		mockRepoDataBrowse: newMockRepoDataBrowse(),
+		mockRepoDataBrowse: data,
 		mockRepoClock:      NewMockRepoClock(),
-		mockRepoTest:       NewMockRepoTest(),
+		mockRepoTest:       NewMockRepoTest(data),
 	}
 }
 
@@ -247,12 +248,11 @@ func newMockRepoDataBrowse() *mockRepoDataBrowse {
 	}
 }
 
-func (r *mockRepoDataBrowse) FetchRefs(remote string, prefixes ...string) (string, error) {
+func (r *mockRepoDataBrowse) FetchRefs(remote string, namespaces ...string) (string, error) {
 	panic("implement me")
 }
 
-// PushRefs push git refs to a remote
-func (r *mockRepoDataBrowse) PushRefs(remote string, prefixes ...string) (string, error) {
+func (r *mockRepoDataBrowse) PushRefs(remote string, namespaces ...string) (string, error) {
 	panic("implement me")
 }
 
@@ -355,15 +355,16 @@ func (r *mockRepoDataBrowse) ReadCommit(hash Hash) (Commit, error) {
 	return result, nil
 }
 
-func (r *mockRepoDataBrowse) ResolveRef(ref string) (Hash, error) {
-	h, ok := r.refs[ref]
-	if !ok {
-		return "", ErrNotFound
-	}
-	return h, nil
+func (r *mockRepoDataBrowse) ListRefs(namespace string) (map[string]Hash, error) {
+	return r.listRefs(refPrefix(namespace)), nil
 }
 
-func (r *mockRepoDataBrowse) UpdateRef(ref string, old Hash, hash Hash) error {
+func (r *mockRepoDataBrowse) ResolveRef(namespace string, key string) (Hash, error) {
+	return r.lookupRef(refPrefix(namespace) + key)
+}
+
+func (r *mockRepoDataBrowse) UpdateRef(namespace string, key string, old Hash, hash Hash) error {
+	ref := refPrefix(namespace) + key
 	if r.refs[ref] != old {
 		return fmt.Errorf("%w: %s", ErrRefChanged, ref)
 	}
@@ -371,41 +372,44 @@ func (r *mockRepoDataBrowse) UpdateRef(ref string, old Hash, hash Hash) error {
 	return nil
 }
 
-func (r *mockRepoDataBrowse) RemoveRef(ref string) error {
-	delete(r.refs, ref)
+func (r *mockRepoDataBrowse) RemoveRef(namespace string, key string) error {
+	delete(r.refs, refPrefix(namespace)+key)
 	return nil
 }
 
-func (r *mockRepoDataBrowse) ListRefs(refPrefix string) ([]string, error) {
-	var keys []string
+func (r *mockRepoDataBrowse) ListTrackingRefs(remote string, namespace string) (map[string]Hash, error) {
+	return r.listRefs(trackingRefPrefix(remote, namespace)), nil
+}
 
-	for k := range r.refs {
-		if strings.HasPrefix(k, refPrefix) {
-			keys = append(keys, k)
+func (r *mockRepoDataBrowse) ResolveTrackingRef(remote string, namespace string, key string) (Hash, error) {
+	return r.lookupRef(trackingRefPrefix(remote, namespace) + key)
+}
+
+func (r *mockRepoDataBrowse) RemoveTrackingRef(remote string, namespace string, key string) error {
+	delete(r.refs, trackingRefPrefix(remote, namespace)+key)
+	return nil
+}
+
+func (r *mockRepoDataBrowse) listRefs(prefix string) map[string]Hash {
+	refs := make(map[string]Hash)
+	for ref, hash := range r.refs {
+		if key, ok := strings.CutPrefix(ref, prefix); ok {
+			refs[key] = hash
 		}
 	}
-
-	return keys, nil
+	return refs
 }
 
-func (r *mockRepoDataBrowse) RefExist(ref string) (bool, error) {
-	_, exist := r.refs[ref]
-	return exist, nil
-}
-
-func (r *mockRepoDataBrowse) CopyRef(source string, dest string) error {
-	hash, exist := r.refs[source]
-
-	if !exist {
-		return ErrNotFound
+func (r *mockRepoDataBrowse) lookupRef(name string) (Hash, error) {
+	h, ok := r.refs[name]
+	if !ok {
+		return "", ErrNotFound
 	}
-
-	r.refs[dest] = hash
-	return nil
+	return h, nil
 }
 
-func (r *mockRepoDataBrowse) ListCommits(ref string) ([]Hash, error) {
-	return nonNativeListCommits(r, ref)
+func (r *mockRepoDataBrowse) ListCommits(commit Hash) ([]Hash, error) {
+	return nonNativeListCommits(r, commit)
 }
 
 // resolveRef resolves a ref matching the RepoBrowse contract:
@@ -917,10 +921,12 @@ func (r *mockRepoClock) Witness(name string, time lamport.Time) error {
 
 var _ repoTest = &mockRepoTest{}
 
-type mockRepoTest struct{}
+type mockRepoTest struct {
+	data *mockRepoDataBrowse
+}
 
-func NewMockRepoTest() *mockRepoTest {
-	return &mockRepoTest{}
+func NewMockRepoTest(data *mockRepoDataBrowse) *mockRepoTest {
+	return &mockRepoTest{data: data}
 }
 
 func (r *mockRepoTest) AddRemote(name string, url string) error {
@@ -933,5 +939,15 @@ func (r mockRepoTest) GetLocalRemote() string {
 
 func (r mockRepoTest) EraseFromDisk() error {
 	// nothing to do
+	return nil
+}
+
+func (r *mockRepoTest) SetBranch(name string, commit Hash) error {
+	r.data.refs["refs/heads/"+name] = commit
+	return nil
+}
+
+func (r *mockRepoTest) SetTag(name string, commit Hash) error {
+	r.data.refs["refs/tags/"+name] = commit
 	return nil
 }

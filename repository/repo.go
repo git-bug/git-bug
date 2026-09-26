@@ -133,18 +133,14 @@ type Commit struct {
 
 // RepoData give access to the git data storage
 type RepoData interface {
-	// FetchRefs fetch git refs matching a directory prefix to a remote
-	// Ex: prefix="foo" will fetch any remote refs matching "refs/foo/*" locally.
-	// The equivalent git refspec would be "refs/foo/*:refs/remotes/<remote>/foo/*"
-	FetchRefs(remote string, prefixes ...string) (string, error)
+	// FetchRefs retrieves the refs of the given namespaces (and the data they
+	// point to) from a remote, and stores them as that remote's tracking refs.
+	// Local refs are left untouched.
+	FetchRefs(remote string, namespaces ...string) (string, error)
 
-	// PushRefs push git refs matching a directory prefix to a remote
-	// Ex: prefix="foo" will push any local refs matching "refs/foo/*" to the remote.
-	// The equivalent git refspec would be "refs/foo/*:refs/foo/*"
-	//
-	// Additionally, PushRefs will update the local references in refs/remotes/<remote>/foo to match
-	// the remote state.
-	PushRefs(remote string, prefixes ...string) (string, error)
+	// PushRefs sends the local refs of the given namespaces (and the data they
+	// point to) to a remote, and updates that remote's tracking refs to match.
+	PushRefs(remote string, namespaces ...string) (string, error)
 
 	// StoreData will store arbitrary data and return the corresponding hash
 	StoreData(data []byte) (Hash, error)
@@ -173,34 +169,42 @@ type RepoData interface {
 	// Returns ErrNotFound if not found.
 	ReadCommit(hash Hash) (Commit, error)
 
-	// ResolveRef returns the hash of the target commit of the given ref
-	// Returns ErrNotFound if not found.
-	ResolveRef(ref string) (Hash, error)
+	// ListRefs returns every local ref of a namespace, by key.
+	ListRefs(namespace string) (map[string]Hash, error)
 
-	// UpdateRef sets a Git reference to hash, only if it currently points to old.
-	// An empty old means that the reference must not exist yet; that check is
-	// not atomic, two concurrent creations of the same reference can both succeed.
-	// Returns ErrRefChanged otherwise, and the reference is left unchanged.
-	// Only direct references are supported: a symbolic reference like HEAD can't
-	// be read as old, nor replaced by hash.
-	UpdateRef(ref string, old Hash, hash Hash) error
+	// ResolveRef returns the commit a local ref points to.
+	// Returns ErrNotFound if it doesn't exist.
+	ResolveRef(namespace string, key string) (Hash, error)
 
-	// RemoveRef will remove a Git reference
+	// UpdateRef sets a local ref to hash, only if it currently is old.
+	// An empty old means that the ref must not exist yet; that check is not
+	// atomic, two concurrent creations of the same ref can both succeed.
+	// Returns ErrRefChanged otherwise, and the ref is left unchanged.
+	UpdateRef(namespace string, key string, old Hash, hash Hash) error
+
+	// RemoveRef deletes a local ref.
 	// RemoveRef is idempotent.
-	RemoveRef(ref string) error
+	RemoveRef(namespace string, key string) error
 
-	// ListRefs will return a list of Git ref matching the given refspec
-	ListRefs(refPrefix string) ([]string, error)
+	// A remote's tracking refs are the local record of that remote's refs, as
+	// of the last fetch or push. Reading or removing them never contacts the
+	// remote.
 
-	// RefExist will check if a reference exists in Git
-	RefExist(ref string) (bool, error)
+	// ListTrackingRefs returns every tracking ref of a namespace for a remote,
+	// by key.
+	ListTrackingRefs(remote string, namespace string) (map[string]Hash, error)
 
-	// CopyRef will create a new reference with the same value as another one
-	// Returns ErrNotFound if not found.
-	CopyRef(source string, dest string) error
+	// ResolveTrackingRef returns the commit a tracking ref points to.
+	// Returns ErrNotFound if it doesn't exist.
+	ResolveTrackingRef(remote string, namespace string, key string) (Hash, error)
 
-	// ListCommits will return the list of tree hashes of a ref, in chronological order
-	ListCommits(ref string) ([]Hash, error)
+	// RemoveTrackingRef deletes a tracking ref.
+	// RemoveTrackingRef is idempotent.
+	RemoveTrackingRef(remote string, namespace string, key string) error
+
+	// ListCommits returns the hashes of commit and all its ancestors, in
+	// chronological order.
+	ListCommits(commit Hash) ([]Hash, error)
 }
 
 // RepoClock give access to Lamport clocks
@@ -297,4 +301,10 @@ type repoTest interface {
 
 	// EraseFromDisk delete this repository entirely from the disk
 	EraseFromDisk() error
+
+	// SetBranch points the branch name to commit, creating it if needed.
+	SetBranch(name string, commit Hash) error
+
+	// SetTag points the lightweight tag name to commit, creating it if needed.
+	SetTag(name string, commit Hash) error
 }

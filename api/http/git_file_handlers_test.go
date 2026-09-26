@@ -117,10 +117,10 @@ func TestGitFileHandlers(t *testing.T) {
 	featureCommit, err := repo.StoreCommit(otherTreeHash)
 	require.NoError(t, err)
 
-	require.NoError(t, repo.UpdateRef("refs/heads/main", "", mainCommit))
+	require.NoError(t, repo.SetBranch("main", mainCommit))
 	// "feature" branch has otherBytes; "feature/foo" tag has imgBytes.
-	require.NoError(t, repo.UpdateRef("refs/heads/feature", "", featureCommit))
-	require.NoError(t, repo.UpdateRef("refs/tags/feature/foo", "", mainCommit))
+	require.NoError(t, repo.SetBranch("feature", featureCommit))
+	require.NoError(t, repo.SetTag("feature/foo", mainCommit))
 
 	handler := NewGitFileHandler(mrc)
 	authCtx := auth.CtxWithUser(context.Background(), author.Id())
