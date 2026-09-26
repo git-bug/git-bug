@@ -100,7 +100,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Load() error {
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
 
-	f, err := sc.repo.LocalStorage().Open(filepath.Join("cache", sc.namespace))
+	f, err := sc.repo.LocalStorage().Open(filepath.Join(cacheDir, sc.namespace))
 	if err != nil {
 		return err
 	}
@@ -175,7 +175,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) write() error {
 		return err
 	}
 
-	f, err := sc.repo.LocalStorage().Create(filepath.Join("cache", sc.namespace))
+	f, err := sc.repo.LocalStorage().Create(filepath.Join(cacheDir, sc.namespace))
 	if err != nil {
 		return err
 	}
