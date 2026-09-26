@@ -92,6 +92,11 @@ func TestListLocalIds(t *testing.T) {
 
 	listLocalIds(t, def, repoA, 2)
 	listLocalIds(t, def, repoB, 2)
+
+	// a ref whose key is not an id is reported, not listed
+	require.NoError(t, repoA.UpdateRef(def.Namespace, "not-an-id", "", e.lastCommit))
+	_, err = ListLocalIds(def, repoA)
+	require.ErrorContains(t, err, `invalid id "not-an-id"`)
 }
 
 func listLocalIds(t *testing.T, def Definition, repo repository.RepoData, expectedCount int) {

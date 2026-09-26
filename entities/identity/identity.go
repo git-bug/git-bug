@@ -177,7 +177,11 @@ func ListLocalIds(repo repository.Repo) ([]entity.Id, error) {
 
 	ids := make([]entity.Id, 0, len(refs))
 	for key := range refs {
-		ids = append(ids, entity.Id(key))
+		id := entity.Id(key)
+		if err := id.Validate(); err != nil {
+			return nil, errors.Wrapf(err, "invalid id %q", key)
+		}
+		ids = append(ids, id)
 	}
 	return ids, nil
 }

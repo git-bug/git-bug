@@ -117,7 +117,13 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 // linked from another entity, otherwise it would break it.
 // Remove is idempotent.
 func Remove(repo repository.ClockedRepo, id entity.Id) error {
-	found, err := existAnywhere(repo, id)
+	// list the remotes before deleting anything, to not stop halfway on failure
+	remotes, err := repo.GetRemotes()
+	if err != nil {
+		return err
+	}
+
+	found, err := existAnywhere(repo, remotes, id)
 	if err != nil {
 		return err
 	}
@@ -130,10 +136,6 @@ func Remove(repo repository.ClockedRepo, id entity.Id) error {
 		return err
 	}
 
-	remotes, err := repo.GetRemotes()
-	if err != nil {
-		return err
-	}
 	for remote := range remotes {
 		err = repo.RemoveTrackingRef(remote, Namespace, id.String())
 		if err != nil {
@@ -144,18 +146,14 @@ func Remove(repo repository.ClockedRepo, id entity.Id) error {
 	return nil
 }
 
-// existAnywhere tells if an identity exists locally or in any remote.
-func existAnywhere(repo repository.ClockedRepo, id entity.Id) (bool, error) {
+// existAnywhere tells if an identity exists locally or in the tracking refs of
+// any of the given remotes.
+func existAnywhere(repo repository.ClockedRepo, remotes map[string]string, id entity.Id) (bool, error) {
 	_, err := repo.ResolveRef(Namespace, id.String())
 	if err == nil {
 		return true, nil
 	}
 	if !errors.Is(err, repository.ErrNotFound) {
-		return false, err
-	}
-
-	remotes, err := repo.GetRemotes()
-	if err != nil {
 		return false, err
 	}
 

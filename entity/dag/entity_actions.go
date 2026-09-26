@@ -18,7 +18,11 @@ func ListLocalIds(def Definition, repo repository.RepoData) ([]entity.Id, error)
 	}
 	ids := make([]entity.Id, 0, len(refs))
 	for key := range refs {
-		ids = append(ids, entity.Id(key))
+		id := entity.Id(key)
+		if err := id.Validate(); err != nil {
+			return nil, errors.Wrapf(err, "invalid id %q", key)
+		}
+		ids = append(ids, id)
 	}
 	return ids, nil
 }
@@ -229,15 +233,17 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 // Remove delete an Entity, as well as its tracking refs for every remote.
 // Remove is idempotent.
 func Remove(def Definition, repo repository.ClockedRepo, id entity.Id) error {
-	err := repo.RemoveRef(def.Namespace, id.String())
-	if err != nil {
-		return err
-	}
-
+	// list the remotes before deleting anything, to not stop halfway on failure
 	remotes, err := repo.GetRemotes()
 	if err != nil {
 		return err
 	}
+
+	err = repo.RemoveRef(def.Namespace, id.String())
+	if err != nil {
+		return err
+	}
+
 	for remote := range remotes {
 		err = repo.RemoveTrackingRef(remote, def.Namespace, id.String())
 		if err != nil {
