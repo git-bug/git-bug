@@ -15,7 +15,6 @@ import (
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
-const refsPattern = "refs/%s/%s"
 const creationClockPattern = "%s-create"
 const editClockPattern = "%s-edit"
 
@@ -64,25 +63,7 @@ func Read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 		return *new(EntityT), errors.Wrap(err, "invalid id")
 	}
 
-	ref := fmt.Sprintf("refs/%s/%s", def.Namespace, id.String())
-
-	return read[EntityT](def, wrapper, repo, resolvers, ref)
-}
-
-// readRemote will read and decode a stored remote Entity from a repository
-func readRemote[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, id entity.Id) (EntityT, error) {
-	if err := id.Validate(); err != nil {
-		return *new(EntityT), errors.Wrap(err, "invalid id")
-	}
-
-	ref := fmt.Sprintf("refs/remotes/%s/%s/%s", def.Namespace, remote, id.String())
-
-	return read[EntityT](def, wrapper, repo, resolvers, ref)
-}
-
-// read fetch from git and decode an Entity at an arbitrary git reference.
-func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, ref string) (EntityT, error) {
-	rootHash, err := repo.ResolveRef(ref)
+	commit, err := repo.ResolveRef(def.Namespace, id.String())
 	if err == repository.ErrNotFound {
 		return *new(EntityT), entity.NewErrNotFound(def.Typename)
 	}
@@ -90,6 +71,29 @@ func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 		return *new(EntityT), err
 	}
 
+	return read[EntityT](def, wrapper, repo, resolvers, id, commit)
+}
+
+// readTracking will read and decode an Entity from the tracking refs of a remote
+func readTracking[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, id entity.Id) (EntityT, error) {
+	if err := id.Validate(); err != nil {
+		return *new(EntityT), errors.Wrap(err, "invalid id")
+	}
+
+	commit, err := repo.ResolveTrackingRef(remote, def.Namespace, id.String())
+	if err == repository.ErrNotFound {
+		return *new(EntityT), entity.NewErrNotFound(def.Typename)
+	}
+	if err != nil {
+		return *new(EntityT), err
+	}
+
+	return read[EntityT](def, wrapper, repo, resolvers, id, commit)
+}
+
+// read fetch from git and decode an Entity from its last commit, and make sure
+// that it is the Entity with the given id.
+func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash) (EntityT, error) {
 	// Perform a breadth-first search to get a topological order of the DAG where we discover the
 	// parents commit and go back in time up to the chronological root
 
@@ -97,8 +101,8 @@ func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 	visited := make(map[repository.Hash]struct{})
 	BFSOrder := make([]repository.Commit, 0, 32)
 
-	queue = append(queue, rootHash)
-	visited[rootHash] = struct{}{}
+	queue = append(queue, lastCommit)
+	visited[lastCommit] = struct{}{}
 
 	for len(queue) > 0 {
 		// pop
@@ -162,6 +166,12 @@ func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 			return *new(EntityT), fmt.Errorf("creation lamport time not set")
 		}
 
+		// The id of an Entity is the id of its first operation: make sure that
+		// the ref actually points to the Entity it is named after.
+		if isFirstCommit && (len(opp.Operations) == 0 || opp.Operations[0].Id() != id) {
+			return *new(EntityT), fmt.Errorf("the %s doesn't match its id %s", def.Typename, id)
+		}
+
 		// make sure that the lamport clocks causality match the DAG topology
 		for _, parentHash := range commit.Parents {
 			parentPack, ok := oppMap[parentHash]
@@ -188,7 +198,7 @@ func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 
 	// The clocks are fine, we witness them
 	for _, opp := range oppMap {
-		err = witnessClock(repo, fmt.Sprintf(creationClockPattern, def.Namespace), opp.CreateTime)
+		err := witnessClock(repo, fmt.Sprintf(creationClockPattern, def.Namespace), opp.CreateTime)
 		if err != nil {
 			return *new(EntityT), err
 		}
@@ -238,27 +248,19 @@ func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 	return wrapper(&Entity{
 		Definition: def,
 		ops:        ops,
-		lastCommit: rootHash,
+		lastCommit: lastCommit,
 		createTime: createTime,
 		editTime:   editTime,
 	}), nil
 }
 
-// readClockNoCheck fetch from git the clocks of an Entity at an arbitrary git reference: the creation time of its
-// root, and the edit time of its head, which is the highest of the Entity.
+// readClockNoCheck fetch from git the clocks of an Entity from its last commit: the creation time of its
+// root, and the edit time of its last commit, which is the highest of the Entity.
 // Note: readClockNoCheck does not verify the integrity of the Entity and could return incorrect or incomplete
 // clocks if so. If data integrity check is a requirement, a flow similar to read without actually reading/decoding
 // operation blobs can be implemented instead.
-func readClockNoCheck(def Definition, repo repository.ClockedRepo, ref string) (createTime, editTime lamport.Time, err error) {
-	rootHash, err := repo.ResolveRef(ref)
-	if err == repository.ErrNotFound {
-		return 0, 0, entity.NewErrNotFound(def.Typename)
-	}
-	if err != nil {
-		return 0, 0, err
-	}
-
-	commit, err := repo.ReadCommit(rootHash)
+func readClockNoCheck(repo repository.ClockedRepo, lastCommit repository.Hash) (createTime, editTime lamport.Time, err error) {
+	commit, err := repo.ReadCommit(lastCommit)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -300,9 +302,7 @@ func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) E
 	go func() {
 		defer close(out)
 
-		refPrefix := fmt.Sprintf("refs/%s/", def.Namespace)
-
-		refs, err := repo.ListRefs(refPrefix)
+		refs, err := repo.ListRefs(def.Namespace)
 		if err != nil {
 			out <- entity.StreamedEntity[EntityT]{Err: err}
 			return
@@ -311,8 +311,8 @@ func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) E
 		total := int64(len(refs))
 		current := int64(1)
 
-		for _, ref := range refs {
-			e, err := read[EntityT](def, wrapper, repo, resolvers, ref)
+		for key, commit := range refs {
+			e, err := read[EntityT](def, wrapper, repo, resolvers, entity.Id(key), commit)
 
 			if err != nil {
 				out <- entity.StreamedEntity[EntityT]{Err: err}
@@ -334,15 +334,13 @@ func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) E
 // readAllClocksNoCheck goes over all entities matching Definition and return the highest creation and edit time
 // they hold, for the corresponding clocks to be rebuilt. Zero if there is no entity.
 func readAllClocksNoCheck(def Definition, repo repository.ClockedRepo) (createTime, editTime lamport.Time, err error) {
-	refPrefix := fmt.Sprintf("refs/%s/", def.Namespace)
-
-	refs, err := repo.ListRefs(refPrefix)
+	refs, err := repo.ListRefs(def.Namespace)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	for _, ref := range refs {
-		create, edit, err := readClockNoCheck(def, repo, ref)
+	for _, commit := range refs {
+		create, edit, err := readClockNoCheck(repo, commit)
 		if err != nil {
 			return 0, 0, err
 		}
@@ -504,8 +502,7 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 	// Create or update the Git reference for this entity
 	// When pushing later, the remote will ensure that this ref update
 	// is fast-forward, that is no data has been overwritten.
-	ref := fmt.Sprintf(refsPattern, e.Namespace, e.Id().String())
-	err = repo.UpdateRef(ref, e.lastCommit, lastCommit)
+	err = repo.UpdateRef(e.Namespace, e.Id().String(), e.lastCommit, lastCommit)
 	if err != nil {
 		return err
 	}

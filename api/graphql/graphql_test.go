@@ -290,9 +290,9 @@ func TestGitBrowseQueries(t *testing.T) {
 	c3, err := repo.StoreCommit(rootTreeV3, c2)
 	require.NoError(t, err)
 
-	require.NoError(t, repo.UpdateRef("refs/heads/main", "", c3))
-	require.NoError(t, repo.UpdateRef("refs/heads/feature", "", c2))
-	require.NoError(t, repo.UpdateRef("refs/tags/v1.0", "", c1))
+	require.NoError(t, repo.SetBranch("main", c3))
+	require.NoError(t, repo.SetBranch("feature", c2))
+	require.NoError(t, repo.SetTag("v1.0", c1))
 
 	// ── set up GraphQL handler ─────────────────────────────────────────────────
 
@@ -535,7 +535,7 @@ func TestGitBrowseQueries(t *testing.T) {
 
 	t.Run("head", func(t *testing.T) {
 		// a new repository's HEAD points to refs/heads/master
-		require.NoError(t, repo.UpdateRef("refs/heads/master", "", c3))
+		require.NoError(t, repo.SetBranch("master", c3))
 		var resp struct {
 			Repository struct {
 				Head struct {

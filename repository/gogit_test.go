@@ -79,7 +79,7 @@ func TestGoGitRepo_Head(t *testing.T) {
 	require.NoError(t, err)
 	commit, err := repo.StoreCommit(treeHash)
 	require.NoError(t, err)
-	require.NoError(t, repo.UpdateRef("refs/heads/master", "", commit))
+	require.NoError(t, repo.SetBranch("master", commit))
 
 	meta, err := repo.Head()
 	require.NoError(t, err)
@@ -104,15 +104,15 @@ func TestGoGitRepo_ConcurrentUpdateRef(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	ref := "refs/concurrent/update"
-	require.NoError(t, repo.UpdateRef(ref, "", commits[0]))
+	key := randomKey()
+	require.NoError(t, repo.UpdateRef("concurrent", key, "", commits[0]))
 
 	// every writer moves the ref from the same commit to its own: exactly one must succeed
 	candidates := commits[1:]
 	errs := make([]error, len(candidates))
 	var wg sync.WaitGroup
 	for i, commit := range candidates {
-		wg.Go(func() { errs[i] = repo.UpdateRef(ref, commits[0], commit) })
+		wg.Go(func() { errs[i] = repo.UpdateRef("concurrent", key, commits[0], commit) })
 	}
 	wg.Wait()
 
@@ -126,7 +126,7 @@ func TestGoGitRepo_ConcurrentUpdateRef(t *testing.T) {
 	}
 	require.Len(t, winners, 1)
 
-	h, err := repo.ResolveRef(ref)
+	h, err := repo.ResolveRef("concurrent", key)
 	require.NoError(t, err)
 	require.Equal(t, winners[0], h)
 }

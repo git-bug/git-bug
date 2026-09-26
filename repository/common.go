@@ -10,18 +10,13 @@ import (
 
 // nonNativeListCommits is an implementation for ListCommits, for the case where
 // the underlying git implementation doesn't support if natively.
-func nonNativeListCommits(repo RepoData, ref string) ([]Hash, error) {
+func nonNativeListCommits(repo RepoData, commit Hash) ([]Hash, error) {
 	var result []Hash
 
 	stack := make([]Hash, 0, 32)
 	visited := make(map[Hash]struct{})
 
-	hash, err := repo.ResolveRef(ref)
-	if err != nil {
-		return nil, err
-	}
-
-	stack = append(stack, hash)
+	stack = append(stack, commit)
 
 	for len(stack) > 0 {
 		// pop
@@ -71,4 +66,16 @@ func must[T any](v T, err error) T {
 		panic(err)
 	}
 	return v
+}
+
+// Refs are stored as git references, grouped by namespace:
+//   - refs/<namespace>/<key> for the local refs
+//   - refs/remotes/<remote>/<namespace>/<key> for the tracking refs of a remote
+
+func refPrefix(namespace string) string {
+	return "refs/" + namespace + "/"
+}
+
+func trackingRefPrefix(remote string, namespace string) string {
+	return "refs/remotes/" + remote + "/" + namespace + "/"
 }
