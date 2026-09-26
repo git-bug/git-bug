@@ -8,6 +8,7 @@ import (
 	"io"
 	"math"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -71,9 +72,14 @@ func GetOrCreatePersistedClock(root billy.Filesystem, filePath string, initial T
 		return nil, fmt.Errorf("lamport: 0 is not a valid time")
 	}
 
+	err := root.MkdirAll(filepath.Dir(filePath), 0755)
+	if err != nil {
+		return nil, err
+	}
+
 	clock := &PersistedClock{root: root, filePath: filePath}
 
-	err := clock.create(initial)
+	err = clock.create(initial)
 	if err != nil {
 		return nil, err
 	}

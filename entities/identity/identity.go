@@ -246,6 +246,21 @@ func (i *Identity) Mutate(repo repository.RepoClock, f func(orig *Mutator)) erro
 		return nil
 	}
 
+	// a clock can be behind what the last version recorded, if it came back
+	// low after a power loss or was rebuilt without some entities: bring it up,
+	// or the new version would go back in time
+	for name, time := range i.lastVersion().times {
+		err := repo.Witness(name, time)
+		if errors.Is(err, lamport.ErrClockNotExist) || errors.Is(err, lamport.ErrClockCorrupt) {
+			// not a clock to raise from a single identity, newVersion or
+			// Validate report it
+			continue
+		}
+		if err != nil {
+			return err
+		}
+	}
+
 	v, err := newVersion(repo,
 		mutated.Name,
 		mutated.Email,
