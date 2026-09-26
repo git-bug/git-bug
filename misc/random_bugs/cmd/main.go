@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 
-	"github.com/git-bug/git-bug/entities/bug"
 	rb "github.com/git-bug/git-bug/misc/random_bugs"
 	"github.com/git-bug/git-bug/repository"
 )
@@ -18,11 +17,7 @@ func main() {
 		panic(err)
 	}
 
-	loaders := []repository.ClockLoader{
-		bug.ClockLoader,
-	}
-
-	repo, err := repository.OpenGoGitRepo(dir, gitBugNamespace, loaders)
+	repo, err := repository.OpenGoGitRepo(dir, gitBugNamespace)
 	if err != nil {
 		panic(err)
 	}

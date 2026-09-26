@@ -1,11 +1,13 @@
 package cache
 
 import (
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/go-git/go-billy/v5/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -15,6 +17,7 @@ import (
 	"github.com/git-bug/git-bug/misc/random_bugs"
 	"github.com/git-bug/git-bug/query"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/lamport"
 )
 
 type observerEvent struct {
@@ -737,4 +740,85 @@ func createTestRepoCacheNoEvents(t *testing.T, repo repository.TestedRepo) *Repo
 	})
 
 	return cache
+}
+
+// Clocks that aren't usable are rebuilt when the cache opens, before anything
+// is written: an identity records every clock in each of its versions, and
+// couldn't otherwise be edited until some bug rebuilt them.
+func TestCacheRebuildsUnusableClocks(t *testing.T) {
+	damages := map[string]func(t *testing.T, repo repository.ClockedRepo, name string){
+		// what clocks written before they carried a checksum look like
+		"legacy": func(t *testing.T, repo repository.ClockedRepo, name string) {
+			err := util.WriteFile(repo.LocalStorage(), filepath.Join("clocks", name), []byte("42"), 0644)
+			require.NoError(t, err)
+		},
+		"missing": func(t *testing.T, repo repository.ClockedRepo, name string) {
+			err := repo.LocalStorage().Remove(filepath.Join("clocks", name))
+			require.NoError(t, err)
+		},
+	}
+
+	clocks := []string{bug.Namespace + "-create", bug.Namespace + "-edit"}
+
+	clockTimes := func(t *testing.T, repo repository.ClockedRepo) map[string]lamport.Time {
+		t.Helper()
+		times := make(map[string]lamport.Time)
+		for _, name := range clocks {
+			clock, err := repo.GetClock(name)
+			require.NoError(t, err)
+			times[name], err = clock.Time()
+			require.NoError(t, err)
+		}
+		return times
+	}
+
+	for name, damage := range damages {
+		t.Run(name, func(t *testing.T) {
+			repo := repository.CreateGoGitTestRepo(t, false)
+
+			cache, err := NewRepoCacheNoEvents(repo)
+			require.NoError(t, err)
+
+			iden, err := cache.Identities().New("René Descartes", "rene@descartes.fr")
+			require.NoError(t, err)
+			require.NoError(t, cache.SetUserIdentity(iden))
+
+			for i := 0; i < 3; i++ {
+				_, _, err = cache.Bugs().New("title", "message")
+				require.NoError(t, err)
+			}
+
+			// this version records the bug clocks: the next one can't hold less
+			require.NoError(t, iden.Mutate(repo, func(m *identity.Mutator) { m.Name = "Descartes" }))
+			require.NoError(t, iden.Commit())
+
+			before := clockTimes(t, repo)
+			require.NoError(t, cache.Close())
+
+			for _, name := range clocks {
+				damage(t, repo, name)
+			}
+
+			// opening the cache brings the clocks back from the bugs, exactly
+			// where they were since every time issued went into a commit
+			cache, err = NewRepoCacheNoEvents(repo)
+			require.NoError(t, err)
+			require.Equal(t, before, clockTimes(t, repo))
+
+			iden, err = cache.Identities().Resolve(iden.Id())
+			require.NoError(t, err)
+			require.NoError(t, iden.Mutate(repo, func(m *identity.Mutator) { m.Name = "René" }))
+			require.NoError(t, iden.Commit())
+			require.Equal(t, before, iden.LastModificationLamports())
+			require.NoError(t, cache.Close())
+
+			// and what was written reads back
+			cache, err = NewRepoCacheNoEvents(repo)
+			require.NoError(t, err)
+			iden, err = cache.Identities().Resolve(iden.Id())
+			require.NoError(t, err)
+			require.Equal(t, "René", iden.Name())
+			require.NoError(t, cache.Close())
+		})
+	}
 }

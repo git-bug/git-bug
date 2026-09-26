@@ -188,11 +188,11 @@ func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 
 	// The clocks are fine, we witness them
 	for _, opp := range oppMap {
-		err = repo.Witness(fmt.Sprintf(creationClockPattern, def.Namespace), opp.CreateTime)
+		err = witnessClock(repo, fmt.Sprintf(creationClockPattern, def.Namespace), opp.CreateTime)
 		if err != nil {
 			return *new(EntityT), err
 		}
-		err = repo.Witness(fmt.Sprintf(editClockPattern, def.Namespace), opp.EditTime)
+		err = witnessClock(repo, fmt.Sprintf(editClockPattern, def.Namespace), opp.EditTime)
 		if err != nil {
 			return *new(EntityT), err
 		}
@@ -244,27 +244,28 @@ func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 	}), nil
 }
 
-// readClockNoCheck fetch from git, read and witness the clocks of an Entity at an arbitrary git reference.
-// Note: readClockNoCheck does not verify the integrity of the Entity and could witness incorrect or incomplete
+// readClockNoCheck fetch from git the clocks of an Entity at an arbitrary git reference: the creation time of its
+// root, and the edit time of its head, which is the highest of the Entity.
+// Note: readClockNoCheck does not verify the integrity of the Entity and could return incorrect or incomplete
 // clocks if so. If data integrity check is a requirement, a flow similar to read without actually reading/decoding
 // operation blobs can be implemented instead.
-func readClockNoCheck(def Definition, repo repository.ClockedRepo, ref string) error {
+func readClockNoCheck(def Definition, repo repository.ClockedRepo, ref string) (createTime, editTime lamport.Time, err error) {
 	rootHash, err := repo.ResolveRef(ref)
 	if err == repository.ErrNotFound {
-		return entity.NewErrNotFound(def.Typename)
+		return 0, 0, entity.NewErrNotFound(def.Typename)
 	}
 	if err != nil {
-		return err
+		return 0, 0, err
 	}
 
 	commit, err := repo.ReadCommit(rootHash)
 	if err != nil {
-		return err
+		return 0, 0, err
 	}
 
-	createTime, editTime, err := readOperationPackClock(repo, commit)
+	createTime, editTime, err = readOperationPackClock(repo, commit)
 	if err != nil {
-		return err
+		return 0, 0, err
 	}
 
 	// if we have more than one commit, we need to find the root to have the create time
@@ -273,30 +274,23 @@ func readClockNoCheck(def Definition, repo repository.ClockedRepo, ref string) e
 			// The path to the root is irrelevant.
 			commit, err = repo.ReadCommit(commit.Parents[0])
 			if err != nil {
-				return err
+				return 0, 0, err
 			}
 		}
 		createTime, _, err = readOperationPackClock(repo, commit)
 		if err != nil {
-			return err
+			return 0, 0, err
 		}
 	}
 
 	if createTime <= 0 {
-		return fmt.Errorf("creation lamport time not set")
+		return 0, 0, fmt.Errorf("creation lamport time not set")
 	}
 	if editTime <= 0 {
-		return fmt.Errorf("creation lamport time not set")
+		return 0, 0, fmt.Errorf("edit lamport time not set")
 	}
-	err = repo.Witness(fmt.Sprintf(creationClockPattern, def.Namespace), createTime)
-	if err != nil {
-		return err
-	}
-	err = repo.Witness(fmt.Sprintf(editClockPattern, def.Namespace), editTime)
-	if err != nil {
-		return err
-	}
-	return nil
+
+	return createTime, editTime, nil
 }
 
 // ReadAll read and parse all local Entity
@@ -337,24 +331,26 @@ func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) E
 	return out
 }
 
-// ReadAllClocksNoCheck goes over all entities matching Definition and read/witness the corresponding clocks so that the
-// repo end up with correct clocks for the next write.
-func ReadAllClocksNoCheck(def Definition, repo repository.ClockedRepo) error {
+// readAllClocksNoCheck goes over all entities matching Definition and return the highest creation and edit time
+// they hold, for the corresponding clocks to be rebuilt. Zero if there is no entity.
+func readAllClocksNoCheck(def Definition, repo repository.ClockedRepo) (createTime, editTime lamport.Time, err error) {
 	refPrefix := fmt.Sprintf("refs/%s/", def.Namespace)
 
 	refs, err := repo.ListRefs(refPrefix)
 	if err != nil {
-		return err
+		return 0, 0, err
 	}
 
 	for _, ref := range refs {
-		err = readClockNoCheck(def, repo, ref)
+		create, edit, err := readClockNoCheck(def, repo, ref)
 		if err != nil {
-			return err
+			return 0, 0, err
 		}
+		createTime = max(createTime, create)
+		editTime = max(editTime, edit)
 	}
 
-	return nil
+	return createTime, editTime, nil
 }
 
 // Id return the Entity identifier
@@ -475,7 +471,7 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 			staging = staging[1:]
 		}
 
-		editTime, err = repo.Increment(fmt.Sprintf(editClockPattern, e.Namespace))
+		editTime, err = incrementClock(e.Definition, repo, editClockPattern)
 		if err != nil {
 			return err
 		}
@@ -487,7 +483,7 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 		}
 
 		if lastCommit == "" {
-			createTime, err = repo.Increment(fmt.Sprintf(creationClockPattern, e.Namespace))
+			createTime, err = incrementClock(e.Definition, repo, creationClockPattern)
 			if err != nil {
 				return err
 			}

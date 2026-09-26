@@ -876,7 +876,17 @@ func (r *mockRepoClock) AllClocks() (map[string]lamport.Clock, error) {
 	return r.clocks, nil
 }
 
-func (r *mockRepoClock) GetOrCreateClock(name string) (lamport.Clock, error) {
+func (r *mockRepoClock) GetClock(name string) (lamport.Clock, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if c, ok := r.clocks[name]; ok {
+		return c, nil
+	}
+	return nil, ErrClockNotExist
+}
+
+func (r *mockRepoClock) GetOrCreateClock(name string, initial lamport.Time) (lamport.Clock, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -884,13 +894,13 @@ func (r *mockRepoClock) GetOrCreateClock(name string) (lamport.Clock, error) {
 		return c, nil
 	}
 
-	c := lamport.NewMemClock()
+	c := lamport.NewMemClockWithTime(uint64(initial))
 	r.clocks[name] = c
 	return c, nil
 }
 
 func (r *mockRepoClock) Increment(name string) (lamport.Time, error) {
-	c, err := r.GetOrCreateClock(name)
+	c, err := r.GetClock(name)
 	if err != nil {
 		return lamport.Time(0), err
 	}
@@ -898,7 +908,7 @@ func (r *mockRepoClock) Increment(name string) (lamport.Time, error) {
 }
 
 func (r *mockRepoClock) Witness(name string, time lamport.Time) error {
-	c, err := r.GetOrCreateClock(name)
+	c, err := r.GetClock(name)
 	if err != nil {
 		return err
 	}

@@ -36,6 +36,7 @@
 package lamport
 
 import (
+	"math"
 	"sync/atomic"
 )
 
@@ -64,13 +65,22 @@ func NewMemClockWithTime(time uint64) *MemClock {
 }
 
 // Time is used to return the current value of the lamport clock
-func (mc *MemClock) Time() Time {
-	return Time(atomic.LoadUint64(&mc.counter))
+func (mc *MemClock) Time() (Time, error) {
+	return Time(atomic.LoadUint64(&mc.counter)), nil
 }
 
 // Increment is used to return the value of the lamport clock and increment it afterwards
 func (mc *MemClock) Increment() (Time, error) {
-	return Time(atomic.AddUint64(&mc.counter, 1)), nil
+	for {
+		cur := atomic.LoadUint64(&mc.counter)
+		if cur == math.MaxUint64 {
+			return 0, ErrClockOverflow
+		}
+		// CAS rather than AddUint64, which would wrap to 0
+		if atomic.CompareAndSwapUint64(&mc.counter, cur, cur+1) {
+			return Time(cur + 1), nil
+		}
+	}
 }
 
 // Witness is called to update our local clock if necessary after

@@ -30,8 +30,6 @@ var def = dag.Definition{
 	FormatVersion:        formatVersion,
 }
 
-var ClockLoader = dag.ClockLoader(def)
-
 type Interface interface {
 	dag.Interface[*Snapshot, Operation]
 }
@@ -81,6 +79,12 @@ func ReadAllWithResolver(repo repository.ClockedRepo, resolvers entity.Resolvers
 // ListLocalIds list all the available local bug ids
 func ListLocalIds(repo repository.Repo) ([]entity.Id, error) {
 	return dag.ListLocalIds(def, repo)
+}
+
+// EnsureClocks makes sure that the clocks ordering bugs are usable, and rebuilds
+// them from the bugs if not. See dag.EnsureClocks.
+func EnsureClocks(repo repository.ClockedRepo) error {
+	return dag.EnsureClocks(def, repo)
 }
 
 // Validate check if the Bug data is valid

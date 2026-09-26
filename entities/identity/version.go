@@ -59,7 +59,11 @@ func newVersion(repo repository.RepoClock, name string, email string, login stri
 
 	times := make(map[string]lamport.Time)
 	for name, clock := range clocks {
-		times[name] = clock.Time()
+		time, err := clock.Time()
+		if err != nil {
+			return nil, err
+		}
+		times[name] = time
 	}
 
 	return &version{

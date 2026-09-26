@@ -36,6 +36,7 @@ type Actions[EntityT entity.Interface] struct {
 	Remove              func(repo repository.ClockedRepo, id entity.Id) error
 	RemoveAll           func(repo repository.ClockedRepo) error
 	MergeAll            func(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult
+	EnsureClocks        func(repo repository.ClockedRepo) error
 }
 
 var _ cacheMgmt = &SubCache[entity.Interface, Excerpt, CacheEntity]{}
@@ -93,6 +94,12 @@ func NewSubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity]
 
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) Typename() string {
 	return sc.typename
+}
+
+// EnsureClocks makes sure that the clocks of the entities are usable, rebuilding
+// them if not. See dag.EnsureClocks.
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) EnsureClocks() error {
+	return sc.actions.EnsureClocks(sc.repo)
 }
 
 // Load will try to read from the disk the entity cache file

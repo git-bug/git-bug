@@ -116,6 +116,32 @@ func TestIdentityMutate(t *testing.T) {
 	require.Equal(t, identity.Login(), "rene")
 }
 
+// A clock can come back below what an identity recorded, after a power loss for
+// example: the next version must not go back in time.
+func TestIdentityMutateStaleClock(t *testing.T) {
+	repo := makeIdentityTestRepo(t)
+
+	identity, err := NewIdentity(repo, "René Descartes", "rene.descartes@example.com")
+	require.NoError(t, err)
+	require.NoError(t, identity.Commit(repo))
+
+	// the clock "foo" is at 42, as if it came back from 100
+	identity.versions[0].times["foo"] = 100
+
+	err = identity.Mutate(repo, func(orig *Mutator) {
+		orig.Name = "René"
+	})
+	require.NoError(t, err)
+	require.NoError(t, identity.Validate())
+	require.Equal(t, lamport.Time(100), identity.lastVersion().times["foo"])
+
+	clock, err := repo.GetClock("foo")
+	require.NoError(t, err)
+	time, err := clock.Time()
+	require.NoError(t, err)
+	require.Equal(t, lamport.Time(100), time)
+}
+
 func TestIdentityCommitStaleCopy(t *testing.T) {
 	repo := makeIdentityTestRepo(t)
 
