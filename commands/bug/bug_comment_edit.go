@@ -57,7 +57,11 @@ func runBugCommentEdit(env *execenv.Env, opts bugCommentEditOptions, args []stri
 			env.Err.Println("No message given. Use -m or -F option to specify a message. Aborting.")
 			return nil
 		}
-		opts.message, err = buginput.BugCommentEditorInput(env.Backend, "")
+		comment, err := b.Snapshot().SearchComment(commentId)
+		if err != nil {
+			return err
+		}
+		opts.message, err = buginput.BugCommentEditorInput(env.Backend, comment.Message)
 		if err == buginput.ErrEmptyMessage {
 			env.Err.Println("Empty message, aborting.")
 			return nil
