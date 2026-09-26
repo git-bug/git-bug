@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/identity"
@@ -88,6 +89,18 @@ func NewRepoCache(r repository.ClockedRepo) (*RepoCache, chan BuildEvent) {
 // The caller is expected to read all returned events before the cache is considered
 // ready to use.
 func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan BuildEvent) {
+	return newRepoCache(r, name, false)
+}
+
+// NewRepoCacheRebuild open a cache on top of a raw repository, ignoring any
+// cache already on disk and always rebuilding it from the git data.
+// The caller is expected to read all returned events before the cache is considered
+// ready to use.
+func NewRepoCacheRebuild(r repository.ClockedRepo) (*RepoCache, chan BuildEvent) {
+	return newRepoCache(r, defaultRepoName, true)
+}
+
+func newRepoCache(r repository.ClockedRepo, name string, rebuild bool) (*RepoCache, chan BuildEvent) {
 	c := &RepoCache{
 		repo: r,
 		name: name,
@@ -118,9 +131,17 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan 
 			return
 		}
 
-		err = c.load()
-		if err == nil {
-			return
+		if rebuild {
+			err = c.repo.LocalStorage().RemoveAll(cacheDir)
+			if err != nil {
+				events <- BuildEvent{Err: err}
+				return
+			}
+		} else {
+			err = c.load()
+			if err == nil {
+				return
+			}
 		}
 
 		// Cache is either missing, broken or outdated. Rebuilding.
@@ -215,6 +236,7 @@ func (c *RepoCache) buildCache(events chan BuildEvent) {
 	events <- BuildEvent{Event: BuildEventCacheIsBuilt}
 
 	var wg sync.WaitGroup
+	var failed atomic.Bool
 	for _, subcache := range c.subcaches {
 		wg.Add(1)
 		go func(subcache cacheMgmt) {
@@ -224,12 +246,18 @@ func (c *RepoCache) buildCache(events chan BuildEvent) {
 			for buildEvent := range buildEvents {
 				events <- buildEvent
 				if buildEvent.Err != nil {
+					failed.Store(true)
 					return
 				}
 			}
 		}(subcache)
 	}
 	wg.Wait()
+
+	if failed.Load() {
+		// don't leave the excerpts of the sub-caches that succeeded
+		_ = c.repo.LocalStorage().RemoveAll(cacheDir)
+	}
 }
 
 func (c *RepoCache) registerObserver(repoName string, typename string, observer Observer) error {

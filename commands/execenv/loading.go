@@ -59,6 +59,16 @@ func LoadRepoEnsureUser(env *Env) func(*cobra.Command, []string) error {
 // LoadBackend is a pre-run function that load the repository and the Backend for use in a command
 // When using this function you also need to use CloseBackend as a post-run
 func LoadBackend(env *Env) func(*cobra.Command, []string) error {
+	return loadBackend(env, cache.NewRepoCache)
+}
+
+// LoadBackendRebuild is the same as LoadBackend, but always rebuild the cache
+// instead of loading it from disk.
+func LoadBackendRebuild(env *Env) func(*cobra.Command, []string) error {
+	return loadBackend(env, cache.NewRepoCacheRebuild)
+}
+
+func loadBackend(env *Env, open func(repository.ClockedRepo) (*cache.RepoCache, chan cache.BuildEvent)) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		err := LoadRepo(env)(cmd, args)
 		if err != nil {
@@ -66,7 +76,7 @@ func LoadBackend(env *Env) func(*cobra.Command, []string) error {
 		}
 
 		var events chan cache.BuildEvent
-		env.Backend, events = cache.NewRepoCache(env.Repo)
+		env.Backend, events = open(env.Repo)
 
 		err = CacheBuildProgressBar(env, events)
 		if err != nil {

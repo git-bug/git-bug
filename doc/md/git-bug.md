@@ -26,6 +26,7 @@ git-bug [flags]
 
 * [git-bug bridge](git-bug_bridge.md)	 - List bridges to other bug trackers
 * [git-bug bug](git-bug_bug.md)	 - List bugs
+* [git-bug cache](git-bug_cache.md)	 - Manage the local cache
 * [git-bug label](git-bug_label.md)	 - List valid labels
 * [git-bug pull](git-bug_pull.md)	 - Pull updates from a git remote
 * [git-bug push](git-bug_push.md)	 - Push updates to a git remote

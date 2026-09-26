@@ -7,6 +7,8 @@ import (
 )
 
 const lockfile = "lock"
+
+const cacheDir = "cache"
 const defaultRepoName = "__default"
 
 // MultiRepoCache is the root cache, holding multiple RepoCache.
