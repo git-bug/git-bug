@@ -84,8 +84,8 @@ func (i *Identity) UnmarshalJSON(data []byte) error {
 	panic("identity should be loaded with identity.UnmarshalJSON")
 }
 
-// ReadLocal load a local Identity from the identities data available in git
-func ReadLocal(repo repository.Repo, id entity.Id) (*Identity, error) {
+// Read load a local Identity from the identities data available in git
+func Read(repo repository.Repo, id entity.Id) (*Identity, error) {
 	commit, err := repo.ResolveRef(Namespace, id.String())
 	if errors.Is(err, repository.ErrNotFound) {
 		return nil, entity.NewErrNotFound(Typename)
@@ -97,15 +97,15 @@ func ReadLocal(repo repository.Repo, id entity.Id) (*Identity, error) {
 }
 
 // ReadTracking load an Identity from the tracking refs of a remote
-func ReadTracking(repo repository.Repo, remote string, id string) (*Identity, error) {
-	commit, err := repo.ResolveTrackingRef(remote, Namespace, id)
+func ReadTracking(repo repository.Repo, remote string, id entity.Id) (*Identity, error) {
+	commit, err := repo.ResolveTrackingRef(remote, Namespace, id.String())
 	if errors.Is(err, repository.ErrNotFound) {
 		return nil, entity.NewErrNotFound(Typename)
 	}
 	if err != nil {
 		return nil, err
 	}
-	return read(repo, entity.Id(id), commit)
+	return read(repo, id, commit)
 }
 
 // read will load and parse an identity from git, from its last commit
@@ -177,8 +177,8 @@ func ListLocalIds(repo repository.Repo) ([]entity.Id, error) {
 	return ids, nil
 }
 
-// ReadAllLocal read and parse all local Identity
-func ReadAllLocal(repo repository.ClockedRepo) <-chan entity.StreamedEntity[*Identity] {
+// ReadAll read and parse all local Identity
+func ReadAll(repo repository.ClockedRepo) <-chan entity.StreamedEntity[*Identity] {
 	return readAll(repo, func() (map[string]repository.Hash, error) {
 		return repo.ListRefs(Namespace)
 	})

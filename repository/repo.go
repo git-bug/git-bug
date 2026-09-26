@@ -176,11 +176,11 @@ type RepoData interface {
 	// Returns ErrNotFound if it doesn't exist.
 	ResolveRef(namespace string, key string) (Hash, error)
 
-	// UpdateRef sets a local ref to hash, only if it currently is old.
+	// UpdateRef points a local ref to commit, only if it currently points to old.
 	// An empty old means that the ref must not exist yet; that check is not
 	// atomic, two concurrent creations of the same ref can both succeed.
 	// Returns ErrRefChanged otherwise, and the ref is left unchanged.
-	UpdateRef(namespace string, key string, old Hash, hash Hash) error
+	UpdateRef(namespace string, key string, old Hash, commit Hash) error
 
 	// RemoveRef deletes a local ref.
 	// RemoveRef is idempotent.
@@ -232,8 +232,8 @@ type RepoClock interface {
 // RepoBrowse is implemented by all Repo implementations and provides
 // code-browsing endpoints (file tree, history, diffs).
 //
-// All methods accepting a ref parameter resolve it in order:
-// refs/heads/<ref>, refs/tags/<ref>, full ref name, raw commit hash.
+// All methods accepting a rev parameter resolve it in order:
+// refs/heads/<rev>, refs/tags/<rev>, full ref name, raw commit hash.
 type RepoBrowse interface {
 	// Branches returns all local branches (refs/heads/*).
 	// All other ref namespaces — including git-bug's internal refs
@@ -244,30 +244,30 @@ type RepoBrowse interface {
 	// All other ref namespaces are excluded.
 	Tags() ([]TagInfo, error)
 
-	// TreeAtPath returns the entries of the directory at path under ref.
+	// TreeAtPath returns the entries of the directory at path under rev.
 	// An empty path returns the root tree.
-	// Returns ErrNotFound if ref or path does not exist, or if path
+	// Returns ErrNotFound if rev or path does not exist, or if path
 	// resolves to a blob rather than a tree.
 	// Symlinks appear as entries with ObjectType Symlink; they are not followed.
-	TreeAtPath(ref, path string) ([]TreeEntry, error)
+	TreeAtPath(rev, path string) ([]TreeEntry, error)
 
 	// BlobAtPath returns the raw content, byte size, and git object hash of
-	// the file at path under ref. Returns ErrNotFound if ref or path does
+	// the file at path under rev. Returns ErrNotFound if rev or path does
 	// not exist, or if path resolves to a tree. Symlinks are not followed.
 	// The caller must close the reader.
-	BlobAtPath(ref, path string) (io.ReadCloser, int64, Hash, error)
+	BlobAtPath(rev, path string) (io.ReadCloser, int64, Hash, error)
 
-	// CommitLog returns at most limit commits reachable from ref, filtered
+	// CommitLog returns at most limit commits reachable from rev, filtered
 	// to those touching path (empty = unrestricted). after is an exclusive
 	// cursor; pass Hash("") for no cursor. since and until bound the author
 	// date (inclusive); pass nil for no bound. Merge commits appear once,
 	// compared against the first parent only.
-	CommitLog(ref, path string, limit int, after Hash, since, until *time.Time) ([]CommitMeta, error)
+	CommitLog(rev, path string, limit int, after Hash, since, until *time.Time) ([]CommitMeta, error)
 
 	// LastCommitForEntries returns the most recent commit that touched each
-	// name in the directory at path under ref. Entries not resolved within
+	// name in the directory at path under rev. Entries not resolved within
 	// the implementation's depth limit are silently absent from the result.
-	LastCommitForEntries(ref, path string, names []string) (map[string]CommitMeta, error)
+	LastCommitForEntries(rev, path string, names []string) (map[string]CommitMeta, error)
 
 	// CommitDetail returns the full metadata and changed-file list for a
 	// single commit identified by its hash. Diffs against the first parent

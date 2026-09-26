@@ -363,12 +363,12 @@ func (r *mockRepoDataBrowse) ResolveRef(namespace string, key string) (Hash, err
 	return r.lookupRef(refPrefix(namespace) + key)
 }
 
-func (r *mockRepoDataBrowse) UpdateRef(namespace string, key string, old Hash, hash Hash) error {
+func (r *mockRepoDataBrowse) UpdateRef(namespace string, key string, old Hash, commit Hash) error {
 	ref := refPrefix(namespace) + key
 	if r.refs[ref] != old {
 		return fmt.Errorf("%w: %s", ErrRefChanged, ref)
 	}
-	r.refs[ref] = hash
+	r.refs[ref] = commit
 	return nil
 }
 
@@ -412,16 +412,16 @@ func (r *mockRepoDataBrowse) ListCommits(commit Hash) ([]Hash, error) {
 	return nonNativeListCommits(r, commit)
 }
 
-// resolveRef resolves a ref matching the RepoBrowse contract:
-// refs/heads/<ref>, refs/tags/<ref>, full ref name, raw commit hash.
-func (r *mockRepoDataBrowse) resolveRef(ref string) (Hash, error) {
-	for _, candidate := range []string{"refs/heads/" + ref, "refs/tags/" + ref, ref} {
+// resolveRev resolves a rev matching the RepoBrowse contract:
+// refs/heads/<rev>, refs/tags/<rev>, full ref name, raw commit hash.
+func (r *mockRepoDataBrowse) resolveRev(rev string) (Hash, error) {
+	for _, candidate := range []string{"refs/heads/" + rev, "refs/tags/" + rev, rev} {
 		if h, ok := r.refs[candidate]; ok {
 			return h, nil
 		}
 	}
-	if _, ok := r.commits[Hash(ref)]; ok {
-		return Hash(ref), nil
+	if _, ok := r.commits[Hash(rev)]; ok {
+		return Hash(rev), nil
 	}
 	return "", ErrNotFound
 }
@@ -569,8 +569,8 @@ func (r *mockRepoDataBrowse) Tags() ([]TagInfo, error) {
 	return tags, nil
 }
 
-func (r *mockRepoDataBrowse) TreeAtPath(ref, path string) ([]TreeEntry, error) {
-	startHash, err := r.resolveRef(ref)
+func (r *mockRepoDataBrowse) TreeAtPath(rev, path string) ([]TreeEntry, error) {
+	startHash, err := r.resolveRev(rev)
 	if err != nil {
 		return nil, ErrNotFound
 	}
@@ -581,8 +581,8 @@ func (r *mockRepoDataBrowse) TreeAtPath(ref, path string) ([]TreeEntry, error) {
 	return r.treeEntriesAt(c.treeHash, path)
 }
 
-func (r *mockRepoDataBrowse) BlobAtPath(ref, path string) (io.ReadCloser, int64, Hash, error) {
-	startHash, err := r.resolveRef(ref)
+func (r *mockRepoDataBrowse) BlobAtPath(rev, path string) (io.ReadCloser, int64, Hash, error) {
+	startHash, err := r.resolveRev(rev)
 	if err != nil {
 		return nil, 0, "", ErrNotFound
 	}
@@ -601,8 +601,8 @@ func (r *mockRepoDataBrowse) BlobAtPath(ref, path string) (io.ReadCloser, int64,
 	return io.NopCloser(bytes.NewReader(data)), int64(len(data)), blobHash, nil
 }
 
-func (r *mockRepoDataBrowse) CommitLog(ref, path string, limit int, after Hash, since, until *time.Time) ([]CommitMeta, error) {
-	startHash, err := r.resolveRef(ref)
+func (r *mockRepoDataBrowse) CommitLog(rev, path string, limit int, after Hash, since, until *time.Time) ([]CommitMeta, error) {
+	startHash, err := r.resolveRev(rev)
 	if err != nil {
 		return nil, ErrNotFound
 	}
@@ -679,8 +679,8 @@ func (r *mockRepoDataBrowse) CommitLog(ref, path string, limit int, after Hash, 
 	return result, nil
 }
 
-func (r *mockRepoDataBrowse) LastCommitForEntries(ref, path string, names []string) (map[string]CommitMeta, error) {
-	startHash, err := r.resolveRef(ref)
+func (r *mockRepoDataBrowse) LastCommitForEntries(rev, path string, names []string) (map[string]CommitMeta, error) {
+	startHash, err := r.resolveRev(rev)
 	if err != nil {
 		return nil, ErrNotFound
 	}

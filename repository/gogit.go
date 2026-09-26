@@ -712,13 +712,13 @@ func (repo *GoGitRepo) ResolveRef(namespace string, key string) (Hash, error) {
 	return repo.lookupRef(refPrefix(namespace) + key)
 }
 
-// UpdateRef sets a local ref to hash, only if it currently is old.
+// UpdateRef points a local ref to commit, only if it currently points to old.
 // An empty old means that the ref must not exist yet.
 // Returns ErrRefChanged otherwise, and the ref is left unchanged.
-func (repo *GoGitRepo) UpdateRef(namespace string, key string, old Hash, hash Hash) error {
+func (repo *GoGitRepo) UpdateRef(namespace string, key string, old Hash, commit Hash) error {
 	ref := refPrefix(namespace) + key
 	name := plumbing.ReferenceName(ref)
-	newRef := plumbing.NewHashReference(name, plumbing.NewHash(hash.String()))
+	newRef := plumbing.NewHashReference(name, plumbing.NewHash(commit.String()))
 
 	// TODO: both branches below work around go-git limitations tracked in
 	// https://github.com/go-git/go-git/issues/2399. Once they are fixed:
@@ -993,23 +993,23 @@ func (repo *GoGitRepo) peelToCommit(h plumbing.Hash) (plumbing.Hash, error) {
 	}
 }
 
-// resolveRefToHash resolves a branch/tag name or raw hash to a commit hash.
-// Resolution order: refs/heads/<ref>, refs/tags/<ref>, full ref name, raw commit hash.
+// resolveRev resolves a branch/tag name or raw hash to a commit hash.
+// Resolution order: refs/heads/<rev>, refs/tags/<rev>, full ref name, raw commit hash.
 // Annotated tags are peeled to their target commit.
-func (repo *GoGitRepo) resolveRefToHash(ref string) (plumbing.Hash, error) {
+func (repo *GoGitRepo) resolveRev(rev string) (plumbing.Hash, error) {
 	for _, prefix := range []string{"refs/heads/", "refs/tags/"} {
-		r, err := repo.r.Reference(plumbing.ReferenceName(prefix+ref), true)
+		r, err := repo.r.Reference(plumbing.ReferenceName(prefix+rev), true)
 		if err == nil {
 			return repo.peelToCommit(r.Hash())
 		}
 	}
 	// try as a full ref name
-	r, err := repo.r.Reference(plumbing.ReferenceName(ref), true)
+	r, err := repo.r.Reference(plumbing.ReferenceName(rev), true)
 	if err == nil {
 		return repo.peelToCommit(r.Hash())
 	}
 	// try as a raw commit hash
-	h := plumbing.NewHash(ref)
+	h := plumbing.NewHash(rev)
 	if h != plumbing.ZeroHash {
 		if _, err := repo.r.CommitObject(h); err == nil {
 			return h, nil
@@ -1085,14 +1085,14 @@ func (repo *GoGitRepo) Tags() ([]TagInfo, error) {
 	return tags, nil
 }
 
-// TreeAtPath returns the entries of the directory at path under ref.
-func (repo *GoGitRepo) TreeAtPath(ref, path string) ([]TreeEntry, error) {
+// TreeAtPath returns the entries of the directory at path under rev.
+func (repo *GoGitRepo) TreeAtPath(rev, path string) ([]TreeEntry, error) {
 	path = strings.Trim(path, "/")
 
 	repo.rMutex.Lock()
 	defer repo.rMutex.Unlock()
 
-	startHash, err := repo.resolveRefToHash(ref)
+	startHash, err := repo.resolveRev(rev)
 	if err != nil {
 		return nil, ErrNotFound
 	}
@@ -1142,14 +1142,14 @@ func objectTypeFromFileMode(m filemode.FileMode) ObjectType {
 }
 
 // BlobAtPath returns the content, size, and git object hash of the file at
-// path under ref. rMutex is held for the entire function, covering all
+// path under rev. rMutex is held for the entire function, covering all
 // shared-Scanner access (CommitObject, Tree, File). The returned reader is
 // safe to use without the mutex: small blobs are already materialized into a
 // MemoryObject (bytes.Reader) by the time File() returns; large blobs come
 // back as an FSObject whose Reader() opens its own independent file handle and
 // Scanner and then reads via ReadAt — no shared state is touched after this
 // function returns. Callers must Close the reader.
-func (repo *GoGitRepo) BlobAtPath(ref, path string) (io.ReadCloser, int64, Hash, error) {
+func (repo *GoGitRepo) BlobAtPath(rev, path string) (io.ReadCloser, int64, Hash, error) {
 	path = strings.Trim(path, "/")
 	if path == "" {
 		return nil, 0, "", ErrNotFound
@@ -1158,7 +1158,7 @@ func (repo *GoGitRepo) BlobAtPath(ref, path string) (io.ReadCloser, int64, Hash,
 	repo.rMutex.Lock()
 	defer repo.rMutex.Unlock()
 
-	startHash, err := repo.resolveRefToHash(ref)
+	startHash, err := repo.resolveRev(rev)
 	if err != nil {
 		return nil, 0, "", ErrNotFound
 	}
@@ -1182,14 +1182,14 @@ func (repo *GoGitRepo) BlobAtPath(ref, path string) (io.ReadCloser, int64, Hash,
 	return r, f.Blob.Size, Hash(f.Blob.Hash.String()), nil
 }
 
-// CommitLog returns at most limit commits reachable from ref, optionally
+// CommitLog returns at most limit commits reachable from rev, optionally
 // filtered to those that touched path, starting after the given cursor hash,
 // and bounded by the since/until author-date range.
-func (repo *GoGitRepo) CommitLog(ref, path string, limit int, after Hash, since, until *time.Time) ([]CommitMeta, error) {
+func (repo *GoGitRepo) CommitLog(rev, path string, limit int, after Hash, since, until *time.Time) ([]CommitMeta, error) {
 	repo.rMutex.Lock()
 	defer repo.rMutex.Unlock()
 
-	startHash, err := repo.resolveRefToHash(ref)
+	startHash, err := repo.resolveRev(rev)
 	if err != nil {
 		return nil, err
 	}
@@ -1247,7 +1247,7 @@ func (repo *GoGitRepo) CommitLog(ref, path string, limit int, after Hash, since,
 // treeEntriesAtPath returns the tree hash and a name→entry-hash map for the
 // directory at dirPath inside the given commit. An empty dirPath means the
 // root tree. The tree hash is content-addressed and can be used as a stable
-// cache key regardless of which branch or ref was resolved.
+// cache key regardless of which rev was resolved.
 func treeEntriesAtPath(c *object.Commit, dirPath string) (plumbing.Hash, map[string]plumbing.Hash, error) {
 	tree, err := c.Tree()
 	if err != nil {
@@ -1271,18 +1271,18 @@ func treeEntriesAtPath(c *object.Commit, dirPath string) (plumbing.Hash, map[str
 // the most recent commit that changed that entry in the directory at path.
 //
 // Results are cached by (dirTreeHash, path). Because git trees are
-// content-addressed, two refs that point to the same directory tree share one
+// content-addressed, two revs that resolve to the same directory tree share one
 // cache entry, and the cache never needs invalidation: a changed directory
 // produces a new tree hash, which becomes a new key.
-func (repo *GoGitRepo) LastCommitForEntries(ref, path string, names []string) (map[string]CommitMeta, error) {
+func (repo *GoGitRepo) LastCommitForEntries(rev, path string, names []string) (map[string]CommitMeta, error) {
 	// Normalize path up front so the cache key is canonical.
 	path = strings.Trim(path, "/")
 
-	// Resolve ref and load the current directory tree in one brief lock.
+	// Resolve rev and load the current directory tree in one brief lock.
 	// We need the tree hash for the cache key and we keep the entries to
 	// seed the parent-reuse optimisation in the walk below.
 	repo.rMutex.Lock()
-	startHash, err := repo.resolveRefToHash(ref)
+	startHash, err := repo.resolveRev(rev)
 	if err != nil {
 		repo.rMutex.Unlock()
 		return nil, err

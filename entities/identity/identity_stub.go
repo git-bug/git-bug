@@ -49,51 +49,51 @@ func (i *IdentityStub) Id() entity.Id {
 }
 
 func (IdentityStub) Name() string {
-	panic("identities needs to be properly loaded with identity.ReadLocal()")
+	panic("identities needs to be properly loaded with identity.Read()")
 }
 
 func (IdentityStub) DisplayName() string {
-	panic("identities needs to be properly loaded with identity.ReadLocal()")
+	panic("identities needs to be properly loaded with identity.Read()")
 }
 
 func (IdentityStub) Email() string {
-	panic("identities needs to be properly loaded with identity.ReadLocal()")
+	panic("identities needs to be properly loaded with identity.Read()")
 }
 
 func (IdentityStub) Login() string {
-	panic("identities needs to be properly loaded with identity.ReadLocal()")
+	panic("identities needs to be properly loaded with identity.Read()")
 }
 
 func (IdentityStub) AvatarUrl() string {
-	panic("identities needs to be properly loaded with identity.ReadLocal()")
+	panic("identities needs to be properly loaded with identity.Read()")
 }
 
 func (IdentityStub) Keys() []*Key {
-	panic("identities needs to be properly loaded with identity.ReadLocal()")
+	panic("identities needs to be properly loaded with identity.Read()")
 }
 
 func (i *IdentityStub) SigningKey(repo repository.RepoKeyring) (*Key, error) {
-	panic("identities needs to be properly loaded with identity.ReadLocal()")
+	panic("identities needs to be properly loaded with identity.Read()")
 }
 
 func (IdentityStub) ValidKeysAtTime(_ string, _ lamport.Time) []*Key {
-	panic("identities needs to be properly loaded with identity.ReadLocal()")
+	panic("identities needs to be properly loaded with identity.Read()")
 }
 
 func (i *IdentityStub) LastModification() timestamp.Timestamp {
-	panic("identities needs to be properly loaded with identity.ReadLocal()")
+	panic("identities needs to be properly loaded with identity.Read()")
 }
 
 func (i *IdentityStub) LastModificationLamports() map[string]lamport.Time {
-	panic("identities needs to be properly loaded with identity.ReadLocal()")
+	panic("identities needs to be properly loaded with identity.Read()")
 }
 
 func (IdentityStub) IsProtected() bool {
-	panic("identities needs to be properly loaded with identity.ReadLocal()")
+	panic("identities needs to be properly loaded with identity.Read()")
 }
 
 func (IdentityStub) Validate() error {
-	panic("identities needs to be properly loaded with identity.ReadLocal()")
+	panic("identities needs to be properly loaded with identity.Read()")
 }
 
 func (i *IdentityStub) NeedCommit() bool {

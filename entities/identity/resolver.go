@@ -17,5 +17,5 @@ func NewSimpleResolver(repo repository.Repo) *SimpleResolver {
 }
 
 func (r *SimpleResolver) Resolve(id entity.Id) (entity.Resolved, error) {
-	return ReadLocal(r.repo, id)
+	return Read(r.repo, id)
 }

@@ -30,7 +30,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 	require.Equal(t, idBeforeCommit, identity.Id())
 	require.Equal(t, idBeforeCommit, identity.versions[0].Id())
 
-	loaded, err := ReadLocal(repo, identity.Id())
+	loaded, err := Read(repo, identity.Id())
 	require.NoError(t, err)
 	commitsAreSet(t, loaded)
 	require.Equal(t, identity, loaded)
@@ -62,7 +62,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 	require.Equal(t, idBeforeCommit, identity.Id())
 	require.Equal(t, idBeforeCommit, identity.versions[0].Id())
 
-	loaded, err = ReadLocal(repo, identity.Id())
+	loaded, err = Read(repo, identity.Id())
 	require.NoError(t, err)
 	commitsAreSet(t, loaded)
 	require.Equal(t, identity, loaded)
@@ -89,7 +89,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 	require.Equal(t, idBeforeCommit, identity.Id())
 	require.Equal(t, idBeforeCommit, identity.versions[0].Id())
 
-	loaded, err = ReadLocal(repo, identity.Id())
+	loaded, err = Read(repo, identity.Id())
 	require.NoError(t, err)
 	commitsAreSet(t, loaded)
 	require.Equal(t, identity, loaded)
@@ -149,9 +149,9 @@ func TestIdentityCommitStaleCopy(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, identity.Commit(repo))
 
-	copy1, err := ReadLocal(repo, identity.Id())
+	copy1, err := Read(repo, identity.Id())
 	require.NoError(t, err)
-	copy2, err := ReadLocal(repo, identity.Id())
+	copy2, err := Read(repo, identity.Id())
 	require.NoError(t, err)
 
 	require.NoError(t, copy1.Mutate(repo, func(orig *Mutator) { orig.Name = "René" }))
@@ -163,7 +163,7 @@ func TestIdentityCommitStaleCopy(t *testing.T) {
 	// the stale copy keeps its new version pending
 	require.True(t, copy2.NeedCommit())
 
-	loaded, err := ReadLocal(repo, identity.Id())
+	loaded, err := Read(repo, identity.Id())
 	require.NoError(t, err)
 	require.Len(t, loaded.versions, 2)
 	require.Equal(t, "René", loaded.Name())
@@ -250,7 +250,7 @@ func TestMetadata(t *testing.T) {
 	require.NoError(t, err)
 
 	// reload
-	loaded, err := ReadLocal(repo, identity.Id())
+	loaded, err := Read(repo, identity.Id())
 	require.NoError(t, err)
 
 	assertHasKeyValue(t, loaded.ImmutableMetadata(), "key1", "value1")
@@ -294,7 +294,7 @@ func TestMetadataAfterCommit(t *testing.T) {
 	err = identity.Commit(repo)
 	require.NoError(t, err)
 
-	loaded, err := ReadLocal(repo, identity.Id())
+	loaded, err := Read(repo, identity.Id())
 	require.NoError(t, err)
 
 	assertHasKeyValue(t, loaded.ImmutableMetadata(), "key1", "value1")
@@ -329,7 +329,7 @@ func TestJSON(t *testing.T) {
 	require.Equal(t, identity.Id(), i.Id())
 
 	// make sure we can load the identity properly
-	i, err = ReadLocal(repo, i.Id())
+	i, err = Read(repo, i.Id())
 	require.NoError(t, err)
 }
 
@@ -366,13 +366,13 @@ func TestIdentityRemove(t *testing.T) {
 	err = Remove(repo, rene.Id())
 	require.NoError(t, err)
 
-	_, err = ReadLocal(repo, rene.Id())
+	_, err = Read(repo, rene.Id())
 	require.ErrorAs(t, entity.ErrNotFound{}, err)
 
-	_, err = ReadTracking(repo, "remoteA", string(rene.Id()))
+	_, err = ReadTracking(repo, "remoteA", rene.Id())
 	require.ErrorAs(t, entity.ErrNotFound{}, err)
 
-	_, err = ReadTracking(repo, "remoteB", string(rene.Id()))
+	_, err = ReadTracking(repo, "remoteB", rene.Id())
 	require.ErrorAs(t, entity.ErrNotFound{}, err)
 
 	ids, err := ListLocalIds(repo)
