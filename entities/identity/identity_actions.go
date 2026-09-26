@@ -54,11 +54,6 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 
 		for key, remoteCommit := range remoteRefs {
 			id := entity.Id(key)
-			if err := id.Validate(); err != nil {
-				out <- entity.NewMergeInvalidStatus(id, errors.Wrap(err, "invalid ref").Error())
-				continue
-			}
-
 			remoteIdentity, err := read(repo, id, remoteCommit)
 
 			if err != nil {

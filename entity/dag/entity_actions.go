@@ -97,7 +97,7 @@ func MergeAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) 
 // See MergeAll for more details.
 func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id, remoteCommit repository.Hash, author identity.Interface) entity.MergeResult {
 	if err := id.Validate(); err != nil {
-		return entity.NewMergeInvalidStatus(id, errors.Wrap(err, "invalid ref").Error())
+		return entity.NewMergeInvalidStatus(id, errors.Wrap(err, "invalid id").Error())
 	}
 
 	localCommit, err := repo.ResolveRef(def.Namespace, id.String())
@@ -132,7 +132,7 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 		}
 	}
 
-	remoteEntity, err := read[EntityT](def, wrapper, repo, resolvers, remoteCommit)
+	remoteEntity, err := read[EntityT](def, wrapper, repo, resolvers, id, remoteCommit)
 	if err != nil {
 		return entity.NewMergeInvalidStatus(id,
 			errors.Wrapf(err, "remote %s is not readable", def.Typename).Error())
@@ -218,7 +218,7 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 
 	// read the merged entity back, so that the returned entity holds the operations
 	// of both branches and can be committed on top of the merge commit.
-	mergedEntity, err := read[EntityT](def, wrapper, repo, resolvers, commitHash)
+	mergedEntity, err := read[EntityT](def, wrapper, repo, resolvers, id, commitHash)
 	if err != nil {
 		return entity.NewMergeError(err, id)
 	}

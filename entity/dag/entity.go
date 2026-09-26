@@ -71,7 +71,7 @@ func Read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 		return *new(EntityT), err
 	}
 
-	return read[EntityT](def, wrapper, repo, resolvers, commit)
+	return read[EntityT](def, wrapper, repo, resolvers, id, commit)
 }
 
 // readTracking will read and decode an Entity from the tracking refs of a remote
@@ -88,11 +88,12 @@ func readTracking[EntityT entity.Interface](def Definition, wrapper func(e *Enti
 		return *new(EntityT), err
 	}
 
-	return read[EntityT](def, wrapper, repo, resolvers, commit)
+	return read[EntityT](def, wrapper, repo, resolvers, id, commit)
 }
 
-// read fetch from git and decode an Entity from its last commit.
-func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, lastCommit repository.Hash) (EntityT, error) {
+// read fetch from git and decode an Entity from its last commit, and make sure
+// that it is the Entity with the given id.
+func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash) (EntityT, error) {
 	// Perform a breadth-first search to get a topological order of the DAG where we discover the
 	// parents commit and go back in time up to the chronological root
 
@@ -163,6 +164,12 @@ func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 		// Check that the create lamport clock is set (not checked in Validate() as it's optional)
 		if isFirstCommit && opp.CreateTime <= 0 {
 			return *new(EntityT), fmt.Errorf("creation lamport time not set")
+		}
+
+		// The id of an Entity is the id of its first operation: make sure that
+		// the ref actually points to the Entity it is named after.
+		if isFirstCommit && (len(opp.Operations) == 0 || opp.Operations[0].Id() != id) {
+			return *new(EntityT), fmt.Errorf("the %s doesn't match its id %s", def.Typename, id)
 		}
 
 		// make sure that the lamport clocks causality match the DAG topology
@@ -304,8 +311,8 @@ func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) E
 		total := int64(len(refs))
 		current := int64(1)
 
-		for _, commit := range refs {
-			e, err := read[EntityT](def, wrapper, repo, resolvers, commit)
+		for key, commit := range refs {
+			e, err := read[EntityT](def, wrapper, repo, resolvers, entity.Id(key), commit)
 
 			if err != nil {
 				out <- entity.StreamedEntity[EntityT]{Err: err}

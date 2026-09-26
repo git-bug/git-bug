@@ -86,6 +86,10 @@ func (i *Identity) UnmarshalJSON(data []byte) error {
 
 // Read load a local Identity from the identities data available in git
 func Read(repo repository.Repo, id entity.Id) (*Identity, error) {
+	if err := id.Validate(); err != nil {
+		return nil, errors.Wrap(err, "invalid id")
+	}
+
 	commit, err := repo.ResolveRef(Namespace, id.String())
 	if errors.Is(err, repository.ErrNotFound) {
 		return nil, entity.NewErrNotFound(Typename)
@@ -98,6 +102,10 @@ func Read(repo repository.Repo, id entity.Id) (*Identity, error) {
 
 // ReadTracking load an Identity from the tracking refs of a remote
 func ReadTracking(repo repository.Repo, remote string, id entity.Id) (*Identity, error) {
+	if err := id.Validate(); err != nil {
+		return nil, errors.Wrap(err, "invalid id")
+	}
+
 	commit, err := repo.ResolveTrackingRef(remote, Namespace, id.String())
 	if errors.Is(err, repository.ErrNotFound) {
 		return nil, entity.NewErrNotFound(Typename)
@@ -108,12 +116,9 @@ func ReadTracking(repo repository.Repo, remote string, id entity.Id) (*Identity,
 	return read(repo, id, commit)
 }
 
-// read will load and parse an identity from git, from its last commit
+// read will load and parse an identity from git, from its last commit, and make
+// sure that it is the identity with the given id.
 func read(repo repository.Repo, id entity.Id, lastCommit repository.Hash) (*Identity, error) {
-	if err := id.Validate(); err != nil {
-		return nil, errors.Wrap(err, "invalid id")
-	}
-
 	hashes, err := repo.ListCommits(lastCommit)
 	if err != nil {
 		return nil, err
@@ -157,7 +162,7 @@ func read(repo repository.Repo, id entity.Id, lastCommit repository.Hash) (*Iden
 	}
 
 	if id != i.versions[0].Id() {
-		return nil, fmt.Errorf("identity ID doesn't math the first version ID")
+		return nil, fmt.Errorf("the %s doesn't match its id %s", Typename, id)
 	}
 
 	return i, nil
