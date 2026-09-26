@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/identity"
@@ -235,6 +236,7 @@ func (c *RepoCache) buildCache(events chan BuildEvent) {
 	events <- BuildEvent{Event: BuildEventCacheIsBuilt}
 
 	var wg sync.WaitGroup
+	var failed atomic.Bool
 	for _, subcache := range c.subcaches {
 		wg.Add(1)
 		go func(subcache cacheMgmt) {
@@ -244,12 +246,18 @@ func (c *RepoCache) buildCache(events chan BuildEvent) {
 			for buildEvent := range buildEvents {
 				events <- buildEvent
 				if buildEvent.Err != nil {
+					failed.Store(true)
 					return
 				}
 			}
 		}(subcache)
 	}
 	wg.Wait()
+
+	if failed.Load() {
+		// don't leave the excerpts of the sub-caches that succeeded
+		_ = c.repo.LocalStorage().RemoveAll(cacheDir)
+	}
 }
 
 func (c *RepoCache) registerObserver(repoName string, typename string, observer Observer) error {

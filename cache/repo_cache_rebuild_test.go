@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 )
@@ -109,16 +110,21 @@ func TestCacheRebuildLocked(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = c.Close() })
 
-	excerptsPath := filepath.Join(repo.LocalStorage().Root(), cacheDir, bug.Namespace)
-	before, err := os.ReadFile(excerptsPath)
-	require.NoError(t, err)
+	before := make(map[string][]byte)
+	for _, namespace := range []string{bug.Namespace, identity.Namespace} {
+		data, err := os.ReadFile(filepath.Join(repo.LocalStorage().Root(), cacheDir, namespace))
+		require.NoError(t, err)
+		before[namespace] = data
+	}
 
 	_, err = rebuildNoEvents(t, repo)
 	require.ErrorContains(t, err, "already locked")
 
-	after, err := os.ReadFile(excerptsPath)
-	require.NoError(t, err)
-	require.Equal(t, before, after)
+	for namespace, data := range before {
+		after, err := os.ReadFile(filepath.Join(repo.LocalStorage().Root(), cacheDir, namespace))
+		require.NoError(t, err)
+		require.Equal(t, data, after)
+	}
 }
 
 func TestCacheRebuildFailureLeavesNoExcerpts(t *testing.T) {
@@ -128,8 +134,8 @@ func TestCacheRebuildFailureLeavesNoExcerpts(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, c.Close())
 
-	excerptsPath := filepath.Join(repo.LocalStorage().Root(), cacheDir, bug.Namespace)
-	_, err = os.Stat(excerptsPath)
+	cachePath := filepath.Join(repo.LocalStorage().Root(), cacheDir)
+	_, err = os.Stat(filepath.Join(cachePath, bug.Namespace))
 	require.NoError(t, err)
 
 	// a bug ref pointing to something that isn't a bug
@@ -138,12 +144,26 @@ func TestCacheRebuildFailureLeavesNoExcerpts(t *testing.T) {
 	commit, err := repo.StoreCommit(tree)
 	require.NoError(t, err)
 	badId := entity.DeriveId([]byte("not a bug"))
-	require.NoError(t, repo.UpdateRef("refs/"+bug.Namespace+"/"+badId.String(), "", commit))
+	badRef := "refs/" + bug.Namespace + "/" + badId.String()
+	require.NoError(t, repo.UpdateRef(badRef, "", commit))
 
 	c, err = rebuildNoEvents(t, repo)
 	require.Error(t, err)
 	require.NoError(t, c.Close())
 
-	_, err = os.Stat(excerptsPath)
-	require.ErrorIs(t, err, os.ErrNotExist)
+	for _, namespace := range []string{bug.Namespace, identity.Namespace} {
+		_, err = os.Stat(filepath.Join(cachePath, namespace))
+		require.ErrorIs(t, err, os.ErrNotExist)
+	}
+
+	// the next normal open rebuilds
+	require.NoError(t, repo.RemoveRef(badRef))
+	c, events := NewRepoCache(repo)
+	var rebuilt bool
+	for event := range events {
+		require.NoError(t, event.Err)
+		rebuilt = rebuilt || event.Event == BuildEventCacheIsBuilt
+	}
+	require.True(t, rebuilt)
+	require.NoError(t, c.Close())
 }
