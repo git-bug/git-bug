@@ -370,14 +370,15 @@ func (repo *GoGitRepo) GetIndex(name string) (Index, error) {
 	return index, err
 }
 
-// FetchRefs fetch git refs matching a directory prefix to a remote
-// Ex: prefix="foo" will fetch any remote refs matching "refs/foo/*" locally.
-// The equivalent git refspec would be "refs/foo/*:refs/remotes/<remote>/foo/*"
-func (repo *GoGitRepo) FetchRefs(remote string, prefixes ...string) (string, error) {
-	refSpecs := make([]config.RefSpec, len(prefixes))
+// FetchRefs retrieves the refs of the given namespaces (and the data they
+// point to) from a remote, and stores them as that remote's tracking refs.
+// Local refs are left untouched.
+// The equivalent git refspec for namespace="foo" is "refs/foo/*:refs/remotes/<remote>/foo/*"
+func (repo *GoGitRepo) FetchRefs(remote string, namespaces ...string) (string, error) {
+	refSpecs := make([]config.RefSpec, len(namespaces))
 
-	for i, prefix := range prefixes {
-		refSpecs[i] = config.RefSpec(fmt.Sprintf("refs/%s/*:refs/remotes/%s/%s/*", prefix, remote, prefix))
+	for i, namespace := range namespaces {
+		refSpecs[i] = config.RefSpec(refPrefix(namespace) + "*:" + trackingRefPrefix(remote, namespace) + "*")
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -440,28 +441,25 @@ func (repo *GoGitRepo) resolveRemote(remote string, fetch bool) (string, error) 
 	return url, nil
 }
 
-// PushRefs push git refs matching a directory prefix to a remote
-// Ex: prefix="foo" will push any local refs matching "refs/foo/*" to the remote.
-// The equivalent git refspec would be "refs/foo/*:refs/foo/*"
-//
-// Additionally, PushRefs will update the local references in refs/remotes/<remote>/foo to match
-// the remote state.
-func (repo *GoGitRepo) PushRefs(remote string, prefixes ...string) (string, error) {
+// PushRefs sends the local refs of the given namespaces (and the data they
+// point to) to a remote, and updates that remote's tracking refs to match.
+// The equivalent git refspec for namespace="foo" is "refs/foo/*:refs/foo/*"
+func (repo *GoGitRepo) PushRefs(remote string, namespaces ...string) (string, error) {
 	remo, err := repo.r.Remote(remote)
 	if err != nil {
 		return "", err
 	}
 
-	refSpecs := make([]config.RefSpec, len(prefixes))
+	refSpecs := make([]config.RefSpec, len(namespaces))
 
-	for i, prefix := range prefixes {
-		refspec := fmt.Sprintf("refs/%s/*:refs/%s/*", prefix, prefix)
+	for i, namespace := range namespaces {
+		refspec := refPrefix(namespace) + "*:" + refPrefix(namespace) + "*"
 
 		// to make sure that the push also create the corresponding refs/remotes/<remote>/... references,
 		// we need to have a default fetch refspec configured on the remote, to make our refs "track" the remote ones.
 		// This does not change the config on disk, only on memory.
 		hasCustomFetch := false
-		fetchRefspec := fmt.Sprintf("refs/%s/*:refs/remotes/%s/%s/*", prefix, remote, prefix)
+		fetchRefspec := refPrefix(namespace) + "*:" + trackingRefPrefix(remote, namespace) + "*"
 		for _, r := range remo.Config().Fetch {
 			if string(r) == fetchRefspec {
 				hasCustomFetch = true
@@ -703,43 +701,44 @@ func (repo *GoGitRepo) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity,
 	return Hash(hash.String()), nil
 }
 
-func (repo *GoGitRepo) ResolveRef(ref string) (Hash, error) {
-	r, err := repo.r.Reference(plumbing.ReferenceName(ref), false)
-	if err == plumbing.ErrReferenceNotFound {
-		return "", ErrNotFound
-	}
-	if err != nil {
-		return "", err
-	}
-	return Hash(r.Hash().String()), nil
+// ListRefs returns every local ref of a namespace, by key.
+func (repo *GoGitRepo) ListRefs(namespace string) (map[string]Hash, error) {
+	return repo.listRefs(refPrefix(namespace))
 }
 
-// UpdateRef sets a Git reference to hash, only if it currently points to old.
-// An empty old means that the reference must not exist yet.
-// Returns ErrRefChanged otherwise, and the reference is left unchanged.
-func (repo *GoGitRepo) UpdateRef(ref string, old Hash, hash Hash) error {
+// ResolveRef returns the commit a local ref points to.
+// Returns ErrNotFound if it doesn't exist.
+func (repo *GoGitRepo) ResolveRef(namespace string, key string) (Hash, error) {
+	return repo.lookupRef(refPrefix(namespace) + key)
+}
+
+// UpdateRef points a local ref to commit, only if it currently points to old.
+// An empty old means that the ref must not exist yet.
+// Returns ErrRefChanged otherwise, and the ref is left unchanged.
+func (repo *GoGitRepo) UpdateRef(namespace string, key string, old Hash, commit Hash) error {
+	ref := refPrefix(namespace) + key
 	name := plumbing.ReferenceName(ref)
-	newRef := plumbing.NewHashReference(name, plumbing.NewHash(hash.String()))
+	newRef := plumbing.NewHashReference(name, plumbing.NewHash(commit.String()))
 
 	// TODO: both branches below work around go-git limitations tracked in
 	// https://github.com/go-git/go-git/issues/2399. Once they are fixed:
 	//   - CheckAndSetReference no longer leaves an empty loose ref file behind when
-	//     it rejects an update, so the workaround in RepoDataUpdateRefTest can go and
-	//     its "stale expected value on a missing ref" assertion be unskipped.
+	//     it rejects an update, so the workaround in RepoDataUpdateRefTest can
+	//     go and its "stale expected value on a missing ref" assertion be unskipped.
 	//   - a zero hash as old means "must not exist", so the branch below collapses
 	//     into a single CheckAndSetReference and becomes atomic. Drop the caveat on
-	//     RepoData.UpdateRef then. Don't do this before the fix above: it would move
-	//     ref creation onto the code path that leaves the empty ref file behind.
+	//     RepoData.UpdateRef then. Don't do this before the fix above: it would
+	//     move ref creation onto the code path that leaves the empty ref file behind.
 
 	if old == "" {
 		// go-git can't express "must not exist" atomically: two concurrent
 		// creations of the same ref can both succeed.
-		exist, err := repo.RefExist(ref)
-		if err != nil {
-			return err
-		}
-		if exist {
+		_, err := repo.r.Reference(name, false)
+		if err == nil {
 			return fmt.Errorf("%w: %s already exists", ErrRefChanged, ref)
+		}
+		if err != plumbing.ErrReferenceNotFound {
+			return err
 		}
 		return repo.r.Storer.SetReference(newRef)
 	}
@@ -752,23 +751,41 @@ func (repo *GoGitRepo) UpdateRef(ref string, old Hash, hash Hash) error {
 	return err
 }
 
-// RemoveRef will remove a Git reference
-func (repo *GoGitRepo) RemoveRef(ref string) error {
-	return repo.r.Storer.RemoveReference(plumbing.ReferenceName(ref))
+// RemoveRef deletes a local ref.
+// RemoveRef is idempotent.
+func (repo *GoGitRepo) RemoveRef(namespace string, key string) error {
+	return repo.r.Storer.RemoveReference(plumbing.ReferenceName(refPrefix(namespace) + key))
 }
 
-// ListRefs will return a list of Git ref matching the given refspec
-func (repo *GoGitRepo) ListRefs(refPrefix string) ([]string, error) {
+// ListTrackingRefs returns every tracking ref of a namespace for a remote,
+// by key.
+func (repo *GoGitRepo) ListTrackingRefs(remote string, namespace string) (map[string]Hash, error) {
+	return repo.listRefs(trackingRefPrefix(remote, namespace))
+}
+
+// ResolveTrackingRef returns the commit a tracking ref points to.
+// Returns ErrNotFound if it doesn't exist.
+func (repo *GoGitRepo) ResolveTrackingRef(remote string, namespace string, key string) (Hash, error) {
+	return repo.lookupRef(trackingRefPrefix(remote, namespace) + key)
+}
+
+// RemoveTrackingRef deletes a tracking ref.
+// RemoveTrackingRef is idempotent.
+func (repo *GoGitRepo) RemoveTrackingRef(remote string, namespace string, key string) error {
+	return repo.r.Storer.RemoveReference(plumbing.ReferenceName(trackingRefPrefix(remote, namespace) + key))
+}
+
+func (repo *GoGitRepo) listRefs(prefix string) (map[string]Hash, error) {
 	refIter, err := repo.r.References()
 	if err != nil {
 		return nil, err
 	}
 
-	refs := make([]string, 0)
+	refs := make(map[string]Hash)
 
 	err = refIter.ForEach(func(ref *plumbing.Reference) error {
-		if strings.HasPrefix(ref.Name().String(), refPrefix) {
-			refs = append(refs, ref.Name().String())
+		if key, ok := strings.CutPrefix(ref.Name().String(), prefix); ok {
+			refs[key] = Hash(ref.Hash().String())
 		}
 		return nil
 	})
@@ -779,32 +796,21 @@ func (repo *GoGitRepo) ListRefs(refPrefix string) ([]string, error) {
 	return refs, nil
 }
 
-// RefExist will check if a reference exist in Git
-func (repo *GoGitRepo) RefExist(ref string) (bool, error) {
-	_, err := repo.r.Reference(plumbing.ReferenceName(ref), false)
-	if err == nil {
-		return true, nil
-	} else if err == plumbing.ErrReferenceNotFound {
-		return false, nil
-	}
-	return false, err
-}
-
-// CopyRef will create a new reference with the same value as another one
-func (repo *GoGitRepo) CopyRef(source string, dest string) error {
-	r, err := repo.r.Reference(plumbing.ReferenceName(source), false)
+func (repo *GoGitRepo) lookupRef(name string) (Hash, error) {
+	r, err := repo.r.Reference(plumbing.ReferenceName(name), false)
 	if err == plumbing.ErrReferenceNotFound {
-		return ErrNotFound
+		return "", ErrNotFound
 	}
 	if err != nil {
-		return err
+		return "", err
 	}
-	return repo.r.Storer.SetReference(plumbing.NewHashReference(plumbing.ReferenceName(dest), r.Hash()))
+	return Hash(r.Hash().String()), nil
 }
 
-// ListCommits will return the list of tree hashes of a ref, in chronological order
-func (repo *GoGitRepo) ListCommits(ref string) ([]Hash, error) {
-	return nonNativeListCommits(repo, ref)
+// ListCommits returns the hashes of commit and all its ancestors, in
+// chronological order.
+func (repo *GoGitRepo) ListCommits(commit Hash) ([]Hash, error) {
+	return nonNativeListCommits(repo, commit)
 }
 
 func (repo *GoGitRepo) ReadCommit(hash Hash) (Commit, error) {
@@ -987,23 +993,23 @@ func (repo *GoGitRepo) peelToCommit(h plumbing.Hash) (plumbing.Hash, error) {
 	}
 }
 
-// resolveRefToHash resolves a branch/tag name or raw hash to a commit hash.
-// Resolution order: refs/heads/<ref>, refs/tags/<ref>, full ref name, raw commit hash.
+// resolveRev resolves a branch/tag name or raw hash to a commit hash.
+// Resolution order: refs/heads/<rev>, refs/tags/<rev>, full ref name, raw commit hash.
 // Annotated tags are peeled to their target commit.
-func (repo *GoGitRepo) resolveRefToHash(ref string) (plumbing.Hash, error) {
+func (repo *GoGitRepo) resolveRev(rev string) (plumbing.Hash, error) {
 	for _, prefix := range []string{"refs/heads/", "refs/tags/"} {
-		r, err := repo.r.Reference(plumbing.ReferenceName(prefix+ref), true)
+		r, err := repo.r.Reference(plumbing.ReferenceName(prefix+rev), true)
 		if err == nil {
 			return repo.peelToCommit(r.Hash())
 		}
 	}
 	// try as a full ref name
-	r, err := repo.r.Reference(plumbing.ReferenceName(ref), true)
+	r, err := repo.r.Reference(plumbing.ReferenceName(rev), true)
 	if err == nil {
 		return repo.peelToCommit(r.Hash())
 	}
 	// try as a raw commit hash
-	h := plumbing.NewHash(ref)
+	h := plumbing.NewHash(rev)
 	if h != plumbing.ZeroHash {
 		if _, err := repo.r.CommitObject(h); err == nil {
 			return h, nil
@@ -1079,14 +1085,14 @@ func (repo *GoGitRepo) Tags() ([]TagInfo, error) {
 	return tags, nil
 }
 
-// TreeAtPath returns the entries of the directory at path under ref.
-func (repo *GoGitRepo) TreeAtPath(ref, path string) ([]TreeEntry, error) {
+// TreeAtPath returns the entries of the directory at path under rev.
+func (repo *GoGitRepo) TreeAtPath(rev, path string) ([]TreeEntry, error) {
 	path = strings.Trim(path, "/")
 
 	repo.rMutex.Lock()
 	defer repo.rMutex.Unlock()
 
-	startHash, err := repo.resolveRefToHash(ref)
+	startHash, err := repo.resolveRev(rev)
 	if err != nil {
 		return nil, ErrNotFound
 	}
@@ -1136,14 +1142,14 @@ func objectTypeFromFileMode(m filemode.FileMode) ObjectType {
 }
 
 // BlobAtPath returns the content, size, and git object hash of the file at
-// path under ref. rMutex is held for the entire function, covering all
+// path under rev. rMutex is held for the entire function, covering all
 // shared-Scanner access (CommitObject, Tree, File). The returned reader is
 // safe to use without the mutex: small blobs are already materialized into a
 // MemoryObject (bytes.Reader) by the time File() returns; large blobs come
 // back as an FSObject whose Reader() opens its own independent file handle and
 // Scanner and then reads via ReadAt — no shared state is touched after this
 // function returns. Callers must Close the reader.
-func (repo *GoGitRepo) BlobAtPath(ref, path string) (io.ReadCloser, int64, Hash, error) {
+func (repo *GoGitRepo) BlobAtPath(rev, path string) (io.ReadCloser, int64, Hash, error) {
 	path = strings.Trim(path, "/")
 	if path == "" {
 		return nil, 0, "", ErrNotFound
@@ -1152,7 +1158,7 @@ func (repo *GoGitRepo) BlobAtPath(ref, path string) (io.ReadCloser, int64, Hash,
 	repo.rMutex.Lock()
 	defer repo.rMutex.Unlock()
 
-	startHash, err := repo.resolveRefToHash(ref)
+	startHash, err := repo.resolveRev(rev)
 	if err != nil {
 		return nil, 0, "", ErrNotFound
 	}
@@ -1176,14 +1182,14 @@ func (repo *GoGitRepo) BlobAtPath(ref, path string) (io.ReadCloser, int64, Hash,
 	return r, f.Blob.Size, Hash(f.Blob.Hash.String()), nil
 }
 
-// CommitLog returns at most limit commits reachable from ref, optionally
+// CommitLog returns at most limit commits reachable from rev, optionally
 // filtered to those that touched path, starting after the given cursor hash,
 // and bounded by the since/until author-date range.
-func (repo *GoGitRepo) CommitLog(ref, path string, limit int, after Hash, since, until *time.Time) ([]CommitMeta, error) {
+func (repo *GoGitRepo) CommitLog(rev, path string, limit int, after Hash, since, until *time.Time) ([]CommitMeta, error) {
 	repo.rMutex.Lock()
 	defer repo.rMutex.Unlock()
 
-	startHash, err := repo.resolveRefToHash(ref)
+	startHash, err := repo.resolveRev(rev)
 	if err != nil {
 		return nil, err
 	}
@@ -1241,7 +1247,7 @@ func (repo *GoGitRepo) CommitLog(ref, path string, limit int, after Hash, since,
 // treeEntriesAtPath returns the tree hash and a name→entry-hash map for the
 // directory at dirPath inside the given commit. An empty dirPath means the
 // root tree. The tree hash is content-addressed and can be used as a stable
-// cache key regardless of which branch or ref was resolved.
+// cache key regardless of which rev was resolved.
 func treeEntriesAtPath(c *object.Commit, dirPath string) (plumbing.Hash, map[string]plumbing.Hash, error) {
 	tree, err := c.Tree()
 	if err != nil {
@@ -1265,18 +1271,18 @@ func treeEntriesAtPath(c *object.Commit, dirPath string) (plumbing.Hash, map[str
 // the most recent commit that changed that entry in the directory at path.
 //
 // Results are cached by (dirTreeHash, path). Because git trees are
-// content-addressed, two refs that point to the same directory tree share one
+// content-addressed, two revs that resolve to the same directory tree share one
 // cache entry, and the cache never needs invalidation: a changed directory
 // produces a new tree hash, which becomes a new key.
-func (repo *GoGitRepo) LastCommitForEntries(ref, path string, names []string) (map[string]CommitMeta, error) {
+func (repo *GoGitRepo) LastCommitForEntries(rev, path string, names []string) (map[string]CommitMeta, error) {
 	// Normalize path up front so the cache key is canonical.
 	path = strings.Trim(path, "/")
 
-	// Resolve ref and load the current directory tree in one brief lock.
+	// Resolve rev and load the current directory tree in one brief lock.
 	// We need the tree hash for the cache key and we keep the entries to
 	// seed the parent-reuse optimisation in the walk below.
 	repo.rMutex.Lock()
-	startHash, err := repo.resolveRefToHash(ref)
+	startHash, err := repo.resolveRev(rev)
 	if err != nil {
 		repo.rMutex.Unlock()
 		return nil, err
@@ -1703,6 +1709,20 @@ func (repo *GoGitRepo) AddRemote(name string, url string) error {
 	})
 
 	return err
+}
+
+// SetBranch points the branch name to commit, creating it if needed.
+// Not in the interface because it's only used for testing
+func (repo *GoGitRepo) SetBranch(name string, commit Hash) error {
+	return repo.r.Storer.SetReference(plumbing.NewHashReference(
+		plumbing.NewBranchReferenceName(name), plumbing.NewHash(commit.String())))
+}
+
+// SetTag points the lightweight tag name to commit, creating it if needed.
+// Not in the interface because it's only used for testing
+func (repo *GoGitRepo) SetTag(name string, commit Hash) error {
+	return repo.r.Storer.SetReference(plumbing.NewHashReference(
+		plumbing.NewTagReferenceName(name), plumbing.NewHash(commit.String())))
 }
 
 // GetLocalRemote return the URL to use to add this repo as a local remote

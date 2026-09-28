@@ -52,6 +52,33 @@ func TestWriteReadMultipleAuthor(t *testing.T) {
 	assertEqualEntities(t, entity.Entity, read.Entity)
 }
 
+// A ref must point to the Entity it is named after.
+func TestReadIdMismatch(t *testing.T) {
+	repo, id1, _, resolver, def := makeTestContext()
+
+	e1 := wrapper(New(def))
+	e1.Append(newOp1(id1, "foo"))
+	require.NoError(t, e1.Commit(repo))
+
+	e2 := wrapper(New(def))
+	e2.Append(newOp1(id1, "bar"))
+	require.NoError(t, e2.Commit(repo))
+
+	// the ref of e1 now points to the data of e2
+	require.NoError(t, repo.UpdateRef(def.Namespace, e1.Id().String(), e1.lastCommit, e2.lastCommit))
+
+	_, err := Read(def, wrapper, repo, resolver, e1.Id())
+	require.ErrorContains(t, err, "doesn't match its id")
+
+	var readAllErr error
+	for streamed := range ReadAll(def, wrapper, repo, resolver) {
+		if streamed.Err != nil {
+			readAllErr = streamed.Err
+		}
+	}
+	require.ErrorContains(t, readAllErr, "doesn't match its id")
+}
+
 func TestCommitStaleCopy(t *testing.T) {
 	repo, id1, _, resolver, def := makeTestContext()
 

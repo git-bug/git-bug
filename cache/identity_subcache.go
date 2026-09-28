@@ -32,10 +32,10 @@ func NewRepoCacheIdentity(repo repository.ClockedRepo,
 
 	actions := Actions[*identity.Identity]{
 		ReadWithResolver: func(repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (*identity.Identity, error) {
-			return identity.ReadLocal(repo, id)
+			return identity.Read(repo, id)
 		},
 		ReadAllWithResolver: func(repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[*identity.Identity] {
-			return identity.ReadAllLocal(repo)
+			return identity.ReadAll(repo)
 		},
 		Remove:    identity.Remove,
 		RemoveAll: identity.RemoveAll,

@@ -342,7 +342,7 @@ func Example_entity() {
 
 	// Isaac add more operations
 	confIsaac.Append(NewSetSignatureRequired(isaac, false))
-	reneFromIsaacRepo, _ := identity.ReadLocal(repoIsaac, rene.Id())
+	reneFromIsaacRepo, _ := identity.Read(repoIsaac, rene.Id())
 	confIsaac.Append(NewRemoveAdministratorOp(isaac, reneFromIsaacRepo))
 	_ = confIsaac.Commit(repoIsaac)
 }

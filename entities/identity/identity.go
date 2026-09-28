@@ -14,8 +14,6 @@ import (
 	"github.com/git-bug/git-bug/util/timestamp"
 )
 
-const identityRefPattern = "refs/identities/"
-const identityRemoteRefPattern = "refs/remotes/%s/identities/"
 const versionEntryName = "version"
 const identityConfigKey = "git-bug.identity"
 
@@ -86,29 +84,44 @@ func (i *Identity) UnmarshalJSON(data []byte) error {
 	panic("identity should be loaded with identity.UnmarshalJSON")
 }
 
-// ReadLocal load a local Identity from the identities data available in git
-func ReadLocal(repo repository.Repo, id entity.Id) (*Identity, error) {
-	ref := fmt.Sprintf("%s%s", identityRefPattern, id)
-	return read(repo, ref)
-}
-
-// ReadRemote load a remote Identity from the identities data available in git
-func ReadRemote(repo repository.Repo, remote string, id string) (*Identity, error) {
-	ref := fmt.Sprintf(identityRemoteRefPattern, remote) + id
-	return read(repo, ref)
-}
-
-// read will load and parse an identity from git
-func read(repo repository.Repo, ref string) (*Identity, error) {
-	id := entity.RefToId(ref)
-
+// Read load a local Identity from the identities data available in git
+func Read(repo repository.Repo, id entity.Id) (*Identity, error) {
 	if err := id.Validate(); err != nil {
-		return nil, errors.Wrap(err, "invalid ref")
+		return nil, errors.Wrap(err, "invalid id")
 	}
 
-	hashes, err := repo.ListCommits(ref)
-	if err != nil {
+	commit, err := repo.ResolveRef(Namespace, id.String())
+	if errors.Is(err, repository.ErrNotFound) {
 		return nil, entity.NewErrNotFound(Typename)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return read(repo, id, commit)
+}
+
+// ReadTracking load an Identity from the tracking refs of a remote
+func ReadTracking(repo repository.Repo, remote string, id entity.Id) (*Identity, error) {
+	if err := id.Validate(); err != nil {
+		return nil, errors.Wrap(err, "invalid id")
+	}
+
+	commit, err := repo.ResolveTrackingRef(remote, Namespace, id.String())
+	if errors.Is(err, repository.ErrNotFound) {
+		return nil, entity.NewErrNotFound(Typename)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return read(repo, id, commit)
+}
+
+// read will load and parse an identity from git, from its last commit, and make
+// sure that it is the identity with the given id.
+func read(repo repository.Repo, id entity.Id, lastCommit repository.Hash) (*Identity, error) {
+	hashes, err := repo.ListCommits(lastCommit)
+	if err != nil {
+		return nil, err
 	}
 	if len(hashes) == 0 {
 		return nil, fmt.Errorf("empty identity")
@@ -149,7 +162,7 @@ func read(repo repository.Repo, ref string) (*Identity, error) {
 	}
 
 	if id != i.versions[0].Id() {
-		return nil, fmt.Errorf("identity ID doesn't math the first version ID")
+		return nil, fmt.Errorf("the %s doesn't match its id %s", Typename, id)
 	}
 
 	return i, nil
@@ -157,33 +170,44 @@ func read(repo repository.Repo, ref string) (*Identity, error) {
 
 // ListLocalIds list all the available local identity ids
 func ListLocalIds(repo repository.Repo) ([]entity.Id, error) {
-	refs, err := repo.ListRefs(identityRefPattern)
+	refs, err := repo.ListRefs(Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	return entity.RefsToIds(refs), nil
+	ids := make([]entity.Id, 0, len(refs))
+	for key := range refs {
+		id := entity.Id(key)
+		if err := id.Validate(); err != nil {
+			return nil, errors.Wrapf(err, "invalid id %q", key)
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
 }
 
-// ReadAllLocal read and parse all local Identity
-func ReadAllLocal(repo repository.ClockedRepo) <-chan entity.StreamedEntity[*Identity] {
-	return readAll(repo, identityRefPattern)
+// ReadAll read and parse all local Identity
+func ReadAll(repo repository.ClockedRepo) <-chan entity.StreamedEntity[*Identity] {
+	return readAll(repo, func() (map[string]repository.Hash, error) {
+		return repo.ListRefs(Namespace)
+	})
 }
 
-// ReadAllRemote read and parse all remote Identity for a given remote
-func ReadAllRemote(repo repository.ClockedRepo, remote string) <-chan entity.StreamedEntity[*Identity] {
-	refPrefix := fmt.Sprintf(identityRemoteRefPattern, remote)
-	return readAll(repo, refPrefix)
+// ReadAllTracking read and parse all Identity in the tracking refs of a remote
+func ReadAllTracking(repo repository.ClockedRepo, remote string) <-chan entity.StreamedEntity[*Identity] {
+	return readAll(repo, func() (map[string]repository.Hash, error) {
+		return repo.ListTrackingRefs(remote, Namespace)
+	})
 }
 
-// readAll read and parse all available bug with a given ref prefix
-func readAll(repo repository.ClockedRepo, refPrefix string) <-chan entity.StreamedEntity[*Identity] {
+// readAll read and parse all the identities listed by listRefs
+func readAll(repo repository.ClockedRepo, listRefs func() (map[string]repository.Hash, error)) <-chan entity.StreamedEntity[*Identity] {
 	out := make(chan entity.StreamedEntity[*Identity])
 
 	go func() {
 		defer close(out)
 
-		refs, err := repo.ListRefs(refPrefix)
+		refs, err := listRefs()
 		if err != nil {
 			out <- entity.StreamedEntity[*Identity]{Err: err}
 			return
@@ -192,8 +216,8 @@ func readAll(repo repository.ClockedRepo, refPrefix string) <-chan entity.Stream
 		total := int64(len(refs))
 		current := int64(1)
 
-		for _, ref := range refs {
-			i, err := read(repo, ref)
+		for key, commit := range refs {
+			i, err := read(repo, entity.Id(key), commit)
 
 			if err != nil {
 				out <- entity.StreamedEntity[*Identity]{Err: err}
@@ -329,8 +353,7 @@ func (i *Identity) Commit(repo repository.ClockedRepo) error {
 		newCommits[v] = commitHash
 	}
 
-	ref := fmt.Sprintf("%s%s", identityRefPattern, i.Id().String())
-	err := repo.UpdateRef(ref, oldCommit, lastCommit)
+	err := repo.UpdateRef(Namespace, i.Id().String(), oldCommit, lastCommit)
 	if err != nil {
 		return err
 	}
@@ -406,7 +429,7 @@ func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
 	}
 
 	if len(newVersions) > 0 {
-		err := repo.UpdateRef(identityRefPattern+i.Id().String(), oldCommit, lastCommit)
+		err := repo.UpdateRef(Namespace, i.Id().String(), oldCommit, lastCommit)
 		if err != nil {
 			return false, err
 		}

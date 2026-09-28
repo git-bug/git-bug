@@ -24,7 +24,7 @@ func TestIdentityPushPull(t *testing.T) {
 	err = Pull(repoB, "origin")
 	require.NoError(t, err)
 
-	identities := allIdentities(t, ReadAllLocal(repoB))
+	identities := allIdentities(t, ReadAll(repoB))
 
 	if len(identities) != 1 {
 		t.Fatal("Unexpected number of bugs")
@@ -42,7 +42,7 @@ func TestIdentityPushPull(t *testing.T) {
 	err = Pull(repoA, "origin")
 	require.NoError(t, err)
 
-	identities = allIdentities(t, ReadAllLocal(repoA))
+	identities = allIdentities(t, ReadAll(repoA))
 
 	if len(identities) != 2 {
 		t.Fatal("Unexpected number of bugs")
@@ -74,7 +74,7 @@ func TestIdentityPushPull(t *testing.T) {
 	err = Pull(repoB, "origin")
 	require.NoError(t, err)
 
-	identities = allIdentities(t, ReadAllLocal(repoB))
+	identities = allIdentities(t, ReadAll(repoB))
 
 	if len(identities) != 2 {
 		t.Fatal("Unexpected number of bugs")
@@ -88,7 +88,7 @@ func TestIdentityPushPull(t *testing.T) {
 	err = Pull(repoA, "origin")
 	require.NoError(t, err)
 
-	identities = allIdentities(t, ReadAllLocal(repoA))
+	identities = allIdentities(t, ReadAll(repoA))
 
 	if len(identities) != 2 {
 		t.Fatal("Unexpected number of bugs")
@@ -104,7 +104,7 @@ func TestIdentityPushPull(t *testing.T) {
 	err = identity1.Commit(repoA)
 	require.NoError(t, err)
 
-	identity1B, err := ReadLocal(repoB, identity1.Id())
+	identity1B, err := Read(repoB, identity1.Id())
 	require.NoError(t, err)
 
 	err = identity1B.Mutate(repoB, func(orig *Mutator) {
@@ -124,7 +124,7 @@ func TestIdentityPushPull(t *testing.T) {
 	err = Pull(repoB, "origin")
 	require.Error(t, err)
 
-	identities = allIdentities(t, ReadAllLocal(repoB))
+	identities = allIdentities(t, ReadAll(repoB))
 
 	if len(identities) != 2 {
 		t.Fatal("Unexpected number of bugs")
@@ -139,7 +139,7 @@ func TestIdentityPushPull(t *testing.T) {
 	err = Pull(repoA, "origin")
 	require.NoError(t, err)
 
-	identities = allIdentities(t, ReadAllLocal(repoA))
+	identities = allIdentities(t, ReadAll(repoA))
 
 	if len(identities) != 2 {
 		t.Fatal("Unexpected number of bugs")

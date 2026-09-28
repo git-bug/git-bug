@@ -98,6 +98,10 @@ func randomHash() Hash {
 	return Hash(b)
 }
 
+func randomKey() string {
+	return string(randomHash())
+}
+
 // helper to test a RepoData
 func RepoDataTest(t *testing.T, repo RepoData) {
 	// Blob
@@ -194,56 +198,68 @@ func RepoDataTest(t *testing.T, repo RepoData) {
 	_, err = repo.ReadCommit(randomHash())
 	require.ErrorIs(t, err, ErrNotFound)
 
-	// Ref
+	// Refs
 
-	exist1, err := repo.RefExist("refs/bugs/ref1")
+	key1 := randomKey()
+	key2 := randomKey()
+
+	_, err = repo.ResolveRef("bugs", key1)
+	require.ErrorIs(t, err, ErrNotFound)
+
+	err = repo.UpdateRef("bugs", key1, "", commit2)
 	require.NoError(t, err)
-	require.False(t, exist1)
 
-	err = repo.UpdateRef("refs/bugs/ref1", "", commit2)
-	require.NoError(t, err)
-
-	exist1, err = repo.RefExist("refs/bugs/ref1")
-	require.NoError(t, err)
-	require.True(t, exist1)
-
-	h, err := repo.ResolveRef("refs/bugs/ref1")
+	h, err := repo.ResolveRef("bugs", key1)
 	require.NoError(t, err)
 	require.Equal(t, commit2, h)
 
-	ls, err := repo.ListRefs("refs/bugs")
-	require.NoError(t, err)
-	require.ElementsMatch(t, []string{"refs/bugs/ref1"}, ls)
-
-	err = repo.CopyRef("refs/bugs/ref1", "refs/bugs/ref2")
+	err = repo.UpdateRef("bugs", key2, "", commit1)
 	require.NoError(t, err)
 
-	ls, err = repo.ListRefs("refs/bugs")
+	// the same key in another namespace is another ref
+	err = repo.UpdateRef("identities", key1, "", commit1)
 	require.NoError(t, err)
-	require.ElementsMatch(t, []string{"refs/bugs/ref1", "refs/bugs/ref2"}, ls)
 
-	commits, err := repo.ListCommits("refs/bugs/ref2")
+	refs, err := repo.ListRefs("bugs")
+	require.NoError(t, err)
+	require.Equal(t, map[string]Hash{key1: commit2, key2: commit1}, refs)
+
+	refs, err = repo.ListTrackingRefs("origin", "bugs")
+	require.NoError(t, err)
+	require.Empty(t, refs)
+
+	_, err = repo.ResolveTrackingRef("origin", "bugs", key1)
+	require.ErrorIs(t, err, ErrNotFound)
+
+	// RemoveTrackingRef is idempotent
+	err = repo.RemoveTrackingRef("origin", "bugs", key1)
+	require.NoError(t, err)
+
+	commits, err := repo.ListCommits(commit2)
 	require.NoError(t, err)
 	require.Equal(t, []Hash{commit1, commit2}, commits)
 
-	_, err = repo.ResolveRef("refs/bugs/refnotexist")
-	require.ErrorIs(t, err, ErrNotFound)
-
-	err = repo.CopyRef("refs/bugs/refnotexist", "refs/foo")
-	require.ErrorIs(t, err, ErrNotFound)
-
 	// Cleanup
 
-	err = repo.RemoveRef("refs/bugs/ref1")
+	err = repo.RemoveRef("bugs", key1)
 	require.NoError(t, err)
+
+	_, err = repo.ResolveRef("bugs", key1)
+	require.ErrorIs(t, err, ErrNotFound)
 
 	// RemoveRef is idempotent
-	err = repo.RemoveRef("refs/bugs/ref1")
+	err = repo.RemoveRef("bugs", key1)
 	require.NoError(t, err)
+
+	require.NoError(t, repo.RemoveRef("bugs", key2))
+	require.NoError(t, repo.RemoveRef("identities", key1))
 }
 
-// RepoDataUpdateRefTest checks that UpdateRef only moves a ref from its expected value.
+// RepoDataUpdateRefTest checks that UpdateRef only moves a ref from its
+// expected value.
 func RepoDataUpdateRefTest(t *testing.T, repo RepoData) {
+	const namespace = "update-ref"
+
 	blobHash, err := repo.StoreData(randomData())
 	require.NoError(t, err)
 	treeHash, err := repo.StoreTree([]TreeEntry{{ObjectType: Blob, Hash: blobHash, Name: "blob"}})
@@ -253,52 +269,52 @@ func RepoDataUpdateRefTest(t *testing.T, repo RepoData) {
 	commit2, err := repo.StoreCommit(treeHash, commit1)
 	require.NoError(t, err)
 
-	requireRef := func(t *testing.T, ref string, expected Hash) {
+	requireRef := func(t *testing.T, key string, expected Hash) {
 		t.Helper()
-		h, err := repo.ResolveRef(ref)
+		h, err := repo.ResolveRef(namespace, key)
 		require.NoError(t, err)
 		require.Equal(t, expected, h)
 	}
 
 	t.Run("expected value matches", func(t *testing.T) {
-		ref := "refs/update-ref/match"
-		require.NoError(t, repo.UpdateRef(ref, "", commit1))
-		require.NoError(t, repo.UpdateRef(ref, commit1, commit2))
-		requireRef(t, ref, commit2)
+		key := randomKey()
+		require.NoError(t, repo.UpdateRef(namespace, key, "", commit1))
+		require.NoError(t, repo.UpdateRef(namespace, key, commit1, commit2))
+		requireRef(t, key, commit2)
 	})
 
 	t.Run("stale expected value", func(t *testing.T) {
-		ref := "refs/update-ref/stale"
-		require.NoError(t, repo.UpdateRef(ref, "", commit2))
-		require.ErrorIs(t, repo.UpdateRef(ref, commit1, commit1), ErrRefChanged)
-		requireRef(t, ref, commit2)
+		key := randomKey()
+		require.NoError(t, repo.UpdateRef(namespace, key, "", commit2))
+		require.ErrorIs(t, repo.UpdateRef(namespace, key, commit1, commit1), ErrRefChanged)
+		requireRef(t, key, commit2)
 	})
 
 	t.Run("create an existing ref", func(t *testing.T) {
-		ref := "refs/update-ref/exists"
-		require.NoError(t, repo.UpdateRef(ref, "", commit1))
-		require.ErrorIs(t, repo.UpdateRef(ref, "", commit2), ErrRefChanged)
-		requireRef(t, ref, commit1)
+		key := randomKey()
+		require.NoError(t, repo.UpdateRef(namespace, key, "", commit1))
+		require.ErrorIs(t, repo.UpdateRef(namespace, key, "", commit2), ErrRefChanged)
+		requireRef(t, key, commit1)
 	})
 
 	t.Run("stale expected value on a missing ref", func(t *testing.T) {
-		ref := "refs/update-ref/missing"
-		require.ErrorIs(t, repo.UpdateRef(ref, commit1, commit2), ErrRefChanged)
-		_, err := repo.ResolveRef(ref)
+		key := randomKey()
+		require.ErrorIs(t, repo.UpdateRef(namespace, key, commit1, commit2), ErrRefChanged)
+		_, err := repo.ResolveRef(namespace, key)
 		require.ErrorIs(t, err, ErrNotFound)
 
 		// TODO: remove once go-git includes a fix for https://github.com/go-git/go-git/issues/2399
 		if rk, ok := repo.(*replaceKeyring); ok {
 			if _, ok := rk.TestedRepo.(*GoGitRepo); ok {
 				// the empty ref file left by go-git would break listing refs in the next tests
-				require.NoError(t, repo.RemoveRef(ref))
+				require.NoError(t, repo.RemoveRef(namespace, key))
 				t.Skip("go-git leaves an empty ref file behind: https://github.com/go-git/go-git/issues/2399")
 			}
 		}
 
-		refs, err := repo.ListRefs("refs/update-ref/")
+		refs, err := repo.ListRefs(namespace)
 		require.NoError(t, err)
-		require.NotContains(t, refs, ref)
+		require.NotContains(t, refs, key)
 	})
 }
 
@@ -465,6 +481,7 @@ type browsable interface {
 	RepoConfig
 	RepoData
 	RepoBrowse
+	repoTest
 }
 
 // RepoBrowseTest exercises the RepoBrowse interface against any implementation.
@@ -538,9 +555,9 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 	c3, err := repo.StoreCommit(rootTreeV3, c2)
 	require.NoError(t, err)
 
-	require.NoError(t, repo.UpdateRef("refs/heads/main", "", c3))
-	require.NoError(t, repo.UpdateRef("refs/heads/feature", "", c2))
-	require.NoError(t, repo.UpdateRef("refs/tags/v1.0", "", c1))
+	require.NoError(t, repo.SetBranch("main", c3))
+	require.NoError(t, repo.SetBranch("feature", c2))
+	require.NoError(t, repo.SetTag("v1.0", c1))
 
 	// ── Branches ──────────────────────────────────────────────────────────────
 

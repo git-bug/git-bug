@@ -91,7 +91,7 @@ func TestGitFileHandlers(t *testing.T) {
 	// Ambiguity test: git's filesystem prevents refs/heads/feature and
 	// refs/heads/feature/foo from coexisting (file vs directory). Instead, use
 	// a branch "feature" and a tag "feature/foo" — different namespaces, no
-	// conflict. resolveRefToHash checks both heads and tags, so the tag is a
+	// conflict. resolveRev checks both heads and tags, so the tag is a
 	// valid ref. With longest-ref-first resolution, "feature/foo/image.png"
 	// must resolve via the tag (imgBytes), not via the branch (which has no
 	// foo/image.png and would 404).
@@ -117,10 +117,10 @@ func TestGitFileHandlers(t *testing.T) {
 	featureCommit, err := repo.StoreCommit(otherTreeHash)
 	require.NoError(t, err)
 
-	require.NoError(t, repo.UpdateRef("refs/heads/main", "", mainCommit))
+	require.NoError(t, repo.SetBranch("main", mainCommit))
 	// "feature" branch has otherBytes; "feature/foo" tag has imgBytes.
-	require.NoError(t, repo.UpdateRef("refs/heads/feature", "", featureCommit))
-	require.NoError(t, repo.UpdateRef("refs/tags/feature/foo", "", mainCommit))
+	require.NoError(t, repo.SetBranch("feature", featureCommit))
+	require.NoError(t, repo.SetTag("feature/foo", mainCommit))
 
 	handler := NewGitFileHandler(mrc)
 	authCtx := auth.CtxWithUser(context.Background(), author.Id())

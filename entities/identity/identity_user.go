@@ -26,7 +26,7 @@ func GetUserIdentity(repo repository.Repo) (*Identity, error) {
 		return nil, err
 	}
 
-	i, err := ReadLocal(repo, id)
+	i, err := Read(repo, id)
 	if entity.IsErrNotFound(err) {
 		innerErr := repo.LocalConfig().RemoveAll(identityConfigKey)
 		if innerErr != nil {
