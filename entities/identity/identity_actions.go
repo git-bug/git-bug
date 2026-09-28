@@ -123,14 +123,6 @@ func Remove(repo repository.ClockedRepo, id entity.Id) error {
 		return err
 	}
 
-	found, err := existAnywhere(repo, remotes, id)
-	if err != nil {
-		return err
-	}
-	if !found {
-		return entity.NewErrNotFound(Typename)
-	}
-
 	err = repo.RemoveRef(Namespace, id.String())
 	if err != nil {
 		return err
@@ -144,30 +136,6 @@ func Remove(repo repository.ClockedRepo, id entity.Id) error {
 	}
 
 	return nil
-}
-
-// existAnywhere tells if an identity exists locally or in the tracking refs of
-// any of the given remotes.
-func existAnywhere(repo repository.ClockedRepo, remotes map[string]string, id entity.Id) (bool, error) {
-	_, err := repo.ResolveRef(Namespace, id.String())
-	if err == nil {
-		return true, nil
-	}
-	if !errors.Is(err, repository.ErrNotFound) {
-		return false, err
-	}
-
-	for remote := range remotes {
-		_, err := repo.ResolveTrackingRef(remote, Namespace, id.String())
-		if err == nil {
-			return true, nil
-		}
-		if !errors.Is(err, repository.ErrNotFound) {
-			return false, err
-		}
-	}
-
-	return false, nil
 }
 
 // RemoveAll will remove all local identities.
