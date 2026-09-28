@@ -383,6 +383,19 @@ func (i *Identity) NeedCommit() bool {
 	return false
 }
 
+// LastCommit returns the hash of the commit holding the last committed version,
+// that is what the Identity's reference points to as far as the Identity knows.
+// It is empty if the Identity has never been committed.
+func (i *Identity) LastCommit() repository.Hash {
+	// committed versions always come before the pending ones
+	for j := len(i.versions) - 1; j >= 0; j-- {
+		if i.versions[j].commitHash != "" {
+			return i.versions[j].commitHash
+		}
+	}
+	return ""
+}
+
 // Merge will merge a different version of the same Identity
 //
 // To make sure that an Identity history can't be altered, a strict fast-forward

@@ -20,7 +20,8 @@ import (
 // 2: added cache for identities with a reference in the bug cache
 // 3: no more legacy identity
 // 4: entities make their IDs from data, not git commit
-const formatVersion = 4
+// 5: record the commit each excerpt was built from
+const formatVersion = 5
 
 // The maximum number of bugs loaded in memory. After that, eviction will be done.
 const defaultMaxLoadedBugs = 1000
@@ -51,9 +52,9 @@ type cacheMgmt interface {
 //  2. The cache maintains in memory and on disk a pre-digested excerpt for each bug,
 //     allowing for fast querying the whole set of bugs without having to load
 //     them individually.
-//  3. The cache guarantees that a single instance of a Bug is loaded at once, avoiding
-//     loss of data that we could have with multiple copies in the same process.
-//  4. The same way, the cache maintains in memory a single copy of the loaded identities.
+//  3. The cache keeps a single copy of each loaded entity when possible. A copy
+//     that got evicted keeps working, and if it goes stale, its commits are
+//     rejected by the repository rather than overwriting newer data.
 //
 // The cache also protects the on-disk data by locking the git repository for its
 // own usage, by writing a lock file. Of course, normal git operations are not

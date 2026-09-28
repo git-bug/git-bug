@@ -21,8 +21,8 @@ func NewRepoCacheBug(repo repository.ClockedRepo,
 	resolvers func() entity.Resolvers,
 	getUserIdentity getUserIdentityFunc) *RepoCacheBug {
 
-	makeCached := func(b *bug.Bug, entityUpdated func(id entity.Id) error) *BugCache {
-		return NewBugCache(b, repo, getUserIdentity, entityUpdated)
+	makeCached := func(b *bug.Bug, onCommit func() error) *BugCache {
+		return NewBugCache(b, repo, getUserIdentity, onCommit)
 	}
 
 	makeIndexData := func(b *BugCache) []string {
@@ -71,13 +71,13 @@ func (c *RepoCacheBug) ResolveComment(prefix string) (*BugCache, entity.Combined
 	bugCandidate := make([]entity.Id, 0, 5)
 
 	// build a list of possible matching bugs
-	c.mu.RLock()
+	c.muMaps.RLock()
 	for _, excerpt := range c.excerpts {
 		if excerpt.Id().HasPrefix(bugPrefix) {
 			bugCandidate = append(bugCandidate, excerpt.Id())
 		}
 	}
-	c.mu.RUnlock()
+	c.muMaps.RUnlock()
 
 	matchingBugIds := make([]entity.Id, 0, 5)
 	matchingCommentId := entity.UnsetCombinedId
@@ -112,8 +112,8 @@ func (c *RepoCacheBug) ResolveComment(prefix string) (*BugCache, entity.Combined
 
 // Query return the id of all Bug matching the given Query
 func (c *RepoCacheBug) Query(q *query.Query) ([]entity.Id, error) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.muMaps.RLock()
+	defer c.muMaps.RUnlock()
 
 	if q == nil {
 		return c.AllIds(), nil
@@ -139,7 +139,10 @@ func (c *RepoCacheBug) Query(q *query.Query) ([]entity.Id, error) {
 
 		for _, hit := range res {
 			id := entity.Id(hit)
-			foundBySearch[id] = c.excerpts[id]
+			// the index can be ahead of the excerpts, see SubCache.publishDerived
+			if excerpt, ok := c.excerpts[id]; ok {
+				foundBySearch[id] = excerpt
+			}
 		}
 	} else {
 		foundBySearch = c.excerpts
@@ -190,8 +193,8 @@ func (c *RepoCacheBug) Query(q *query.Query) ([]entity.Id, error) {
 // labels are defined in a configuration file. Until that, the default behavior
 // is to return the list of labels already used.
 func (c *RepoCacheBug) ValidLabels() []common.Label {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.muMaps.RLock()
+	defer c.muMaps.RUnlock()
 
 	set := map[common.Label]interface{}{}
 

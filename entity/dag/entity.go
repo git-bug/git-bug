@@ -515,6 +515,13 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 	return nil
 }
 
+// LastCommit returns the hash of the commit holding the last committed operations,
+// that is what the Entity's reference points to as far as the Entity knows.
+// It is empty if the Entity has never been committed.
+func (e *Entity) LastCommit() repository.Hash {
+	return e.lastCommit
+}
+
 // CreateLamportTime return the Lamport time of creation
 func (e *Entity) CreateLamportTime() lamport.Time {
 	return e.createTime

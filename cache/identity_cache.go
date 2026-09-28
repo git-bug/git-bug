@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/git-bug/git-bug/entities/identity"
-	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 )
 
@@ -13,33 +12,25 @@ var _ CacheEntity = &IdentityCache{}
 
 // IdentityCache is a wrapper around an Identity for caching.
 type IdentityCache struct {
-	repo          repository.ClockedRepo
-	entityUpdated func(id entity.Id) error
+	repo     repository.ClockedRepo
+	onCommit func() error // called after each commit
 
 	mu sync.Mutex
 	*identity.Identity
 }
 
-func NewIdentityCache(i *identity.Identity, repo repository.ClockedRepo, entityUpdated func(id entity.Id) error) *IdentityCache {
+func NewIdentityCache(i *identity.Identity, repo repository.ClockedRepo, onCommit func() error) *IdentityCache {
 	return &IdentityCache{
-		repo:          repo,
-		entityUpdated: entityUpdated,
-		Identity:      i,
+		repo:     repo,
+		onCommit: onCommit,
+		Identity: i,
 	}
-}
-
-func (i *IdentityCache) notifyUpdated() error {
-	return i.entityUpdated(i.Identity.Id())
 }
 
 func (i *IdentityCache) Mutate(repo repository.RepoClock, f func(*identity.Mutator)) error {
 	i.mu.Lock()
-	err := i.Identity.Mutate(repo, f)
-	i.mu.Unlock()
-	if err != nil {
-		return err
-	}
-	return i.notifyUpdated()
+	defer i.mu.Unlock()
+	return i.Identity.Mutate(repo, f)
 }
 
 func (i *IdentityCache) Commit() error {
@@ -49,19 +40,19 @@ func (i *IdentityCache) Commit() error {
 	if err != nil {
 		return err
 	}
-	return i.notifyUpdated()
+	return i.onCommit()
 }
 
 func (i *IdentityCache) CommitAsNeeded() error {
 	i.mu.Lock()
-	err := i.Identity.CommitAsNeeded(i.repo)
+	if !i.Identity.NeedCommit() {
+		i.mu.Unlock()
+		return nil
+	}
+	err := i.Identity.Commit(i.repo)
 	i.mu.Unlock()
 	if err != nil {
 		return err
 	}
-	return i.notifyUpdated()
-}
-
-func (i *IdentityCache) Lock() {
-	i.mu.Lock()
+	return i.onCommit()
 }

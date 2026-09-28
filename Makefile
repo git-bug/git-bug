@@ -4,7 +4,7 @@ ifeq ($(UNAME_S),Darwin)
     XARGS:=xargs
 endif
 
-TAG:=$(shell git describe --match 'v*' --always --dirty --broken)
+TAG:=$(shell git describe --tags --match 'v*' --always --dirty --broken)
 LDFLAGS:=-X main.version="${TAG}"
 
 all: build

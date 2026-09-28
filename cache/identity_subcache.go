@@ -14,8 +14,8 @@ func NewRepoCacheIdentity(repo repository.ClockedRepo,
 	resolvers func() entity.Resolvers,
 	getUserIdentity getUserIdentityFunc) *RepoCacheIdentity {
 
-	makeCached := func(i *identity.Identity, entityUpdated func(id entity.Id) error) *IdentityCache {
-		return NewIdentityCache(i, repo, entityUpdated)
+	makeCached := func(i *identity.Identity, onCommit func() error) *IdentityCache {
+		return NewIdentityCache(i, repo, onCommit)
 	}
 
 	makeIndex := func(i *IdentityCache) []string {

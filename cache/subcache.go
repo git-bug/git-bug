@@ -21,8 +21,9 @@ type Excerpt interface {
 
 type CacheEntity interface {
 	Id() entity.Id
+	// LastCommit returns the commit holding the committed state of the entity.
+	LastCommit() repository.Hash
 	NeedCommit() bool
-	Lock()
 }
 
 type getUserIdentityFunc func() (*IdentityCache, error)
@@ -46,7 +47,7 @@ type SubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity] st
 	resolvers func() entity.Resolvers
 
 	getUserIdentity getUserIdentityFunc
-	makeCached      func(entity EntityT, entityUpdated func(id entity.Id) error) CacheT
+	makeCached      func(entity EntityT, onCommit func() error) CacheT
 	makeExcerpt     func(CacheT) ExcerptT
 	makeIndexData   func(CacheT) []string
 	actions         Actions[EntityT]
@@ -56,10 +57,21 @@ type SubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity] st
 	version   uint
 	maxLoaded int
 
-	mu       sync.RWMutex
+	// muDerived serializes building and publishing the derived state of the
+	// entities (excerpt, index document, builtFrom), so that it is applied in
+	// commit order.
+	// Taken before muMaps.
+	muDerived sync.Mutex
+
+	// muMaps protects the in-memory maps below, and is only held briefly.
+	muMaps   sync.RWMutex
 	excerpts map[entity.Id]ExcerptT
-	cached   map[entity.Id]CacheT
-	lru      lruIdCache
+	// builtFrom holds, for each entity, the commit its excerpt and index document
+	// were built from. They are only built from the committed state of an entity,
+	// never from pending changes, so they are up to date for exactly that commit.
+	builtFrom map[entity.Id]repository.Hash
+	cached    map[entity.Id]CacheT
+	lru       lruIdCache
 
 	muObservers sync.RWMutex
 	observers   map[Observer]string // observer --> repo name
@@ -68,7 +80,7 @@ type SubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity] st
 func NewSubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity](
 	repo repository.ClockedRepo,
 	resolvers func() entity.Resolvers, getUserIdentity getUserIdentityFunc,
-	makeCached func(entity EntityT, entityUpdated func(id entity.Id) error) CacheT,
+	makeCached func(entity EntityT, onCommit func() error) CacheT,
 	makeExcerpt func(CacheT) ExcerptT,
 	makeIndexData func(CacheT) []string,
 	actions Actions[EntityT],
@@ -87,6 +99,7 @@ func NewSubCache[EntityT entity.Interface, ExcerptT Excerpt, CacheT CacheEntity]
 		version:         version,
 		maxLoaded:       maxLoaded,
 		excerpts:        make(map[entity.Id]ExcerptT),
+		builtFrom:       make(map[entity.Id]repository.Hash),
 		cached:          make(map[entity.Id]CacheT),
 		lru:             newLRUIdCache(),
 	}
@@ -104,8 +117,8 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) EnsureClocks() error {
 
 // Load will try to read from the disk the entity cache file
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) Load() error {
-	sc.mu.Lock()
-	defer sc.mu.Unlock()
+	sc.muMaps.Lock()
+	defer sc.muMaps.Unlock()
 
 	f, err := sc.repo.LocalStorage().Open(filepath.Join("cache", sc.namespace))
 	if err != nil {
@@ -113,8 +126,9 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Load() error {
 	}
 
 	aux := struct {
-		Version  uint
-		Excerpts map[entity.Id]ExcerptT
+		Version   uint
+		Excerpts  map[entity.Id]ExcerptT
+		BuiltFrom map[entity.Id]repository.Hash
 	}{}
 
 	decoder := gob.NewDecoder(f)
@@ -140,6 +154,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Load() error {
 	}
 
 	sc.excerpts = aux.Excerpts
+	sc.builtFrom = aux.BuiltFrom
 
 	index, err := sc.repo.GetIndex(sc.namespace)
 	if err != nil {
@@ -162,17 +177,19 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Load() error {
 
 // Write will serialize on disk the entity cache file
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) write() error {
-	sc.mu.RLock()
-	defer sc.mu.RUnlock()
+	sc.muMaps.RLock()
+	defer sc.muMaps.RUnlock()
 
 	var data bytes.Buffer
 
 	aux := struct {
-		Version  uint
-		Excerpts map[entity.Id]ExcerptT
+		Version   uint
+		Excerpts  map[entity.Id]ExcerptT
+		BuiltFrom map[entity.Id]repository.Hash
 	}{
-		Version:  sc.version,
-		Excerpts: sc.excerpts,
+		Version:   sc.version,
+		Excerpts:  sc.excerpts,
+		BuiltFrom: sc.builtFrom,
 	}
 
 	encoder := gob.NewEncoder(&data)
@@ -228,9 +245,13 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() <-chan BuildEvent {
 			Event:    BuildEventStarted,
 		}
 
-		sc.mu.Lock()
+		sc.muDerived.Lock()
+		defer sc.muDerived.Unlock()
+
+		sc.muMaps.Lock()
 		sc.excerpts = make(map[entity.Id]ExcerptT)
-		sc.mu.Unlock()
+		sc.builtFrom = make(map[entity.Id]repository.Hash)
+		sc.muMaps.Unlock()
 
 		allEntities := sc.actions.ReadAllWithResolver(sc.repo, sc.resolvers())
 
@@ -254,7 +275,23 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() <-chan BuildEvent {
 		}
 
 		indexer, indexEnd := index.IndexBatch()
-		var batchCount int
+		var batch []derived[ExcerptT]
+
+		// the derived state of a batch is published once the batch is in the
+		// index, so that the index is never behind it
+		endBatch := func() error {
+			if err := indexEnd(); err != nil {
+				return err
+			}
+			sc.muMaps.Lock()
+			for _, d := range batch {
+				sc.excerpts[d.excerpt.Id()] = d.excerpt
+				sc.builtFrom[d.excerpt.Id()] = d.commit
+			}
+			sc.muMaps.Unlock()
+			batch = batch[:0]
+			return nil
+		}
 
 		for e := range allEntities {
 			if e.Err != nil {
@@ -265,31 +302,22 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() <-chan BuildEvent {
 				return
 			}
 
-			// Other subcaches are built concurrently and can resolve entities of
-			// this one in the meantime, so the maps need to be protected, and an
-			// already loaded copy needs to be kept to avoid duplicates in memory.
-			sc.mu.Lock()
-			cached, ok := sc.cached[e.Entity.Id()]
-			if !ok {
-				cached = sc.makeCached(e.Entity, sc.entityUpdated)
-				// might as well keep them in memory
-				sc.cached[e.Entity.Id()] = cached
-			}
-			sc.excerpts[e.Entity.Id()] = sc.makeExcerpt(cached)
-			sc.mu.Unlock()
+			// The entity is only read to build its derived state, which only depends
+			// on committed state: it's not kept in memory, whether a copy is already
+			// loaded or not.
+			d := sc.buildDerived(sc.newCached(e.Entity))
 
-			indexData := sc.makeIndexData(cached)
-			if err := indexer(e.Entity.Id().String(), indexData); err != nil {
+			if err := indexer(e.Entity.Id().String(), d.indexData); err != nil {
 				out <- BuildEvent{
 					Typename: sc.typename,
 					Err:      err,
 				}
 				return
 			}
+			batch = append(batch, d)
 
-			batchCount++
-			if batchCount >= maxBatchCount {
-				err = indexEnd()
+			if len(batch) >= maxBatchCount {
+				err = endBatch()
 				if err != nil {
 					out <- BuildEvent{
 						Typename: sc.typename,
@@ -299,7 +327,6 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() <-chan BuildEvent {
 				}
 
 				indexer, indexEnd = index.IndexBatch()
-				batchCount = 0
 			}
 
 			out <- BuildEvent{
@@ -310,8 +337,8 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() <-chan BuildEvent {
 			}
 		}
 
-		if batchCount > 0 {
-			err = indexEnd()
+		if len(batch) > 0 {
+			err = endBatch()
 			if err != nil {
 				out <- BuildEvent{
 					Typename: sc.typename,
@@ -345,9 +372,13 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) SetCacheSize(size int) {
 }
 
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) Close() error {
-	sc.mu.Lock()
-	defer sc.mu.Unlock()
+	sc.muDerived.Lock()
+	defer sc.muDerived.Unlock()
+	sc.muMaps.Lock()
+	defer sc.muMaps.Unlock()
+	// nil maps mark the SubCache as closed, see updateDerived
 	sc.excerpts = nil
+	sc.builtFrom = nil
 	sc.cached = make(map[entity.Id]CacheT)
 	return nil
 }
@@ -369,8 +400,8 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) UnregisterObserver(observer Obser
 
 // AllIds return all known bug ids
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) AllIds() []entity.Id {
-	sc.mu.RLock()
-	defer sc.mu.RUnlock()
+	sc.muMaps.RLock()
+	defer sc.muMaps.RUnlock()
 
 	result := make([]entity.Id, len(sc.excerpts))
 
@@ -385,34 +416,34 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) AllIds() []entity.Id {
 
 // Resolve retrieve an entity matching the exact given id
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) Resolve(id entity.Id) (CacheT, error) {
-	sc.mu.RLock()
+	sc.muMaps.RLock()
 	cached, ok := sc.cached[id]
 	if ok {
 		// mark as recently used
 		sc.lru.Get(id)
-		sc.mu.RUnlock()
+		sc.muMaps.RUnlock()
 		return cached, nil
 	}
-	sc.mu.RUnlock()
+	sc.muMaps.RUnlock()
 
 	e, err := sc.actions.ReadWithResolver(sc.repo, sc.resolvers(), id)
 	if err != nil {
 		return *new(CacheT), err
 	}
 
-	cached = sc.makeCached(e, sc.entityUpdated)
+	cached = sc.newCached(e)
 
-	sc.mu.Lock()
+	sc.muMaps.Lock()
 	if existing, ok := sc.cached[id]; ok {
 		// loaded concurrently in the meantime, keep a single copy in memory
 		// and mark it as recently used
 		sc.lru.Get(id)
-		sc.mu.Unlock()
+		sc.muMaps.Unlock()
 		return existing, nil
 	}
 	sc.cached[id] = cached
 	sc.lru.Add(id)
-	sc.mu.Unlock()
+	sc.muMaps.Unlock()
 
 	sc.evictIfNeeded()
 
@@ -437,8 +468,8 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveMatcher(f func(ExcerptT) b
 
 // ResolveExcerpt retrieves an Excerpt matching the exact given id
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerpt(id entity.Id) (ExcerptT, error) {
-	sc.mu.RLock()
-	defer sc.mu.RUnlock()
+	sc.muMaps.RLock()
+	defer sc.muMaps.RUnlock()
 
 	excerpt, ok := sc.excerpts[id]
 	if !ok {
@@ -466,8 +497,8 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) ResolveExcerptMatcher(f func(Exce
 }
 
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) resolveMatcher(f func(ExcerptT) bool) (entity.Id, error) {
-	sc.mu.RLock()
-	defer sc.mu.RUnlock()
+	sc.muMaps.RLock()
+	defer sc.muMaps.RUnlock()
 
 	// preallocate but empty
 	matching := make([]entity.Id, 0, 5)
@@ -490,27 +521,48 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) resolveMatcher(f func(ExcerptT) b
 }
 
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) add(e EntityT) (CacheT, error) {
-	sc.mu.Lock()
-	if _, has := sc.cached[e.Id()]; has {
-		sc.mu.Unlock()
-		return *new(CacheT), fmt.Errorf("entity %s already exist in the cache", e.Id())
-	}
+	cached := sc.newCached(e)
 
-	cached := sc.makeCached(e, sc.entityUpdated)
-	sc.cached[e.Id()] = cached
-	sc.lru.Add(e.Id())
-	sc.mu.Unlock()
+	// Under muDerived until the copy is registered, so that a concurrent
+	// removal comes either before, and the entity is not added, or after.
+	err := func() error {
+		sc.muDerived.Lock()
+		defer sc.muDerived.Unlock()
 
-	sc.evictIfNeeded()
+		sc.muMaps.RLock()
+		_, has := sc.cached[e.Id()]
+		sc.muMaps.RUnlock()
+		if has {
+			return fmt.Errorf("entity %s already exist in the cache", e.Id())
+		}
 
-	// force the write of the excerpt
-	err := sc.updateExcerptAndIndex(e.Id())
+		// derive before the copy is shared, while it can't have pending changes
+		event, err := sc.publishDerivedLocked(cached)
+		if err != nil {
+			return err
+		}
+		if event == 0 {
+			return fmt.Errorf("%s %s got removed, or the cache closed", sc.typename, e.Id())
+		}
+
+		sc.muMaps.Lock()
+		sc.cached[e.Id()] = cached
+		sc.lru.Add(e.Id())
+		sc.muMaps.Unlock()
+		return nil
+	}()
 	if err != nil {
 		return *new(CacheT), err
 	}
 
-	// defer to notify after the release of the mutex
-	defer sc.notifyObservers(EntityEventCreated, e.Id())
+	err = sc.write()
+	if err != nil {
+		return *new(CacheT), err
+	}
+
+	sc.evictIfNeeded()
+
+	sc.notifyObservers(EntityEventCreated, e.Id())
 
 	return cached, nil
 }
@@ -521,70 +573,78 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Remove(prefix string) error {
 		return err
 	}
 
-	sc.mu.Lock()
+	// under muDerived, so that no derived state is published for the entity
+	// once removed
+	err = func() error {
+		sc.muDerived.Lock()
+		defer sc.muDerived.Unlock()
+		sc.muMaps.Lock()
+		defer sc.muMaps.Unlock()
 
-	err = sc.actions.Remove(sc.repo, e.Id())
+		err := sc.actions.Remove(sc.repo, e.Id())
+		if err != nil {
+			return err
+		}
+
+		delete(sc.cached, e.Id())
+		delete(sc.excerpts, e.Id())
+		delete(sc.builtFrom, e.Id())
+		sc.lru.Remove(e.Id())
+
+		index, err := sc.repo.GetIndex(sc.namespace)
+		if err != nil {
+			return err
+		}
+		return index.Remove(e.Id().String())
+	}()
 	if err != nil {
-		sc.mu.Unlock()
 		return err
 	}
 
-	delete(sc.cached, e.Id())
-	delete(sc.excerpts, e.Id())
-	sc.lru.Remove(e.Id())
-
-	index, err := sc.repo.GetIndex(sc.namespace)
-	if err != nil {
-		sc.mu.Unlock()
-		return err
-	}
-
-	err = index.Remove(e.Id().String())
-	sc.mu.Unlock()
-	if err != nil {
-		return err
-	}
-
-	// defer to notify after the release of the mutex
+	// defer to notify after the write
 	defer sc.notifyObservers(EntityEventRemoved, e.Id())
 
 	return sc.write()
 }
 
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) RemoveAll() error {
-	sc.mu.Lock()
-
-	err := sc.actions.RemoveAll(sc.repo)
-	if err != nil {
-		sc.mu.Unlock()
-		return err
-	}
-
 	ids := make(map[entity.Id]struct{})
 
-	for id, _ := range sc.cached {
-		delete(sc.cached, id)
-		sc.lru.Remove(id)
-		ids[id] = struct{}{}
-	}
-	for id, _ := range sc.excerpts {
-		delete(sc.excerpts, id)
-		ids[id] = struct{}{}
-	}
+	// under muDerived, so that no derived state is published for the entities
+	// once removed
+	err := func() error {
+		sc.muDerived.Lock()
+		defer sc.muDerived.Unlock()
+		sc.muMaps.Lock()
+		defer sc.muMaps.Unlock()
 
-	index, err := sc.repo.GetIndex(sc.namespace)
+		err := sc.actions.RemoveAll(sc.repo)
+		if err != nil {
+			return err
+		}
+
+		for id, _ := range sc.cached {
+			delete(sc.cached, id)
+			sc.lru.Remove(id)
+			ids[id] = struct{}{}
+		}
+		for id, _ := range sc.excerpts {
+			delete(sc.excerpts, id)
+			ids[id] = struct{}{}
+		}
+		clear(sc.builtFrom)
+
+		index, err := sc.repo.GetIndex(sc.namespace)
+		if err != nil {
+			return err
+		}
+		return index.Clear()
+	}()
 	if err != nil {
-		sc.mu.Unlock()
 		return err
 	}
 
-	err = index.Clear()
-	sc.mu.Unlock()
-	if err != nil {
-		return err
-	}
-
-	// defer to notify after the release of the mutex
+	// defer to notify after the write
 	defer func() {
 		for id := range ids {
 			sc.notifyObservers(EntityEventRemoved, id)
@@ -612,20 +672,21 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) MergeAll(remote string) <-chan en
 			author = user
 		}
 
-		index, err := sc.repo.GetIndex(sc.namespace)
-		if err != nil {
-			out <- entity.NewMergeError(err, "")
-			return
-		}
-
-		// merge a single entity in the cache and its views. The excerpt file is
+		// merge a single entity in the cache and its derived state. The excerpt file is
 		// not written here, it's written once for all the merged entities.
 		updateCache := func(result entity.MergeResult) error {
 			e := result.Entity.(EntityT)
-			cached := sc.makeCached(e, sc.entityUpdated)
+			cached := sc.newCached(e)
 
-			sc.mu.Lock()
-			sc.excerpts[result.Id] = sc.makeExcerpt(cached)
+			// derive before the copy is shared, while it can't have pending
+			// changes, and before notifying, so that an observer can already
+			// search it
+			_, err := sc.publishDerived(cached)
+			if err != nil {
+				return err
+			}
+
+			sc.muMaps.Lock()
 			// If the entity is already loaded, replace it with the merged version,
 			// otherwise the loaded copy would be outdated.
 			// If it's not loaded, don't load it: a merge is not a use of the entity,
@@ -634,10 +695,9 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) MergeAll(remote string) <-chan en
 			if _, loaded := sc.cached[result.Id]; loaded {
 				sc.cached[result.Id] = cached
 			}
-			sc.mu.Unlock()
+			sc.muMaps.Unlock()
 
-			// index before notifying, so that an observer can already search it
-			return index.IndexOne(result.Id.String(), sc.makeIndexData(cached))
+			return nil
 		}
 
 		results := sc.actions.MergeAll(sc.repo, sc.resolvers(), remote, author)
@@ -682,10 +742,25 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) GetNamespace() string {
 	return sc.namespace
 }
 
-// entityUpdated is a callback to trigger when the excerpt of an entity changed
-func (sc *SubCache[EntityT, ExcerptT, CacheT]) entityUpdated(id entity.Id) error {
-	sc.notifyObservers(EntityEventUpdated, id)
-	return sc.updateExcerptAndIndex(id)
+// newCached wraps an entity for the cache, and has its commits refresh its
+// derived state.
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) newCached(e EntityT) CacheT {
+	// read the id now, while the entity is not shared
+	id := e.Id()
+	return sc.makeCached(e, func() error { return sc.onCommit(id) })
+}
+
+// onCommit refreshes the derived state after an entity has been committed.
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) onCommit(id entity.Id) error {
+	event, err := sc.refresh(id)
+	if err != nil || event == 0 {
+		return err
+	}
+
+	// defer to notify after the write
+	defer sc.notifyObservers(event, id)
+
+	return sc.write()
 }
 
 // notifyObservers notifies all the observers when something happening for an entity
@@ -697,41 +772,145 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) notifyObservers(event EntityEvent
 	sc.muObservers.RUnlock()
 }
 
-func (sc *SubCache[EntityT, ExcerptT, CacheT]) updateExcerptAndIndex(id entity.Id) error {
-	sc.mu.Lock()
-	e, ok := sc.cached[id]
-	if !ok {
-		sc.mu.Unlock()
+// derived is the state the cache keeps about an entity, built from its committed
+// state: its excerpt, its index document, and the commit they were built from.
+type derived[ExcerptT Excerpt] struct {
+	commit    repository.Hash
+	excerpt   ExcerptT
+	indexData []string
+}
 
-		// if the bug is not loaded at this point, it means it was loaded before
-		// but got evicted. Which means we potentially have multiple copies in
-		// memory and thus concurrent write.
-		// Failing immediately here is the simple and safe solution to avoid
-		// complicated data loss.
-		return errors.New("entity missing from cache")
+// buildDerived derives the state the cache keeps about an entity. The entity
+// must not be shared, and have no pending changes.
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) buildDerived(fresh CacheT) derived[ExcerptT] {
+	return derived[ExcerptT]{
+		commit:    fresh.LastCommit(),
+		excerpt:   sc.makeExcerpt(fresh),
+		indexData: sc.makeIndexData(fresh),
 	}
-	// mark as recently used
-	sc.lru.Get(id)
-	sc.excerpts[id] = sc.makeExcerpt(e)
-	sc.mu.Unlock()
+}
+
+// refresh brings the derived state of an entity up to date with its reference:
+// derived from a fresh read of the entity if the reference moved, dropped if the
+// reference is gone. It reports the change as an event, or 0 if there was none.
+// The excerpt file is not written.
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) refresh(id entity.Id) (EntityEventType, error) {
+	e, err := sc.actions.ReadWithResolver(sc.repo, sc.resolvers(), id)
+	if entity.IsErrNotFound(err) {
+		return sc.dropDerived(id)
+	}
+	if err != nil {
+		return 0, err
+	}
+	return sc.publishDerived(sc.newCached(e))
+}
+
+// publishDerived publishes the derived state of an entity, unless it's already
+// up to date. The entity must not be shared, and have no pending changes. It
+// reports the change as an event, or 0 if there was none. The excerpt file is
+// not written.
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) publishDerived(fresh CacheT) (EntityEventType, error) {
+	sc.muDerived.Lock()
+	defer sc.muDerived.Unlock()
+	return sc.publishDerivedLocked(fresh)
+}
+
+// publishDerivedLocked is publishDerived, for a caller already holding muDerived.
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) publishDerivedLocked(fresh CacheT) (EntityEventType, error) {
+	id := fresh.Id()
+
+	sc.muMaps.RLock()
+	closed := sc.excerpts == nil
+	builtFrom, known := sc.builtFrom[id]
+	sc.muMaps.RUnlock()
+	if closed || fresh.LastCommit() == builtFrom {
+		return 0, nil
+	}
+
+	// Only publish if the reference still points to that commit: the entity
+	// can have been read before a newer commit, or before its removal.
+	ref, err := sc.repo.ResolveRef(sc.namespace, id.String())
+	if errors.Is(err, repository.ErrNotFound) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	if ref != fresh.LastCommit() {
+		return 0, nil
+	}
+
+	d := sc.buildDerived(fresh)
 
 	index, err := sc.repo.GetIndex(sc.namespace)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	err = index.IndexOne(e.Id().String(), sc.makeIndexData(e))
+	// index first, so that the index is never behind what builtFrom records.
+	// Readers of the index must tolerate it being ahead of the excerpts.
+	err = index.IndexOne(id.String(), d.indexData)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return sc.write()
+	sc.muMaps.Lock()
+	sc.excerpts[id] = d.excerpt
+	sc.builtFrom[id] = d.commit
+	sc.muMaps.Unlock()
+
+	if known {
+		return EntityEventUpdated, nil
+	}
+	return EntityEventCreated, nil
+}
+
+// dropDerived drops the derived state of an entity whose reference is gone,
+// along with its loaded copy. It reports the change as an event, or 0 if there
+// was none. The excerpt file is not written.
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) dropDerived(id entity.Id) (EntityEventType, error) {
+	sc.muDerived.Lock()
+	defer sc.muDerived.Unlock()
+
+	sc.muMaps.RLock()
+	_, known := sc.builtFrom[id]
+	sc.muMaps.RUnlock()
+	if !known {
+		return 0, nil
+	}
+
+	// the reference could have come back since it was found missing
+	_, err := sc.repo.ResolveRef(sc.namespace, id.String())
+	if err == nil {
+		return 0, nil
+	}
+	if !errors.Is(err, repository.ErrNotFound) {
+		return 0, err
+	}
+
+	index, err := sc.repo.GetIndex(sc.namespace)
+	if err != nil {
+		return 0, err
+	}
+	err = index.Remove(id.String())
+	if err != nil {
+		return 0, err
+	}
+
+	sc.muMaps.Lock()
+	delete(sc.excerpts, id)
+	delete(sc.builtFrom, id)
+	delete(sc.cached, id)
+	sc.lru.Remove(id)
+	sc.muMaps.Unlock()
+
+	return EntityEventRemoved, nil
 }
 
 // evictIfNeeded will evict an entity from the cache if needed
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) evictIfNeeded() {
-	sc.mu.Lock()
-	defer sc.mu.Unlock()
+	sc.muMaps.Lock()
+	defer sc.muMaps.Unlock()
 	if sc.lru.Len() <= sc.maxLoaded {
 		return
 	}
@@ -741,10 +920,6 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) evictIfNeeded() {
 		if b.NeedCommit() {
 			continue
 		}
-
-		// as a form of assurance that evicted entities don't get manipulated, we lock them here.
-		// if something tries to do it anyway, it will lock the program and make it obvious.
-		b.Lock()
 
 		sc.lru.Remove(id)
 		delete(sc.cached, id)

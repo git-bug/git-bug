@@ -146,9 +146,12 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, res, 1)
 
-	// Updating
+	// Updating, only committed changes are visible
 	_, _, err = bug1.AddComment("new comment")
 	require.NoError(t, err)
+	assertOberserverEvent(obsIdentity, 2, 0, 0)
+	assertOberserverEvent(obsBug, 2, 0, 0)
+	require.NoError(t, bug1.Commit())
 	assertOberserverEvent(obsIdentity, 2, 0, 0)
 	assertOberserverEvent(obsBug, 2, 1, 0)
 
