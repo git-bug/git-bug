@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790584435142,
+  "lastUpdate": 1790677778429,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -21412,6 +21412,102 @@ window.BENCHMARK_DATA = {
             "value": 697302,
             "unit": "allocs/op",
             "extra": "3 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c796077d404434e3f33d6dad20a5cdd377cb64f1",
+          "message": "Merge pull request #1639 from git-bug/cache-repair\n\ncache: record the commit each entity's derived state was built from",
+          "timestamp": "2026-09-29T10:25:00Z",
+          "tree_id": "fa8d9bed8cf91e607230e1ea88de41c80362bd21",
+          "url": "https://github.com/git-bug/git-bug/commit/c796077d404434e3f33d6dad20a5cdd377cb64f1"
+        },
+        "date": 1790677776260,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 5759592,
+            "unit": "ns/op\t 1522011 B/op\t   21051 allocs/op",
+            "extra": "225 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 5759592,
+            "unit": "ns/op",
+            "extra": "225 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 1522011,
+            "unit": "B/op",
+            "extra": "225 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 21051,
+            "unit": "allocs/op",
+            "extra": "225 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 33515038,
+            "unit": "ns/op\t 8646503 B/op\t  118759 allocs/op",
+            "extra": "43 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 33515038,
+            "unit": "ns/op",
+            "extra": "43 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 8646503,
+            "unit": "B/op",
+            "extra": "43 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 118759,
+            "unit": "allocs/op",
+            "extra": "43 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 206623955,
+            "unit": "ns/op\t54991902 B/op\t  711757 allocs/op",
+            "extra": "5 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 206623955,
+            "unit": "ns/op",
+            "extra": "5 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 54991902,
+            "unit": "B/op",
+            "extra": "5 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 711757,
+            "unit": "allocs/op",
+            "extra": "5 times\n4 procs"
           }
         ]
       }
