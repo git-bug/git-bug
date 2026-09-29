@@ -22,11 +22,11 @@ type BugCache struct {
 	CachedEntityBase[*bug.Snapshot, bug.Operation]
 }
 
-func NewBugCache(b *bug.Bug, repo repository.ClockedRepo, getUserIdentity getUserIdentityFunc, entityUpdated func(id entity.Id) error) *BugCache {
+func NewBugCache(b *bug.Bug, repo repository.ClockedRepo, getUserIdentity getUserIdentityFunc, onCommit func() error) *BugCache {
 	return &BugCache{
 		CachedEntityBase: CachedEntityBase[*bug.Snapshot, bug.Operation]{
 			repo:            repo,
-			entityUpdated:   entityUpdated,
+			onCommit:        onCommit,
 			getUserIdentity: getUserIdentity,
 			entity:          &withSnapshot[*bug.Snapshot, bug.Operation]{Interface: b},
 		},
@@ -48,12 +48,8 @@ func (c *BugCache) AddCommentWithFiles(message string, files []repository.Hash) 
 
 func (c *BugCache) AddCommentRaw(author identity.Interface, unixTime int64, message string, files []repository.Hash, metadata map[string]string) (entity.CombinedId, *bug.AddCommentOperation, error) {
 	c.mu.Lock()
-	commentId, op, err := bug.AddComment(c.entity, author, unixTime, message, files, metadata)
-	c.mu.Unlock()
-	if err != nil {
-		return entity.UnsetCombinedId, nil, err
-	}
-	return commentId, op, c.notifyUpdated()
+	defer c.mu.Unlock()
+	return bug.AddComment(c.entity, author, unixTime, message, files, metadata)
 }
 
 func (c *BugCache) ChangeLabels(added []string, removed []string) ([]bug.LabelChangeResult, *bug.LabelChangeOperation, error) {
@@ -67,12 +63,8 @@ func (c *BugCache) ChangeLabels(added []string, removed []string) ([]bug.LabelCh
 
 func (c *BugCache) ChangeLabelsRaw(author identity.Interface, unixTime int64, added []string, removed []string, metadata map[string]string) ([]bug.LabelChangeResult, *bug.LabelChangeOperation, error) {
 	c.mu.Lock()
-	changes, op, err := bug.ChangeLabels(c.entity, author, unixTime, added, removed, metadata)
-	c.mu.Unlock()
-	if err != nil {
-		return changes, nil, err
-	}
-	return changes, op, c.notifyUpdated()
+	defer c.mu.Unlock()
+	return bug.ChangeLabels(c.entity, author, unixTime, added, removed, metadata)
 }
 
 func (c *BugCache) ForceChangeLabels(added []string, removed []string) (*bug.LabelChangeOperation, error) {
@@ -86,12 +78,8 @@ func (c *BugCache) ForceChangeLabels(added []string, removed []string) (*bug.Lab
 
 func (c *BugCache) ForceChangeLabelsRaw(author identity.Interface, unixTime int64, added []string, removed []string, metadata map[string]string) (*bug.LabelChangeOperation, error) {
 	c.mu.Lock()
-	op, err := bug.ForceChangeLabels(c.entity, author, unixTime, added, removed, metadata)
-	c.mu.Unlock()
-	if err != nil {
-		return nil, err
-	}
-	return op, c.notifyUpdated()
+	defer c.mu.Unlock()
+	return bug.ForceChangeLabels(c.entity, author, unixTime, added, removed, metadata)
 }
 
 func (c *BugCache) Open() (*bug.SetStatusOperation, error) {
@@ -105,12 +93,8 @@ func (c *BugCache) Open() (*bug.SetStatusOperation, error) {
 
 func (c *BugCache) OpenRaw(author identity.Interface, unixTime int64, metadata map[string]string) (*bug.SetStatusOperation, error) {
 	c.mu.Lock()
-	op, err := bug.Open(c.entity, author, unixTime, metadata)
-	c.mu.Unlock()
-	if err != nil {
-		return nil, err
-	}
-	return op, c.notifyUpdated()
+	defer c.mu.Unlock()
+	return bug.Open(c.entity, author, unixTime, metadata)
 }
 
 func (c *BugCache) Close() (*bug.SetStatusOperation, error) {
@@ -124,12 +108,8 @@ func (c *BugCache) Close() (*bug.SetStatusOperation, error) {
 
 func (c *BugCache) CloseRaw(author identity.Interface, unixTime int64, metadata map[string]string) (*bug.SetStatusOperation, error) {
 	c.mu.Lock()
-	op, err := bug.Close(c.entity, author, unixTime, metadata)
-	c.mu.Unlock()
-	if err != nil {
-		return nil, err
-	}
-	return op, c.notifyUpdated()
+	defer c.mu.Unlock()
+	return bug.Close(c.entity, author, unixTime, metadata)
 }
 
 func (c *BugCache) SetTitle(title string) (*bug.SetTitleOperation, error) {
@@ -143,12 +123,8 @@ func (c *BugCache) SetTitle(title string) (*bug.SetTitleOperation, error) {
 
 func (c *BugCache) SetTitleRaw(author identity.Interface, unixTime int64, title string, metadata map[string]string) (*bug.SetTitleOperation, error) {
 	c.mu.Lock()
-	op, err := bug.SetTitle(c.entity, author, unixTime, title, metadata)
-	c.mu.Unlock()
-	if err != nil {
-		return nil, err
-	}
-	return op, c.notifyUpdated()
+	defer c.mu.Unlock()
+	return bug.SetTitle(c.entity, author, unixTime, title, metadata)
 }
 
 // EditCreateComment is a convenience function to edit the body of a bug (the first comment)
@@ -164,12 +140,8 @@ func (c *BugCache) EditCreateComment(body string) (entity.CombinedId, *bug.EditC
 // EditCreateCommentRaw is a convenience function to edit the body of a bug (the first comment)
 func (c *BugCache) EditCreateCommentRaw(author identity.Interface, unixTime int64, body string, metadata map[string]string) (entity.CombinedId, *bug.EditCommentOperation, error) {
 	c.mu.Lock()
-	commentId, op, err := bug.EditCreateComment(c.entity, author, unixTime, body, nil, metadata)
-	c.mu.Unlock()
-	if err != nil {
-		return entity.UnsetCombinedId, nil, err
-	}
-	return commentId, op, c.notifyUpdated()
+	defer c.mu.Unlock()
+	return bug.EditCreateComment(c.entity, author, unixTime, body, nil, metadata)
 }
 
 func (c *BugCache) EditComment(target entity.CombinedId, message string) (*bug.EditCommentOperation, error) {
@@ -196,7 +168,7 @@ func (c *BugCache) EditCommentRaw(author identity.Interface, unixTime int64, tar
 	if commentId != target {
 		panic("EditComment returned unexpected comment id")
 	}
-	return op, c.notifyUpdated()
+	return op, nil
 }
 
 func (c *BugCache) SetMetadata(target entity.Id, newMetadata map[string]string) (*dag.SetMetadataOperation[*bug.Snapshot], error) {
@@ -210,10 +182,6 @@ func (c *BugCache) SetMetadata(target entity.Id, newMetadata map[string]string) 
 
 func (c *BugCache) SetMetadataRaw(author identity.Interface, unixTime int64, target entity.Id, newMetadata map[string]string) (*dag.SetMetadataOperation[*bug.Snapshot], error) {
 	c.mu.Lock()
-	op, err := bug.SetMetadata(c.entity, author, unixTime, target, newMetadata)
-	c.mu.Unlock()
-	if err != nil {
-		return nil, err
-	}
-	return op, c.notifyUpdated()
+	defer c.mu.Unlock()
+	return bug.SetMetadata(c.entity, author, unixTime, target, newMetadata)
 }

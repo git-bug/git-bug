@@ -110,6 +110,42 @@ func TestCommitStaleCopy(t *testing.T) {
 	assertEqualEntities(t, copy1.Entity, read.Entity)
 }
 
+// LastCommit follows the reference, and only moves with it.
+func TestLastCommit(t *testing.T) {
+	repo, id1, _, resolver, def := makeTestContext()
+
+	requireRef := func(t *testing.T, e *Foo) {
+		t.Helper()
+		ref, err := repo.ResolveRef(def.Namespace, e.Id().String())
+		require.NoError(t, err)
+		require.Equal(t, ref, e.LastCommit())
+	}
+
+	entity := wrapper(New(def))
+	require.Empty(t, entity.LastCommit())
+
+	entity.Append(newOp1(id1, "foo"))
+	require.Empty(t, entity.LastCommit())
+	require.NoError(t, entity.Commit(repo))
+	requireRef(t, entity)
+
+	read, err := Read(def, wrapper, repo, resolver, entity.Id())
+	require.NoError(t, err)
+	requireRef(t, read)
+
+	// pending operations don't move it
+	entity.Append(newOp2(id1, "bar"))
+	requireRef(t, entity)
+	require.NoError(t, entity.Commit(repo))
+	requireRef(t, entity)
+
+	// neither does a failed commit
+	read.Append(newOp2(id1, "stale"))
+	lastCommit := read.LastCommit()
+	require.ErrorIs(t, read.Commit(repo), repository.ErrRefChanged)
+	require.Equal(t, lastCommit, read.LastCommit())
+}
+
 // failingCommitRepo fails the failAt-th call to StoreCommit
 type failingCommitRepo struct {
 	repository.ClockedRepo

@@ -14,7 +14,7 @@ var _ CacheEntity = &CachedEntityBase[dag.Snapshot, dag.Operation]{}
 // CachedEntityBase provide the base function of an entity managed by the cache.
 type CachedEntityBase[SnapT dag.Snapshot, OpT dag.Operation] struct {
 	repo            repository.ClockedRepo
-	entityUpdated   func(id entity.Id) error
+	onCommit        func() error // called after each commit
 	getUserIdentity getUserIdentityFunc
 
 	mu     sync.RWMutex
@@ -29,10 +29,6 @@ func (e *CachedEntityBase[SnapT, OpT]) Snapshot() SnapT {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.entity.Compile()
-}
-
-func (e *CachedEntityBase[SnapT, OpT]) notifyUpdated() error {
-	return e.entityUpdated(e.entity.Id())
 }
 
 // ResolveOperationWithMetadata will find an operation that has the matching metadata
@@ -76,18 +72,21 @@ func (e *CachedEntityBase[SnapT, OpT]) Commit() error {
 		return err
 	}
 	e.mu.Unlock()
-	return e.notifyUpdated()
+	return e.onCommit()
 }
 
 func (e *CachedEntityBase[SnapT, OpT]) CommitAsNeeded() error {
 	e.mu.Lock()
-	err := e.entity.CommitAsNeeded(e.repo)
-	if err != nil {
+	if !e.entity.NeedCommit() {
 		e.mu.Unlock()
+		return nil
+	}
+	err := e.entity.Commit(e.repo)
+	e.mu.Unlock()
+	if err != nil {
 		return err
 	}
-	e.mu.Unlock()
-	return e.notifyUpdated()
+	return e.onCommit()
 }
 
 func (e *CachedEntityBase[SnapT, OpT]) NeedCommit() bool {
@@ -96,8 +95,10 @@ func (e *CachedEntityBase[SnapT, OpT]) NeedCommit() bool {
 	return e.entity.NeedCommit()
 }
 
-func (e *CachedEntityBase[SnapT, OpT]) Lock() {
-	e.mu.Lock()
+func (e *CachedEntityBase[SnapT, OpT]) LastCommit() repository.Hash {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.entity.LastCommit()
 }
 
 func (e *CachedEntityBase[SnapT, OpT]) CreateLamportTime() lamport.Time {

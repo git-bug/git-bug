@@ -170,6 +170,40 @@ func TestIdentityCommitStaleCopy(t *testing.T) {
 	require.Empty(t, loaded.Login())
 }
 
+// LastCommit follows the reference, and only moves with it.
+func TestIdentityLastCommit(t *testing.T) {
+	repo := makeIdentityTestRepo(t)
+
+	requireRef := func(t *testing.T, i *Identity) {
+		t.Helper()
+		ref, err := repo.ResolveRef(Namespace, i.Id().String())
+		require.NoError(t, err)
+		require.Equal(t, ref, i.LastCommit())
+	}
+
+	identity, err := NewIdentity(repo, "René Descartes", "rene.descartes@example.com")
+	require.NoError(t, err)
+	require.Empty(t, identity.LastCommit())
+	require.NoError(t, identity.Commit(repo))
+	requireRef(t, identity)
+
+	read, err := Read(repo, identity.Id())
+	require.NoError(t, err)
+	requireRef(t, read)
+
+	// a pending version doesn't move it
+	require.NoError(t, identity.Mutate(repo, func(orig *Mutator) { orig.Name = "René" }))
+	requireRef(t, identity)
+	require.NoError(t, identity.Commit(repo))
+	requireRef(t, identity)
+
+	// neither does a failed commit
+	require.NoError(t, read.Mutate(repo, func(orig *Mutator) { orig.Login = "rene" }))
+	lastCommit := read.LastCommit()
+	require.ErrorIs(t, read.Commit(repo), repository.ErrRefChanged)
+	require.Equal(t, lastCommit, read.LastCommit())
+}
+
 func commitsAreSet(t *testing.T, identity *Identity) {
 	for _, version := range identity.versions {
 		require.NotEmpty(t, version.commitHash)
