@@ -5,7 +5,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sync"
 	"testing"
 
 	"github.com/go-git/go-billy/v5/util"
@@ -73,12 +72,7 @@ func TestGoGitRepo_Head(t *testing.T) {
 	_, err := repo.Head()
 	require.ErrorIs(t, err, ErrNotFound)
 
-	blobHash, err := repo.StoreData(randomData())
-	require.NoError(t, err)
-	treeHash, err := repo.StoreTree([]TreeEntry{{ObjectType: Blob, Hash: blobHash, Name: "blob"}})
-	require.NoError(t, err)
-	commit, err := repo.StoreCommit(treeHash)
-	require.NoError(t, err)
+	commit := storeTestCommits(t, repo, 1)[0]
 	require.NoError(t, repo.SetBranch("master", commit))
 
 	meta, err := repo.Head()
@@ -89,46 +83,6 @@ func TestGoGitRepo_Head(t *testing.T) {
 		Type:      GitRefTypeBranch,
 		Hash:      string(commit),
 	}, meta)
-}
-
-func TestGoGitRepo_ConcurrentUpdateRef(t *testing.T) {
-	repo := CreateGoGitTestRepo(t, false)
-
-	commits := make([]Hash, 21)
-	for i := range commits {
-		blobHash, err := repo.StoreData(randomData())
-		require.NoError(t, err)
-		treeHash, err := repo.StoreTree([]TreeEntry{{ObjectType: Blob, Hash: blobHash, Name: "blob"}})
-		require.NoError(t, err)
-		commits[i], err = repo.StoreCommit(treeHash)
-		require.NoError(t, err)
-	}
-
-	key := randomKey()
-	require.NoError(t, repo.UpdateRef("concurrent", key, "", commits[0]))
-
-	// every writer moves the ref from the same commit to its own: exactly one must succeed
-	candidates := commits[1:]
-	errs := make([]error, len(candidates))
-	var wg sync.WaitGroup
-	for i, commit := range candidates {
-		wg.Go(func() { errs[i] = repo.UpdateRef("concurrent", key, commits[0], commit) })
-	}
-	wg.Wait()
-
-	var winners []Hash
-	for i, err := range errs {
-		if err == nil {
-			winners = append(winners, candidates[i])
-			continue
-		}
-		require.ErrorIs(t, err, ErrRefChanged)
-	}
-	require.Len(t, winners, 1)
-
-	h, err := repo.ResolveRef("concurrent", key)
-	require.NoError(t, err)
-	require.Equal(t, winners[0], h)
 }
 
 func TestGoGitRepo_Indexes(t *testing.T) {

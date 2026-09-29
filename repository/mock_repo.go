@@ -232,6 +232,9 @@ type commit struct {
 	message  string
 }
 
+// mockRepoDataBrowse keeps everything in unguarded maps: it is not safe for
+// concurrent use. That also makes UpdateRef trivially atomic, as RepoData
+// requires; tests exercising concurrency use GoGitRepo.
 type mockRepoDataBrowse struct {
 	blobs   map[Hash][]byte
 	trees   map[Hash]string

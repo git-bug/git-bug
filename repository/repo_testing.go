@@ -303,15 +303,6 @@ func RepoDataUpdateRefTest(t *testing.T, repo RepoData) {
 		_, err := repo.ResolveRef(namespace, key)
 		require.ErrorIs(t, err, ErrNotFound)
 
-		// TODO: remove once go-git includes a fix for https://github.com/go-git/go-git/issues/2399
-		if rk, ok := repo.(*replaceKeyring); ok {
-			if _, ok := rk.TestedRepo.(*GoGitRepo); ok {
-				// the empty ref file left by go-git would break listing refs in the next tests
-				require.NoError(t, repo.RemoveRef(namespace, key))
-				t.Skip("go-git leaves an empty ref file behind: https://github.com/go-git/go-git/issues/2399")
-			}
-		}
-
 		refs, err := repo.ListRefs(namespace)
 		require.NoError(t, err)
 		require.NotContains(t, refs, key)

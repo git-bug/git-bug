@@ -21,7 +21,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	fdiff "github.com/go-git/go-git/v5/plumbing/format/diff"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/go-git/go-git/v5/storage"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"golang.org/x/sync/singleflight"
 	"golang.org/x/sys/execabs"
@@ -701,66 +700,13 @@ func (repo *GoGitRepo) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity,
 	return Hash(hash.String()), nil
 }
 
-// ListRefs returns every local ref of a namespace, by key.
-func (repo *GoGitRepo) ListRefs(namespace string) (map[string]Hash, error) {
-	return repo.listRefs(refPrefix(namespace))
-}
+// ListRefs, UpdateRef, RemoveRef and ListTrackingRefs are in gogit_refs.go:
+// go-git gets them wrong in ways git-bug depends on.
 
 // ResolveRef returns the commit a local ref points to.
 // Returns ErrNotFound if it doesn't exist.
 func (repo *GoGitRepo) ResolveRef(namespace string, key string) (Hash, error) {
 	return repo.lookupRef(refPrefix(namespace) + key)
-}
-
-// UpdateRef points a local ref to commit, only if it currently points to old.
-// An empty old means that the ref must not exist yet.
-// Returns ErrRefChanged otherwise, and the ref is left unchanged.
-func (repo *GoGitRepo) UpdateRef(namespace string, key string, old Hash, commit Hash) error {
-	ref := refPrefix(namespace) + key
-	name := plumbing.ReferenceName(ref)
-	newRef := plumbing.NewHashReference(name, plumbing.NewHash(commit.String()))
-
-	// TODO: both branches below work around go-git limitations tracked in
-	// https://github.com/go-git/go-git/issues/2399. Once they are fixed:
-	//   - CheckAndSetReference no longer leaves an empty loose ref file behind when
-	//     it rejects an update, so the workaround in RepoDataUpdateRefTest can
-	//     go and its "stale expected value on a missing ref" assertion be unskipped.
-	//   - a zero hash as old means "must not exist", so the branch below collapses
-	//     into a single CheckAndSetReference and becomes atomic. Drop the caveat on
-	//     RepoData.UpdateRef then. Don't do this before the fix above: it would
-	//     move ref creation onto the code path that leaves the empty ref file behind.
-
-	if old == "" {
-		// go-git can't express "must not exist" atomically: two concurrent
-		// creations of the same ref can both succeed.
-		_, err := repo.r.Reference(name, false)
-		if err == nil {
-			return fmt.Errorf("%w: %s already exists", ErrRefChanged, ref)
-		}
-		if err != plumbing.ErrReferenceNotFound {
-			return err
-		}
-		return repo.r.Storer.SetReference(newRef)
-	}
-
-	// go-git holds a lock on the ref file while checking and writing.
-	err := repo.r.Storer.CheckAndSetReference(newRef, plumbing.NewHashReference(name, plumbing.NewHash(old.String())))
-	if errors.Is(err, storage.ErrReferenceHasChanged) || errors.Is(err, plumbing.ErrReferenceNotFound) {
-		return fmt.Errorf("%w: %s", ErrRefChanged, ref)
-	}
-	return err
-}
-
-// RemoveRef deletes a local ref.
-// RemoveRef is idempotent.
-func (repo *GoGitRepo) RemoveRef(namespace string, key string) error {
-	return repo.r.Storer.RemoveReference(plumbing.ReferenceName(refPrefix(namespace) + key))
-}
-
-// ListTrackingRefs returns every tracking ref of a namespace for a remote,
-// by key.
-func (repo *GoGitRepo) ListTrackingRefs(remote string, namespace string) (map[string]Hash, error) {
-	return repo.listRefs(trackingRefPrefix(remote, namespace))
 }
 
 // ResolveTrackingRef returns the commit a tracking ref points to.
@@ -773,27 +719,6 @@ func (repo *GoGitRepo) ResolveTrackingRef(remote string, namespace string, key s
 // RemoveTrackingRef is idempotent.
 func (repo *GoGitRepo) RemoveTrackingRef(remote string, namespace string, key string) error {
 	return repo.r.Storer.RemoveReference(plumbing.ReferenceName(trackingRefPrefix(remote, namespace) + key))
-}
-
-func (repo *GoGitRepo) listRefs(prefix string) (map[string]Hash, error) {
-	refIter, err := repo.r.References()
-	if err != nil {
-		return nil, err
-	}
-
-	refs := make(map[string]Hash)
-
-	err = refIter.ForEach(func(ref *plumbing.Reference) error {
-		if key, ok := strings.CutPrefix(ref.Name().String(), prefix); ok {
-			refs[key] = Hash(ref.Hash().String())
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return refs, nil
 }
 
 func (repo *GoGitRepo) lookupRef(name string) (Hash, error) {
