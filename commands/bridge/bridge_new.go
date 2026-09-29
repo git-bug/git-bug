@@ -32,7 +32,41 @@ func newBridgeNewCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new",
 		Short: "Configure a new bridge",
-		Long:  "Configure a new bridge by passing flags or/and using interactive terminal prompts. You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.",
+		Long: `Configure a new bridge by passing flags or/and using interactive terminal prompts.
+You can avoid all the terminal prompts by passing all the necessary flags to configure your bridge.
+
+Authentication tokens and required permissions by target:
+
+GitHub:
+  Requires a classic personal access token (https://github.com/settings/tokens;
+  fine-grained tokens starting with 'github_pat_' are not supported).
+  Required scopes:
+    - 'public_repo' for public repositories
+    - 'repo' for private repositories
+  No other scope (code, branches, pull request) is needed or used.
+
+GitLab:
+  Requires a personal access token created on the target GitLab instance
+  ($BASE_URL/-/user_settings/personal_access_tokens).
+  Required scopes:
+    - 'api' (read/write) to import issues and push changes (issues,
+      comments, labels, status). 'read_api' is enough if you only pull.
+    - Read access to the project (at least 'Reporter' role, or public
+      visibility) is required, and at least 'Developer' role to push.
+
+Jira:
+  Authenticates with your user account, so the account itself must have
+  permission to view the project and to create, comment on, edit and
+  transition issues.
+    - Jira Cloud: an API token generated at
+      https://id.atlassian.com/manage-profile/security/api-tokens
+      (sent along with your username).
+    - Jira Data Center / Server: a username and password (session
+      authentication), or an API token.
+
+Launchpad:
+  No token required: the Launchpad bridge is read-only and currently uses
+  the public Launchpad API without any authentication.`,
 		Example: `# Interactive example
 [1]: github
 [2]: gitlab
@@ -69,22 +103,31 @@ Successfully configured bridge: default
 git bug bridge new \
     --name=default \
     --target=github \
-    --owner=example-owner
+    --owner=example-owner \
     --project=example-repo \
+    --token=$TOKEN
+
+# For GitLab
+git bug bridge new \
+    --name=default \
+    --target=gitlab \
+    --url=https://gitlab.example.com/example-org/example-repo \
+    --token=$TOKEN
+
+# For Jira
+git bug bridge new \
+    --name=default \
+    --target=jira \
+    --base-url=https://jira.example.com \
+    --project=PROJ \
+    --login=user@example.com \
     --token=$TOKEN
 
 # For Launchpad
 git bug bridge new \
     --name=default \
     --target=launchpad-preview \
-    --url=https://bugs.launchpad.net/ubuntu/
-
-# For Gitlab
-git bug bridge new \
-    --name=default \
-    --target=gitlab \
-    --url=https://github.com/example-org/example-repo \
-    --token=$TOKEN`,
+    --url=https://bugs.launchpad.net/ubuntu/`,
 		PreRunE: execenv.LoadBackend(env),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBridgeNew(env, options)
