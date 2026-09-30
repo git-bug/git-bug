@@ -1,11 +1,14 @@
 package cache
 
 import (
+	"encoding/gob"
 	"fmt"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/go-git/go-billy/v5"
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/entities/bug"
@@ -437,4 +440,60 @@ func TestSubCacheDerived(t *testing.T) {
 		}
 		requireDerivedBuiltFromRefs(t, repo, c)
 	})
+}
+
+func TestSubCacheWriteNeverTorn(t *testing.T) {
+	repo := repository.CreateGoGitTestRepo(t, false)
+	random_bugs.FillRepoWithSeed(repo, 50, 42)
+	c := createTestRepoCacheNoEvents(t, repo)
+
+	// read the file the way another process would: outside of the cache locks
+	readRaw := func() error {
+		var f billy.File
+		err := retryOnWindows(func() (err error) {
+			f, err = repo.LocalStorage().Open(filepath.Join("cache", bug.Namespace))
+			return err
+		})
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		aux := struct {
+			Version   uint
+			Excerpts  map[entity.Id]*BugExcerpt
+			BuiltFrom map[entity.Id]repository.Hash
+		}{}
+		return gob.NewDecoder(f).Decode(&aux)
+	}
+
+	const writes = 200
+	done := make(chan error)
+	go func() {
+		for range writes {
+			if err := c.bugs.write(); err != nil {
+				done <- err
+				return
+			}
+		}
+		done <- nil
+	}()
+
+	for {
+		select {
+		case err := <-done:
+			require.NoError(t, err)
+
+			// no temporary file is left behind
+			files, err := repo.LocalStorage().ReadDir("cache")
+			require.NoError(t, err)
+			var names []string
+			for _, fi := range files {
+				names = append(names, fi.Name())
+			}
+			require.ElementsMatch(t, []string{bug.Namespace, identity.Namespace}, names)
+			return
+		default:
+			require.NoError(t, readRaw())
+		}
+	}
 }

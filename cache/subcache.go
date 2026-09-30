@@ -4,9 +4,13 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
+	"time"
 
+	"github.com/go-git/go-billy/v5"
 	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/entities/identity"
@@ -120,7 +124,11 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) Load() error {
 	sc.muMaps.Lock()
 	defer sc.muMaps.Unlock()
 
-	f, err := sc.repo.LocalStorage().Open(filepath.Join("cache", sc.namespace))
+	var f billy.File
+	err := retryOnWindows(func() (err error) {
+		f, err = sc.repo.LocalStorage().Open(filepath.Join("cache", sc.namespace))
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -199,7 +207,11 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) write() error {
 		return err
 	}
 
-	f, err := sc.repo.LocalStorage().Create(filepath.Join("cache", sc.namespace))
+	// Written aside then renamed over the cache file, so that a concurrent reader
+	// sees either the previous version or this one, never a partial write.
+	storage := sc.repo.LocalStorage()
+
+	f, err := storage.TempFile("cache", sc.namespace+".tmp-")
 	if err != nil {
 		return err
 	}
@@ -207,10 +219,25 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) write() error {
 	_, err = f.Write(data.Bytes())
 	if err != nil {
 		_ = f.Close()
+		_ = storage.Remove(f.Name())
 		return err
 	}
 
-	return f.Close()
+	err = f.Close()
+	if err != nil {
+		_ = storage.Remove(f.Name())
+		return err
+	}
+
+	err = retryOnWindows(func() error {
+		return storage.Rename(f.Name(), filepath.Join("cache", sc.namespace))
+	})
+	if err != nil {
+		_ = storage.Remove(f.Name())
+		return err
+	}
+
+	return nil
 }
 
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) Build() <-chan BuildEvent {
@@ -927,5 +954,17 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) evictIfNeeded() {
 		if sc.lru.Len() <= sc.maxLoaded {
 			return
 		}
+	}
+}
+
+// On Windows, a file can't be replaced while open, nor opened while being
+// replaced. Both are short-lived, so retry for a bit.
+func retryOnWindows(fn func() error) error {
+	for i := 0; ; i++ {
+		err := fn()
+		if err == nil || runtime.GOOS != "windows" || os.IsNotExist(err) || i == 100 {
+			return err
+		}
+		time.Sleep(20 * time.Millisecond)
 	}
 }
