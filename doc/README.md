@@ -10,6 +10,8 @@ The documentation listed below aims to help provide insight into the usage of
 - Check the [CLI documentation](./md/git-bug.md) for commands and options (or
   run `man git-bug` after [installation](../INSTALLATION.md))
 - Filter results using the [query language](./usage/query-language.md)
+- Look up every available setting in the
+  [configuration reference](./usage/configuration.md)
 - Learn how to [sync third party issues](./usage/third-party.md) for offline
   reading and editing
 
