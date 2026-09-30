@@ -50,9 +50,5 @@ func TestStoreLoad(t *testing.T) {
 
 	require.IsType(t, (*rsa.PrivateKey)(nil), k.private.PrivateKey)
 
-	// See https://github.com/golang/crypto/pull/175
-	rsaPriv := read.private.PrivateKey.(*rsa.PrivateKey)
-	rsaPriv.Primes[0], rsaPriv.Primes[1] = rsaPriv.Primes[1], rsaPriv.Primes[0]
-
 	require.True(t, k.private.PrivateKey.(*rsa.PrivateKey).Equal(read.private.PrivateKey))
 }
