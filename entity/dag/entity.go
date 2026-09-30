@@ -64,7 +64,7 @@ func Read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 	}
 
 	commit, err := repo.ResolveRef(def.Namespace, id.String())
-	if err == repository.ErrNotFound {
+	if errors.Is(err, repository.ErrNotFound) {
 		return *new(EntityT), entity.NewErrNotFound(def.Typename)
 	}
 	if err != nil {
@@ -81,7 +81,7 @@ func readTracking[EntityT entity.Interface](def Definition, wrapper func(e *Enti
 	}
 
 	commit, err := repo.ResolveTrackingRef(remote, def.Namespace, id.String())
-	if err == repository.ErrNotFound {
+	if errors.Is(err, repository.ErrNotFound) {
 		return *new(EntityT), entity.NewErrNotFound(def.Typename)
 	}
 	if err != nil {

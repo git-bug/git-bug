@@ -177,8 +177,7 @@ type RepoData interface {
 	ResolveRef(namespace string, key string) (Hash, error)
 
 	// UpdateRef points a local ref to commit, only if it currently points to old.
-	// An empty old means that the ref must not exist yet; that check is not
-	// atomic, two concurrent creations of the same ref can both succeed.
+	// An empty old means that the ref must not exist yet.
 	// Returns ErrRefChanged otherwise, and the ref is left unchanged.
 	UpdateRef(namespace string, key string, old Hash, commit Hash) error
 
