@@ -139,7 +139,7 @@ func (c *RepoCacheBug) Query(q *query.Query) ([]entity.Id, error) {
 
 		for _, hit := range res {
 			id := entity.Id(hit)
-			// the index can be ahead of the excerpts, see SubCache.publishDerived
+			// the index can be ahead of the excerpts, see SubCache.syncLocked
 			if excerpt, ok := c.excerpts[id]; ok {
 				foundBySearch[id] = excerpt
 			}

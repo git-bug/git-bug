@@ -34,8 +34,8 @@ var _ repository.RepoKeyring = &RepoCache{}
 type cacheMgmt interface {
 	Typename() string
 	EnsureClocks() error
-	Load() error
-	Build() <-chan BuildEvent
+	// Load reads the cache, and brings it up to date with the repository.
+	Load() <-chan BuildEvent
 	SetCacheSize(size int)
 	RemoveAll() error
 	MergeAll(remote string) <-chan entity.MergeResult
@@ -130,13 +130,7 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan 
 			}
 		}
 
-		err = c.load()
-		if err == nil {
-			return
-		}
-
-		// Cache is either missing, broken or outdated. Rebuilding.
-		c.buildCache(events)
+		c.load(events)
 	}()
 
 	return c, events
@@ -175,13 +169,25 @@ func (c *RepoCache) setCacheSize(size int) {
 	}
 }
 
-// load will try to read from the disk all the cache files
-func (c *RepoCache) load() error {
-	var errWait multierr.ErrWaitGroup
-	for _, mgmt := range c.subcaches {
-		errWait.Go(mgmt.Load)
+// load reads the cache files, and brings them up to date with the repository.
+func (c *RepoCache) load(events chan BuildEvent) {
+	// announced once, before the first subcache starts building
+	var announce sync.Once
+
+	var wg sync.WaitGroup
+	for _, subcache := range c.subcaches {
+		wg.Add(1)
+		go func(subcache cacheMgmt) {
+			defer wg.Done()
+			for event := range subcache.Load() {
+				if event.Event == BuildEventStarted {
+					announce.Do(func() { events <- BuildEvent{Event: BuildEventCacheIsBuilt} })
+				}
+				events <- event
+			}
+		}(subcache)
 	}
-	return errWait.Wait()
+	wg.Wait()
 }
 
 func (c *RepoCache) lock(events chan BuildEvent) error {
@@ -221,27 +227,6 @@ func (c *RepoCache) Close() error {
 	}
 
 	return c.repo.LocalStorage().Remove(lockfile)
-}
-
-func (c *RepoCache) buildCache(events chan BuildEvent) {
-	events <- BuildEvent{Event: BuildEventCacheIsBuilt}
-
-	var wg sync.WaitGroup
-	for _, subcache := range c.subcaches {
-		wg.Add(1)
-		go func(subcache cacheMgmt) {
-			defer wg.Done()
-
-			buildEvents := subcache.Build()
-			for buildEvent := range buildEvents {
-				events <- buildEvent
-				if buildEvent.Err != nil {
-					return
-				}
-			}
-		}(subcache)
-	}
-	wg.Wait()
 }
 
 func (c *RepoCache) registerObserver(repoName string, typename string, observer Observer) error {
