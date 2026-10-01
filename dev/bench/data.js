@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790889786651,
+  "lastUpdate": 1790890291535,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -22850,6 +22850,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "BenchmarkReadBugs150 - allocs/op",
             "value": 689439,
+            "unit": "allocs/op",
+            "extra": "3 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f219ad3d2905ae2ab83ba31681a444a6e5da2d58",
+          "message": "Merge pull request #1648 from git-bug/dependabot/npm_and_yarn/webui/types/node-26.4.0\n\nchore(deps-dev): Bump @types/node from 22.20.2 to 26.4.0 in /webui",
+          "timestamp": "2026-10-01T21:25:52Z",
+          "tree_id": "63d4fba0d9c0809503557856df87c102b7e75087",
+          "url": "https://github.com/git-bug/git-bug/commit/f219ad3d2905ae2ab83ba31681a444a6e5da2d58"
+        },
+        "date": 1790890290553,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 11633127,
+            "unit": "ns/op\t 1576135 B/op\t   21291 allocs/op",
+            "extra": "114 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 11633127,
+            "unit": "ns/op",
+            "extra": "114 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 1576135,
+            "unit": "B/op",
+            "extra": "114 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 21291,
+            "unit": "allocs/op",
+            "extra": "114 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 60604965,
+            "unit": "ns/op\t 8192296 B/op\t  111908 allocs/op",
+            "extra": "24 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 60604965,
+            "unit": "ns/op",
+            "extra": "24 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 8192296,
+            "unit": "B/op",
+            "extra": "24 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 111908,
+            "unit": "allocs/op",
+            "extra": "24 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 373708330,
+            "unit": "ns/op\t55410765 B/op\t  690363 allocs/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 373708330,
+            "unit": "ns/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 55410765,
+            "unit": "B/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 690363,
             "unit": "allocs/op",
             "extra": "3 times\n4 procs"
           }
