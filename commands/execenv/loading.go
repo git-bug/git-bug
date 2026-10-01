@@ -10,6 +10,7 @@ import (
 
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/interrupt"
 )
@@ -44,12 +45,7 @@ func LoadRepoEnsureUser(env *Env) func(*cobra.Command, []string) error {
 			return err
 		}
 
-		_, err = identity.GetUserIdentity(env.Repo)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return ensureUser(env.Repo)
 	}
 }
 
@@ -97,12 +93,7 @@ func LoadBackendEnsureUser(env *Env) func(*cobra.Command, []string) error {
 			return err
 		}
 
-		_, err = identity.GetUserIdentity(env.Repo)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return ensureUser(env.Repo)
 	}
 }
 
@@ -167,4 +158,15 @@ func CacheBuildProgressBar(env *Env, events chan cache.BuildEvent) error {
 	}
 
 	return nil
+}
+
+// ensureUser checks that a valid user identity is configured for the repo.
+func ensureUser(repo repository.Repo) error {
+	_, err := identity.GetUserIdentity(repo)
+	if entity.IsErrNotFound(err) {
+		// GetUserIdentity already removed the dangling configuration
+		return fmt.Errorf("the configured user identity doesn't exist in this repository and has been unset; " +
+			"select an existing one with \"git bug user adopt\" or create one with \"git bug user new\"")
+	}
+	return err
 }
