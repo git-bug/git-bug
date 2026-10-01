@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790886977577,
+  "lastUpdate": 1790887961250,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -22468,6 +22468,102 @@ window.BENCHMARK_DATA = {
             "value": 711332,
             "unit": "allocs/op",
             "extra": "4 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0b63879de4ea2ac1bb5f0b776feae77270d39d1e",
+          "message": "Change Dependabot schedule from weekly to monthly",
+          "timestamp": "2026-10-01T22:51:47+02:00",
+          "tree_id": "18f4a9ed66a49f692a1ffbee6d522af442ac7e4f",
+          "url": "https://github.com/git-bug/git-bug/commit/0b63879de4ea2ac1bb5f0b776feae77270d39d1e"
+        },
+        "date": 1790887960004,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 6529933,
+            "unit": "ns/op\t 1751310 B/op\t   24062 allocs/op",
+            "extra": "228 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 6529933,
+            "unit": "ns/op",
+            "extra": "228 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 1751310,
+            "unit": "B/op",
+            "extra": "228 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 24062,
+            "unit": "allocs/op",
+            "extra": "228 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 32177674,
+            "unit": "ns/op\t 8404723 B/op\t  115368 allocs/op",
+            "extra": "34 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 32177674,
+            "unit": "ns/op",
+            "extra": "34 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 8404723,
+            "unit": "B/op",
+            "extra": "34 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 115368,
+            "unit": "allocs/op",
+            "extra": "34 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 207533304,
+            "unit": "ns/op\t55398464 B/op\t  720922 allocs/op",
+            "extra": "5 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 207533304,
+            "unit": "ns/op",
+            "extra": "5 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 55398464,
+            "unit": "B/op",
+            "extra": "5 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 720922,
+            "unit": "allocs/op",
+            "extra": "5 times\n4 procs"
           }
         ]
       }
