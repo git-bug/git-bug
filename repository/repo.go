@@ -96,24 +96,17 @@ type RepoIndex interface {
 	GetIndex(name string) (Index, error)
 }
 
-// Index is a full-text search index
+// Index is a full-text search index. Each document records the commit it was
+// built from, so that the index can tell what it is up to date with.
 type Index interface {
-	// IndexOne indexes one document, for the given ID. If the document already exist,
-	// it replaces it.
-	IndexOne(id string, texts []string) error
+	// NewBatch starts a batch of changes, applied as a whole by its Apply.
+	NewBatch() IndexBatch
 
-	// IndexBatch start a batch indexing. The returned indexer function is used the same
-	// way as IndexOne, and the closer function complete the batch insertion.
-	IndexBatch() (indexer func(id string, texts []string) error, closer func() error)
+	// BuiltFrom returns, for each document, the commit it was built from.
+	BuiltFrom() (map[string]Hash, error)
 
 	// Search returns the list of IDs matching the given terms.
 	Search(terms []string) (ids []string, err error)
-
-	// DocCount returns the number of document in the index.
-	DocCount() (uint64, error)
-
-	// Remove delete one document in the index.
-	Remove(id string) error
 
 	// Clear empty the index.
 	Clear() error
@@ -121,6 +114,21 @@ type Index interface {
 	// Close closes the index and make sure everything is safely written. After this call
 	// the index can't be used anymore.
 	Close() error
+}
+
+// IndexBatch is a set of changes to an Index. Nothing is visible until Apply,
+// which applies every change, documents and the commits they were built from,
+// or none of them.
+type IndexBatch interface {
+	// Set indexes the document of an ID, built from the given commit, replacing
+	// any previous version.
+	Set(id string, texts []string, commit Hash) error
+
+	// Remove deletes the document of an ID, if any.
+	Remove(id string)
+
+	// Apply applies the batch. A batch can't be used anymore afterward.
+	Apply() error
 }
 
 type Commit struct {

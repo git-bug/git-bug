@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"os"
 	"strings"
@@ -68,35 +70,65 @@ func (b *bleveIndex) makeIndex() error {
 	return nil
 }
 
-func (b *bleveIndex) IndexOne(id string, texts []string) error {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	return b._index(b.index.Index, id, texts)
+// builtFromKey is the internal value of the index holding, for each document,
+// the commit it was built from. Internal values are applied and persisted with
+// the documents of the same batch, so a document and its commit land together.
+var builtFromKey = []byte("git-bug:built-from")
+
+func (b *bleveIndex) NewBatch() IndexBatch {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	return &bleveBatch{
+		index:   b,
+		batch:   b.index.NewBatch(),
+		changes: make(map[string]Hash),
+	}
 }
 
-func (b *bleveIndex) IndexBatch() (indexer func(id string, texts []string) error, closer func() error) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
+func (b *bleveIndex) BuiltFrom() (map[string]Hash, error) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
 
-	batch := b.index.NewBatch()
-
-	indexer = func(id string, texts []string) error {
-		return b._index(batch.Index, id, texts)
-	}
-
-	closer = func() error {
-		return b.index.Batch(batch)
-	}
-
-	return indexer, closer
+	return b.builtFrom()
 }
 
-func (b *bleveIndex) _index(indexer func(string, interface{}) error, id string, texts []string) error {
-	searchable := struct{ Text []string }{Text: texts}
+// builtFrom reads the record of what the documents were built from. No value at
+// all is an empty record: a new or cleared index, or one written before the
+// index recorded anything. A record that can't be decoded fails, and has the
+// cache rebuild the index, which also upgrades a record in an older format.
+func (b *bleveIndex) builtFrom() (map[string]Hash, error) {
+	raw, err := b.index.GetInternal(builtFromKey)
+	if err != nil {
+		return nil, err
+	}
+	builtFrom := make(map[string]Hash)
+	if len(raw) == 0 {
+		return builtFrom, nil
+	}
+	err = gob.NewDecoder(bytes.NewReader(raw)).Decode(&builtFrom)
+	if err != nil {
+		return nil, fmt.Errorf("malformed index record: %w", err)
+	}
+	return builtFrom, nil
+}
 
-	// See https://github.com/blevesearch/bleve/issues/1576
+type bleveBatch struct {
+	index *bleveIndex
+	batch *bleve.Batch
+	// the commit of each document set, or "" for a removed one
+	changes map[string]Hash
+}
+
+func (bb *bleveBatch) Set(id string, texts []string, commit Hash) error {
+	if !commit.IsValid() {
+		return fmt.Errorf("invalid commit %q for document %s", commit, id)
+	}
+
+	// drop the very long words, see https://github.com/blevesearch/bleve/issues/1576
+	normalized := make([]string, len(texts))
 	var sb strings.Builder
-	normalize := func(text string) string {
+	for i, text := range texts {
 		sb.Reset()
 		for _, field := range strings.Fields(text) {
 			if utf8.RuneCountInString(field) < 100 {
@@ -104,14 +136,47 @@ func (b *bleveIndex) _index(indexer func(string, interface{}) error, id string, 
 				sb.WriteRune(' ')
 			}
 		}
-		return sb.String()
+		normalized[i] = sb.String()
 	}
 
-	for i, s := range searchable.Text {
-		searchable.Text[i] = normalize(s)
+	err := bb.batch.Index(id, struct{ Text []string }{Text: normalized})
+	if err != nil {
+		return err
 	}
+	bb.changes[id] = commit
+	return nil
+}
 
-	return indexer(id, searchable)
+func (bb *bleveBatch) Remove(id string) {
+	bb.batch.Delete(id)
+	bb.changes[id] = ""
+}
+
+func (bb *bleveBatch) Apply() error {
+	b := bb.index
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	// under the lock, so that two batches don't both update the same record
+	builtFrom, err := b.builtFrom()
+	if err != nil {
+		return err
+	}
+	for id, commit := range bb.changes {
+		if commit == "" {
+			delete(builtFrom, id)
+		} else {
+			builtFrom[id] = commit
+		}
+	}
+	var raw bytes.Buffer
+	err = gob.NewEncoder(&raw).Encode(builtFrom)
+	if err != nil {
+		return err
+	}
+	bb.batch.SetInternal(builtFromKey, raw.Bytes())
+
+	return b.index.Batch(bb.batch)
 }
 
 func (b *bleveIndex) Search(terms []string) ([]string, error) {
@@ -138,17 +203,6 @@ func (b *bleveIndex) Search(terms []string) ([]string, error) {
 	}
 
 	return ids, nil
-}
-
-func (b *bleveIndex) DocCount() (uint64, error) {
-	return b.index.DocCount()
-}
-
-func (b *bleveIndex) Remove(id string) error {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	return b.index.Delete(id)
 }
 
 func (b *bleveIndex) Clear() error {

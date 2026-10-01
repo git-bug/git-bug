@@ -3,12 +3,14 @@ package cache
 import (
 	"encoding/gob"
 	"fmt"
+	"maps"
 	"path/filepath"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/util"
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/entities/bug"
@@ -19,8 +21,8 @@ import (
 	"github.com/git-bug/git-bug/repository"
 )
 
-// requireDerivedBuiltFromRefs checks that the cache recorded, for every entity,
-// the commit its reference points to, and nothing else.
+// requireDerivedBuiltFromRefs checks that the cache and the index recorded, for
+// every entity, the commit its reference points to, and nothing else.
 func requireDerivedBuiltFromRefs(t *testing.T, repo repository.ClockedRepo, c *RepoCache) {
 	t.Helper()
 
@@ -34,15 +36,25 @@ func requireDerivedBuiltFromRefs(t *testing.T, repo repository.ClockedRepo, c *R
 		}
 		require.Equal(t, expected, builtFrom)
 		require.Equal(t, len(expected), excerpts)
+
+		index, err := repo.GetIndex(namespace)
+		require.NoError(t, err)
+		indexBuiltFrom, err := index.BuiltFrom()
+		require.NoError(t, err)
+		require.Equal(t, refs, indexBuiltFrom)
 	}
 
+	// copied under the lock and checked after, as a failed check stops the test
+	// right away, and a lock still held would hang its cleanup
 	c.bugs.muMaps.RLock()
-	check(bug.Namespace, c.bugs.builtFrom, len(c.bugs.excerpts))
+	bugsBuiltFrom, bugsExcerpts := maps.Clone(c.bugs.builtFrom), len(c.bugs.excerpts)
 	c.bugs.muMaps.RUnlock()
+	check(bug.Namespace, bugsBuiltFrom, bugsExcerpts)
 
 	c.identities.muMaps.RLock()
-	check(identity.Namespace, c.identities.builtFrom, len(c.identities.excerpts))
+	identitiesBuiltFrom, identitiesExcerpts := maps.Clone(c.identities.builtFrom), len(c.identities.excerpts)
 	c.identities.muMaps.RUnlock()
+	check(identity.Namespace, identitiesBuiltFrom, identitiesExcerpts)
 }
 
 func searchBugs(t *testing.T, c *RepoCache, term string) []entity.Id {
@@ -83,6 +95,15 @@ func TestSubCacheDerived(t *testing.T) {
 		// the identities resolved as the authors of bugs, which can be evicted
 		require.Empty(t, c.bugs.cached)
 		require.Equal(t, c.identities.lru.Len(), len(c.identities.cached))
+	})
+
+	t.Run("built from git, over several index batches", func(t *testing.T) {
+		repo := repository.CreateGoGitTestRepo(t, false)
+		// more than twice Build's batch size, and not a multiple of it
+		random_bugs.FillRepoWithSeed(repo, 200, 42)
+
+		c := createTestRepoCacheNoEvents(t, repo)
+		requireDerivedBuiltFromRefs(t, repo, c)
 	})
 
 	t.Run("created", func(t *testing.T) {
@@ -159,6 +180,57 @@ func TestSubCacheDerived(t *testing.T) {
 		require.Empty(t, c.bugs.cached)
 		require.Empty(t, c.identities.cached)
 		requireDerivedBuiltFromRefs(t, repo, c)
+	})
+
+	t.Run("an index without record is rebuilt", func(t *testing.T) {
+		repo := repository.CreateGoGitTestRepo(t, false)
+
+		c, err := NewRepoCacheNoEvents(repo)
+		require.NoError(t, err)
+		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
+		require.NoError(t, err)
+		require.NoError(t, c.SetUserIdentity(rene))
+		_, _, err = c.Bugs().New("title", "message")
+		require.NoError(t, err)
+		require.NoError(t, c.Close())
+
+		// what an index written before it recorded anything, or a lost one,
+		// looks like to the cache
+		index, err := repo.GetIndex(bug.Namespace)
+		require.NoError(t, err)
+		require.NoError(t, index.Clear())
+
+		c = createTestRepoCacheNoEvents(t, repo)
+		requireDerivedBuiltFromRefs(t, repo, c)
+	})
+
+	t.Run("an index ahead of the excerpts is rebuilt", func(t *testing.T) {
+		repo := repository.CreateGoGitTestRepo(t, false)
+
+		c, err := NewRepoCacheNoEvents(repo)
+		require.NoError(t, err)
+		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
+		require.NoError(t, err)
+		require.NoError(t, c.SetUserIdentity(rene))
+		b, _, err := c.Bugs().New("title", "message")
+		require.NoError(t, err)
+
+		excerptFile := filepath.Join("cache", bug.Namespace)
+		older, err := util.ReadFile(repo.LocalStorage(), excerptFile)
+		require.NoError(t, err)
+
+		_, _, err = b.AddComment("comment")
+		require.NoError(t, err)
+		require.NoError(t, b.Commit())
+		require.NoError(t, c.Close())
+
+		// what stopping after the index update, but before writing the excerpts,
+		// leaves: as many entries on both sides, built from different commits
+		require.NoError(t, util.WriteFile(repo.LocalStorage(), excerptFile, older, 0644))
+
+		c = createTestRepoCacheNoEvents(t, repo)
+		requireDerivedBuiltFromRefs(t, repo, c)
+		require.Equal(t, 2, lenComments(t, c, b.Id()))
 	})
 
 	t.Run("merged", func(t *testing.T) {
@@ -330,11 +402,6 @@ func TestSubCacheDerived(t *testing.T) {
 		require.NoError(t, c.bugs.onCommit(b.Id()))
 
 		requireDerivedBuiltFromRefs(t, repo, c)
-		index, err := repo.GetIndex(bug.Namespace)
-		require.NoError(t, err)
-		count, err := index.DocCount()
-		require.NoError(t, err)
-		require.Zero(t, count)
 	})
 
 	t.Run("an entity removed while being added is not registered", func(t *testing.T) {
@@ -369,11 +436,6 @@ func TestSubCacheDerived(t *testing.T) {
 
 		requireDerivedBuiltFromRefs(t, repo, c)
 		require.NotContains(t, c.bugs.cached, b.Id())
-		index, err := repo.GetIndex(bug.Namespace)
-		require.NoError(t, err)
-		count, err := index.DocCount()
-		require.NoError(t, err)
-		require.Zero(t, count)
 	})
 
 	t.Run("a search hit without excerpt is skipped", func(t *testing.T) {
@@ -383,7 +445,9 @@ func TestSubCacheDerived(t *testing.T) {
 		// the index is written before the excerpt is published
 		index, err := repo.GetIndex(bug.Namespace)
 		require.NoError(t, err)
-		require.NoError(t, index.IndexOne("notyetpublished", []string{"markerahead"}))
+		batch := index.NewBatch()
+		require.NoError(t, batch.Set("notyetpublished", []string{"markerahead"}, "1111111111111111111111111111111111111111"))
+		require.NoError(t, batch.Apply())
 
 		require.Empty(t, searchBugs(t, c, "markerahead"))
 	})
