@@ -2,6 +2,7 @@ package auth
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -121,4 +122,28 @@ func testCredentialSerial(t *testing.T, original Credential) Credential {
 	assert.Equal(t, original.Metadata(), loaded.Metadata())
 
 	return loaded
+}
+
+func TestListNewestFirst(t *testing.T) {
+	repo := repository.NewMockRepo()
+
+	now := time.Now()
+	var stored []*Token
+	// store out of chronological order on purpose
+	for _, age := range []time.Duration{2 * time.Hour, 0, 3 * time.Hour, time.Hour} {
+		token := NewToken("gitea", "value")
+		token.createTime = now.Add(-age)
+		require.NoError(t, Store(repo, token))
+		stored = append(stored, token)
+	}
+
+	creds, err := List(repo, WithTarget("gitea"))
+	require.NoError(t, err)
+	require.Len(t, creds, 4)
+
+	// expected order: age 0, 1h, 2h, 3h
+	expected := []entity.Id{stored[1].ID(), stored[3].ID(), stored[0].ID(), stored[2].ID()}
+	for i, cred := range creds {
+		assert.Equal(t, expected[i], cred.ID(), "position %d", i)
+	}
 }
