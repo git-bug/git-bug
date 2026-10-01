@@ -13,13 +13,13 @@ func Cleanup(text string) string {
 	text = strings.Replace(text, "\r\n", "\n", -1)
 
 	// remove all unicode control characters except
-	// '\n', '\r' and '\t'
+	// '\n', '\r' and '\t', and unsafe format characters
 	t := runes.Remove(runes.Predicate(func(r rune) bool {
 		switch r {
 		case '\r', '\n', '\t':
 			return false
 		}
-		return unicode.IsControl(r)
+		return unicode.IsControl(r) || isUnsafeRune(r)
 	}))
 	sanitized, _, err := transform.String(t, text)
 	if err != nil {
@@ -34,8 +34,10 @@ func Cleanup(text string) string {
 
 func CleanupOneLine(text string) string {
 	// remove all unicode control characters *including*
-	// '\n', '\r' and '\t'
-	t := runes.Remove(runes.Predicate(unicode.IsControl))
+	// '\n', '\r' and '\t', and unsafe format characters
+	t := runes.Remove(runes.Predicate(func(r rune) bool {
+		return unicode.IsControl(r) || isUnsafeRune(r)
+	}))
 	sanitized, _, err := transform.String(t, text)
 	if err != nil {
 		// transform.String should never return an error as our transformer doesn't returns one.
