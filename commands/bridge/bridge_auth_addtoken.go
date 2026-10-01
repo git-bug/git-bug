@@ -48,7 +48,7 @@ func newBridgeAuthAddTokenCommand(env *execenv.Env) *cobra.Command {
 	flags.StringVarP(&options.login,
 		"login", "l", "", "The login in the remote bug-tracker")
 	flags.StringVarP(&options.baseURL,
-		"base-url", "b", "", "The base URL of the remote bug-tracker instance (required by self-hosted targets such as gitlab)")
+		"base-url", "b", "", "The base URL of the remote bug-tracker instance (required by self-hosted targets such as gitea or gitlab)")
 	flags.StringVarP(&options.user,
 		"user", "u", "", "The user to add the token to. Default is the current user")
 	cmd.RegisterFlagCompletionFunc("user", completion.User(env))

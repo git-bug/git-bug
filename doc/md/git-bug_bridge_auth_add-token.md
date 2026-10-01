@@ -11,7 +11,7 @@ git-bug bridge auth add-token [TOKEN] [flags]
 ```
   -t, --target string     The target of the bridge. Valid values are [gitea,github,gitlab,jira,launchpad-preview]
   -l, --login string      The login in the remote bug-tracker
-  -b, --base-url string   The base URL of the remote bug-tracker instance (required by self-hosted targets such as gitlab)
+  -b, --base-url string   The base URL of the remote bug-tracker instance (required by self-hosted targets such as gitea or gitlab)
   -u, --user string       The user to add the token to. Default is the current user
   -h, --help              help for add-token
 ```
