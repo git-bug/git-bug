@@ -394,6 +394,11 @@ func RepoIndexTest(t *testing.T, repo RepoIndex) {
 		requireSearch(t, idx, "foobar", "id1")
 		requireSearch(t, idx, "foo", "id1", "id2")
 
+		// a document matches with any of the terms
+		res, err := idx.Search([]string{"hello", "bien"})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"id2", "id3"}, res)
+
 		// re-indexing an item replace previous versions
 		b = idx.NewBatch()
 		require.NoError(t, b.Set("id2", []string{"hello"}, commit2))
@@ -407,6 +412,23 @@ func RepoIndexTest(t *testing.T, repo RepoIndex) {
 
 		require.NoError(t, idx.Clear())
 		requireSearch(t, idx, "hello")
+	})
+
+	t.Run("search returns every match", func(t *testing.T) {
+		idx, err := repo.GetIndex("every")
+		require.NoError(t, err)
+
+		// more than bleve returns by default
+		var ids []string
+		b := idx.NewBatch()
+		for i := 0; i < 25; i++ {
+			id := fmt.Sprintf("id%d", i)
+			ids = append(ids, id)
+			require.NoError(t, b.Set(id, []string{"marker"}, commit1))
+		}
+		require.NoError(t, b.Apply())
+
+		requireSearch(t, idx, "marker", ids...)
 	})
 
 	t.Run("a batch is applied as a whole", func(t *testing.T) {
