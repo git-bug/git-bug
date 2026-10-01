@@ -61,7 +61,7 @@ func (ci CombinedId) Validate() error {
 		return fmt.Errorf("invalid length")
 	}
 	for _, r := range ci {
-		if (r < 'a' || r > 'z') && (r < '0' || r > '9') {
+		if (r < 'a' || r > 'f') && (r < '0' || r > '9') {
 			return fmt.Errorf("invalid character")
 		}
 	}
