@@ -37,6 +37,8 @@ func newBugCommentNewCommand(env *execenv.Env) *cobra.Command {
 		"Provide the new message from the command line")
 	flags.BoolVar(&options.nonInteractive, "non-interactive", false, "Do not ask for user input")
 
+	cmd.MarkFlagsMutuallyExclusive("message", "file")
+
 	return cmd
 }
 
@@ -46,7 +48,7 @@ func runBugCommentNew(env *execenv.Env, opts bugCommentNewOptions, args []string
 		return err
 	}
 
-	if opts.messageFile != "" && opts.message == "" {
+	if opts.messageFile != "" {
 		opts.message, err = buginput.BugCommentFileInput(opts.messageFile)
 		if err != nil {
 			return err
