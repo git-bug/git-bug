@@ -344,18 +344,13 @@ After checking out the revision you want, run this instead of `make install`:
 <details><summary>Install <strong>without the web UI</strong></summary>
 
 <pre>
-go install .
+make nowebui
 </pre>
 
-This will build <code>git-bug</code> and place it in your Go binary directory.
-The resulting binary prints an explanatory message if you run <code>git bug
-webui</code> on it, rather than serving a broken page.
-
-One caveat: <code>git bug version</code> will report <code>undefined</code> for
-a binary built this way. The <code>install</code> target in
-<code>//:Makefile</code> stamps the version with <code>git describe</code>, and
-only an exact release tag is accepted as a version, so check out a tag if you
-need a version string.
+This will build <code>git-bug</code> with the same version stamping as
+<code>make install</code>, but without the web UI, and place it in your Go
+binary directory. The resulting binary prints an explanatory message if you
+run <code>git bug webui</code> on it, rather than serving a broken page.
 
 </details>
 
