@@ -35,16 +35,18 @@ func newBugNewCommand(env *execenv.Env) *cobra.Command {
 	flags.StringVarP(&options.message, "message", "m", "",
 		"Provide a message to describe the issue")
 	flags.StringVarP(&options.messageFile, "file", "F", "",
-		"Take the message from the given file. Use - to read the message from the standard input")
+		"Take the title and message from the given file (the first line is the title, unless --title is given). Use - to read from the standard input")
 	flags.BoolVar(&options.nonInteractive, "non-interactive", false, "Do not ask for user input")
+
+	cmd.MarkFlagsMutuallyExclusive("message", "file")
 
 	return cmd
 }
 
 func runBugNew(env *execenv.Env, opts bugNewOptions) error {
 	var err error
-	if opts.messageFile != "" && opts.message == "" {
-		opts.title, opts.message, err = buginput.BugCreateFileInput(opts.messageFile)
+	if opts.messageFile != "" {
+		opts.title, opts.message, err = buginput.BugCreateFileInput(opts.messageFile, opts.title)
 		if err != nil {
 			return err
 		}

@@ -45,11 +45,16 @@ func BugCreateEditorInput(repo repository.RepoCommonStorage, preTitle string, pr
 }
 
 // BugCreateFileInput read from either from a file or from the standard input
-// and extract a title and a message
-func BugCreateFileInput(fileName string) (string, string, error) {
+// and extract a title and a message. If title is not empty, the whole content
+// is used as the message instead.
+func BugCreateFileInput(fileName string, title string) (string, string, error) {
 	raw, err := input.FromFile(fileName)
 	if err != nil {
 		return "", "", err
+	}
+
+	if title != "" {
+		return title, cleanComment(raw), nil
 	}
 
 	return processCreate(raw)
@@ -117,6 +122,17 @@ func BugCommentFileInput(fileName string) (string, error) {
 }
 
 func processComment(raw string) (string, error) {
+	message := cleanComment(raw)
+
+	if message == "" {
+		return "", ErrEmptyMessage
+	}
+
+	return message, nil
+}
+
+// cleanComment removes the lines starting with '#' and trims the result
+func cleanComment(raw string) string {
 	lines := strings.Split(raw, "\n")
 
 	var buffer bytes.Buffer
@@ -128,13 +144,7 @@ func processComment(raw string) (string, error) {
 		buffer.WriteString("\n")
 	}
 
-	message := strings.TrimSpace(buffer.String())
-
-	if message == "" {
-		return "", ErrEmptyMessage
-	}
-
-	return message, nil
+	return strings.TrimSpace(buffer.String())
 }
 
 const bugTitleTemplate = `%s
