@@ -26,6 +26,7 @@ and verify your installation.
 - [MacOS](#macos)
 - [Windows](#windows)
 - [Build from source](#build-from-source)
+  - [Build without the web UI](#build-without-the-web-ui)
 - [Verify your installation](#verify-your-installation)
 
 <!-- mdformat-toc end -->
@@ -210,6 +211,11 @@ dependencies:
 - `git`
 - `go`
 - `make`
+- `nodejs` and `pnpm`, for the web UI only; see
+  [below](#build-without-the-web-ui) if you don't need it
+
+The exact versions used in development are pinned in `.tool-versions`, if you
+use [`asdf`][asdf] then `asdf install` will install them for you.
 
 Ensure that the `go` binary directory (`$GOPATH/bin`) is in your `PATH`. It is
 recommended to set this within your shell configuration file(s), such as
@@ -325,6 +331,37 @@ This will build <code>git-bug</code> and place it in your Go binary directory.
 
 </details>
 
+### Build without the web UI<a name="build-without-the-web-ui"></a>
+
+The `install` and `build` targets in `//:Makefile` compile the web UI first,
+which is where the `nodejs` and `pnpm` dependencies come from. The web UI is
+optional: the assets are embedded behind the `webui` build tag, so building
+without that tag gives you a binary that works for everything except
+`git bug webui`, and needs nothing beyond `git`, `go` and `make`.
+
+After checking out the revision you want, run this instead of `make install`:
+
+<details><summary>Install <strong>without the web UI</strong></summary>
+
+<pre>
+go install .
+</pre>
+
+This will build <code>git-bug</code> and place it in your Go binary directory.
+The resulting binary prints an explanatory message if you run <code>git bug
+webui</code> on it, rather than serving a broken page.
+
+One caveat: <code>git bug version</code> will report <code>undefined</code> for
+a binary built this way. The <code>install</code> target in
+<code>//:Makefile</code> stamps the version with <code>git describe</code>, and
+only an exact release tag is accepted as a version, so check out a tag if you
+need a version string.
+
+</details>
+
+If you'd rather keep the web UI but skip the Node.js toolchain, download a
+[pre-compiled release binary](#download-a-pre-compiled-release-binary) instead.
+
 ## Verify your installation<a name="verify-your-installation"></a>
 
 To verify that `git-bug` was installed correctly, you can run the following
@@ -359,6 +396,7 @@ ______________________________________________________________________
 [arc/openbsd_amd64]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_openbsd_amd64.tar.gz
 [arc/windows_amd64]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_windows_amd64.zip
 [arc/windows_arm64]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_windows_arm64.zip
+[asdf]: https://asdf-vm.com/guide/getting-started.html
 [bin/darwin_amd64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_darwin_amd64
 [bin/darwin_arm64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_darwin_arm64
 [bin/freebsd_amd64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_freebsd_amd64
