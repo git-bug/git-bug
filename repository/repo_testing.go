@@ -1,9 +1,11 @@
 package repository
 
 import (
+	"fmt"
 	"io"
 	"math/rand"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -358,45 +360,169 @@ func RepoDataSignatureTest(t *testing.T, repo RepoData) {
 }
 
 func RepoIndexTest(t *testing.T, repo RepoIndex) {
-	idx, err := repo.GetIndex("a")
-	require.NoError(t, err)
+	const (
+		commit1 = Hash("1111111111111111111111111111111111111111")
+		commit2 = Hash("2222222222222222222222222222222222222222")
+		// an entity id, the usual kind of document id
+		entityId = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	)
 
-	// simple indexing
-	err = idx.IndexOne("id1", []string{"foo", "bar", "foobar barfoo"})
-	require.NoError(t, err)
+	requireBuiltFrom := func(t *testing.T, idx Index, expected map[string]Hash) {
+		t.Helper()
+		builtFrom, err := idx.BuiltFrom()
+		require.NoError(t, err)
+		require.Equal(t, expected, builtFrom)
+	}
 
-	// batched indexing
-	indexer, closer := idx.IndexBatch()
-	err = indexer("id2", []string{"hello", "foo bar"})
-	require.NoError(t, err)
-	err = indexer("id3", []string{"Hola", "Esta bien"})
-	require.NoError(t, err)
-	err = closer()
-	require.NoError(t, err)
+	requireSearch := func(t *testing.T, idx Index, term string, expected ...string) {
+		t.Helper()
+		res, err := idx.Search([]string{term})
+		require.NoError(t, err)
+		require.ElementsMatch(t, expected, res)
+	}
 
-	// search
-	res, err := idx.Search([]string{"foobar"})
-	require.NoError(t, err)
-	require.ElementsMatch(t, []string{"id1"}, res)
+	t.Run("search", func(t *testing.T) {
+		idx, err := repo.GetIndex("search")
+		require.NoError(t, err)
 
-	res, err = idx.Search([]string{"foo"})
-	require.NoError(t, err)
-	require.ElementsMatch(t, []string{"id1", "id2"}, res)
+		b := idx.NewBatch()
+		require.NoError(t, b.Set("id1", []string{"foo", "bar", "foobar barfoo"}, commit1))
+		require.NoError(t, b.Set("id2", []string{"hello", "foo bar"}, commit1))
+		require.NoError(t, b.Set("id3", []string{"Hola", "Esta bien"}, commit1))
+		require.NoError(t, b.Apply())
 
-	// re-indexing an item replace previous versions
-	err = idx.IndexOne("id2", []string{"hello"})
-	require.NoError(t, err)
+		requireSearch(t, idx, "foobar", "id1")
+		requireSearch(t, idx, "foo", "id1", "id2")
 
-	res, err = idx.Search([]string{"foo"})
-	require.NoError(t, err)
-	require.ElementsMatch(t, []string{"id1"}, res)
+		// re-indexing an item replace previous versions
+		b = idx.NewBatch()
+		require.NoError(t, b.Set("id2", []string{"hello"}, commit2))
+		require.NoError(t, b.Apply())
+		requireSearch(t, idx, "foo", "id1")
 
-	err = idx.Clear()
-	require.NoError(t, err)
+		b = idx.NewBatch()
+		b.Remove("id1")
+		require.NoError(t, b.Apply())
+		requireSearch(t, idx, "foo")
 
-	res, err = idx.Search([]string{"foo"})
-	require.NoError(t, err)
-	require.Empty(t, res)
+		require.NoError(t, idx.Clear())
+		requireSearch(t, idx, "hello")
+	})
+
+	t.Run("a batch is applied as a whole", func(t *testing.T) {
+		idx, err := repo.GetIndex("whole")
+		require.NoError(t, err)
+
+		b := idx.NewBatch()
+		require.NoError(t, b.Set("gone", []string{"marker"}, commit1))
+		require.NoError(t, b.Apply())
+
+		b = idx.NewBatch()
+		require.NoError(t, b.Set("id1", []string{"marker"}, commit1))
+		require.NoError(t, b.Set(entityId, []string{"marker"}, commit2))
+		b.Remove("gone")
+
+		// nothing is visible before Apply
+		requireSearch(t, idx, "marker", "gone")
+		requireBuiltFrom(t, idx, map[string]Hash{"gone": commit1})
+
+		require.NoError(t, b.Apply())
+		requireSearch(t, idx, "marker", "id1", entityId)
+		requireBuiltFrom(t, idx, map[string]Hash{"id1": commit1, entityId: commit2})
+	})
+
+	t.Run("records the commit of each document", func(t *testing.T) {
+		idx, err := repo.GetIndex("record")
+		require.NoError(t, err)
+
+		// nothing indexed, nothing recorded
+		requireBuiltFrom(t, idx, map[string]Hash{})
+
+		b := idx.NewBatch()
+		require.NoError(t, b.Set("id1", []string{"a"}, commit1))
+		require.NoError(t, b.Set(entityId, []string{"b"}, commit1))
+		// a document with no text is still a document
+		require.NoError(t, b.Set("empty", nil, commit1))
+		require.NoError(t, b.Apply())
+		requireBuiltFrom(t, idx, map[string]Hash{"id1": commit1, entityId: commit1, "empty": commit1})
+
+		// the latest change of a document in a batch wins
+		b = idx.NewBatch()
+		require.NoError(t, b.Set("id1", []string{"a"}, commit2))
+		b.Remove(entityId)
+		require.NoError(t, b.Set(entityId, []string{"b"}, commit2))
+		b.Remove("empty")
+		require.NoError(t, b.Apply())
+		requireBuiltFrom(t, idx, map[string]Hash{"id1": commit2, entityId: commit2})
+
+		// removing a document that doesn't exist changes nothing
+		b = idx.NewBatch()
+		b.Remove("unknown")
+		require.NoError(t, b.Apply())
+		requireBuiltFrom(t, idx, map[string]Hash{"id1": commit2, entityId: commit2})
+
+		require.NoError(t, idx.Clear())
+		requireBuiltFrom(t, idx, map[string]Hash{})
+	})
+
+	t.Run("the texts of a document are left untouched", func(t *testing.T) {
+		idx, err := repo.GetIndex("untouched")
+		require.NoError(t, err)
+
+		texts := []string{"some  spaced   text", strings.Repeat("x", 200)}
+		b := idx.NewBatch()
+		require.NoError(t, b.Set("id1", texts, commit1))
+		require.NoError(t, b.Apply())
+
+		require.Equal(t, []string{"some  spaced   text", strings.Repeat("x", 200)}, texts)
+	})
+
+	t.Run("concurrent batches all land", func(t *testing.T) {
+		idx, err := repo.GetIndex("concurrent")
+		require.NoError(t, err)
+
+		const batches = 20
+		expected := make(map[string]Hash, batches)
+		for i := 0; i < batches; i++ {
+			expected[fmt.Sprintf("id%d", i)] = commit1
+		}
+
+		var wg sync.WaitGroup
+		errs := make(chan error, batches)
+		for id := range expected {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				b := idx.NewBatch()
+				if err := b.Set(id, []string{"marker"}, commit1); err != nil {
+					errs <- err
+					return
+				}
+				errs <- b.Apply()
+			}()
+		}
+		wg.Wait()
+		close(errs)
+		for err := range errs {
+			require.NoError(t, err)
+		}
+
+		// no batch overwrote the record of another
+		requireBuiltFrom(t, idx, expected)
+	})
+
+	t.Run("an invalid commit is rejected", func(t *testing.T) {
+		idx, err := repo.GetIndex("invalid")
+		require.NoError(t, err)
+
+		b := idx.NewBatch()
+		require.Error(t, b.Set("id1", []string{"marker"}, ""))
+		require.Error(t, b.Set("id1", []string{"marker"}, "nothex"))
+		require.NoError(t, b.Apply())
+
+		requireSearch(t, idx, "marker")
+		requireBuiltFrom(t, idx, map[string]Hash{})
+	})
 }
 
 // helper to test a RepoClock

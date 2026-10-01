@@ -5,6 +5,8 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io"
+	"maps"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -164,30 +166,34 @@ func (m *mockRepoIndex) GetIndex(name string) (Index, error) {
 
 var _ Index = &mockIndex{}
 
-type mockIndex map[string][]string
+type mockIndex struct {
+	mu        sync.RWMutex
+	docs      map[string][]string
+	builtFrom map[string]Hash
+}
 
 func newIndex() *mockIndex {
-	m := make(map[string][]string)
-	return (*mockIndex)(&m)
-}
-
-func (m *mockIndex) IndexOne(id string, texts []string) error {
-	(*m)[id] = texts
-	return nil
-}
-
-func (m *mockIndex) IndexBatch() (indexer func(id string, texts []string) error, closer func() error) {
-	indexer = func(id string, texts []string) error {
-		(*m)[id] = texts
-		return nil
+	return &mockIndex{
+		docs:      make(map[string][]string),
+		builtFrom: make(map[string]Hash),
 	}
-	closer = func() error { return nil }
-	return indexer, closer
+}
+
+func (m *mockIndex) NewBatch() IndexBatch {
+	return &mockIndexBatch{index: m}
+}
+
+func (m *mockIndex) BuiltFrom() (map[string]Hash, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return maps.Clone(m.builtFrom), nil
 }
 
 func (m *mockIndex) Search(terms []string) (ids []string, err error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 loop:
-	for id, texts := range *m {
+	for id, texts := range m.docs {
 		for _, text := range texts {
 			for _, s := range strings.Fields(text) {
 				for _, term := range terms {
@@ -202,23 +208,49 @@ loop:
 	return ids, nil
 }
 
-func (m *mockIndex) DocCount() (uint64, error) {
-	return uint64(len(*m)), nil
-}
-
-func (m *mockIndex) Remove(id string) error {
-	delete(*m, id)
-	return nil
-}
-
 func (m *mockIndex) Clear() error {
-	for k, _ := range *m {
-		delete(*m, k)
-	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	clear(m.docs)
+	clear(m.builtFrom)
 	return nil
 }
 
 func (m *mockIndex) Close() error {
+	return nil
+}
+
+type mockIndexBatch struct {
+	index *mockIndex
+	// the changes in order, applied together
+	changes []func()
+}
+
+func (mb *mockIndexBatch) Set(id string, texts []string, commit Hash) error {
+	if !commit.IsValid() {
+		return fmt.Errorf("invalid commit %q for document %s", commit, id)
+	}
+	texts = slices.Clone(texts)
+	mb.changes = append(mb.changes, func() {
+		mb.index.docs[id] = texts
+		mb.index.builtFrom[id] = commit
+	})
+	return nil
+}
+
+func (mb *mockIndexBatch) Remove(id string) {
+	mb.changes = append(mb.changes, func() {
+		delete(mb.index.docs, id)
+		delete(mb.index.builtFrom, id)
+	})
+}
+
+func (mb *mockIndexBatch) Apply() error {
+	mb.index.mu.Lock()
+	defer mb.index.mu.Unlock()
+	for _, change := range mb.changes {
+		change()
+	}
 	return nil
 }
 

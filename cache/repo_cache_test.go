@@ -51,9 +51,9 @@ func TestCache(t *testing.T) {
 		t.Helper()
 		idx, err := repo.GetIndex(name)
 		require.NoError(t, err)
-		count, err := idx.DocCount()
+		builtFrom, err := idx.BuiltFrom()
 		require.NoError(t, err)
-		return count
+		return uint64(len(builtFrom))
 	}
 	assertOberserverEvent := func(obs observer, created, updated, removed int) {
 		t.Helper()
@@ -459,15 +459,15 @@ func TestCacheMerge(t *testing.T) {
 	err = bugB.Commit()
 	require.NoError(t, err)
 
-	// the index count matches the excerpts, so the next load won't detect a
+	// the index record matches the excerpts, so the next load won't detect a
 	// mismatch and rebuild the cache
 	indexCount := func(t *testing.T, name string) uint64 {
 		t.Helper()
 		idx, err := repoB.GetIndex(name)
 		require.NoError(t, err)
-		count, err := idx.DocCount()
+		builtFrom, err := idx.BuiltFrom()
 		require.NoError(t, err)
-		return count
+		return uint64(len(builtFrom))
 	}
 	require.Equal(t, uint64(len(cacheB.Bugs().AllIds())), indexCount(t, bug.Namespace))
 	require.Equal(t, uint64(len(cacheB.Identities().AllIds())), indexCount(t, identity.Namespace))

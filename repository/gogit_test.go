@@ -130,25 +130,84 @@ func TestGoGitRepo_Head(t *testing.T) {
 }
 
 func TestGoGitRepo_Indexes(t *testing.T) {
-	repo := CreateGoGitTestRepo(t, false)
-	plainRoot := goGitRepoDir(t, repo)
+	const commit1 = Hash("1111111111111111111111111111111111111111")
 
-	// Can create indices
-	indexA, err := repo.GetIndex("a")
-	require.NoError(t, err)
-	require.NotZero(t, indexA)
-	require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "index_meta.json"))
-	require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "store", "root.bolt"))
+	t.Run("created on disk", func(t *testing.T) {
+		repo := CreateGoGitTestRepo(t, false)
+		plainRoot := goGitRepoDir(t, repo)
 
-	indexB, err := repo.GetIndex("b")
-	require.NoError(t, err)
-	require.NotZero(t, indexB)
-	require.DirExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "b"))
+		// Can create indices
+		indexA, err := repo.GetIndex("a")
+		require.NoError(t, err)
+		require.NotZero(t, indexA)
+		require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "index_meta.json"))
+		require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "store", "root.bolt"))
 
-	// Can get an existing index
-	indexA, err = repo.GetIndex("a")
-	require.NoError(t, err)
-	require.NotZero(t, indexA)
+		indexB, err := repo.GetIndex("b")
+		require.NoError(t, err)
+		require.NotZero(t, indexB)
+		require.DirExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "b"))
+
+		// Can get an existing index
+		indexA, err = repo.GetIndex("a")
+		require.NoError(t, err)
+		require.NotZero(t, indexA)
+	})
+
+	t.Run("documents and their record survive a reopen", func(t *testing.T) {
+		repo := CreateGoGitTestRepo(t, false)
+
+		idx, err := repo.GetIndex("a")
+		require.NoError(t, err)
+		b := idx.NewBatch()
+		require.NoError(t, b.Set("id1", []string{"marker"}, commit1))
+		require.NoError(t, b.Apply())
+
+		require.NoError(t, repo.Close())
+
+		idx, err = repo.GetIndex("a")
+		require.NoError(t, err)
+		builtFrom, err := idx.BuiltFrom()
+		require.NoError(t, err)
+		require.Equal(t, map[string]Hash{"id1": commit1}, builtFrom)
+		res, err := idx.Search([]string{"marker"})
+		require.NoError(t, err)
+		require.Equal(t, []string{"id1"}, res)
+	})
+
+	t.Run("a malformed record is rejected", func(t *testing.T) {
+		repo := CreateGoGitTestRepo(t, false)
+
+		idx, err := repo.GetIndex("a")
+		require.NoError(t, err)
+		require.NoError(t, idx.(*bleveIndex).index.SetInternal(builtFromKey, []byte("not a record")))
+
+		_, err = idx.BuiltFrom()
+		require.Error(t, err)
+		require.Error(t, idx.NewBatch().Apply())
+	})
+
+	t.Run("a batch that fails leaves neither documents nor record", func(t *testing.T) {
+		repo := CreateGoGitTestRepo(t, false)
+
+		idx, err := repo.GetIndex("a")
+		require.NoError(t, err)
+		b := idx.NewBatch()
+		require.NoError(t, b.Set("id1", []string{"marker"}, commit1))
+
+		// the index is closed underneath the batch
+		require.NoError(t, repo.Close())
+		require.Error(t, b.Apply())
+
+		idx, err = repo.GetIndex("a")
+		require.NoError(t, err)
+		builtFrom, err := idx.BuiltFrom()
+		require.NoError(t, err)
+		require.Empty(t, builtFrom)
+		res, err := idx.Search([]string{"marker"})
+		require.NoError(t, err)
+		require.Empty(t, res)
+	})
 }
 
 func TestGoGit_DetectsSubmodules(t *testing.T) {
