@@ -84,7 +84,9 @@ func OpenGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 		return nil, err
 	}
 
-	r, err := gogit.PlainOpen(path)
+	// TODO: the possible resource leak is an existing issue in go-git v5
+	// it's fixed in v6
+	r, err := gogit.Open(newReindexingStorage(path), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +114,12 @@ func OpenGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 // of "~/myrepo" and a namespace of "git-bug", local storage for the
 // GoGitRepo will be configured at "~/myrepo/.git/git-bug".
 func InitGoGitRepo(path, namespace string) (*GoGitRepo, error) {
-	r, err := gogit.PlainInit(path, false)
+	_, err := gogit.PlainInit(path, false)
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := gogit.Open(newReindexingStorage(filepath.Join(path, ".git")), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +145,12 @@ func InitGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 // path of "~/myrepo" and a namespace of "git-bug", local storage for the
 // GoGitRepo will be configured at "~/myrepo/.git/git-bug".
 func InitBareGoGitRepo(path, namespace string) (*GoGitRepo, error) {
-	r, err := gogit.PlainInit(path, true)
+	_, err := gogit.PlainInit(path, true)
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := gogit.Open(newReindexingStorage(path), nil)
 	if err != nil {
 		return nil, err
 	}

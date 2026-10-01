@@ -3,8 +3,10 @@ package repository
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/go-git/go-billy/v5/util"
@@ -13,6 +15,48 @@ import (
 
 	"github.com/git-bug/git-bug/util/lamport"
 )
+
+// requireGitBinary skips the test when the git binary is not available.
+func requireGitBinary(t *testing.T) {
+	t.Helper()
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git binary not available")
+	}
+}
+
+// runGit runs the git binary in dir, which can be a worktree or a git
+// directory, and returns its trimmed output.
+//
+// git is isolated from the environment running the tests: no inherited GIT_*
+// variable redirecting it (a GIT_DIR set by a hook would win over -C), no
+// system or user config, which could run hooks (core.hooksPath) or change its
+// behavior, and no automatic gc or maintenance changing the object store
+// behind the test's back. Commits get a fixed identity.
+func runGit(t *testing.T, dir string, args ...string) string {
+	t.Helper()
+
+	home := t.TempDir()
+	env := []string{
+		"GIT_CONFIG_NOSYSTEM=1",
+		"GIT_CONFIG_GLOBAL=" + os.DevNull,
+		"HOME=" + home,
+		"XDG_CONFIG_HOME=" + home,
+		"GIT_AUTHOR_NAME=test", "GIT_AUTHOR_EMAIL=test@example.com",
+		"GIT_COMMITTER_NAME=test", "GIT_COMMITTER_EMAIL=test@example.com",
+	}
+	for _, kv := range os.Environ() {
+		if !strings.HasPrefix(kv, "GIT_") && !strings.HasPrefix(kv, "HOME=") && !strings.HasPrefix(kv, "XDG_CONFIG_HOME=") {
+			env = append(env, kv)
+		}
+	}
+
+	args = append([]string{"-C", dir, "-c", "gc.auto=0", "-c", "maintenance.auto=false"}, args...)
+	cmd := exec.Command("git", args...)
+	cmd.Env = env
+	out, err := cmd.CombinedOutput()
+	require.NoError(t, err, "git %s: %s", strings.Join(args, " "), out)
+	return strings.TrimSpace(string(out))
+}
 
 func TestNewGoGitRepo(t *testing.T) {
 	// Plain
