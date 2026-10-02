@@ -427,7 +427,7 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) add(e EntityT) (CacheT, error) {
 			return nil, fmt.Errorf("entity %s already exist in the cache", id)
 		}
 
-		changes, err := sc.syncLocked(&id, nil)
+		changes, err := sc.syncOneLocked(id)
 		if err != nil {
 			return changes, err
 		}
@@ -579,21 +579,21 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) buildDerived(fresh CacheT) derive
 }
 
 // sync brings the derived state of an entity up to date with its reference, see
-// syncLocked, and notifies the observers.
+// syncOneLocked, and notifies the observers.
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) sync(id entity.Id) error {
 	sc.muDerived.Lock()
-	changes, err := sc.syncLocked(&id, nil)
+	changes, err := sc.syncOneLocked(id)
 	sc.muDerived.Unlock()
 	sc.notifyChanges(changes)
 	return err
 }
 
 // syncAll brings the derived state of every entity up to date with the
-// references, see syncLocked, and notifies the observers. progress, if not nil,
+// references, see syncAllLocked, and notifies the observers. progress, if not nil,
 // receives the build events.
 func (sc *SubCache[EntityT, ExcerptT, CacheT]) syncAll(progress func(BuildEvent)) error {
 	sc.muDerived.Lock()
-	changes, err := sc.syncLocked(nil, progress)
+	changes, err := sc.syncAllLocked(progress)
 	sc.muDerived.Unlock()
 	sc.notifyChanges(changes)
 	return err
@@ -622,27 +622,11 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) syncAll(progress func(BuildEvent)
 // |    500     |      23       |      72      |   5,4    |
 const syncBatchSize = 75
 
-// syncLocked brings the derived state of an entity, or of every entity if only
-// is nil, up to date with their references. The excerpts and the index
-// each record the commit they were built from: an entity that is behind in
-// either is read once from git, and applied to each store that is behind, or
-// removed from them if its reference is gone, along with its loaded copy.
-// Nothing is read if every store is up to date. Changes are applied in batches,
-// and the excerpt file is written once, if the excerpts changed.
-//
-// Entities are read under muDerived, which every change to the derived state
-// holds, so that each sync applies a state at least as recent as the previous
-// one. A reference moving after its entity is read is followed by a sync of
-// its own, from the commit callback.
-//
-// Loaded copies are left as they are, other than removed ones. It returns the
-// changes of excerpts that were applied, even on error, for the caller to
-// notify once muDerived is released.
-func (sc *SubCache[EntityT, ExcerptT, CacheT]) syncLocked(only *entity.Id, progress func(BuildEvent)) (map[entity.Id]EntityEventType, error) {
-	if progress == nil {
-		progress = func(BuildEvent) {}
-	}
-
+// syncOneLocked brings the derived state of an entity up to date with its
+// reference, see syncEntitiesLocked. An unreadable index record can't be
+// repaired entry by entry: it has every entity synced instead, see
+// syncAllLocked.
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) syncOneLocked(id entity.Id) (map[entity.Id]EntityEventType, error) {
 	// nil maps mark the SubCache as closed
 	if sc.excerpts == nil {
 		return nil, nil
@@ -652,75 +636,110 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) syncLocked(only *entity.Id, progr
 	if err != nil {
 		return nil, err
 	}
-	// an unreadable record can't be repaired entry by entry: start over, for
-	// every entity
-	indexBuiltFrom, recordErr := index.BuiltFrom()
-	if recordErr != nil {
-		only = nil
+	indexBuiltFrom, err := index.BuiltFrom()
+	if err != nil {
+		return sc.syncAllLocked(nil)
 	}
 
-	var refs map[string]repository.Hash
-	if only == nil {
-		refs, err = sc.repo.ListRefs(sc.namespace)
+	refs := make(map[string]repository.Hash, 1)
+	ref, err := sc.repo.ResolveRef(sc.namespace, id.String())
+	switch {
+	case err == nil:
+		refs[id.String()] = ref
+	case !errors.Is(err, repository.ErrNotFound):
+		return nil, err
+	}
+
+	candidates := map[entity.Id]struct{}{id: {}}
+	return sc.syncEntitiesLocked(index, candidates, refs, indexBuiltFrom, nil)
+}
+
+// syncAllLocked brings the derived state of every entity up to date with the
+// references, see syncEntitiesLocked: those with a reference, with derived state
+// in either store, or with a loaded copy. An unreadable index record is cleared,
+// and the index rebuilt.
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) syncAllLocked(progress func(BuildEvent)) (map[entity.Id]EntityEventType, error) {
+	// nil maps mark the SubCache as closed
+	if sc.excerpts == nil {
+		return nil, nil
+	}
+
+	index, err := sc.repo.GetIndex(sc.namespace)
+	if err != nil {
+		return nil, err
+	}
+	indexBuiltFrom, recordErr := index.BuiltFrom()
+
+	refs, err := sc.repo.ListRefs(sc.namespace)
+	if err != nil {
+		return nil, err
+	}
+	// cleared once the refs are known, so that failing to list them leaves the
+	// index as it is
+	if recordErr != nil {
+		err = index.Clear()
 		if err != nil {
 			return nil, err
 		}
-		// cleared once the refs are known, so that failing to list them leaves
-		// the index as it is
-		if recordErr != nil {
-			err = index.Clear()
-			if err != nil {
-				return nil, err
-			}
-			indexBuiltFrom = nil
-		}
-	} else {
-		refs = make(map[string]repository.Hash, 1)
-		ref, err := sc.repo.ResolveRef(sc.namespace, only.String())
-		switch {
-		case err == nil:
-			refs[only.String()] = ref
-		case !errors.Is(err, repository.ErrNotFound):
-			return nil, err
-		}
+		indexBuiltFrom = nil
 	}
 
+	candidates := make(map[entity.Id]struct{}, len(refs))
+	for key := range refs {
+		candidates[entity.Id(key)] = struct{}{}
+	}
+	for id := range sc.builtFrom {
+		candidates[id] = struct{}{}
+	}
+	for key := range indexBuiltFrom {
+		candidates[entity.Id(key)] = struct{}{}
+	}
 	// A loaded copy can exist without derived state, for an entity created
 	// outside and resolved before any sync: it is dropped too if its reference
 	// is gone.
 	sc.muMaps.RLock()
-	loaded := make(map[entity.Id]struct{}, len(sc.cached))
 	for id := range sc.cached {
-		loaded[id] = struct{}{}
+		candidates[id] = struct{}{}
 	}
 	sc.muMaps.RUnlock()
 
-	candidates := make(map[entity.Id]struct{})
-	if only == nil {
-		for key := range refs {
-			candidates[entity.Id(key)] = struct{}{}
-		}
-		for id := range sc.builtFrom {
-			candidates[id] = struct{}{}
-		}
-		for key := range indexBuiltFrom {
-			candidates[entity.Id(key)] = struct{}{}
-		}
-		for id := range loaded {
-			candidates[id] = struct{}{}
-		}
-	} else {
-		candidates[*only] = struct{}{}
+	return sc.syncEntitiesLocked(index, candidates, refs, indexBuiltFrom, progress)
+}
+
+// syncEntitiesLocked brings the derived state of the candidates up to date with
+// their references, given in refs, a candidate without one being removed. The
+// excerpts and the index each record the commit they were built from, the
+// latter given in indexBuiltFrom: an entity that is behind in either, or that
+// is loaded while its reference is gone, is read once from git, and applied to
+// each store that is behind, or removed from them if its reference is gone,
+// along with its loaded copy. Nothing is read if every store is up to date.
+// Changes are applied in batches, and the excerpt file is written once, if the
+// excerpts changed.
+//
+// Entities are read under muDerived, which every change to the derived state
+// holds, so that each sync applies a state at least as recent as the previous
+// one. A reference moving after its entity is read is followed by a sync of
+// its own, from the commit callback.
+//
+// Loaded copies are left as they are, other than removed ones. It returns the
+// changes of excerpts that were applied, even on error, for the caller to
+// notify once muDerived is released. progress, if not nil, receives the build
+// events.
+func (sc *SubCache[EntityT, ExcerptT, CacheT]) syncEntitiesLocked(index repository.Index, candidates map[entity.Id]struct{}, refs map[string]repository.Hash, indexBuiltFrom map[string]repository.Hash, progress func(BuildEvent)) (map[entity.Id]EntityEventType, error) {
+	if progress == nil {
+		progress = func(BuildEvent) {}
 	}
 
 	var behind []entity.Id
+	sc.muMaps.RLock()
 	for id := range candidates {
 		ref := refs[id.String()]
-		_, isLoaded := loaded[id]
+		_, isLoaded := sc.cached[id]
 		if sc.builtFrom[id] != ref || indexBuiltFrom[id.String()] != ref || (ref == "" && isLoaded) {
 			behind = append(behind, id)
 		}
 	}
+	sc.muMaps.RUnlock()
 	if len(behind) == 0 {
 		return nil, nil
 	}
@@ -830,14 +849,14 @@ func (sc *SubCache[EntityT, ExcerptT, CacheT]) syncLocked(only *entity.Id, progr
 	}
 
 	if batchSize > 0 {
-		err = endBatch()
+		err := endBatch()
 		if err != nil {
 			return changes, err
 		}
 	}
 
 	if len(changes) > 0 {
-		err = sc.write()
+		err := sc.write()
 		if err != nil {
 			return changes, err
 		}
