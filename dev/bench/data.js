@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790930092937,
+  "lastUpdate": 1790939027353,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -23236,6 +23236,102 @@ window.BENCHMARK_DATA = {
             "value": 708735,
             "unit": "allocs/op",
             "extra": "5 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "df45c05942401bbe3629c1b0dbb09fd5251e8228",
+          "message": "Merge pull request #1661 from git-bug/cache-untangle\n\ncache: untangle syncLocked by splitting in two code paths",
+          "timestamp": "2026-10-02T10:57:59Z",
+          "tree_id": "56fcb073b2d15a822c8e82ce981a29b3c9a38407",
+          "url": "https://github.com/git-bug/git-bug/commit/df45c05942401bbe3629c1b0dbb09fd5251e8228"
+        },
+        "date": 1790939025808,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkReadBugs5",
+            "value": 11890547,
+            "unit": "ns/op\t 1773322 B/op\t   24037 allocs/op",
+            "extra": "118 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - ns/op",
+            "value": 11890547,
+            "unit": "ns/op",
+            "extra": "118 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - B/op",
+            "value": 1773322,
+            "unit": "B/op",
+            "extra": "118 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 - allocs/op",
+            "value": 24037,
+            "unit": "allocs/op",
+            "extra": "118 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25",
+            "value": 57521484,
+            "unit": "ns/op\t 8637144 B/op\t  116999 allocs/op",
+            "extra": "20 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - ns/op",
+            "value": 57521484,
+            "unit": "ns/op",
+            "extra": "20 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - B/op",
+            "value": 8637144,
+            "unit": "B/op",
+            "extra": "20 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 - allocs/op",
+            "value": 116999,
+            "unit": "allocs/op",
+            "extra": "20 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150",
+            "value": 390481339,
+            "unit": "ns/op\t57124936 B/op\t  716663 allocs/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - ns/op",
+            "value": 390481339,
+            "unit": "ns/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - B/op",
+            "value": 57124936,
+            "unit": "B/op",
+            "extra": "3 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 - allocs/op",
+            "value": 716663,
+            "unit": "allocs/op",
+            "extra": "3 times\n4 procs"
           }
         ]
       }
