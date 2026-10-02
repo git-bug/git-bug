@@ -339,18 +339,26 @@ optional: the assets are embedded behind the `webui` build tag, so building
 without that tag gives you a binary that works for everything except
 `git bug webui`, and needs nothing beyond `git`, `go` and `make`.
 
-After checking out the revision you want, run this instead of `make install`:
+After checking out the revision you want, run the `nowebui` target from
+`//:Makefile` instead of `install`:
 
-<details><summary>Install <strong>without the web UI</strong></summary>
+<details><summary>Build <strong>without the web UI</strong></summary>
 
 <pre>
 make nowebui
 </pre>
 
-This will build <code>git-bug</code> with the same version stamping as
-<code>make install</code>, but without the web UI, and place it in your Go
-binary directory. The resulting binary prints an explanatory message if you
-run <code>git bug webui</code> on it, rather than serving a broken page.
+Like <code>make build</code>, this leaves the binary in the working directory
+rather than installing it, so move it wherever you want it on your
+<code>PATH</code>, for example your Go binary directory:
+
+<pre>
+mv git-bug "$(go env GOPATH)/bin"
+</pre>
+
+The binary is stamped with the same version as <code>make install</code>, but
+lacks the embedded web UI. Running <code>git bug webui</code> on it prints an
+explanatory message instead of serving a broken page.
 
 </details>
 
