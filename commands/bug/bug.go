@@ -68,36 +68,54 @@ git bug status:open --by creation "foo bar" baz
 
 	flags.StringSliceVarP(&options.statusQuery, "status", "s", nil,
 		"Filter by status. Valid values are [open,closed]")
-	cmd.RegisterFlagCompletionFunc("status", completion.From([]string{"open", "closed"}))
+	if err := cmd.RegisterFlagCompletionFunc("status", completion.From([]string{"open", "closed"})); err != nil {
+		panic(err)
+	}
 	flags.StringSliceVarP(&options.authorQuery, "author", "a", nil,
 		"Filter by author")
 	flags.StringSliceVarP(&options.metadataQuery, "metadata", "m", nil,
 		"Filter by metadata. Example: github-url=URL")
-	cmd.RegisterFlagCompletionFunc("author", completion.UserForQuery(env))
+	if err := cmd.RegisterFlagCompletionFunc("author", completion.UserForQuery(env)); err != nil {
+		panic(err)
+	}
 	flags.StringSliceVarP(&options.participantQuery, "participant", "p", nil,
 		"Filter by participant")
-	cmd.RegisterFlagCompletionFunc("participant", completion.UserForQuery(env))
+	if err := cmd.RegisterFlagCompletionFunc("participant", completion.UserForQuery(env)); err != nil {
+		panic(err)
+	}
 	flags.StringSliceVarP(&options.actorQuery, "actor", "A", nil,
 		"Filter by actor")
-	cmd.RegisterFlagCompletionFunc("actor", completion.UserForQuery(env))
+	if err := cmd.RegisterFlagCompletionFunc("actor", completion.UserForQuery(env)); err != nil {
+		panic(err)
+	}
 	flags.StringSliceVarP(&options.labelQuery, "label", "l", nil,
 		"Filter by label")
-	cmd.RegisterFlagCompletionFunc("label", completion.Label(env))
+	if err := cmd.RegisterFlagCompletionFunc("label", completion.Label(env)); err != nil {
+		panic(err)
+	}
 	flags.StringSliceVarP(&options.titleQuery, "title", "t", nil,
 		"Filter by title")
 	flags.StringSliceVarP(&options.noQuery, "no", "n", nil,
 		"Filter by absence of something. Valid values are [label]")
-	cmd.RegisterFlagCompletionFunc("no", completion.Label(env))
+	if err := cmd.RegisterFlagCompletionFunc("no", completion.Label(env)); err != nil {
+		panic(err)
+	}
 	flags.StringVarP(&options.sortBy, "by", "b", "creation",
 		"Sort the results by a characteristic. Valid values are [id,creation,edit]")
-	cmd.RegisterFlagCompletionFunc("by", completion.From([]string{"id", "creation", "edit"}))
+	if err := cmd.RegisterFlagCompletionFunc("by", completion.From([]string{"id", "creation", "edit"})); err != nil {
+		panic(err)
+	}
 	flags.StringVarP(&options.sortDirection, "direction", "d", "asc",
 		"Select the sorting direction. Valid values are [asc,desc]")
-	cmd.RegisterFlagCompletionFunc("direction", completion.From([]string{"asc", "desc"}))
+	if err := cmd.RegisterFlagCompletionFunc("direction", completion.From([]string{"asc", "desc"})); err != nil {
+		panic(err)
+	}
 	flags.StringVarP(&options.outputFormat, "format", "f", "default",
 		"Select the output formatting style. Valid values are [default,plain,id,json,org-mode]")
-	cmd.RegisterFlagCompletionFunc("format",
-		completion.From([]string{"default", "plain", "id", "json", "org-mode"}))
+	if err := cmd.RegisterFlagCompletionFunc("format",
+		completion.From([]string{"default", "plain", "id", "json", "org-mode"})); err != nil {
+		panic(err)
+	}
 
 	const selectGroup = "select"
 	cmd.AddGroup(&cobra.Group{ID: selectGroup, Title: "Implicit selection"})
