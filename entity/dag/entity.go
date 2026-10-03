@@ -118,12 +118,14 @@ func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 // If since is not empty, only the commits after it are read, and sinceEditTime must be
 // its edit time. Those commits must all descend from it, otherwise an error is returned.
 func readSince(def Definition, repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash, since repository.Hash, sinceEditTime lamport.Time) ([]Operation, lamport.Time, lamport.Time, error) {
-	// Perform a breadth-first search to get a topological order of the DAG where we discover the
-	// parents commit and go back in time up to the chronological root, or to since.
+	// Perform a breadth-first search to discover the commits of the DAG, going back in time
+	// up to the chronological root, or to since. Along the way, count the children of each
+	// commit.
 
 	queue := make([]repository.Hash, 0, 32)
 	visited := make(map[repository.Hash]struct{})
-	BFSOrder := make([]repository.Commit, 0, 32)
+	commits := make(map[repository.Hash]repository.Commit)
+	children := make(map[repository.Hash]int)
 
 	queue = append(queue, lastCommit)
 	visited[lastCommit] = struct{}{}
@@ -141,13 +143,41 @@ func readSince(def Definition, repo repository.ClockedRepo, resolvers entity.Res
 			return nil, 0, 0, err
 		}
 
-		BFSOrder = append(BFSOrder, commit)
+		commits[hash] = commit
 
 		for _, parent := range commit.Parents {
+			children[parent]++
 			if _, ok := visited[parent]; !ok {
 				queue = append(queue, parent)
 				// mark as visited
 				visited[parent] = struct{}{}
+			}
+		}
+	}
+
+	// Topological sort with Kahn's algorithm: starting from the last commit, a commit is
+	// taken only once all its children have been, so children come first. The root is
+	// necessarily last, as all the other commits descend from it.
+
+	topoOrder := make([]repository.Commit, 0, len(commits))
+	ready := []repository.Hash{lastCommit}
+
+	for len(ready) > 0 {
+		// pop
+		hash := ready[0]
+		ready = ready[1:]
+
+		commit := commits[hash]
+		topoOrder = append(topoOrder, commit)
+
+		for _, parent := range commit.Parents {
+			if _, ok := commits[parent]; !ok {
+				// since, not walked
+				continue
+			}
+			children[parent]--
+			if children[parent] == 0 {
+				ready = append(ready, parent)
 			}
 		}
 	}
@@ -160,11 +190,51 @@ func readSince(def Definition, repo repository.ClockedRepo, resolvers entity.Res
 	// 2) make sure that clocks causality respect the DAG topology.
 
 	oppMap := make(map[repository.Hash]*operationPack)
+	opIds := make(map[entity.Id]struct{})
 	var opsCount int
 
-	for i := len(BFSOrder) - 1; i >= 0; i-- {
-		commit := BFSOrder[i]
-		isFirstCommit := since == "" && i == len(BFSOrder)-1
+	// editTimeOf returns the edit time of an already verified commit
+	editTimeOf := func(hash repository.Hash) lamport.Time {
+		if hash == since {
+			return sinceEditTime
+		}
+		pack, ok := oppMap[hash]
+		if !ok {
+			panic("topological ordering failed")
+		}
+		return pack.EditTime
+	}
+
+	// isAncestor tells if target is an ancestor of the already verified commit from.
+	// As the clocks have been verified to follow the DAG, ancestors have a strictly
+	// lower edit time: only the commits with an edit time higher than the target's
+	// can lead to it.
+	isAncestor := func(target, from repository.Hash) bool {
+		targetEditTime := editTimeOf(target)
+		stack := []repository.Hash{from}
+		seen := map[repository.Hash]struct{}{from: {}}
+		for len(stack) > 0 {
+			hash := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+			for _, parent := range commits[hash].Parents {
+				if parent == target {
+					return true
+				}
+				if _, ok := seen[parent]; ok {
+					continue
+				}
+				seen[parent] = struct{}{}
+				if editTimeOf(parent) > targetEditTime {
+					stack = append(stack, parent)
+				}
+			}
+		}
+		return false
+	}
+
+	for i := len(topoOrder) - 1; i >= 0; i-- {
+		commit := topoOrder[i]
+		isFirstCommit := since == "" && i == len(topoOrder)-1
 		isMerge := len(commit.Parents) > 1
 
 		// Verify DAG structure: single chronological root, so only the root
@@ -190,6 +260,14 @@ func readSince(def Definition, repo repository.ClockedRepo, resolvers entity.Res
 			return nil, 0, 0, fmt.Errorf("merge commit cannot have operations")
 		}
 
+		// an operation can only be stored once
+		for _, op := range opp.Operations {
+			if _, ok := opIds[op.Id()]; ok {
+				return nil, 0, 0, fmt.Errorf("duplicate operation %s", op.Id())
+			}
+			opIds[op.Id()] = struct{}{}
+		}
+
 		// Check that the create lamport clock is set (not checked in Validate() as it's optional)
 		if isFirstCommit && opp.CreateTime <= 0 {
 			return nil, 0, 0, fmt.Errorf("creation lamport time not set")
@@ -203,16 +281,7 @@ func readSince(def Definition, repo repository.ClockedRepo, resolvers entity.Res
 
 		// make sure that the lamport clocks causality match the DAG topology
 		for _, parentHash := range commit.Parents {
-			var parentEditTime lamport.Time
-			if parentHash == since {
-				parentEditTime = sinceEditTime
-			} else {
-				parentPack, ok := oppMap[parentHash]
-				if !ok {
-					panic("DFS failed")
-				}
-				parentEditTime = parentPack.EditTime
-			}
+			parentEditTime := editTimeOf(parentHash)
 
 			if parentEditTime >= opp.EditTime {
 				return nil, 0, 0, fmt.Errorf("lamport clock ordering doesn't match the DAG")
@@ -224,6 +293,18 @@ func readSince(def Definition, repo repository.ClockedRepo, resolvers entity.Res
 			// as long as there is one valid chain of small hops, it's fine.
 			if !isMerge && opp.EditTime-parentEditTime > 1_000_000 {
 				return nil, 0, 0, fmt.Errorf("lamport clock jumping too far in the future, likely an attack")
+			}
+		}
+
+		// A merge joins diverged branches: none of its parents can be an ancestor
+		// of another one, as git-bug would fast-forward instead.
+		if isMerge {
+			for i, parent := range commit.Parents {
+				for j, other := range commit.Parents {
+					if i != j && (parent == other || isAncestor(other, parent)) {
+						return nil, 0, 0, fmt.Errorf("merge commit with a parent that is an ancestor of another")
+					}
+				}
 			}
 		}
 
@@ -419,11 +500,16 @@ func validateOperations(lists ...[]Operation) error {
 	return nil
 }
 
-// Operations return the ordered operations
+// Operations return the ordered operations.
+// The returned slice must not be modified.
 func (e *Entity) Operations() []Operation {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
-	// always copy, to not share the backing array of e.ops with the caller
+	if len(e.staging) == 0 {
+		// Committed operations are never modified in place, only appended, so they can be
+		// shared. The capacity is capped so that appending to the result can't write into e.ops.
+		return e.ops[:len(e.ops):len(e.ops)]
+	}
 	res := make([]Operation, 0, len(e.ops)+len(e.staging))
 	res = append(res, e.ops...)
 	return append(res, e.staging...)
@@ -643,6 +729,19 @@ func (e *Entity) Repair(repo repository.ClockedRepo, resolvers entity.Resolvers)
 	// Note: both read the clocks, so that the next commit get higher ones.
 	if e.lastCommit != "" {
 		ops, createTime, editTime, err := readSince(e.Definition, repo, resolvers, id, commit, e.lastCommit, e.editTime)
+		if err == nil {
+			// readSince only sees the new operations, check them against the known ones
+			known := make(map[entity.Id]struct{}, len(e.ops))
+			for _, op := range e.ops {
+				known[op.Id()] = struct{}{}
+			}
+			for _, op := range ops {
+				if _, ok := known[op.Id()]; ok {
+					err = fmt.Errorf("duplicate operation %s", op.Id())
+					break
+				}
+			}
+		}
 		if err == nil {
 			e.ops = append(e.ops, ops...)
 			e.createTime = max(e.createTime, createTime)

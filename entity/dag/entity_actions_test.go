@@ -1,6 +1,7 @@
 package dag
 
 import (
+	"fmt"
 	"maps"
 	"slices"
 	"sort"
@@ -462,6 +463,54 @@ func TestMergeConcurrentReturnsMergedEntity(t *testing.T) {
 
 	merged.Append(newOp1(id1, "after"))
 	require.NoError(t, merged.Commit(repoB))
+}
+
+// A merge commit joins branches of any length since their common ancestor, and the
+// result must be readable on both sides.
+func TestMergeUnequalBranches(t *testing.T) {
+	for _, tc := range []struct{ local, remote int }{
+		{1, 1}, {2, 1}, {1, 2}, {3, 1}, {1, 3}, {4, 2},
+	} {
+		t.Run(fmt.Sprintf("local %d remote %d", tc.local, tc.remote), func(t *testing.T) {
+			repoA, repoB, _, id1, id2, resolvers, def := makeTestContextRemote(t)
+
+			eA := wrapper(New(def))
+			eA.Append(newOp1(id1, "root"))
+			require.NoError(t, eA.Commit(repoA))
+			_, err := Push(def, repoA, "remote")
+			require.NoError(t, err)
+			require.NoError(t, Pull(def, wrapper, repoB, resolvers, "remote", id2))
+
+			// one commit per operation
+			for i := range tc.remote {
+				eA.Append(newOp2(id1, fmt.Sprintf("remote %d", i)))
+				require.NoError(t, eA.Commit(repoA))
+			}
+			eB, err := Read(def, wrapper, repoB, resolvers, eA.Id())
+			require.NoError(t, err)
+			for i := range tc.local {
+				eB.Append(newOp2(id2, fmt.Sprintf("local %d", i)))
+				require.NoError(t, eB.Commit(repoB))
+			}
+
+			// merge in B, then fast-forward in A
+			_, err = Push(def, repoA, "remote")
+			require.NoError(t, err)
+			require.NoError(t, Pull(def, wrapper, repoB, resolvers, "remote", id2))
+			_, err = Push(def, repoB, "remote")
+			require.NoError(t, err)
+			require.NoError(t, Pull(def, wrapper, repoA, resolvers, "remote", id1))
+
+			readB, err := Read(def, wrapper, repoB, resolvers, eA.Id())
+			require.NoError(t, err)
+			require.Len(t, readB.Operations(), 1+tc.local+tc.remote)
+
+			readA, err := Read(def, wrapper, repoA, resolvers, eA.Id())
+			require.NoError(t, err)
+			require.Equal(t, readB.LastCommit(), readA.LastCommit())
+			require.Equal(t, readB.Operations(), readA.Operations())
+		})
+	}
 }
 
 // Invalid remote data must never reach the local entities, whether the merge
