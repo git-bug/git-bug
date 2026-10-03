@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"strconv"
+	"slices"
 	"strings"
 	"time"
 
@@ -173,6 +173,18 @@ func List(repo repository.RepoKeyring, opts ...ListOption) ([]Credential, error)
 		}
 	}
 
+	// The keyring returns keys in an arbitrary (backend dependent) order.
+	// Callers commonly pick the first matching credential, so make that
+	// choice deterministic and sensible: the most recently created one first.
+	// This way, adding a fresh credential supersedes older (possibly revoked)
+	// ones instead of being shadowed by them.
+	slices.SortStableFunc(credentials, func(a, b Credential) int {
+		if c := b.CreateTime().Compare(a.CreateTime()); c != 0 {
+			return c
+		}
+		return strings.Compare(a.ID().String(), b.ID().String())
+	})
+
 	return credentials, nil
 }
 
@@ -198,7 +210,7 @@ func Store(repo repository.RepoKeyring, cred Credential) error {
 
 	confs[keyringKeyKind] = string(cred.Kind())
 	confs[keyringKeyTarget] = cred.Target()
-	confs[keyringKeyCreateTime] = strconv.Itoa(int(cred.CreateTime().Unix()))
+	confs[keyringKeyCreateTime] = cred.CreateTime().UTC().Format(time.RFC3339Nano)
 	confs[keyringKeySalt] = base64.StdEncoding.EncodeToString(cred.Salt())
 
 	for key, val := range cred.Metadata() {
