@@ -215,7 +215,9 @@ dependencies:
   [below](#build-without-the-web-ui) if you don't need it
 
 The exact versions used in development are pinned in `.tool-versions`, if you
-use [`asdf`][asdf] then `asdf install` will install them for you.
+use [`asdf`][asdf] then `asdf install` will install them for you. `asdf install`
+only supplies the pinned versions for plugins you already registered, so run
+the plugin registrations from [`CONTRIBUTING.md`][contrib] once beforehand.
 
 Ensure that the `go` binary directory (`$GOPATH/bin`) is in your `PATH`. It is
 recommended to set this within your shell configuration file(s), such as
@@ -339,8 +341,10 @@ optional: the assets are embedded behind the `webui` build tag, so building
 without that tag gives you a binary that works for everything except
 `git bug webui`, and needs nothing beyond `git`, `go` and `make`.
 
-After checking out the revision you want, run the `nowebui` target from
-`//:Makefile` instead of `install`:
+The `nowebui` target is newer than every release tag, so none of them have it:
+checking out `v0.11.0` or older and running `make` fails with `No rule to make
+target 'nowebui'`. Check out `trunk`, or another revision that carries the
+target, and then run it from `//:Makefile` instead of `install`:
 
 <details><summary>Build <strong>without the web UI</strong></summary>
 
@@ -350,10 +354,12 @@ make nowebui
 
 Like <code>make build</code>, this leaves the binary in the working directory
 rather than installing it, so move it wherever you want it on your
-<code>PATH</code>, for example your Go binary directory:
+<code>PATH</code>, for example your Go binary directory. <code>make</code> does
+not create that directory for you, so create it first on a fresh Go setup:
 
 <pre>
-mv git-bug "$(go env GOPATH)/bin"
+mkdir -p "$(go env GOPATH)/bin"
+mv git-bug "$(go env GOPATH)/bin/"
 </pre>
 
 The binary is stamped with the same version as <code>make install</code>, but
@@ -413,6 +419,7 @@ ______________________________________________________________________
 [bin/windows_amd64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_windows_amd64.exe
 [bin/windows_arm64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_windows_arm64.exe
 [brew.sh]: https://brew.sh
+[contrib]: ./CONTRIBUTING.md
 [cosign]: https://docs.sigstore.dev/cosign/system_config/installation/
 [docs/home]: ./doc
 [p/arch-repo]: https://archlinux.org/packages/extra/x86_64/git-bug/
