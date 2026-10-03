@@ -54,3 +54,14 @@ func (ws *withSnapshot[SnapT, OpT]) Commit(repo repository.ClockedRepo) error {
 
 	return nil
 }
+
+// CommitOperations intercept Bug.CommitOperations() to invalidate the snapshot, as the
+// committed operations are ordered before the pending ones already applied to it.
+func (ws *withSnapshot[SnapT, OpT]) CommitOperations(repo repository.ClockedRepo, ops []OpT) error {
+	ws.mu.Lock()
+	defer ws.mu.Unlock()
+
+	ws.snap = nil
+
+	return ws.Interface.CommitOperations(repo, ops)
+}
