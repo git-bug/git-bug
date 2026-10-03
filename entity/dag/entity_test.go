@@ -193,6 +193,68 @@ func TestCommitFailureMidway(t *testing.T) {
 	require.NoError(t, entity.Commit(repo))
 }
 
+// git-bug never writes a merge commit with a parent that is also an ancestor of its
+// other parent, and such a DAG must be rejected. Reading it must never panic, even
+// when crafted so that a commit other than the root passes the root checks.
+//
+//	root <- X <- A <- merge
+//	  ^               |
+//	  +---------------+
+func TestReadMergeWithAncestorParent(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		// whether X carries the root operation and a creation time
+		craftedX bool
+		err      string
+	}{
+		{"plain", false, "merge commit with a parent that is an ancestor of another"},
+		// rejected before reaching the merge
+		{"crafted", true, "duplicate operation"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			repo, id1, _, resolver, def := makeTestContext()
+
+			rootOp := newOp1(id1, "root")
+			e := wrapper(New(def))
+			e.Append(rootOp)
+			require.NoError(t, e.Commit(repo))
+			root := e.LastCommit()
+
+			xPack := &operationPack{
+				Author:     id1,
+				Operations: []Operation{newOp2(id1, "x")},
+				EditTime:   e.EditLamportTime() + 1,
+			}
+			if tc.craftedX {
+				xPack.Operations = []Operation{rootOp}
+				xPack.CreateTime = e.CreateLamportTime()
+			}
+			x, err := xPack.Write(def, repo, root)
+			require.NoError(t, err)
+
+			a, err := (&operationPack{
+				Author:     id1,
+				Operations: []Operation{newOp2(id1, "a")},
+				EditTime:   e.EditLamportTime() + 2,
+			}).Write(def, repo, x)
+			require.NoError(t, err)
+
+			merge, err := (&operationPack{
+				Author:   id1,
+				EditTime: e.EditLamportTime() + 3,
+			}).Write(def, repo, a, root)
+			require.NoError(t, err)
+			require.NoError(t, repo.UpdateRef(def.Namespace, e.Id().String(), root, merge))
+
+			require.NotPanics(t, func() {
+				_, err = Read(def, wrapper, repo, resolver, e.Id())
+			})
+
+			require.ErrorContains(t, err, tc.err)
+		})
+	}
+}
+
 // countingRepo counts the calls to ReadCommit
 type countingRepo struct {
 	repository.ClockedRepo
@@ -402,23 +464,44 @@ func TestRepair(t *testing.T) {
 
 	t.Run("invalid new data", func(t *testing.T) {
 		// a forged commit is added on top of the moved entity
+		type forge struct {
+			ops      []Operation
+			editTime lamport.Time
+			parents  []repository.Hash
+		}
 		for _, tc := range []struct {
-			name     string
-			editTime func(moved *Foo) lamport.Time
-			err      string
+			name  string
+			forge func(stale, moved *Foo, id1 identity.Interface) forge
+			err   string
 		}{
-			{"clock not after parent", func(moved *Foo) lamport.Time { return moved.EditLamportTime() }, "lamport clock ordering doesn't match the DAG"},
-			{"clock too far", func(moved *Foo) lamport.Time { return moved.EditLamportTime() + 2_000_000 }, "lamport clock jumping too far"},
+			{"clock not after parent", func(stale, moved *Foo, id1 identity.Interface) forge {
+				return forge{[]Operation{newOp1(id1, "forged")}, moved.EditLamportTime(), []repository.Hash{moved.LastCommit()}}
+			}, "lamport clock ordering doesn't match the DAG"},
+			{"clock too far", func(stale, moved *Foo, id1 identity.Interface) forge {
+				return forge{[]Operation{newOp1(id1, "forged")}, moved.EditLamportTime() + 2_000_000, []repository.Hash{moved.LastCommit()}}
+			}, "lamport clock jumping too far"},
+			// the known root operation, stored again
+			{"duplicate operation", func(stale, moved *Foo, id1 identity.Interface) forge {
+				return forge{[]Operation{stale.FirstOp()}, moved.EditLamportTime() + 1, []repository.Hash{moved.LastCommit()}}
+			}, "duplicate operation"},
+			// the last known commit is an ancestor of the moved one
+			{"merge with ancestor parent", func(stale, moved *Foo, id1 identity.Interface) forge {
+				return forge{nil, moved.EditLamportTime() + 1, []repository.Hash{moved.LastCommit(), stale.LastCommit()}}
+			}, "merge commit with a parent that is an ancestor of another"},
+			{"merge with the same parent twice", func(stale, moved *Foo, id1 identity.Interface) forge {
+				return forge{nil, moved.EditLamportTime() + 1, []repository.Hash{moved.LastCommit(), moved.LastCommit()}}
+			}, "merge commit with a parent that is an ancestor of another"},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				repo, resolver, _, stale, moved, id1, _ := setup(t)
 
+				f := tc.forge(stale, moved, id1)
 				opp := &operationPack{
 					Author:     id1,
-					Operations: []Operation{newOp1(id1, "forged")},
-					EditTime:   tc.editTime(moved),
+					Operations: f.ops,
+					EditTime:   f.editTime,
 				}
-				forged, err := opp.Write(stale.Definition, repo, moved.LastCommit())
+				forged, err := opp.Write(stale.Definition, repo, f.parents...)
 				require.NoError(t, err)
 				require.NoError(t, repo.UpdateRef(stale.Namespace, stale.Id().String(), moved.LastCommit(), forged))
 
@@ -487,4 +570,106 @@ func assertEqualEntities(t *testing.T, a, b *Entity) {
 	}()
 
 	require.Equal(t, a, b)
+}
+
+// BenchmarkRead reads entities with different history shapes, each with about the
+// given number of commits.
+func BenchmarkRead(b *testing.B) {
+	type history struct {
+		repo      repository.ClockedRepo
+		resolvers entity.Resolvers
+		def       Definition
+		head      repository.Hash
+		e         *Foo
+	}
+
+	// build creates an entity, and returns a function writing commits with the
+	// given clock on top of the given parents. Merge commits have no operation.
+	build := func(b *testing.B) (history, func(editTime lamport.Time, parents ...repository.Hash) repository.Hash) {
+		repo, id1, _, resolvers, def := makeTestContext()
+
+		e := wrapper(New(def))
+		e.Append(newOp1(id1, "root"))
+		require.NoError(b, e.Commit(repo))
+
+		var n int
+		write := func(editTime lamport.Time, parents ...repository.Hash) repository.Hash {
+			opp := &operationPack{Author: id1, EditTime: editTime}
+			if len(parents) == 1 {
+				n++
+				opp.Operations = []Operation{newOp2(id1, fmt.Sprintf("op %d", n))}
+			}
+			hash, err := opp.Write(def, repo, parents...)
+			require.NoError(b, err)
+			return hash
+		}
+
+		return history{repo: repo, resolvers: resolvers, def: def, head: e.LastCommit(), e: e}, write
+	}
+
+	shapes := []struct {
+		name  string
+		build func(b *testing.B, commits int) history
+	}{
+		{"linear", func(b *testing.B, commits int) history {
+			h, write := build(b)
+			clock := h.e.EditLamportTime()
+			for range commits {
+				clock++
+				h.head = write(clock, h.head)
+			}
+			return h
+		}},
+		// Short-lived branches, merged back after two commits on each side: the
+		// usual shape of concurrent edition.
+		{"merges", func(b *testing.B, commits int) history {
+			h, write := build(b)
+			clock := h.e.EditLamportTime()
+			for range commits / 5 {
+				fork := h.head
+				branch := fork
+				for i := range lamport.Time(2) {
+					branch = write(clock+1+i, branch)
+					h.head = write(clock+1+i, h.head)
+				}
+				clock += 3
+				h.head = write(clock, h.head, branch)
+			}
+			return h
+		}},
+		// A long-lived branch whose clocks lag far behind, merged again and again
+		// into a busy trunk: the worst case for the merge-parent check, as its
+		// ancestry walks can't stop early.
+		{"lagging branch", func(b *testing.B, commits int) history {
+			h, write := build(b)
+			base := h.e.EditLamportTime()
+			branch := h.head
+			clock := base + lamport.Time(commits)
+			for i := range commits / 5 {
+				branch = write(base+1+lamport.Time(i), branch)
+				for range 3 {
+					clock++
+					h.head = write(clock, h.head)
+				}
+				clock++
+				h.head = write(clock, h.head, branch)
+			}
+			return h
+		}},
+	}
+
+	for _, shape := range shapes {
+		for _, commits := range []int{100, 1000} {
+			b.Run(fmt.Sprintf("%s/%d", shape.name, commits), func(b *testing.B) {
+				h := shape.build(b, commits)
+				// make sure the history is valid
+				_, err := read(h.def, wrapper, h.repo, h.resolvers, h.e.Id(), h.head)
+				require.NoError(b, err)
+
+				for b.Loop() {
+					_, _ = read(h.def, wrapper, h.repo, h.resolvers, h.e.Id(), h.head)
+				}
+			})
+		}
+	}
 }
