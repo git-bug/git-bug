@@ -129,12 +129,6 @@ func assertMergeResults(t *testing.T, expected []entity.MergeResult, results <-c
 		require.Equal(t, expected[i].Id, result.Id)
 		require.Equal(t, expected[i].Status, result.Status)
 
-		switch result.Status {
-		case entity.MergeStatusNew, entity.MergeStatusUpdated:
-			require.NotNil(t, result.Entity)
-			require.Equal(t, expected[i].Id, result.Entity.Id())
-		}
-
 		i++
 	}
 }
@@ -409,9 +403,9 @@ func TestMergeWithoutAuthor(t *testing.T) {
 	}, results)
 }
 
-// The entity returned by a merge commit must be the merged entity: it holds the
-// operations of both branches, and further changes can be committed on top.
-func TestMergeConcurrentReturnsMergedEntity(t *testing.T) {
+// A merge commit joins the branches: a read then holds the operations of both,
+// and further changes can be committed on top.
+func TestMergeConcurrentJoinsBranches(t *testing.T) {
 	repoA, repoB, _, id1, _, resolvers, def := makeTestContextRemote(t)
 
 	eA := New(def)
@@ -448,12 +442,8 @@ func TestMergeConcurrentReturnsMergedEntity(t *testing.T) {
 	require.NoError(t, all[0].Err)
 	require.Equal(t, entity.MergeStatusUpdated, all[0].Status)
 
-	merged := all[0].Entity.(*Foo)
-
-	// same operations, order, clocks and last commit as a later read
-	fresh, err := Read(def, wrapper, repoB, resolvers, eA.Id())
+	merged, err := Read(def, wrapper, repoB, resolvers, eA.Id())
 	require.NoError(t, err)
-	assertEqualEntities(t, fresh.Entity, merged.Entity)
 
 	var fields []string
 	for _, op := range merged.Operations() {

@@ -49,16 +49,3 @@ type Tracked[SnapT Snapshot, OpT Operation] interface {
 	// EditLamportTime return the Lamport time of the last edit
 	EditLamportTime() lamport.Time
 }
-
-// Interface define the extended interface of a dag.Entity: its committed state,
-// and a staging area of its own on top of it.
-type Interface[SnapT Snapshot, OpT Operation] interface {
-	Mutable[SnapT, OpT]
-	Tracked[SnapT, OpT]
-
-	// NeedCommit indicates that the in-memory state changed and need to be committed in the repository
-	NeedCommit() bool
-
-	// Commit writes the staging area in Git and move the operations to the packs
-	Commit(repo repository.ClockedRepo) error
-}

@@ -26,9 +26,6 @@ type MergeResult struct {
 
 	// Only set for Invalid status
 	Reason string
-
-	// Only set for New or Updated status
-	Entity Interface
 }
 
 func (mr MergeResult) String() string {
@@ -51,11 +48,10 @@ func (mr MergeResult) String() string {
 	}
 }
 
-func NewMergeNewStatus(id Id, entity Interface) MergeResult {
+func NewMergeNewStatus(id Id) MergeResult {
 	return MergeResult{
 		Id:     id,
 		Status: MergeStatusNew,
-		Entity: entity,
 	}
 }
 
@@ -67,11 +63,10 @@ func NewMergeInvalidStatus(id Id, reason string) MergeResult {
 	}
 }
 
-func NewMergeUpdatedStatus(id Id, entity Interface) MergeResult {
+func NewMergeUpdatedStatus(id Id) MergeResult {
 	return MergeResult{
 		Id:     id,
 		Status: MergeStatusUpdated,
-		Entity: entity,
 	}
 }
 
