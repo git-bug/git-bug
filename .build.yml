@@ -1,0 +1,23 @@
+---
+image: debian/testing
+packages:
+  - curl
+  - golang
+  - make
+  - gnupg
+sources:
+  - "https://git.sr.ht/~mcepl/git-bug"
+environment:
+  DESTDIR: ./out
+  GOFLAGS: ""
+  CC: gcc
+tasks:
+  - validate: |
+      cd git-bug
+      test -z "$(gofmt -d .)" || exit 1
+  - download-dependencies: |
+      cd git-bug
+      go mod download > /dev/null
+  - build: |
+      cd git-bug
+      make test

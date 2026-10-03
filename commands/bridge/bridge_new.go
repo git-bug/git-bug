@@ -127,7 +127,15 @@ git bug bridge new \
 git bug bridge new \
     --name=default \
     --target=launchpad-preview \
-    --url=https://bugs.launchpad.net/ubuntu/`,
+    --url=https://bugs.launchpad.net/ubuntu/
+
+# For todo.sr.ht
+git bug bridge new \
+    --name=default \
+    --target=todosrht \
+    --url=https://todo.sr.ht/~owner/tracker-name \
+    --login=your-username \
+    --token=$TOKEN`,
 		PreRunE: execenv.LoadBackend(env),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBridgeNew(env, options)
