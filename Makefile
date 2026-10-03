@@ -29,6 +29,12 @@ install: build-webui
 	go generate
 	go install -tags webui -ldflags "$(LDFLAGS)" .
 
+# build without the embedded web UI (no Node.js / pnpm needed)
+.PHONY: nowebui
+nowebui:
+	go generate
+	go build -ldflags "$(LDFLAGS)" .
+
 .PHONY: secure
 secure:
 	go tool govulncheck ./...
