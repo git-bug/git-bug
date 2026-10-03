@@ -16,12 +16,14 @@ import (
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/commands/completion"
 	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/entity"
 )
 
 type bridgeAuthAddTokenOptions struct {
-	target string
-	login  string
-	user   string
+	target  string
+	login   string
+	baseURL string
+	user    string
 }
 
 func newBridgeAuthAddTokenCommand(env *execenv.Env) *cobra.Command {
@@ -45,6 +47,8 @@ func newBridgeAuthAddTokenCommand(env *execenv.Env) *cobra.Command {
 	cmd.RegisterFlagCompletionFunc("target", completion.From(bridge.Targets()))
 	flags.StringVarP(&options.login,
 		"login", "l", "", "The login in the remote bug-tracker")
+	flags.StringVarP(&options.baseURL,
+		"base-url", "b", "", "The base URL of the remote bug-tracker instance (required by self-hosted targets such as gitea or gitlab)")
 	flags.StringVarP(&options.user,
 		"user", "u", "", "The user to add the token to. Default is the current user")
 	cmd.RegisterFlagCompletionFunc("user", completion.User(env))
@@ -94,6 +98,9 @@ func runBridgeAuthAddToken(env *execenv.Env, opts bridgeAuthAddTokenOptions, arg
 		user, err = env.Backend.GetUserIdentity()
 	} else {
 		user, err = env.Backend.Identities().ResolvePrefix(opts.user)
+		if entity.IsErrNotFound(err) {
+			return fmt.Errorf("no identity matching --user %q", opts.user)
+		}
 	}
 	if err != nil {
 		return err
@@ -117,6 +124,9 @@ func runBridgeAuthAddToken(env *execenv.Env, opts bridgeAuthAddTokenOptions, arg
 
 	token := auth.NewToken(opts.target, value)
 	token.SetMetadata(auth.MetaKeyLogin, opts.login)
+	if opts.baseURL != "" {
+		token.SetMetadata(auth.MetaKeyBaseURL, opts.baseURL)
+	}
 
 	if err := token.Validate(); err != nil {
 		return errors.Wrap(err, "invalid token")

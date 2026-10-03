@@ -22,7 +22,15 @@ func FinishConfig(repo *cache.RepoCache, metaKey string, login string) error {
 
 	// if a default user exist, tag it with the login
 	user, err := repo.GetUserIdentity()
-	if err != nil && err != identity.ErrNoIdentitySet {
+	switch {
+	case err == nil, err == identity.ErrNoIdentitySet:
+	case entity.IsErrNotFound(err):
+		// The configured user identity points to an identity that doesn't
+		// exist (anymore) in this repository. Don't fail the whole bridge
+		// configuration for that, just create a fresh identity below, which
+		// will replace the dangling one as the current user.
+		fmt.Printf("The configured user identity doesn't exist in this repository, ignoring it\n")
+	default:
 		// real error
 		return err
 	}
