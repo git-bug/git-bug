@@ -661,8 +661,9 @@ func TestBuildConcurrentResolve(t *testing.T) {
 		cached, err := repoCache.Identities().Resolve(author.Id())
 		require.NoError(t, err)
 
-		// a single copy of each identity should exist in memory
-		require.Same(t, cached, author)
+		// both are views of the single loaded copy of that identity
+		require.Equal(t, cached.Id(), author.Id())
+		require.Contains(t, repoCache.identities.cached, author.Id())
 	}
 }
 
@@ -728,7 +729,7 @@ func checkBugPresence(t *testing.T, cache *RepoCache, bug *BugCache, presence bo
 	b, ok := cache.bugs.cached[id]
 	require.Equal(t, presence, ok)
 	if ok {
-		require.Equal(t, bug, b)
+		require.Same(t, bug.shared, b)
 	}
 }
 

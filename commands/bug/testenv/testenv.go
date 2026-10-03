@@ -75,6 +75,7 @@ func NewTestEnvAndBugWithComment(t *testing.T) (*execenv.Env, entity.Id, entity.
 
 	commentId, _, err := b.AddComment(testCommentMessage)
 	require.NoError(t, err)
+	require.NoError(t, b.Commit())
 
 	return env, bugID, commentId
 }

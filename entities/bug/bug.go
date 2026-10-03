@@ -11,7 +11,8 @@ import (
 	"github.com/git-bug/git-bug/repository"
 )
 
-var _ dag.Interface[*Snapshot, Operation] = &Bug{}
+var _ dag.Mutable[*Snapshot, Operation] = &Bug{}
+var _ dag.Tracked[*Snapshot, Operation] = &Bug{}
 var _ entity.Interface = &Bug{}
 
 // 1: original format

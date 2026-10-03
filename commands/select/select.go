@@ -29,7 +29,7 @@ func IsErrNoValidId(err error) bool {
 	return ok
 }
 
-type Resolver[CacheT cache.CacheEntity] interface {
+type Resolver[CacheT entity.Resolved] interface {
 	Resolve(id entity.Id) (CacheT, error)
 	ResolvePrefix(prefix string) (CacheT, error)
 }
@@ -42,7 +42,7 @@ type Resolver[CacheT cache.CacheEntity] interface {
 //   - the new list of command line arguments with the entity prefix removed if it
 //     has been used
 //   - an error if the process failed
-func Resolve[CacheT cache.CacheEntity](repo *cache.RepoCache,
+func Resolve[CacheT entity.Resolved](repo *cache.RepoCache,
 	typename string, namespace string, resolver Resolver[CacheT],
 	args []string) (CacheT, []string, error) {
 	// At first, try to use the first argument as an entity prefix
@@ -113,7 +113,7 @@ func Clear(repo *cache.RepoCache, namespace string) error {
 	return repo.LocalStorage().Remove(filename)
 }
 
-func selected[CacheT cache.CacheEntity](repo *cache.RepoCache, resolver Resolver[CacheT], namespace string) (*CacheT, error) {
+func selected[CacheT entity.Resolved](repo *cache.RepoCache, resolver Resolver[CacheT], namespace string) (*CacheT, error) {
 	filename := selectFileName(namespace)
 	f, err := repo.LocalStorage().Open(filename)
 	if err != nil {

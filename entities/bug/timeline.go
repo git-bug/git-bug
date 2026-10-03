@@ -1,6 +1,7 @@
 package bug
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/git-bug/git-bug/entities/identity"
@@ -77,4 +78,11 @@ func (c *CommentTimelineItem) Edited() bool {
 // MessageIsEmpty return true is the message is empty or only made of spaces
 func (c *CommentTimelineItem) MessageIsEmpty() bool {
 	return len(strings.TrimSpace(c.Message)) == 0
+}
+
+// clone returns a copy that Append can be called on without the original noticing
+func (c *CommentTimelineItem) clone() CommentTimelineItem {
+	res := *c
+	res.History = slices.Clone(c.History)
+	return res
 }

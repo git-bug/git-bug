@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 
 	"github.com/pkg/errors"
 
@@ -32,6 +33,13 @@ var _ entity.Interface = &Identity{}
 type Identity struct {
 	// all the successive version of the identity
 	versions []*version
+}
+
+// Clone returns a copy of the identity that can be mutated and committed without
+// the original noticing. The committed versions are shared, as they don't change.
+// It is meant for an identity with no pending version: those would be shared too.
+func (i *Identity) Clone() *Identity {
+	return &Identity{versions: slices.Clone(i.versions)}
 }
 
 func NewIdentity(repo repository.RepoClock, name string, email string) (*Identity, error) {
