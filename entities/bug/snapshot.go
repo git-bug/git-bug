@@ -2,6 +2,7 @@ package bug
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/git-bug/git-bug/entities/common"
@@ -45,6 +46,32 @@ func (snap *Snapshot) AllOperations() []dag.Operation {
 
 func (snap *Snapshot) AppendOperation(op dag.Operation) {
 	snap.Operations = append(snap.Operations, op)
+}
+
+// Clone returns a copy of the snapshot that operations can be applied to without
+// the original noticing, and conversely: the slices and the timeline items that
+// applying an operation modifies are copied, the rest is shared.
+// Operations and identities are shared, as they don't change once created. The
+// exception is the extra metadata that a SetMetadataOperation sets on its target
+// operation, which both snapshots see.
+func (snap *Snapshot) Clone() *Snapshot {
+	clone := *snap
+	clone.Comments = slices.Clone(snap.Comments)
+	clone.Labels = slices.Clone(snap.Labels)
+	clone.Actors = slices.Clone(snap.Actors)
+	clone.Participants = slices.Clone(snap.Participants)
+	clone.Operations = slices.Clone(snap.Operations)
+	clone.Timeline = slices.Clone(snap.Timeline)
+	for i, item := range clone.Timeline {
+		// comment items are edited in place, see EditCommentOperation.Apply
+		switch item := item.(type) {
+		case *CreateTimelineItem:
+			clone.Timeline[i] = &CreateTimelineItem{CommentTimelineItem: item.CommentTimelineItem.clone()}
+		case *AddCommentTimelineItem:
+			clone.Timeline[i] = &AddCommentTimelineItem{CommentTimelineItem: item.CommentTimelineItem.clone()}
+		}
+	}
+	return &clone
 }
 
 // EditTime returns the last time a bug was modified
