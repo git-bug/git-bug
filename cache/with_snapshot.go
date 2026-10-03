@@ -3,6 +3,7 @@ package cache
 import (
 	"sync"
 
+	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/git-bug/git-bug/repository"
 )
@@ -64,4 +65,15 @@ func (ws *withSnapshot[SnapT, OpT]) CommitOperations(repo repository.ClockedRepo
 	ws.snap = nil
 
 	return ws.Interface.CommitOperations(repo, ops)
+}
+
+// Repair intercept Bug.Repair() to invalidate the snapshot, as the committed
+// operations it reloads can come anywhere before the pending ones already applied to it.
+func (ws *withSnapshot[SnapT, OpT]) Repair(repo repository.ClockedRepo, resolvers entity.Resolvers) error {
+	ws.mu.Lock()
+	defer ws.mu.Unlock()
+
+	ws.snap = nil
+
+	return ws.Interface.Repair(repo, resolvers)
 }
