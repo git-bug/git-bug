@@ -44,13 +44,16 @@ func runPush(env *execenv.Env, args []string, verbose bool) error {
 		remote = v
 	}
 
+	if verbose {
+		env.Err.Println("Pushing to remote:", remote)
+	}
+
 	stdout, err := env.Backend.Push(remote)
 	if err != nil {
 		return err
 	}
 
 	if verbose {
-		env.Err.Println("Pushing to remote:", remote)
 		env.Err.Println(stdout)
 	} else {
 		env.Out.Println(stdout)

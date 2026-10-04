@@ -82,9 +82,17 @@ func NewTestEnvTerminal(t *testing.T) *Env {
 	return newTestEnv(t, true)
 }
 
+func NewTestEnvWithRepo(t *testing.T, repo repository.ClockedRepo) *Env {
+	t.Helper()
+	return newTestEnvWithRepo(t, repo, false)
+}
+
 func newTestEnv(t *testing.T, isTerminal bool) *Env {
 	repo := repository.CreateGoGitTestRepo(t, false)
+	return newTestEnvWithRepo(t, repo, isTerminal)
+}
 
+func newTestEnvWithRepo(t *testing.T, repo repository.ClockedRepo, isTerminal bool) *Env {
 	backend, err := cache.NewRepoCacheNoEvents(repo)
 	require.NoError(t, err)
 
