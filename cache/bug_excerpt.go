@@ -38,8 +38,8 @@ type BugExcerpt struct {
 	CreateMetadata map[string]string
 }
 
-func NewBugExcerpt(b *BugCache) *BugExcerpt {
-	snap := b.Snapshot()
+func newBugExcerpt(b *sharedBug) *BugExcerpt {
+	snap := b.Compile()
 	participantsIds := make([]entity.Id, 0, len(snap.Participants))
 	for _, participant := range snap.Participants {
 		participantsIds = append(participantsIds, participant.Id())

@@ -78,7 +78,7 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 					return
 				}
 
-				out <- entity.NewMergeNewStatus(id, remoteIdentity)
+				out <- entity.NewMergeNewStatus(id)
 				continue
 			}
 
@@ -102,7 +102,7 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 			}
 
 			if updated {
-				out <- entity.NewMergeUpdatedStatus(id, localIdentity)
+				out <- entity.NewMergeUpdatedStatus(id)
 			} else {
 				out <- entity.NewMergeNothingStatus(id)
 			}

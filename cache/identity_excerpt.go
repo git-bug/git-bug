@@ -3,6 +3,7 @@ package cache
 import (
 	"encoding/gob"
 	"fmt"
+	"github.com/git-bug/git-bug/entities/identity"
 	"strings"
 
 	"github.com/git-bug/git-bug/entity"
@@ -26,7 +27,7 @@ type IdentityExcerpt struct {
 	ImmutableMetadata map[string]string
 }
 
-func NewIdentityExcerpt(i *IdentityCache) *IdentityExcerpt {
+func newIdentityExcerpt(i *identity.Identity) *IdentityExcerpt {
 	return &IdentityExcerpt{
 		id:                i.Id(),
 		Name:              i.Name(),

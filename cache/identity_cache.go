@@ -8,9 +8,11 @@ import (
 )
 
 var _ identity.Interface = &IdentityCache{}
-var _ CacheEntity = &IdentityCache{}
 
-// IdentityCache is a wrapper around an Identity for caching.
+// IdentityCache is a wrapper around an Identity for caching: a view over a copy
+// of the loaded identity, taken when it is resolved, see SubCache.Resolve. What
+// it mutates and commits is its own, and it doesn't follow later changes to the
+// loaded identity.
 type IdentityCache struct {
 	repo     repository.ClockedRepo
 	onCommit func() error // called after each commit

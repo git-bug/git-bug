@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"maps"
+	"reflect"
 	"time"
 
 	"github.com/pkg/errors"
@@ -59,8 +61,9 @@ type Operation interface {
 	setId(id entity.Id)
 	// setAuthor allow to set the author, used when unmarshalling only
 	setAuthor(author identity.Interface)
-	// setExtraMetadataImmutable add a metadata not carried by the operation itself on the operation
-	setExtraMetadataImmutable(key string, value string)
+	// addExtraMetadataImmutable adds metadata not carried by the operation itself
+	// on the operation, see withExtraMetadata
+	addExtraMetadataImmutable(metadata map[string]string)
 }
 
 type OperationWithApply[SnapT Snapshot] interface {
@@ -88,7 +91,8 @@ type OperationDoesntChangeSnapshot interface {
 
 // Snapshot is the minimal interface that a snapshot need to implement
 type Snapshot interface {
-	// AllOperations returns all the operations that have been applied to that snapshot, in order
+	// AllOperations returns all the operations that have been applied to that snapshot, in order.
+	// It is the snapshot's own slice: SetMetadataOperation replaces its target in it.
 	AllOperations() []Operation
 	// AppendOperation add an operation in the list
 	AppendOperation(op Operation)
@@ -271,11 +275,34 @@ func (base *OpBase) setAuthor(author identity.Interface) {
 	base.author = author
 }
 
-func (base *OpBase) setExtraMetadataImmutable(key string, value string) {
-	if base.extraMetadata == nil {
-		base.extraMetadata = make(map[string]string)
+// addExtraMetadataImmutable sets the given metadata that the operation doesn't
+// have already. The map is replaced, not modified: a copy of the operation made
+// before shares the previous one, see withExtraMetadata.
+func (base *OpBase) addExtraMetadataImmutable(metadata map[string]string) {
+	extra := maps.Clone(base.extraMetadata)
+	if extra == nil {
+		extra = make(map[string]string, len(metadata))
 	}
-	if _, exist := base.extraMetadata[key]; !exist {
-		base.extraMetadata[key] = value
+	for key, value := range metadata {
+		if _, exist := extra[key]; !exist {
+			extra[key] = value
+		}
 	}
+	base.extraMetadata = extra
+}
+
+// withExtraMetadata returns a copy of op carrying the given metadata on top of
+// its own, see addExtraMetadataImmutable. op itself is left untouched: operations
+// are shared between snapshots, and with whoever reads them, so they are never
+// modified once created.
+// The copy is shallow and of the same concrete type, with the same id.
+func withExtraMetadata(op Operation, metadata map[string]string) Operation {
+	// operations are pointers, as OpBase's methods have pointer receivers
+	orig := reflect.ValueOf(op).Elem()
+	cpy := reflect.New(orig.Type())
+	cpy.Elem().Set(orig)
+
+	result := cpy.Interface().(Operation)
+	result.addExtraMetadataImmutable(metadata)
+	return result
 }
