@@ -11,6 +11,14 @@ import (
 // Filter is a predicate that matches a subset of bugs
 type Filter func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool
 
+// IdFilter return a Filter that matches a bug ID or prefix.
+func IdFilter(prefix string) Filter {
+	prefix = strings.ToLower(prefix)
+	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
+		return prefix != "" && excerpt.Id().HasPrefix(prefix)
+	}
+}
+
 // StatusFilter return a Filter that matches a bug status
 func StatusFilter(status common.Status) Filter {
 	return func(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
@@ -111,6 +119,7 @@ func NoLabelFilter() Filter {
 
 // Matcher is a collection of Filter that implement a complex filter
 type Matcher struct {
+	Id          []Filter
 	Status      []Filter
 	Author      []Filter
 	Metadata    []Filter
@@ -126,6 +135,9 @@ type Matcher struct {
 func compileMatcher(filters query.Filters) *Matcher {
 	result := &Matcher{}
 
+	for _, value := range filters.Id {
+		result.Id = append(result.Id, IdFilter(value))
+	}
 	for _, value := range filters.Status {
 		result.Status = append(result.Status, StatusFilter(value))
 	}
@@ -156,6 +168,10 @@ func compileMatcher(filters query.Filters) *Matcher {
 
 // Match check if a bug matches the set of filters
 func (f *Matcher) Match(excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
+	if match := f.orMatch(f.Id, excerpt, resolvers); !match {
+		return false
+	}
+
 	if match := f.orMatch(f.Status, excerpt, resolvers); !match {
 		return false
 	}

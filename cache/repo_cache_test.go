@@ -146,6 +146,26 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, res, 1)
 
+	for _, tc := range []struct {
+		term string
+		want []entity.Id
+	}{
+		{"id:" + bug1.Id().String(), []entity.Id{bug1.Id()}},
+		{"id:" + bug1.Id().Human(), []entity.Id{bug1.Id()}},
+		{"id:" + strings.ToUpper(bug1.Id().Human()), []entity.Id{bug1.Id()}},
+		{"id:" + bug1.Id().String() + " id:" + bug2.Id().String(), []entity.Id{bug1.Id(), bug2.Id()}},
+		{"id:" + bug1.Id().Human() + " status:closed", []entity.Id{}},
+		{"id:" + bug2.Id().Human() + " marker", []entity.Id{bug2.Id()}},
+	} {
+		t.Run(tc.term, func(t *testing.T) {
+			q, err := query.Parse(tc.term)
+			require.NoError(t, err)
+			res, err := cache.Bugs().Query(q)
+			require.NoError(t, err)
+			require.ElementsMatch(t, tc.want, res)
+		})
+	}
+
 	// Updating, only committed changes are visible
 	_, _, err = bug1.AddComment("new comment")
 	require.NoError(t, err)
