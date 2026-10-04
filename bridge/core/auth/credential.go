@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"slices"
 	"strings"
 	"time"
@@ -249,4 +250,22 @@ func (b ById) Less(i, j int) bool {
 
 func (b ById) Swap(i, j int) {
 	b[i], b[j] = b[j], b[i]
+}
+
+// NormalizeBaseURL canonicalizes a base URL by lowercasing the scheme and host,
+// removing trailing slashes, and cleaning paths.
+func NormalizeBaseURL(rawURL string) string {
+	rawURL = strings.TrimSpace(rawURL)
+	if rawURL == "" {
+		return ""
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Host == "" {
+		return strings.TrimRight(rawURL, "/")
+	}
+	u.Scheme = strings.ToLower(u.Scheme)
+	u.Host = strings.ToLower(u.Host)
+	u.Path = strings.TrimRight(u.Path, "/")
+	u.RawPath = strings.TrimRight(u.RawPath, "/")
+	return u.String()
 }

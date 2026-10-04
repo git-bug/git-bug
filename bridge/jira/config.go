@@ -52,6 +52,7 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 			return nil, err
 		}
 	}
+	baseURL = auth.NormalizeBaseURL(baseURL)
 
 	project := params.Project
 	if project == "" {

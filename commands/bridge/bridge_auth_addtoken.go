@@ -125,7 +125,7 @@ func runBridgeAuthAddToken(env *execenv.Env, opts bridgeAuthAddTokenOptions, arg
 	token := auth.NewToken(opts.target, value)
 	token.SetMetadata(auth.MetaKeyLogin, opts.login)
 	if opts.baseURL != "" {
-		token.SetMetadata(auth.MetaKeyBaseURL, opts.baseURL)
+		token.SetMetadata(auth.MetaKeyBaseURL, auth.NormalizeBaseURL(opts.baseURL))
 	}
 
 	if err := token.Validate(); err != nil {
