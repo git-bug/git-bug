@@ -86,6 +86,86 @@ func TestViews(t *testing.T) {
 		requireDerivedBuiltFromRefs(t, repo, c)
 	})
 
+	t.Run("staged metadata is the view's own", func(t *testing.T) {
+		repo := repository.CreateGoGitTestRepo(t, false)
+		c, _ := newTestCacheWithUser(t, repo)
+		created, _, err := c.Bugs().New("title", "message")
+		require.NoError(t, err)
+		target := created.Snapshot().Operations[0].Id()
+
+		a, err := c.Bugs().Resolve(created.Id())
+		require.NoError(t, err)
+		b, err := c.Bugs().Resolve(created.Id())
+		require.NoError(t, err)
+
+		_, err = a.SetMetadata(target, map[string]string{"key": "from a"})
+		require.NoError(t, err)
+		val, ok := a.Snapshot().GetCreateMetadata("key")
+		require.True(t, ok)
+		require.Equal(t, "from a", val)
+		_, ok = b.Snapshot().GetCreateMetadata("key")
+		require.False(t, ok)
+		_, ok = created.Snapshot().GetCreateMetadata("key")
+		require.False(t, ok)
+		_, err = b.ResolveOperationWithMetadata("key", "from a")
+		require.ErrorIs(t, err, ErrNoMatchingOp)
+
+		// the first value committed wins, in memory as in git
+		_, err = b.SetMetadata(target, map[string]string{"key": "from b"})
+		require.NoError(t, err)
+		require.NoError(t, b.Commit())
+		require.NoError(t, a.Commit())
+		for _, snap := range []*bug.Snapshot{a.Snapshot(), b.Snapshot(), created.Snapshot()} {
+			val, _ = snap.GetCreateMetadata("key")
+			require.Equal(t, "from b", val)
+		}
+		inGit, err := bug.Read(repo, created.Id())
+		require.NoError(t, err)
+		val, _ = inGit.Compile().GetCreateMetadata("key")
+		require.Equal(t, "from b", val)
+	})
+
+	t.Run("concurrent views stage metadata independently", func(t *testing.T) {
+		repo := repository.CreateGoGitTestRepo(t, false)
+		c, _ := newTestCacheWithUser(t, repo)
+		created, _, err := c.Bugs().New("title", "message")
+		require.NoError(t, err)
+		target := created.Snapshot().Operations[0].Id()
+
+		const count = 10
+		var wg sync.WaitGroup
+		errs := make(chan error, count)
+		for i := range count {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				v, err := c.Bugs().Resolve(created.Id())
+				if err != nil {
+					errs <- err
+					return
+				}
+				key := fmt.Sprintf("key%d", i)
+				if _, err := v.SetMetadata(target, map[string]string{key: "value"}); err != nil {
+					errs <- err
+					return
+				}
+				// reads the metadata of the shared operations, while the other
+				// views apply theirs
+				if _, err := v.ResolveOperationWithMetadata(key, "value"); err != nil {
+					errs <- err
+					return
+				}
+				errs <- nil
+			}()
+		}
+		wg.Wait()
+		close(errs)
+		for err := range errs {
+			require.NoError(t, err)
+		}
+		require.Empty(t, created.Snapshot().Operations[0].AllMetadata())
+	})
+
 	t.Run("staged operations are committed as one", func(t *testing.T) {
 		repo := repository.CreateGoGitTestRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)

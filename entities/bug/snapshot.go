@@ -51,9 +51,7 @@ func (snap *Snapshot) AppendOperation(op dag.Operation) {
 // Clone returns a copy of the snapshot that operations can be applied to without
 // the original noticing, and conversely: the slices and the timeline items that
 // applying an operation modifies are copied, the rest is shared.
-// Operations and identities are shared, as they don't change once created. The
-// exception is the extra metadata that a SetMetadataOperation sets on its target
-// operation, which both snapshots see.
+// Operations and identities are shared, as they don't change once created.
 func (snap *Snapshot) Clone() *Snapshot {
 	clone := *snap
 	clone.Comments = slices.Clone(snap.Comments)
