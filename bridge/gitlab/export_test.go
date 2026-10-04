@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/signal"
 	"strconv"
@@ -323,4 +325,61 @@ func deleteRepository(ctx context.Context, project int64, token *auth.Token) err
 
 	_, err = client.Projects.DeleteProject(project, nil, gitlab.WithContext(ctx))
 	return err
+}
+
+func TestGitlabCacheAllClient_MultipleLogins(t *testing.T) {
+	repo := repository.CreateGoGitTestRepo(t, false)
+	backend, err := cache.NewRepoCacheNoEvents(repo)
+	require.NoError(t, err)
+	defer backend.Close()
+
+	alice, err := backend.Identities().New("Alice", "alice@example.com")
+	require.NoError(t, err)
+	alice.SetMetadata(metaKeyGitlabLogin, "alice")
+	require.NoError(t, alice.Commit())
+
+	bob, err := backend.Identities().New("Bob", "bob@example.com")
+	require.NoError(t, err)
+	bob.SetMetadata(metaKeyGitlabLogin, "bob")
+	require.NoError(t, bob.Commit())
+
+	var lastToken string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		lastToken = r.Header.Get("PRIVATE-TOKEN")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`[]`))
+	}))
+	defer ts.Close()
+
+	tokenAlice := auth.NewToken(target, "glpat-alice-secret-token")
+	tokenAlice.SetMetadata(auth.MetaKeyLogin, "alice")
+	tokenAlice.SetMetadata(auth.MetaKeyBaseURL, ts.URL)
+	require.NoError(t, auth.Store(repo, tokenAlice))
+
+	time.Sleep(10 * time.Millisecond)
+
+	tokenBob := auth.NewToken(target, "glpat-bob-secret-token0")
+	tokenBob.SetMetadata(auth.MetaKeyLogin, "bob")
+	tokenBob.SetMetadata(auth.MetaKeyBaseURL, ts.URL)
+	require.NoError(t, auth.Store(repo, tokenBob))
+
+	ge := &gitlabExporter{
+		conf: core.Configuration{
+			confKeyGitlabBaseUrl: ts.URL,
+		},
+		identityClient: make(map[entity.Id]*gitlab.Client),
+	}
+
+	require.NoError(t, ge.cacheAllClient(backend, ts.URL))
+
+	aliceClient, err := ge.getIdentityClient(alice.Id())
+	require.NoError(t, err)
+	_, _, _ = aliceClient.Projects.ListProjects(nil)
+	require.Equal(t, "glpat-alice-secret-token", lastToken)
+
+	bobClient, err := ge.getIdentityClient(bob.Id())
+	require.NoError(t, err)
+	_, _, _ = bobClient.Projects.ListProjects(nil)
+	require.Equal(t, "glpat-bob-secret-token0", lastToken)
 }

@@ -532,3 +532,40 @@ func deleteRepository(ctx context.Context, project, owner, token string) error {
 
 	return nil
 }
+
+func TestCacheAllClient_MultipleLogins(t *testing.T) {
+	repo := repository.CreateGoGitTestRepo(t, false)
+	backend, err := cache.NewRepoCacheNoEvents(repo)
+	require.NoError(t, err)
+	defer backend.Close()
+
+	alice, err := backend.Identities().New("Alice", "alice@example.com")
+	require.NoError(t, err)
+	alice.SetMetadata(metaKeyGithubLogin, "alice")
+	require.NoError(t, alice.Commit())
+
+	bob, err := backend.Identities().New("Bob", "bob@example.com")
+	require.NoError(t, err)
+	bob.SetMetadata(metaKeyGithubLogin, "bob")
+	require.NoError(t, bob.Commit())
+
+	tokenAlice := auth.NewToken(target, "alice-secret-token")
+	tokenAlice.SetMetadata(auth.MetaKeyLogin, "alice")
+	require.NoError(t, auth.Store(repo, tokenAlice))
+
+	time.Sleep(10 * time.Millisecond)
+
+	tokenBob := auth.NewToken(target, "bob-secret-token")
+	tokenBob.SetMetadata(auth.MetaKeyLogin, "bob")
+	require.NoError(t, auth.Store(repo, tokenBob))
+
+	ge := &githubExporter{
+		conf: core.Configuration{
+			confKeyDefaultLogin: "alice",
+		},
+		identityClient: make(map[entity.Id]*rateLimitHandlerClient),
+	}
+
+	require.NoError(t, ge.cacheAllClient(backend))
+	require.Equal(t, "alice-secret-token", ge.defaultToken.Value)
+}

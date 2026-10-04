@@ -104,13 +104,18 @@ func (ge *githubExporter) cacheAllClient(repo *cache.RepoCache) error {
 			continue
 		}
 
-		client := buildClient(creds[0].(*auth.Token))
+		token, ok := cred.(*auth.Token)
+		if !ok {
+			continue
+		}
+
+		client := buildClient(token)
 		ge.identityClient[user.Id()] = client
 
 		// assign the default client and token as well
 		if ge.defaultClient == nil && login == ge.conf[confKeyDefaultLogin] {
 			ge.defaultClient = client
-			ge.defaultToken = creds[0].(*auth.Token)
+			ge.defaultToken = token
 		}
 	}
 
