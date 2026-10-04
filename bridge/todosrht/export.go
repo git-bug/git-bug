@@ -85,7 +85,6 @@ func (je *todosrhtExporter) cacheAllClient(ctx context.Context, repo *cache.Repo
 	creds, err := auth.List(repo,
 		auth.WithTarget(target),
 		auth.WithKind(auth.KindToken),
-		auth.WithMeta(auth.MetaKeyBaseURL, je.conf[confKeyBaseUrl]),
 	)
 	if err != nil {
 		return err
@@ -98,6 +97,10 @@ func (je *todosrhtExporter) cacheAllClient(ctx context.Context, repo *cache.Repo
 			continue
 		}
 
+		if base, ok := cred.GetMetadata(auth.MetaKeyBaseURL); ok && base != je.conf[confKeyBaseUrl] {
+			continue
+		}
+
 		if login == je.conf[confKeyDefaultLogin] && je.defaultClient == nil {
 			tokenCred, ok := cred.(*auth.Token)
 			if !ok {
@@ -106,7 +109,12 @@ func (je *todosrhtExporter) cacheAllClient(ctx context.Context, repo *cache.Repo
 			je.defaultClient = NewTodoSClient(ctx, je.conf[confKeyBaseUrl], tokenCred.Value)
 		}
 
-		user, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyTodoSourceHutLogin, login)
+		user, err := repo.Identities().ResolveMatcher(func(excerpt *cache.IdentityExcerpt) bool {
+			if baseURL, ok := excerpt.ImmutableMetadata[metaKeyTodoSourceHutBaseUrl]; ok && baseURL != je.conf[confKeyBaseUrl] {
+				return false
+			}
+			return excerpt.ImmutableMetadata[metaKeyTodoSourceHutLogin] == login
+		})
 		if entity.IsErrNotFound(err) {
 			continue
 		}
@@ -206,25 +214,37 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 		return nil
 	}
 
-	// skip bug if it is a todosrht bug but is associated with another tracker
-	trackerMeta, ok := snapshot.GetCreateMetadata(metaKeyTodoSourceHutTracker)
-	if ok && trackerMeta != je.conf[confKeyTrackerName] {
+	trackerMeta, hasTracker := snapshot.GetCreateMetadata(metaKeyTodoSourceHutTracker)
+	if hasTracker && trackerMeta != je.conf[confKeyTrackerName] {
 		out <- core.NewExportNothing(
 			b.Id(), fmt.Sprintf("issue tagged with tracker: %s", trackerMeta))
 		return nil
 	}
 
-	// skip bug if it is associated with another SourceHut instance
-	baseURLMeta, ok := snapshot.GetCreateMetadata(metaKeyTodoSourceHutBaseUrl)
-	if ok && baseURLMeta != je.conf[confKeyBaseUrl] {
+	baseURLMeta, hasBaseURL := snapshot.GetCreateMetadata(metaKeyTodoSourceHutBaseUrl)
+	if hasBaseURL && baseURLMeta != je.conf[confKeyBaseUrl] {
 		out <- core.NewExportNothing(
 			b.Id(), fmt.Sprintf("issue tagged with base URL: %s", baseURLMeta))
 		return nil
 	}
 
 	// get todosrht bug ID
-	todosrhtIDStr, ok := snapshot.GetCreateMetadata(metaKeyTodoSourceHutId)
-	if ok {
+	todosrhtIDStr, hasID := snapshot.GetCreateMetadata(metaKeyTodoSourceHutId)
+	if hasID {
+		// Require a verified tracker association before accepting the ID as an export mapping
+		if !hasTracker || trackerMeta != je.conf[confKeyTrackerName] {
+			out <- core.NewExportNothing(
+				b.Id(), fmt.Sprintf("issue tagged with ticket ID %s but not verified for tracker %s",
+					todosrhtIDStr, je.conf[confKeyTrackerName]))
+			return nil
+		}
+		if hasBaseURL && baseURLMeta != je.conf[confKeyBaseUrl] {
+			out <- core.NewExportNothing(
+				b.Id(), fmt.Sprintf("issue tagged with ticket ID %s but belongs to base URL %s",
+					todosrhtIDStr, baseURLMeta))
+			return nil
+		}
+
 		var err error
 		bugTodoSourceHutID, err = strconv.Atoi(todosrhtIDStr)
 		if err != nil {
@@ -382,11 +402,25 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 				return err
 			}
 
+			// Fetch current remote ticket to reconcile labels idempotently
+			currentTicket, err := client.GetTicket(ctx, bugTodoSourceHutID)
+			currentLabelNames := make(map[string]int)
+			if err == nil && currentTicket != nil {
+				for _, l := range currentTicket.Labels {
+					currentLabelNames[l.Name] = l.Id
+				}
+			}
+
 			// Add labels
 			for _, addedLabel := range opr.Added {
 				labelName := strings.TrimSpace(string(addedLabel))
 				if labelName == "" {
 					out <- core.NewExportWarning(fmt.Errorf("skipping empty label name"), b.Id())
+					continue
+				}
+
+				if _, alreadyOnTicket := currentLabelNames[labelName]; alreadyOnTicket {
+					// Label already exists on remote ticket; skip to avoid duplicate events
 					continue
 				}
 
@@ -408,6 +442,7 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 					out <- core.NewExportError(fmt.Errorf("failed to add label '%s' to ticket: %w", labelName, err), b.Id())
 					return err
 				}
+				currentLabelNames[labelName] = labelID
 				// Use the last label event ID and time
 				todosrhtOpID = fmt.Sprintf("%d", labelEvent.Id)
 				exportTime = labelEvent.Created.Unix()
@@ -426,11 +461,18 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 					out <- core.NewExportWarning(fmt.Errorf("label '%s' not found on SourceHut, cannot remove", labelName), b.Id())
 					continue
 				}
+				if currentTicket != nil {
+					if _, onTicket := currentLabelNames[labelName]; !onTicket {
+						// Label is already removed from ticket; skip
+						continue
+					}
+				}
 				labelEvent, err := removeTodoSRHTLabel(ctx, client, je.tracker.Id, bugTodoSourceHutID, labelID)
 				if err != nil {
 					out <- core.NewExportError(fmt.Errorf("failed to remove label '%s' from ticket: %w", labelName, err), b.Id())
 					return err
 				}
+				delete(currentLabelNames, labelName)
 				// Use the last label event ID and time
 				todosrhtOpID = fmt.Sprintf("%d", labelEvent.Id)
 				exportTime = labelEvent.Created.Unix()
@@ -496,7 +538,7 @@ func addTodoSRHTComment(ctx context.Context, client TodosrhtClient, trackerID, t
 
 func updateTodoSRHTTicketBody(ctx context.Context, client TodosrhtClient, trackerID, ticketID int, body string) (*Ticket, error) {
 	input := UpdateTicketInput{
-		Body: body,
+		Body: &body,
 	}
 	return client.UpdateTicket(ctx, trackerID, ticketID, input)
 }

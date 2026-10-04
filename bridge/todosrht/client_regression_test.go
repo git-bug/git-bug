@@ -13,6 +13,8 @@ import (
 )
 
 func TestMutationInputsOmitOptionalFields(t *testing.T) {
+	newBody := "new"
+	emptyBody := ""
 	for _, tc := range []struct {
 		name  string
 		input interface{}
@@ -20,7 +22,8 @@ func TestMutationInputsOmitOptionalFields(t *testing.T) {
 	}{
 		{"comment", SubmitCommentInput{Text: "hello"}, `{"text":"hello"}`},
 		{"title", UpdateTicketInput{Subject: "new"}, `{"subject":"new"}`},
-		{"body", UpdateTicketInput{Body: "new"}, `{"body":"new"}`},
+		{"body", UpdateTicketInput{Body: &newBody}, `{"body":"new"}`},
+		{"empty_body", UpdateTicketInput{Body: &emptyBody}, `{"body":null}`},
 		{"status", UpdateStatusInput{Status: TicketStatusReported}, `{"status":"REPORTED"}`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

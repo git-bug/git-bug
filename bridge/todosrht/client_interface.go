@@ -9,6 +9,7 @@ type TodosrhtClient interface {
 	GetTracker(ctx context.Context, name string) (*Tracker, error)
 	TrackerExists(ctx context.Context, name string) (bool, error)
 	GetTickets(ctx context.Context, trackerName string, cursor *string) ([]Ticket, *string, error)
+	GetTicket(ctx context.Context, id int) (*Ticket, error)
 	GetEvents(ctx context.Context, trackerName string, ticketID int, cursor *string) ([]Event, *string, error)
 	CreateTicket(ctx context.Context, trackerID int, input SubmitTicketInput) (*Ticket, error)
 	CreateComment(ctx context.Context, trackerID, ticketID int, input SubmitCommentInput) (*Event, error)

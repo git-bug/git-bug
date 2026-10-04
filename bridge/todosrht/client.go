@@ -69,6 +69,7 @@ func trackerQuery(template, ref string) (string, map[string]interface{}, error) 
 	query := strings.Replace(template, "me {", root+" {", 1)
 	if root == "me" {
 		query = strings.Replace(query, "$owner: String!, ", "", 1)
+		delete(variables, "owner")
 	}
 	return query, variables, nil
 }
@@ -1020,8 +1021,37 @@ type UpdateStatusInput struct {
 }
 
 type UpdateTicketInput struct {
-	Subject string `json:"subject,omitempty"`
-	Body    string `json:"body,omitempty"`
+	Subject string  `json:"subject,omitempty"`
+	Body    *string `json:"-"`
+}
+
+func (u UpdateTicketInput) MarshalJSON() ([]byte, error) {
+	m := make(map[string]interface{})
+	if u.Subject != "" {
+		m["subject"] = u.Subject
+	}
+	if u.Body != nil {
+		if *u.Body == "" {
+			m["body"] = nil
+		} else {
+			m["body"] = *u.Body
+		}
+	}
+	return json.Marshal(m)
+}
+
+func (u *UpdateTicketInput) UnmarshalJSON(data []byte) error {
+	type Alias UpdateTicketInput
+	var aux struct {
+		Alias
+		Body *string `json:"body"`
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	u.Subject = aux.Subject
+	u.Body = aux.Body
+	return nil
 }
 
 // Helper method to execute GraphQL requests
@@ -1047,21 +1077,29 @@ func (c *TodoSClient) executeRequest(ctx context.Context, query string, variable
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("GraphQL request failed with status %d: %s", resp.StatusCode, resp.Status)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseSize))
+	if err != nil {
+		return errors.Wrap(err, "failed to read response body")
 	}
 
 	var response GraphQLResponse
-	if err := json.NewDecoder(io.LimitReader(resp.Body, maxResponseSize)).Decode(&response); err != nil {
-		return errors.Wrap(err, "failed to decode response")
-	}
-
-	if len(response.Errors) > 0 {
+	if err := json.Unmarshal(body, &response); err == nil && len(response.Errors) > 0 {
 		var errs []string
 		for _, e := range response.Errors {
 			errs = append(errs, e.Message)
 		}
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("GraphQL request failed with status %d: %s (%s)", resp.StatusCode, resp.Status, strings.Join(errs, ", "))
+		}
 		return fmt.Errorf("GraphQL errors: %s", strings.Join(errs, ", "))
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		trimmedBody := strings.TrimSpace(string(body))
+		if trimmedBody != "" {
+			return fmt.Errorf("GraphQL request failed with status %d: %s (response: %s)", resp.StatusCode, resp.Status, trimmedBody)
+		}
+		return fmt.Errorf("GraphQL request failed with status %d: %s", resp.StatusCode, resp.Status)
 	}
 
 	if err := json.Unmarshal(response.Data, result); err != nil {
