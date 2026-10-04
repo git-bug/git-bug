@@ -3,6 +3,7 @@ package todosrht
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/git-bug/git-bug/bridge/core"
@@ -31,20 +32,26 @@ func (ji *todosrhtImporter) Init(_ context.Context, repo *cache.RepoCache, conf 
 	creds, err := auth.List(repo,
 		auth.WithTarget(target),
 		auth.WithKind(auth.KindToken),
-		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseUrl]),
 		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),
 	)
 	if err != nil {
 		return err
 	}
 
-	if len(creds) == 0 {
+	var matchingCreds []auth.Credential
+	for _, cred := range creds {
+		if base, ok := cred.GetMetadata(auth.MetaKeyBaseURL); !ok || base == conf[confKeyBaseUrl] {
+			matchingCreds = append(matchingCreds, cred)
+		}
+	}
+
+	if len(matchingCreds) == 0 {
 		return ErrMissingCredentials
 	}
 
-	tokenCred, ok := creds[0].(*auth.Token)
+	tokenCred, ok := matchingCreds[0].(*auth.Token)
 	if !ok {
-		return fmt.Errorf("expected token credential, got %T", creds[0])
+		return fmt.Errorf("expected token credential, got %T", matchingCreds[0])
 	}
 
 	ji.client = NewTodoSClient(context.TODO(), conf[confKeyBaseUrl], tokenCred.Value)
@@ -94,6 +101,7 @@ func (ji *todosrhtImporter) ImportAll(ctx context.Context, repo *cache.RepoCache
 					continue
 				}
 
+				var allEvents []Event
 				var eventCursor *string
 				for {
 					events, nextEventCursor, err := ji.client.GetEvents(ctx, trackerName, ticket.Id, eventCursor)
@@ -101,18 +109,27 @@ func (ji *todosrhtImporter) ImportAll(ctx context.Context, repo *cache.RepoCache
 						ji.out <- core.NewImportError(fmt.Errorf("failed to get events for ticket %d: %w", ticket.Id, err), b.Id())
 						break
 					}
-
-					for _, event := range events {
-						if err := ji.ensureEvent(repo, b, event); err != nil {
-							ji.out <- core.NewImportError(fmt.Errorf("failed to ensure event %d for ticket %d: %w", event.Id, ticket.Id, err), b.Id())
-							continue
-						}
-					}
+					allEvents = append(allEvents, events...)
 
 					if nextEventCursor == nil || *nextEventCursor == "" {
 						break
 					}
 					eventCursor = nextEventCursor
+				}
+
+				// Establish chronological order before applying stateful changes
+				sort.SliceStable(allEvents, func(i, j int) bool {
+					if allEvents[i].Created.Unix() != allEvents[j].Created.Unix() {
+						return allEvents[i].Created.Unix() < allEvents[j].Created.Unix()
+					}
+					return allEvents[i].Id < allEvents[j].Id
+				})
+
+				for _, event := range allEvents {
+					if err := ji.ensureEvent(repo, b, event); err != nil {
+						ji.out <- core.NewImportError(fmt.Errorf("failed to ensure event %d for ticket %d: %w", event.Id, ticket.Id, err), b.Id())
+						continue
+					}
 				}
 
 				if b.NeedCommit() {
@@ -173,18 +190,23 @@ func (ji *todosrhtImporter) ensurePerson(repo *cache.RepoCache, entities Entity)
 	}
 
 	// Look first in the cache
-	i, err := repo.Identities().ResolveIdentityImmutableMetadata(
-		metaKeyTodoSourceHutLogin, login)
+	i, err := repo.Identities().ResolveMatcher(func(excerpt *cache.IdentityExcerpt) bool {
+		if baseURL, ok := excerpt.ImmutableMetadata[metaKeyTodoSourceHutBaseUrl]; ok && baseURL != ji.conf[confKeyBaseUrl] {
+			return false
+		}
+		return excerpt.ImmutableMetadata[metaKeyTodoSourceHutLogin] == login
+	})
 	if err == nil {
 		return i, nil
 	}
-	if _, ok := err.(entity.ErrMultipleMatch); ok {
+	if entity.IsErrMultipleMatch(err) {
 		return nil, err
 	}
 
 	// If not found, create a new identity
 	metadata := map[string]string{
-		metaKeyTodoSourceHutLogin: login,
+		metaKeyTodoSourceHutLogin:   login,
+		metaKeyTodoSourceHutBaseUrl: ji.conf[confKeyBaseUrl],
 	}
 	if externalId != "" {
 		metadata[metaKeyTodoSourceHutUser] = externalId
@@ -265,26 +287,64 @@ func (ji *todosrhtImporter) ensureIssue(repo *cache.RepoCache, ticket Ticket) (*
 		return b, true, nil
 	}
 
+	// Reconcile remote edits on title and body
+	snapshot := b.Snapshot()
+	editTime := ticket.Updated.Unix()
+	if editTime <= 0 {
+		editTime = ticket.Created.Unix()
+	}
+	if editTime <= 0 {
+		editTime = time.Now().Unix()
+	}
+
+	cleanSubject := text.CleanupOneLine(ticket.Subject)
+	if cleanSubject != "" && cleanSubject != snapshot.Title {
+		op, err := b.SetTitleRaw(author, editTime, cleanSubject, nil)
+		if err != nil {
+			return nil, false, err
+		}
+		ji.out <- core.NewImportTitleEdition(b.Id(), op.Id())
+	}
+
+	cleanBody := text.Cleanup(ticket.Body)
+	if ticket.Body != "" && len(snapshot.Comments) > 0 && cleanBody != snapshot.Comments[0].Message {
+		commentID, _, err := b.EditCreateCommentRaw(author, editTime, cleanBody, nil)
+		if err != nil {
+			return nil, false, err
+		}
+		ji.out <- core.NewImportCommentEdition(b.Id(), commentID)
+	}
+
 	return b, false, nil
+}
+
+func hasOperationWithMetadata(b *cache.BugCache, key string, values ...string) bool {
+	for _, op := range b.Snapshot().AllOperations() {
+		if val, ok := op.GetMetadata(key); ok {
+			for _, target := range values {
+				if val == target {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 // ensureEvent processes a SourceHut event and creates corresponding git-bug operations.
 func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache, event Event) error {
-	// Check if this event has already been imported
-	_, err := b.ResolveOperationWithMetadata(metaKeyTodoSourceHutId, fmt.Sprintf("%d", event.Id))
-	if err == nil {
-		return nil // Already imported
-	}
-	if err != cache.ErrNoMatchingOp {
-		return err // Real error
-	}
-
 	changes, err := event.GetChanges()
 	if err != nil {
 		return err
 	}
 
-	for _, change := range changes {
+	for i, change := range changes {
+		changeID := fmt.Sprintf("%d:%d", event.Id, i)
+		legacyID := fmt.Sprintf("%d", event.Id)
+		if hasOperationWithMetadata(b, metaKeyTodoSourceHutId, changeID, legacyID) {
+			continue
+		}
+
 		switch c := change.(type) {
 		case *Created:
 			// The Created event is handled by ensureIssue when creating the bug itself.
@@ -325,7 +385,7 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 				text.Cleanup(c.Text),
 				nil,
 				map[string]string{
-					metaKeyTodoSourceHutId: fmt.Sprintf("%d", event.Id),
+					metaKeyTodoSourceHutId: changeID,
 				},
 			)
 			if err != nil {
@@ -352,7 +412,7 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 					editor,
 					event.Created.Unix(),
 					map[string]string{
-						metaKeyTodoSourceHutId: fmt.Sprintf("%d", event.Id),
+						metaKeyTodoSourceHutId: changeID,
 					},
 				)
 			} else {
@@ -361,7 +421,7 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 					editor,
 					event.Created.Unix(),
 					map[string]string{
-						metaKeyTodoSourceHutId: fmt.Sprintf("%d", event.Id),
+						metaKeyTodoSourceHutId: changeID,
 					},
 				)
 			}
@@ -396,7 +456,7 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 				labelsToStrings(added),
 				labelsToStrings(removed),
 				map[string]string{
-					metaKeyTodoSourceHutId: fmt.Sprintf("%d", event.Id),
+					metaKeyTodoSourceHutId: changeID,
 				},
 			)
 			if err != nil {
@@ -404,85 +464,10 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 			}
 			ji.out <- core.NewImportLabelChange(b.Id(), op.Id())
 
-		case *Assignment:
-			assignerEntity, err := UnmarshalEntity(c.Assigner)
-			if err != nil {
-				return err
-			}
-			if assignerEntity == nil {
-				ji.out <- core.NewImportWarning(fmt.Errorf("assigner is unknown for event %d, skipping", event.Id), b.Id())
-				continue
-			}
-			assigner, err := ji.ensurePerson(repo, assignerEntity)
-			if err != nil {
-				return err
-			}
-			assigneeEntity, err := UnmarshalEntity(c.Assignee)
-			if err != nil {
-				return err
-			}
-			if assigneeEntity == nil {
-				ji.out <- core.NewImportWarning(fmt.Errorf("assignee is unknown for event %d, skipping", event.Id), b.Id())
-				continue
-			}
-			assignee, err := ji.ensurePerson(repo, assigneeEntity)
-			if err != nil {
-				return err
-			}
-			ji.out <- core.NewImportWarning(
-				fmt.Errorf("assignment event: %s assigned %s to ticket (not directly supported in git-bug)",
-					assigner.DisplayName(), assignee.DisplayName()),
-				b.Id(),
-			)
-
-		case *UserMention:
-			authorEntity, err := UnmarshalEntity(c.Author)
-			if err != nil {
-				return err
-			}
-			if authorEntity == nil {
-				ji.out <- core.NewImportWarning(fmt.Errorf("mention author is unknown for event %d, skipping", event.Id), b.Id())
-				continue
-			}
-			author, err := ji.ensurePerson(repo, authorEntity)
-			if err != nil {
-				return err
-			}
-			mentionedEntity, err := UnmarshalEntity(c.Mentioned)
-			if err != nil {
-				return err
-			}
-			if mentionedEntity == nil {
-				ji.out <- core.NewImportWarning(fmt.Errorf("mentioned user is unknown for event %d, skipping", event.Id), b.Id())
-				continue
-			}
-			mentioned, err := ji.ensurePerson(repo, mentionedEntity)
-			if err != nil {
-				return err
-			}
-			ji.out <- core.NewImportWarning(
-				fmt.Errorf("user mention event: %s mentioned %s (not directly supported in git-bug)",
-					author.DisplayName(), mentioned.DisplayName()),
-				b.Id(),
-			)
-		case *TicketMention:
-			authorEntity, err := UnmarshalEntity(c.Author)
-			if err != nil {
-				return err
-			}
-			if authorEntity == nil {
-				ji.out <- core.NewImportWarning(fmt.Errorf("mention author is unknown for event %d, skipping", event.Id), b.Id())
-				continue
-			}
-			author, err := ji.ensurePerson(repo, authorEntity)
-			if err != nil {
-				return err
-			}
-			ji.out <- core.NewImportWarning(
-				fmt.Errorf("ticket mention event: %s mentioned ticket %d (not directly supported in git-bug)",
-					author.DisplayName(), c.Mentioned.Id),
-				b.Id(),
-			)
+		case *Assignment, *UserMention, *TicketMention:
+			// Mentions and assignments are not tracked as state-changing operations in git-bug;
+			// skip quietly without emitting repetitive warnings on every pull.
+			continue
 
 		default:
 			ji.out <- core.NewImportWarning(

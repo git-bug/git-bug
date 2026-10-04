@@ -107,7 +107,7 @@ func (*TodoSourceHut) ValidParams() map[string]interface{} {
 		"BaseURL":    nil,
 		"Login":      nil,
 		"CredPrefix": nil,
-		"Tracker":    nil,
+		"Project":    nil,
 		"TokenRaw":   nil,
 	}
 }
@@ -150,7 +150,7 @@ func (j *TodoSourceHut) Configure(repo *cache.RepoCache, params core.BridgeParam
 		trackerName = params.Project // params.Project is used to pass the tracker name
 		if trackerName == "" {
 			if !interactive {
-				return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the TODOSRHT tracker name via the --tracker option or provide a full URL with --url.")
+				return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the TODOSRHT tracker name via the --project option or provide a full URL with --url.")
 			}
 			trackerName, err = input.Prompt("TODOSRHT tracker name", "tracker", input.Required)
 			if err != nil {
@@ -236,11 +236,10 @@ func (j *TodoSourceHut) Configure(repo *cache.RepoCache, params core.BridgeParam
 	}
 
 	// don't forget to store the now known valid token
-	if !auth.IdExist(repo, cred.ID()) {
-		err = auth.Store(repo, cred)
-		if err != nil {
-			return nil, err
-		}
+	tokenCred.SetMetadata(auth.MetaKeyBaseURL, baseURL)
+	err = auth.Store(repo, tokenCred)
+	if err != nil {
+		return nil, err
 	}
 
 	err = core.FinishConfig(repo, metaKeyTodoSourceHutLogin, login)

@@ -15,7 +15,7 @@ func TestValidParams(t *testing.T) {
 		"BaseURL":    nil,
 		"Login":      nil,
 		"CredPrefix": nil,
-		"Tracker":    nil,
+		"Project":    nil,
 		"TokenRaw":   nil,
 	}
 
