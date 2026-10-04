@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -71,9 +72,11 @@ func runPull(ctx context.Context, env *execenv.Env, args []string, verbose bool)
 	updatedBugs := 0
 	newIdentities := 0
 	updatedIdentities := 0
+	failedMerges := 0
 
 	for result := range env.Backend.MergeAll(ctx, remote) {
 		if result.Err != nil {
+			failedMerges++
 			if verbose {
 				env.Err.Printf("Error: %v\n", result.Err)
 			} else {
@@ -85,8 +88,6 @@ func runPull(ctx context.Context, env *execenv.Env, args []string, verbose bool)
 		if result.Status != entity.MergeStatusNothing {
 			if verbose {
 				env.Err.Printf("%s: %s\n", result.Id.Human(), result)
-			} else {
-				env.Out.Printf("%s: %s\n", result.Id.Human(), result)
 			}
 
 			// Count entity changes by checking the entity type
@@ -110,13 +111,30 @@ func runPull(ctx context.Context, env *execenv.Env, args []string, verbose bool)
 	}
 
 	// Print summary
-	if !verbose {
-		if newBugs > 0 || updatedBugs > 0 || newIdentities > 0 || updatedIdentities > 0 {
-			env.Out.Printf("Summary: %d new bugs, %d updated bugs, %d new identities, %d updated identities\n",
-				newBugs, updatedBugs, newIdentities, updatedIdentities)
+	summaryOut := env.Out
+	if verbose {
+		summaryOut = env.Err
+	}
+
+	if newBugs > 0 || updatedBugs > 0 || newIdentities > 0 || updatedIdentities > 0 {
+		if failedMerges > 0 {
+			summaryOut.Printf("Summary: %d new bugs, %d updated bugs, %d new identities, %d updated identities (%d failed)\n",
+				newBugs, updatedBugs, newIdentities, updatedIdentities, failedMerges)
 		} else {
-			env.Out.Println("No new changes")
+			summaryOut.Printf("Summary: %d new bugs, %d updated bugs, %d new identities, %d updated identities\n",
+				newBugs, updatedBugs, newIdentities, updatedIdentities)
 		}
+	} else if failedMerges > 0 {
+		summaryOut.Printf("Summary: %d failed to merge\n", failedMerges)
+	} else {
+		summaryOut.Println("No new changes")
+	}
+
+	if failedMerges > 0 {
+		if failedMerges == 1 {
+			return errors.New("1 entity failed to merge")
+		}
+		return fmt.Errorf("%d entities failed to merge", failedMerges)
 	}
 
 	return nil

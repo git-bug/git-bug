@@ -44,13 +44,16 @@ func runPush(ctx context.Context, env *execenv.Env, args []string, verbose bool)
 		remote = cfg.Value("git-bug.remote", "origin")
 	}
 
+	if verbose {
+		env.Err.Println("Pushing to remote:", remote)
+	}
+
 	stdout, err := env.Backend.Push(ctx, remote)
 	if err != nil {
 		return err
 	}
 
 	if verbose {
-		env.Err.Println("Pushing to remote:", remote)
 		env.Err.Println(stdout)
 	} else {
 		env.Out.Println(stdout)
