@@ -202,3 +202,53 @@ func TestListLegacyTimestamp(t *testing.T) {
 	assert.Equal(t, tokenNew.ID(), creds[0].ID())
 	assert.Equal(t, tokenOld.ID(), creds[1].ID())
 }
+
+func TestListBaseURLNormalization(t *testing.T) {
+	repo := repository.NewMockRepo()
+
+	tokenWithoutSlash := NewToken("gitlab", "value-1")
+	tokenWithoutSlash.SetMetadata(MetaKeyBaseURL, "https://gitlab.com")
+	require.NoError(t, Store(repo, tokenWithoutSlash))
+
+	tokenWithSlash := NewToken("gitlab", "value-2")
+	tokenWithSlash.SetMetadata(MetaKeyBaseURL, "https://gitlab.example.com/")
+	require.NoError(t, Store(repo, tokenWithSlash))
+
+	// Query with trailing slash against token without trailing slash
+	creds, err := List(repo, WithTarget("gitlab"), WithMeta(MetaKeyBaseURL, "https://gitlab.com/"))
+	require.NoError(t, err)
+	require.Len(t, creds, 1)
+	assert.Equal(t, tokenWithoutSlash.ID(), creds[0].ID())
+
+	// Query without trailing slash against token with trailing slash
+	creds, err = List(repo, WithTarget("gitlab"), WithMeta(MetaKeyBaseURL, "https://gitlab.example.com"))
+	require.NoError(t, err)
+	require.Len(t, creds, 1)
+	assert.Equal(t, tokenWithSlash.ID(), creds[0].ID())
+}
+
+func TestNormalizeBaseURL(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"", ""},
+		{"   ", ""},
+		{"https://gitlab.com", "https://gitlab.com"},
+		{"https://gitlab.com/", "https://gitlab.com"},
+		{"https://gitlab.com///", "https://gitlab.com"},
+		{"HTTPS://GITLAB.COM/", "https://gitlab.com"},
+		{"https://gitlab.example.com/sub/group/", "https://gitlab.example.com/sub/group"},
+		{"https://gitlab.example.com/sub/group", "https://gitlab.example.com/sub/group"},
+		{"http://jira.local:8080/jira/", "http://jira.local:8080/jira"},
+		{"http://jira.local:8080/jira", "http://jira.local:8080/jira"},
+		{"jira.example.com/", "jira.example.com"},
+		{"jira.example.com", "jira.example.com"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.input, func(t *testing.T) {
+			assert.Equal(t, tc.want, NormalizeBaseURL(tc.input))
+		})
+	}
+}

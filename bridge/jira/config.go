@@ -52,6 +52,7 @@ func (j *Jira) Configure(ctx context.Context, repo *cache.RepoCache, params core
 			return nil, err
 		}
 	}
+	baseURL = auth.NormalizeBaseURL(baseURL)
 
 	project := params.Project
 	if project == "" {
