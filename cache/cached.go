@@ -30,8 +30,8 @@ type cloneable[SnapT any] interface {
 //
 // Each caller gets its own view, see SubCache.Resolve. What a view stages is
 // invisible to the others until Commit writes it through the shared copy, in a
-// single pass. Once Commit returned, successfully or not, the staged operations
-// are gone: a failure can't be saved by a later commit.
+// single pass. A failed Commit leaves them staged, to be committed again; dropping
+// the view is how they are discarded.
 //
 // A view is safe for concurrent use: its methods can be called from any
 // goroutine, and a snapshot it handed out is never modified afterwards. It is
@@ -131,7 +131,7 @@ func (e *CachedEntityBase[SnapT, OpT]) ResolveOperationWithMetadata(key string, 
 // state. If the reference moved in the meantime, the shared copy is reloaded and
 // the operations written again on top of what moved it: operations commute, so a
 // write that raced with another writer only has to be redone, never reconciled.
-// Whether it succeeded or not, the staged operations are dropped.
+// On failure, the operations stay staged and Commit can be called again.
 func (e *CachedEntityBase[SnapT, OpT]) Commit() error {
 	return e.commit(true)
 }
@@ -161,11 +161,12 @@ func (e *CachedEntityBase[SnapT, OpT]) commit(required bool) error {
 }
 
 func (e *CachedEntityBase[SnapT, OpT]) commitLocked() error {
-	staged := e.staged
-	e.staged, e.snap = nil, nil
-
 	for attempt := 0; ; attempt++ {
-		err := e.shared.CommitOperations(e.repo, staged)
+		err := e.shared.CommitOperations(e.repo, e.staged)
+		if err == nil {
+			e.staged, e.snap = nil, nil
+			return nil
+		}
 		if !errors.Is(err, repository.ErrRefChanged) || attempt == maxCommitRetries {
 			return err
 		}

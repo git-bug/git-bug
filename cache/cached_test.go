@@ -2,6 +2,8 @@ package cache
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -213,24 +215,59 @@ func TestViews(t *testing.T) {
 		requireDerivedBuiltFromRefs(t, repo, c)
 	})
 
-	t.Run("a failed commit drops the staged operations", func(t *testing.T) {
+	t.Run("a failed commit keeps the staged operations", func(t *testing.T) {
 		repo := repository.CreateGoGitTestRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
 
 		// an operation already committed can't be committed again
-		b.Append(b.Snapshot().Operations[0].(bug.Operation))
-		require.True(t, b.NeedCommit())
-		require.Error(t, b.Commit())
-		require.False(t, b.NeedCommit())
-		require.Len(t, b.Snapshot().Operations, 1)
-
-		// the view is usable afterwards, and nothing of the failure gets saved
-		_, _, err = b.AddComment("after")
+		_, _, err = b.AddComment("staged")
 		require.NoError(t, err)
+		b.Append(b.Snapshot().Operations[0].(bug.Operation))
+		require.Error(t, b.Commit())
+		require.True(t, b.NeedCommit())
+		require.Len(t, b.Snapshot().Operations, 3)
+		require.Equal(t, []string{"message"}, commentsInGit(t, repo, b.Id()))
+		requireDerivedBuiltFromRefs(t, repo, c)
+
+		// committing again fails the same way, and nothing gets saved
+		require.Error(t, b.CommitAsNeeded())
+		require.True(t, b.NeedCommit())
+		require.Equal(t, []string{"message"}, commentsInGit(t, repo, b.Id()))
+
+		// other views are not affected, and a new view starts without them
+		other, err := c.Bugs().Resolve(b.Id())
+		require.NoError(t, err)
+		require.False(t, other.NeedCommit())
+		_, _, err = other.AddComment("other")
+		require.NoError(t, err)
+		require.NoError(t, other.Commit())
+		require.Equal(t, []string{"message", "other"}, commentsInGit(t, repo, b.Id()))
+		requireDerivedBuiltFromRefs(t, repo, c)
+	})
+
+	t.Run("a commit failed on a transient error succeeds once retried", func(t *testing.T) {
+		repo := repository.CreateGoGitTestRepo(t, false)
+		c, _ := newTestCacheWithUser(t, repo)
+		b, _, err := c.Bugs().New("title", "message")
+		require.NoError(t, err)
+
+		_, _, err = b.AddComment("retried")
+		require.NoError(t, err)
+
+		// a lock held by someone else on the reference fails the commit
+		lockPath := filepath.Join(repo.GetLocalRemote(), "refs", bug.Namespace, b.Id().String()+".lock")
+		require.NoError(t, os.WriteFile(lockPath, []byte("held"), 0666))
+		require.Error(t, b.Commit())
+		require.True(t, b.NeedCommit())
+		require.Equal(t, []string{"message"}, commentsInGit(t, repo, b.Id()))
+
+		require.NoError(t, os.Remove(lockPath))
 		require.NoError(t, b.Commit())
-		require.Equal(t, []string{"message", "after"}, commentsInGit(t, repo, b.Id()))
+		require.False(t, b.NeedCommit())
+		require.Equal(t, []string{"message", "retried"}, commentsInGit(t, repo, b.Id()))
+		require.Equal(t, []string{"message", "retried"}, commentMessages(b.Snapshot()))
 		requireDerivedBuiltFromRefs(t, repo, c)
 	})
 
