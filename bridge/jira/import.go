@@ -39,8 +39,7 @@ func (ji *jiraImporter) Init(ctx context.Context, repo *cache.RepoCache, conf co
 
 	var cred auth.Credential
 
-	// Dedicated API tokens precede legacy password credentials; stored
-	// secrets precede credentials that need an interactive password prompt.
+	// Respect the configured credential form, including password prompts.
 	creds, err := configuredCredentials(repo, conf,
 		auth.WithTarget(target),
 		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseUrl]),
@@ -51,12 +50,6 @@ func (ji *jiraImporter) Init(ctx context.Context, repo *cache.RepoCache, conf co
 	}
 	if len(creds) > 0 {
 		cred = creds[0]
-		for _, candidate := range creds {
-			if candidate.Kind() != auth.KindLogin {
-				cred = candidate
-				break
-			}
-		}
 		goto end
 	}
 
