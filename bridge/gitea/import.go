@@ -436,7 +436,13 @@ func (gi *giteaImporter) importStatus(ctx context.Context, repo *cache.RepoCache
 		kind = "close"
 	}
 	key := timelineEventKey(kind, event.ID, event.Created)
-	if alreadyImported(bug, key) {
+	status := common.OpenStatus
+	if event.Closed {
+		status = common.ClosedStatus
+	}
+	// A status that is already current carries no new information, for
+	// example the echo of a change that git-bug exported.
+	if alreadyImported(bug, key) || bug.Snapshot().Status == status {
 		return nil
 	}
 
@@ -546,7 +552,7 @@ func (gi *giteaImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache
 		map[string]string{
 			// because Gitea
 			metaKeyGiteaLogin:       user.UserName,
-			metaKeyGiteaScopedLogin: gi.conf[confKeyBaseURL] + "\x00" + user.UserName,
+			metaKeyGiteaScopedLogin: scopedLogin(gi.conf[confKeyBaseURL], user.UserName),
 		},
 	)
 	if err != nil {
@@ -559,8 +565,22 @@ func (gi *giteaImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache
 
 // Legacy identities carry only a username and cannot safely be assigned to
 // an instance. Keep them intact; create scoped identities on the next import.
+// scopedLogin identifies a remote account on one Gitea instance.
+func scopedLogin(baseURL, login string) string {
+	return baseURL + "\x00" + login
+}
+
 func (gi *giteaImporter) getCachedIdentity(repo *cache.RepoCache, loginName string) (*cache.IdentityCache, error) {
-	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaScopedLogin, gi.conf[confKeyBaseURL]+"\x00"+loginName)
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaScopedLogin, scopedLogin(gi.conf[confKeyBaseURL], loginName))
+	if entity.IsErrNotFound(err) && loginName == gi.conf[confKeyDefaultLogin] {
+		// Bridge configuration tags the local user with the unscoped login.
+		// That login was verified against this instance's token.
+		i, err = repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, loginName)
+		if entity.IsErrMultipleMatch(err) {
+			// Ambiguous legacy identities; create a scoped one instead.
+			return nil, nil
+		}
+	}
 	if entity.IsErrNotFound(err) {
 		return nil, nil
 	}
@@ -581,7 +601,7 @@ func (gi *giteaImporter) deletedIdentity(ctx context.Context, repo *cache.RepoCa
 		map[string]string{
 			// because Gitea
 			metaKeyGiteaLogin:       DeletedIdentity,
-			metaKeyGiteaScopedLogin: gi.conf[confKeyBaseURL] + "\x00" + DeletedIdentity,
+			metaKeyGiteaScopedLogin: scopedLogin(gi.conf[confKeyBaseURL], DeletedIdentity),
 		},
 	)
 	if err != nil {
