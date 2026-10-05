@@ -1508,18 +1508,38 @@ func TestImportRepoNotFound(t *testing.T) {
 
 	gi := &giteaImporter{}
 	// Ask for a repo the fake server intentionally does not register.
-	require.NoError(t, gi.Init(context.Background(), backend, core.Configuration{
+	err = gi.Init(context.Background(), backend, core.Configuration{
 		confKeyBaseURL:      srv.URL,
 		confKeyOwner:        "ghost-owner", // not registered with the mux
 		confKeyProject:      "ghost-project",
 		confKeyDefaultLogin: "testuser",
-	}))
-
-	results := runImport(t, gi, backend)
-	assert.NotEmpty(t, collectErrors(results),
-		"importing a nonexistent repo should surface as ImportError, not a silent empty import")
+	})
+	assert.Error(t, err, "importing a nonexistent repo must fail, not import nothing")
 	assert.Empty(t, backend.Bugs().AllIds(),
 		"no bugs should be created when the repo is unreachable")
+}
+
+func TestBridgeRejectsUnusableIssueTracker(t *testing.T) {
+	cases := map[string]*giteatest.FakeAPI{
+		"external tracker": {ExternalTracker: &gitea.ExternalTracker{ExternalTrackerURL: "https://todo.example/tracker"}},
+		"issues disabled":  {IssuesDisabled: true},
+	}
+	for name, fa := range cases {
+		t.Run(name, func(t *testing.T) {
+			fa.Owner, fa.Project = "owner", "project"
+			srv := fa.NewServer(t)
+			repo, backend := newRoundTripRepo(t)
+			storeRoundTripToken(t, repo, srv.URL)
+			seedRoundTripBug(t, backend, roundTripBug{Title: "local", Body: "body"})
+			conf := roundTripConfig(srv.URL)
+
+			err := (&giteaImporter{}).Init(context.Background(), backend, conf)
+			assert.ErrorContains(t, err, "project")
+			err = (&giteaExporter{}).Init(context.Background(), backend, conf)
+			assert.ErrorContains(t, err, "project")
+			assert.Empty(t, fa.Issues, "nothing may be pushed")
+		})
+	}
 }
 
 // TestImportStopsAfterIssueError pins the current fail-fast behavior of

@@ -37,7 +37,7 @@ type giteaImporter struct {
 
 const DeletedIdentity = "@deleted-user"
 
-func (gi *giteaImporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
+func (gi *giteaImporter) Init(ctx context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	gi.conf = conf
 
 	creds, err := auth.List(repo,
@@ -59,7 +59,7 @@ func (gi *giteaImporter) Init(_ context.Context, repo *cache.RepoCache, conf cor
 		return err
 	}
 
-	return nil
+	return checkIssueTracker(ctx, gi.client, conf[confKeyOwner], conf[confKeyProject])
 }
 
 // ImportAll iterate over all the configured repository issues (comments) and ensure the creation
