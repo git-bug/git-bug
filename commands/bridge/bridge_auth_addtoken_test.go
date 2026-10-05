@@ -43,3 +43,16 @@ func TestBridgeAuthAddToken_BaseURLNormalization(t *testing.T) {
 	require.Len(t, credsWithSlash, 1)
 	assert.Equal(t, creds[0].ID(), credsWithSlash[0].ID())
 }
+
+func TestBridgeAuthAddTokenRejectsInvalidBaseURL(t *testing.T) {
+	for _, baseURL := range []string{"gitlab.com", "ftp://gitlab.com", "https://user:password@gitlab.com", "https://gitlab.com?token=secret", "https://gitlab.com/#fragment"} {
+		t.Run(baseURL, func(t *testing.T) {
+			env, _ := testenv.NewTestEnvAndUser(t)
+			err := runBridgeAuthAddToken(env, bridgeAuthAddTokenOptions{target: "gitlab", login: "alice", baseURL: baseURL}, []string{"token"})
+			require.ErrorContains(t, err, "invalid --base-url")
+			creds, err := auth.List(env.Repo)
+			require.NoError(t, err)
+			require.Empty(t, creds)
+		})
+	}
+}
