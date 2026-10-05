@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"os"
 	"sync"
+
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-billy/v5/util"
@@ -38,6 +39,7 @@ func NewRepoStorage(storage LocalStorage) RepoStorage {
 func (r *repoStorage) LocalStorage() LocalStorage {
 	return r.storage
 }
+
 // lockedFilesystem wraps a billy.Filesystem with a RWMutex for thread-safe access.
 type lockedFilesystem struct {
 	fs billy.Filesystem
