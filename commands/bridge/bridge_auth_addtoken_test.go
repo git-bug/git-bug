@@ -56,3 +56,12 @@ func TestBridgeAuthAddTokenRejectsInvalidBaseURL(t *testing.T) {
 		})
 	}
 }
+
+func TestJiraTokenRequiresInstanceURL(t *testing.T) {
+	env, _ := testenv.NewTestEnvAndUser(t)
+	err := runBridgeAuthAddToken(env, bridgeAuthAddTokenOptions{target: "jira", login: "alice"}, []string{"token"})
+	require.ErrorContains(t, err, "--base-url is required")
+	credentials, err := auth.List(env.Repo)
+	require.NoError(t, err)
+	require.Empty(t, credentials)
+}

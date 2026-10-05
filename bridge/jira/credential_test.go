@@ -44,6 +44,7 @@ func TestTokenCredentials(t *testing.T) {
 	identity.SetMetadata(metaKeyJiraLogin, "alice")
 	require.NoError(t, identity.Commit())
 	conf := core.Configuration{confKeyBaseUrl: server.URL + "/", confKeyDefaultLogin: "alice", confKeyCredentialType: "TOKEN", confKeyProject: "TEST"}
+	conf[confKeyCredentialID] = token.ID().String()
 	importer := &jiraImporter{}
 	require.NoError(t, importer.Init(context.Background(), backend, conf))
 	_, err = importer.client.GetProject("TEST")
@@ -54,6 +55,9 @@ func TestTokenCredentials(t *testing.T) {
 	require.NoError(t, err)
 	_, err = client.GetProject("TEST")
 	require.NoError(t, err)
+	credentials, err := listCredentials(repo, "TOKEN", auth.WithTarget(target))
+	require.NoError(t, err)
+	require.Equal(t, password.ID(), credentials[0].ID(), "legacy unpinned bridges retain newest-secret selection")
 	for _, params := range []core.BridgeParams{
 		{BaseURL: server.URL + "/", Project: "TEST", CredPrefix: token.ID().String()},
 		{BaseURL: server.URL + "/", Project: "TEST", Login: "alice", TokenRaw: "api-token"},
@@ -63,6 +67,10 @@ func TestTokenCredentials(t *testing.T) {
 		require.Equal(t, server.URL+"/", configured[confKeyBaseUrl], "preserve the URL used by existing imported issues")
 		require.Equal(t, "TOKEN", configured[confKeyCredentialType])
 	}
+	legacyConf := core.Configuration{confKeyCredentialType: "TOKEN", confKeyCredentialID: password.ID().String()}
+	credentials, err = configuredCredentials(repo, legacyConf, auth.WithTarget(target))
+	require.NoError(t, err)
+	require.Equal(t, password.ID(), credentials[0].ID(), "the validated legacy API credential must remain selected")
 }
 
 func TestSessionCredentialsIgnoreNewerToken(t *testing.T) {

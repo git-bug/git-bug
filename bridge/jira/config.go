@@ -133,6 +133,7 @@ func (j *Jira) Configure(ctx context.Context, repo *cache.RepoCache, params core
 	conf[confKeyProject] = project
 	conf[confKeyCredentialType] = credType
 	conf[confKeyDefaultLogin] = login
+	conf[confKeyCredentialID] = cred.ID().String()
 
 	err = j.ValidateConfig(conf)
 	if err != nil {
