@@ -21,14 +21,13 @@ Gitea:
   Requires a personal access token created at $BASE_URL/user/settings/applications
   (e.g. https://codeberg.org/user/settings/applications; works with any Gitea
   or Forgejo instance).
-  The bridge is pull-only at present, so the token needs read access only.
   With fine-grained scopes the minimum set is:
-    - 'read:issue' (issue list and timelines: comments, labels, status,
-      title changes)
+    - 'write:issue' (push issues, comments and labels; 'read:issue' is
+      enough for pull only)
     - 'read:repository' (repository access check)
     - 'read:user' (identify the token's owner account)
-  On instances without fine-grained scopes, any token with read-only permission
-  works.
+  On instances without fine-grained scopes, use a token with write access
+  to the repository, or a read-only token for pull only.
 
 .PP
 GitHub:
