@@ -27,7 +27,15 @@ func (opts *listOptions) Match(cred Credential) bool {
 	}
 
 	for key, val := range opts.meta {
-		if v, ok := cred.GetMetadata(key); !ok || v != val {
+		v, ok := cred.GetMetadata(key)
+		if !ok {
+			return false
+		}
+		if key == MetaKeyBaseURL {
+			if NormalizeBaseURL(v) != NormalizeBaseURL(val) {
+				return false
+			}
+		} else if v != val {
 			return false
 		}
 	}

@@ -85,9 +85,8 @@ func (je *jiraExporter) Init(ctx context.Context, repo *cache.RepoCache, conf co
 }
 
 func (je *jiraExporter) cacheAllClient(ctx context.Context, repo *cache.RepoCache) error {
-	creds, err := auth.List(repo,
+	creds, err := configuredCredentials(repo, je.conf,
 		auth.WithTarget(target),
-		auth.WithKind(auth.KindLoginPassword), auth.WithKind(auth.KindLogin),
 		auth.WithMeta(auth.MetaKeyBaseURL, je.conf[confKeyBaseUrl]),
 	)
 	if err != nil {

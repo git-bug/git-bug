@@ -16,6 +16,9 @@ NOTE: There are a few optional configuration values that you can additionally
 set in your git configuration to influence the behavior of the bridge. Please
 see the notes at:
 https://github.com/git-bug/git-bug/blob/trunk/doc/jira_bridge.md
+
+The bridge retains the credential validated during setup. To rotate it, add
+the replacement token with --base-url and reconfigure with --credential.
 `
 
 const credTypeText = `
@@ -79,6 +82,11 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 			return nil, fmt.Errorf("credential doesn't have a login")
 		}
 		login = l
+		if cred.Kind() == auth.KindToken {
+			credType = "TOKEN"
+		} else {
+			credType = "SESSION"
+		}
 	default:
 		if params.Login == "" {
 			if !interactive {
@@ -103,13 +111,23 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 				return nil, err
 			}
 			credType = []string{"SESSION", "TOKEN"}[credTypeInput]
-			cred, err = promptCredOptions(repo, login, baseURL)
+			cred, err = promptCredOptions(repo, login, baseURL, credType)
 			if err != nil {
 				return nil, err
 			}
 		} else {
 			credType = "TOKEN"
+			cred = auth.NewToken(target, params.TokenRaw)
+			cred.SetMetadata(auth.MetaKeyLogin, login)
+			cred.SetMetadata(auth.MetaKeyBaseURL, baseURL)
 		}
+	}
+
+	if cred.Target() != target {
+		return nil, fmt.Errorf("credential is for %s, not Jira", cred.Target())
+	}
+	if boundURL, ok := cred.GetMetadata(auth.MetaKeyBaseURL); !ok || auth.NormalizeBaseURL(boundURL) != auth.NormalizeBaseURL(baseURL) {
+		return nil, fmt.Errorf("credential is not bound to this Jira instance")
 	}
 
 	conf := make(core.Configuration)
@@ -118,6 +136,7 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 	conf[confKeyProject] = project
 	conf[confKeyCredentialType] = credType
 	conf[confKeyDefaultLogin] = login
+	conf[confKeyCredentialID] = cred.ID().String()
 
 	err = j.ValidateConfig(conf)
 	if err != nil {
@@ -180,10 +199,9 @@ func (*Jira) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-func promptCredOptions(repo repository.RepoKeyring, login, baseUrl string) (auth.Credential, error) {
-	creds, err := auth.List(repo,
+func promptCredOptions(repo repository.RepoKeyring, login, baseUrl, credType string) (auth.Credential, error) {
+	creds, err := listCredentials(repo, credType,
 		auth.WithTarget(target),
-		auth.WithKind(auth.KindToken),
 		auth.WithMeta(auth.MetaKeyLogin, login),
 		auth.WithMeta(auth.MetaKeyBaseURL, baseUrl),
 	)
