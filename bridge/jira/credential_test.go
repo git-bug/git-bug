@@ -90,7 +90,14 @@ func TestTokenCredentials(t *testing.T) {
 	require.NoError(t, auth.Store(repo, replacement))
 	credentials, err = configuredCredentials(repo, legacyConf, auth.WithTarget(target))
 	require.NoError(t, err)
-	require.Equal(t, replacement.ID(), credentials[0].ID(), "newer tokens must rotate the configured token")
+	require.Equal(t, token.ID(), credentials[0].ID(), "adding a token must not silently replace the validated credential")
+	legacyConf[confKeyCredentialID] = replacement.ID().String()
+	credentials, err = configuredCredentials(repo, legacyConf, auth.WithTarget(target))
+	require.NoError(t, err)
+	require.Equal(t, replacement.ID(), credentials[0].ID(), "explicit reconfiguration selects the replacement token")
+	require.NoError(t, auth.Remove(repo, replacement.ID()))
+	_, err = configuredCredentials(repo, legacyConf, auth.WithTarget(target))
+	require.ErrorContains(t, err, "reconfigure the bridge")
 }
 
 func TestSessionCredentialsIgnoreNewerToken(t *testing.T) {

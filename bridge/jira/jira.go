@@ -136,25 +136,12 @@ func configuredCredentials(repo repository.RepoKeyring, conf core.Configuration,
 		return nil, err
 	}
 	if id := conf[confKeyCredentialID]; id != "" {
-		configured, err := auth.LoadWithId(repo, entity.Id(id))
+		_, err := auth.LoadWithId(repo, entity.Id(id))
 		if err != nil {
-			if err == auth.ErrCredentialNotExist && len(credentials) > 0 {
-				return credentials, nil
-			}
-			return nil, err
-		}
-		// Retain the validated credential form, but permit rotation within
-		// that form. A newer account password must not replace an API token.
-		preferred := configured
-		login, _ := configured.GetMetadata(auth.MetaKeyLogin)
-		for _, candidate := range credentials {
-			candidateLogin, _ := candidate.GetMetadata(auth.MetaKeyLogin)
-			if candidateLogin == login && candidate.Kind() == configured.Kind() && candidate.CreateTime().After(preferred.CreateTime()) {
-				preferred = candidate
-			}
+			return nil, fmt.Errorf("configured Jira credential is missing; reconfigure the bridge with --credential: %w", err)
 		}
 		for i, credential := range credentials {
-			if credential.ID() == preferred.ID() {
+			if credential.ID().String() == id {
 				copy(credentials[1:i+1], credentials[:i])
 				credentials[0] = credential
 				return credentials, nil
