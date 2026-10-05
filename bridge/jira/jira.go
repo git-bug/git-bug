@@ -29,6 +29,7 @@ const (
 	confKeyProject        = "project"
 	confKeyDefaultLogin   = "default-login"
 	confKeyCredentialType = "credentials-type" // "SESSION" or "TOKEN"
+	confKeyCredentialID   = "credential-id"
 	confKeyIDMap          = "bug-id-map"
 	confKeyIDRevMap       = "bug-id-revmap"
 	// the issue type when exporting a new bug. Default is Story (10001)
@@ -101,8 +102,8 @@ func buildClient(ctx context.Context, baseURL string, credType string, cred auth
 	return client, nil
 }
 
-// Prefer dedicated API tokens in TOKEN mode. Login/password credentials remain
-// a fallback for older configurations that stored API tokens as passwords.
+// List credentials compatible with the selected authentication mode, including
+// legacy TOKEN configurations that stored API tokens as passwords.
 func listCredentials(repo repository.RepoKeyring, credType string, opts ...auth.ListOption) ([]auth.Credential, error) {
 	var credentials []auth.Credential
 	if credType == "TOKEN" {
@@ -113,7 +114,37 @@ func listCredentials(repo repository.RepoKeyring, credType string, opts ...auth.
 		credentials = append(credentials, tokens...)
 	}
 	passwords, err := auth.List(repo, append(append([]auth.ListOption{}, opts...), auth.WithKind(auth.KindLoginPassword), auth.WithKind(auth.KindLogin))...)
-	return append(credentials, passwords...), err
+	if err != nil {
+		return nil, err
+	}
+	// Legacy TOKEN configurations used password credentials for API tokens.
+	// Honor the newest stored secret across both forms for unpinned bridges.
+	credentials = append(credentials, passwords...)
+	sort.SliceStable(credentials, func(i, j int) bool {
+		if credentials[i].Kind() == auth.KindLogin || credentials[j].Kind() == auth.KindLogin {
+			return credentials[i].Kind() != auth.KindLogin && credentials[j].Kind() == auth.KindLogin
+		}
+		return credentials[i].CreateTime().After(credentials[j].CreateTime())
+	})
+	return credentials, nil
+}
+
+func configuredCredentials(repo repository.RepoKeyring, conf core.Configuration, opts ...auth.ListOption) ([]auth.Credential, error) {
+	credentials, err := listCredentials(repo, conf[confKeyCredentialType], opts...)
+	if err != nil {
+		return nil, err
+	}
+	if id := conf[confKeyCredentialID]; id != "" {
+		for i, credential := range credentials {
+			if credential.ID().String() == id {
+				copy(credentials[1:i+1], credentials[:i])
+				credentials[0] = credential
+				return credentials, nil
+			}
+		}
+		return nil, fmt.Errorf("configured Jira credential is missing or does not match this bridge")
+	}
+	return credentials, nil
 }
 
 // stringInSlice returns true if needle is found in haystack

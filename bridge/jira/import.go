@@ -41,7 +41,7 @@ func (ji *jiraImporter) Init(ctx context.Context, repo *cache.RepoCache, conf co
 
 	// Dedicated API tokens precede legacy password credentials; stored
 	// secrets precede credentials that need an interactive password prompt.
-	creds, err := listCredentials(repo, conf[confKeyCredentialType],
+	creds, err := configuredCredentials(repo, conf,
 		auth.WithTarget(target),
 		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseUrl]),
 		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),

@@ -73,6 +73,9 @@ func runBridgeAuthAddToken(env *execenv.Env, opts bridgeAuthAddTokenOptions, arg
 	if !core.TargetExist(opts.target) {
 		return fmt.Errorf("unknown target")
 	}
+	if opts.target == "jira" && opts.baseURL == "" {
+		return fmt.Errorf("flag --base-url is required for Jira tokens")
+	}
 	if opts.baseURL != "" {
 		opts.baseURL = auth.NormalizeBaseURL(opts.baseURL)
 		if err := auth.ValidateBaseURL(opts.baseURL); err != nil {
