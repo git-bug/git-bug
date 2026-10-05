@@ -52,7 +52,6 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 			return nil, err
 		}
 	}
-	baseURL = auth.NormalizeBaseURL(baseURL)
 
 	project := params.Project
 	if project == "" {
@@ -80,6 +79,11 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 			return nil, fmt.Errorf("credential doesn't have a login")
 		}
 		login = l
+		if cred.Kind() == auth.KindToken {
+			credType = "TOKEN"
+		} else {
+			credType = "SESSION"
+		}
 	default:
 		if params.Login == "" {
 			if !interactive {
@@ -110,6 +114,9 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 			}
 		} else {
 			credType = "TOKEN"
+			cred = auth.NewToken(target, params.TokenRaw)
+			cred.SetMetadata(auth.MetaKeyLogin, login)
+			cred.SetMetadata(auth.MetaKeyBaseURL, baseURL)
 		}
 	}
 
@@ -185,6 +192,7 @@ func promptCredOptions(repo repository.RepoKeyring, login, baseUrl string) (auth
 	creds, err := auth.List(repo,
 		auth.WithTarget(target),
 		auth.WithKind(auth.KindToken),
+		auth.WithKind(auth.KindLoginPassword), auth.WithKind(auth.KindLogin),
 		auth.WithMeta(auth.MetaKeyLogin, login),
 		auth.WithMeta(auth.MetaKeyBaseURL, baseUrl),
 	)

@@ -47,7 +47,6 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 			return nil, errors.Wrap(err, "base url prompt")
 		}
 	}
-	baseUrl = auth.NormalizeBaseURL(baseUrl)
 
 	var projectURL string
 

@@ -253,7 +253,7 @@ func (b ById) Swap(i, j int) {
 }
 
 // NormalizeBaseURL canonicalizes a base URL by lowercasing the scheme and host,
-// removing trailing slashes, and cleaning paths.
+// removing trailing slashes.
 func NormalizeBaseURL(rawURL string) string {
 	rawURL = strings.TrimSpace(rawURL)
 	if rawURL == "" {
@@ -268,4 +268,13 @@ func NormalizeBaseURL(rawURL string) string {
 	u.Path = strings.TrimRight(u.Path, "/")
 	u.RawPath = strings.TrimRight(u.RawPath, "/")
 	return u.String()
+}
+
+// ValidateBaseURL checks a supplied instance URL before storing credentials.
+func ValidateBaseURL(rawURL string) error {
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Hostname() == "" || (u.Scheme != "https" && u.Scheme != "http") || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+		return fmt.Errorf("base URL must be an absolute HTTP(S) URL without credentials, query, or fragment")
+	}
+	return nil
 }
