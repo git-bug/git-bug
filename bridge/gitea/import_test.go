@@ -280,12 +280,28 @@ func TestImportBugMetadataKeysExact(t *testing.T) {
 }
 
 func TestImportThenExportThenImportNoDup(t *testing.T) {
-	exporter := (&Gitea{}).NewExporter()
-	if exporter == nil {
-		t.Skip("Gitea exporter is not wired yet; enable this round-trip pin when NewExporter returns a real exporter")
-	}
+	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project"}
+	srv := fa.NewServer(t)
+	repo, backend := newRoundTripRepo(t)
+	storeRoundTripToken(t, repo, srv.URL)
+	seedRoundTripBug(t, backend, roundTripBug{
+		Title: "local", Body: "body", Closed: true,
+		Comments: []string{"first"}, Labels: []string{"bug"},
+	})
 
-	t.Fatal("TODO: create a local bug, export it to Gitea, then import and assert len(AllIds()) == 1")
+	exporter := (&Gitea{}).NewExporter()
+	runExportAll(t, exporter, backend, roundTripConfig(srv.URL))
+	require.Len(t, fa.Issues, 1)
+
+	gi := setupImporterOnExistingBackend(t, srv.URL, backend)
+	require.Empty(t, collectErrors(runImport(t, gi, backend)))
+	b := onlyBug(t, backend)
+	assert.Len(t, b.Snapshot().Comments, 2, "exported comment must not be imported again")
+
+	// A second push has nothing left to send.
+	before := len(fa.IssueRequests)
+	runExportAll(t, exporter, backend, roundTripConfig(srv.URL))
+	assert.Equal(t, before, len(fa.IssueRequests))
 }
 
 func TestImportMatchesByAllFiveMetadataKeys(t *testing.T) {

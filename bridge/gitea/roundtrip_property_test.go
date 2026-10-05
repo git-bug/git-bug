@@ -16,6 +16,7 @@ import (
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/text"
 )
 
 type roundTripBug struct {
@@ -190,7 +191,8 @@ func normalizeOnlyBug(t testLike, backend *cache.RepoCache) normalizedBug {
 	}
 	body := ""
 	if len(comments) > 0 {
-		body = comments[0]
+		// The importer applies text.Cleanup to issue bodies.
+		body = text.Cleanup(comments[0])
 		comments = comments[1:]
 	}
 	labels := make([]string, 0, len(snap.Labels))
@@ -200,7 +202,7 @@ func normalizeOnlyBug(t testLike, backend *cache.RepoCache) normalizedBug {
 	sort.Strings(labels)
 
 	return normalizedBug{
-		Title:    snap.Title,
+		Title:    cleanTitle(snap.Title),
 		Body:     body,
 		Closed:   snap.Status == common.ClosedStatus,
 		Comments: comments,
