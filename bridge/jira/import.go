@@ -39,22 +39,24 @@ func (ji *jiraImporter) Init(ctx context.Context, repo *cache.RepoCache, conf co
 
 	var cred auth.Credential
 
-	// Prioritize LoginPassword credentials to avoid a prompt
-	opts := []auth.ListOption{
+	// Dedicated API tokens precede legacy password credentials; stored
+	// secrets precede credentials that need an interactive password prompt.
+	creds, err := listCredentials(repo, conf[confKeyCredentialType],
 		auth.WithTarget(target),
-		auth.WithKind(auth.KindLoginPassword),
 		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseUrl]),
 		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),
-	}
-	if conf[confKeyCredentialType] == "TOKEN" {
-		opts = append(opts, auth.WithKind(auth.KindToken))
-	}
-	creds, err := auth.List(repo, opts...)
+	)
 	if err != nil {
 		return err
 	}
 	if len(creds) > 0 {
 		cred = creds[0]
+		for _, candidate := range creds {
+			if candidate.Kind() != auth.KindLogin {
+				cred = candidate
+				break
+			}
+		}
 		goto end
 	}
 
