@@ -43,6 +43,7 @@ func (ji *jiraImporter) Init(ctx context.Context, repo *cache.RepoCache, conf co
 	creds, err := auth.List(repo,
 		auth.WithTarget(target),
 		auth.WithKind(auth.KindLoginPassword),
+		auth.WithKind(auth.KindToken),
 		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseUrl]),
 		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),
 	)
