@@ -48,8 +48,7 @@ func (Gitea) NewImporter() core.Importer {
 }
 
 func (Gitea) NewExporter() core.Exporter {
-	return nil
-	// return &giteaExporter{}
+	return &giteaExporter{}
 }
 
 func buildClient(baseURL string, token *auth.Token) (*gitea.Client, error) {
