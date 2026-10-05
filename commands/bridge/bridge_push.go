@@ -16,22 +16,33 @@ import (
 	"github.com/git-bug/git-bug/util/interrupt"
 )
 
+type bridgePushOptions struct {
+	verbose bool
+}
+
 func newBridgePushCommand(env *execenv.Env) *cobra.Command {
+	options := bridgePushOptions{}
+
 	cmd := &cobra.Command{
 		Use:     "push [NAME]",
 		Short:   "Push updates to remote bug tracker",
 		PreRunE: execenv.LoadBackendEnsureUser(env),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
-			return runBridgePush(env, args)
+			return runBridgePush(env, options, args)
 		}),
 		Args:              cobra.MaximumNArgs(1),
 		ValidArgsFunction: completion.Bridge(env),
 	}
 
+	flags := cmd.Flags()
+	flags.SortFlags = false
+	flags.BoolVarP(&options.verbose, "verbose", "v", false,
+		"Explain why issues were not pushed")
+
 	return cmd
 }
 
-func runBridgePush(env *execenv.Env, args []string) error {
+func runBridgePush(env *execenv.Env, opts bridgePushOptions, args []string) error {
 	var b *core.Bridge
 	var err error
 
@@ -80,7 +91,16 @@ func runBridgePush(env *execenv.Env, args []string) error {
 
 	exportedIssues := 0
 	exportErrors := 0
+	// Skipped issues are summarized by reason instead of listed one by one.
+	skipped := map[string]int{}
+	var skipOrder []string
 	for result := range events {
+		if result.Event == core.ExportEventNothing && result.Reason != core.ReasonNothingExported {
+			if skipped[result.Reason] == 0 {
+				skipOrder = append(skipOrder, result.Reason)
+			}
+			skipped[result.Reason]++
+		}
 		if result.Event != core.ExportEventNothing {
 			env.Out.Println(result.String())
 		}
@@ -93,6 +113,11 @@ func runBridgePush(env *execenv.Env, args []string) error {
 		}
 	}
 
+	if opts.verbose {
+		for _, reason := range skipOrder {
+			env.Out.Printf("skipped %d issues: %s\n", skipped[reason], reason)
+		}
+	}
 	env.Out.Printf("exported %d issues with %s bridge\n", exportedIssues, b.Name)
 
 	// send done signal
