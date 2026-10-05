@@ -150,6 +150,18 @@ func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 					// try to export the bug and it associated events
 					ge.exportBug(ctx, b, out)
 				} else {
+					if origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin); ok && origin != target {
+						out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue tagged with origin: %s", origin))
+						continue
+					}
+					if baseURL, ok := snapshot.GetCreateMetadata(metaKeyGitlabBaseUrl); ok && baseURL != ge.conf[confKeyGitlabBaseUrl] {
+						out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue belongs to another GitLab instance (%s)", baseURL))
+						continue
+					}
+					if project, ok := snapshot.GetCreateMetadata(metaKeyGitlabProject); ok && project != ge.conf[confKeyProjectID] {
+						out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue belongs to another GitLab project (ID %s)", project))
+						continue
+					}
 					out <- core.NewExportNothing(b.Id(), core.SkipReasonNoTokenActor(snapshot.Operations, metaKeyGitlabId))
 				}
 			}
