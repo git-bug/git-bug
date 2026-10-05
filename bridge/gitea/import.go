@@ -165,7 +165,7 @@ func (gi *giteaImporter) reportError(ctx context.Context, err error, when string
 
 // reportBugError reports an error that concerns an already-created bug.
 func (gi *giteaImporter) reportBugError(ctx context.Context, err error, when string, id entity.Id) {
-	gi.sendImportResult(ctx, core.NewImportError(fmt.Errorf("%s: %v", when, err), id))
+	gi.sendImportResult(ctx, core.NewImportError(fmt.Errorf("%s: %w", when, err), id))
 }
 
 func (gi *giteaImporter) sendImportResult(ctx context.Context, result core.ImportResult) {

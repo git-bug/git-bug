@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -92,7 +93,7 @@ func TestReportImportResultsFailsOnErrors(t *testing.T) {
 
 func TestReportImportResultsIgnoresCancellation(t *testing.T) {
 	out := newOut()
-	err := reportImportResults(out, "b", importEvents(core.NewImportError(context.Canceled, "")))
+	err := reportImportResults(out, "b", importEvents(core.NewImportError(fmt.Errorf("fetch timeline: %w", context.Canceled), "")))
 	assert.NoError(t, err)
 	assert.Equal(t, "imported 0 issues and 0 identities with b bridge\n", out.String())
 }
