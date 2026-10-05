@@ -69,13 +69,15 @@ func buildClient(ctx context.Context, baseURL string, credType string, cred auth
 
 	switch cred := cred.(type) {
 	case *auth.Token:
+		if credType != "TOKEN" {
+			return nil, fmt.Errorf("token credential requires Jira TOKEN authentication")
+		}
 		var ok bool
 		login, ok = cred.GetMetadata(auth.MetaKeyLogin)
 		if !ok || login == "" {
 			return nil, fmt.Errorf("Jira token has no login")
 		}
 		password = cred.Value
-		credType = "TOKEN"
 	case *auth.LoginPassword:
 		login = cred.Login
 		password = cred.Password
@@ -96,6 +98,14 @@ func buildClient(ctx context.Context, baseURL string, credType string, cred auth
 	}
 
 	return client, nil
+}
+
+func credentialKinds(credType string) []auth.ListOption {
+	opts := []auth.ListOption{auth.WithKind(auth.KindLoginPassword), auth.WithKind(auth.KindLogin)}
+	if credType == "TOKEN" {
+		opts = append(opts, auth.WithKind(auth.KindToken))
+	}
+	return opts
 }
 
 // stringInSlice returns true if needle is found in haystack
