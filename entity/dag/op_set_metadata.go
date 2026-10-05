@@ -32,13 +32,14 @@ func (op *SetMetadataOperation[SnapT]) Id() entity.Id {
 }
 
 func (op *SetMetadataOperation[SnapT]) Apply(snapshot SnapT) {
-	for _, target := range snapshot.AllOperations() {
+	ops := snapshot.AllOperations()
+	for i, target := range ops {
 		if target.Id() == op.Target {
 			// Apply the metadata in an immutable way: if a metadata already
 			// exist, it's not possible to override it.
-			for key, value := range op.NewMetadata {
-				target.setExtraMetadataImmutable(key, value)
-			}
+			// The target is shared with other snapshots, replace it in this one
+			// by a copy carrying the metadata.
+			ops[i] = withExtraMetadata(target, op.NewMetadata)
 			return
 		}
 	}

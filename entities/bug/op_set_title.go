@@ -84,21 +84,8 @@ func (s SetTitleTimelineItem) CombinedId() entity.CombinedId {
 func (s *SetTitleTimelineItem) IsAuthored() {}
 
 // SetTitle is a convenience function to change a bugs title
-func SetTitle(b Interface, author identity.Interface, unixTime int64, title string, metadata map[string]string) (*SetTitleOperation, error) {
-	var lastTitleOp *SetTitleOperation
-	for _, op := range b.Operations() {
-		switch op := op.(type) {
-		case *SetTitleOperation:
-			lastTitleOp = op
-		}
-	}
-
-	var was string
-	if lastTitleOp != nil {
-		was = lastTitleOp.Title
-	} else {
-		was = b.FirstOp().(*CreateOperation).Title
-	}
+func SetTitle(b Mutable, author identity.Interface, unixTime int64, title string, metadata map[string]string) (*SetTitleOperation, error) {
+	was := b.Compile().Title
 
 	op := NewSetTitleOp(author, unixTime, title, was)
 	for key, value := range metadata {

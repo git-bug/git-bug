@@ -48,6 +48,7 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 
 	_, _, err = bugWithComments.AddComment("new comment")
 	require.NoError(t, err)
+	require.NoError(t, bugWithComments.Commit())
 
 	// bug with label changes
 	bugLabelChange, _, err := repo.Bugs().New("bug label change", "new bug")
@@ -67,6 +68,7 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 
 	_, _, err = bugLabelChange.ChangeLabels([]string{"bUG"}, nil)
 	require.NoError(t, err)
+	require.NoError(t, bugLabelChange.Commit())
 
 	// bug with comments editions
 	bugWithCommentEditions, createOp, err := repo.Bugs().New("bug with comments editions", "new bug")
@@ -81,6 +83,7 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 
 	_, err = bugWithCommentEditions.EditComment(commentId, "first comment edited")
 	require.NoError(t, err)
+	require.NoError(t, bugWithCommentEditions.Commit())
 
 	// bug status changed
 	bugStatusChanged, _, err := repo.Bugs().New("bug status changed", "new bug")
@@ -91,6 +94,7 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 
 	_, err = bugStatusChanged.Open()
 	require.NoError(t, err)
+	require.NoError(t, bugStatusChanged.Commit())
 
 	// bug title changed
 	bugTitleEdited, _, err := repo.Bugs().New("bug title edited", "new bug")
@@ -98,6 +102,7 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 
 	_, err = bugTitleEdited.SetTitle("bug title edited again")
 	require.NoError(t, err)
+	require.NoError(t, bugTitleEdited.Commit())
 
 	return []*testCase{
 		{
@@ -231,6 +236,7 @@ func TestGithubPushPull(t *testing.T) {
 	// create a second backend
 	backendTwo, err := cache.NewRepoCacheNoEvents(repoTwo)
 	require.NoError(t, err)
+	defer backendTwo.Close()
 
 	importer := &githubImporter{}
 	err = importer.Init(ctx, backend, core.Configuration{

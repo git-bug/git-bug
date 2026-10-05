@@ -15,6 +15,7 @@ func TestSelect(t *testing.T) {
 
 	backend, err := cache.NewRepoCacheNoEvents(repo)
 	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, backend.Close()) })
 
 	const typename = "foo"
 	const namespace = "foos"

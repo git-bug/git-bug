@@ -11,7 +11,8 @@ import (
 	"github.com/git-bug/git-bug/repository"
 )
 
-var _ Interface = &Bug{}
+var _ dag.Mutable[*Snapshot, Operation] = &Bug{}
+var _ dag.Tracked[*Snapshot, Operation] = &Bug{}
 var _ entity.Interface = &Bug{}
 
 // 1: original format
@@ -30,9 +31,9 @@ var def = dag.Definition{
 	FormatVersion:        formatVersion,
 }
 
-type Interface interface {
-	dag.Interface[*Snapshot, Operation]
-}
+// Mutable is what the functions creating operations (AddComment, SetTitle, ...)
+// need from a bug, see dag.Mutable.
+type Mutable = dag.Mutable[*Snapshot, Operation]
 
 // Bug holds the data of a bug thread, organized in a way close to
 // how it will be persisted inside Git. This is the data structure
@@ -115,6 +116,15 @@ func (bug *Bug) Validate() error {
 // Append add a new Operation to the Bug
 func (bug *Bug) Append(op Operation) {
 	bug.Entity.Append(op)
+}
+
+// CommitOperations writes the given operations, see dag.Entity.CommitOperations
+func (bug *Bug) CommitOperations(repo repository.ClockedRepo, ops []Operation) error {
+	converted := make([]dag.Operation, len(ops))
+	for i, op := range ops {
+		converted[i] = op
+	}
+	return bug.Entity.CommitOperations(repo, converted)
 }
 
 // Operations return the ordered operations

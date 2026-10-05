@@ -13,20 +13,27 @@ import (
 	"github.com/git-bug/git-bug/repository"
 )
 
+// sharedBug is the single loaded copy of a bug, see sharedEntity.
+type sharedBug = sharedEntity[*bug.Snapshot, bug.Operation]
+
+func newSharedBug(b *bug.Bug) *sharedBug {
+	return &sharedBug{Tracked: b}
+}
+
 type RepoCacheBug struct {
-	*SubCache[*bug.Bug, *BugExcerpt, *BugCache]
+	*SubCache[*sharedBug, *BugExcerpt, *BugCache]
 }
 
 func NewRepoCacheBug(repo repository.ClockedRepo,
 	resolvers func() entity.Resolvers,
 	getUserIdentity getUserIdentityFunc) *RepoCacheBug {
 
-	makeCached := func(b *bug.Bug, onCommit func() error) *BugCache {
-		return NewBugCache(b, repo, getUserIdentity, onCommit)
+	makeView := func(shared *sharedBug, onCommit func() error) *BugCache {
+		return newBugCache(shared, repo, resolvers, getUserIdentity, onCommit)
 	}
 
-	makeIndexData := func(b *BugCache) []string {
-		snap := b.Snapshot()
+	makeIndexData := func(b *sharedBug) []string {
+		snap := b.Compile()
 		var res []string
 		for _, comment := range snap.Comments {
 			res = append(res, comment.Message)
@@ -35,18 +42,26 @@ func NewRepoCacheBug(repo repository.ClockedRepo,
 		return res
 	}
 
-	actions := Actions[*bug.Bug]{
-		ReadWithResolver:    bug.ReadWithResolver,
-		ReadAllWithResolver: bug.ReadAllWithResolver,
-		Remove:              bug.Remove,
-		RemoveAll:           bug.RemoveAll,
-		MergeAll:            bug.MergeAll,
-		EnsureClocks:        bug.EnsureClocks,
+	actions := Actions[*sharedBug]{
+		ReadWithResolver: func(repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (*sharedBug, error) {
+			b, err := bug.ReadWithResolver(repo, resolvers, id)
+			if err != nil {
+				return nil, err
+			}
+			return newSharedBug(b), nil
+		},
+		Refresh: func(repo repository.ClockedRepo, resolvers entity.Resolvers, shared *sharedBug) (*sharedBug, error) {
+			return shared, shared.Repair(repo, resolvers)
+		},
+		Remove:       bug.Remove,
+		RemoveAll:    bug.RemoveAll,
+		MergeAll:     bug.MergeAll,
+		EnsureClocks: bug.EnsureClocks,
 	}
 
-	sc := NewSubCache[*bug.Bug, *BugExcerpt, *BugCache](
+	sc := NewSubCache[*sharedBug, *BugExcerpt, *BugCache](
 		repo, resolvers, getUserIdentity,
-		makeCached, NewBugExcerpt, makeIndexData, actions,
+		makeView, newBugExcerpt, makeIndexData, actions,
 		bug.Typename, bug.Namespace,
 		formatVersion, defaultMaxLoadedBugs,
 	)
@@ -67,6 +82,7 @@ func (c *RepoCacheBug) ResolveBugCreateMetadata(key string, value string) (*BugC
 // bug/comment Id prefix. Returns the Bug containing the Comment and the Comment's
 // Id.
 func (c *RepoCacheBug) ResolveComment(prefix string) (*BugCache, entity.CombinedId, error) {
+	c.requestSync()
 	bugPrefix, _ := entity.SeparateIds(prefix)
 	bugCandidate := make([]entity.Id, 0, 5)
 
@@ -112,6 +128,7 @@ func (c *RepoCacheBug) ResolveComment(prefix string) (*BugCache, entity.Combined
 
 // Query return the id of all Bug matching the given Query
 func (c *RepoCacheBug) Query(q *query.Query) ([]entity.Id, error) {
+	c.requestSync()
 	c.muMaps.RLock()
 	defer c.muMaps.RUnlock()
 
@@ -193,6 +210,7 @@ func (c *RepoCacheBug) Query(q *query.Query) ([]entity.Id, error) {
 // labels are defined in a configuration file. Until that, the default behavior
 // is to return the list of labels already used.
 func (c *RepoCacheBug) ValidLabels() []common.Label {
+	c.requestSync()
 	c.muMaps.RLock()
 	defer c.muMaps.RUnlock()
 
@@ -251,7 +269,7 @@ func (c *RepoCacheBug) NewRaw(author identity.Interface, unixTime int64, title s
 		return nil, nil, err
 	}
 
-	cached, err := c.add(b)
+	cached, err := c.add(newSharedBug(b))
 	if err != nil {
 		return nil, nil, err
 	}

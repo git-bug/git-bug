@@ -6,43 +6,42 @@ import (
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
-// Interface define the extended interface of a dag.Entity
-type Interface[SnapT Snapshot, OpT Operation] interface {
-	entity.Interface
-
-	// Validate checks if the Entity data is valid
-	Validate() error
+// Mutable is what creating an operation needs from an Entity: the state to
+// create the operation against, and where to stage it. Besides an Entity,
+// anything holding staged operations of its own on top of one can implement it.
+type Mutable[SnapT Snapshot, OpT Operation] interface {
+	// Id return the Entity identifier
+	Id() entity.Id
 
 	// Append an operation into the staging area, to be committed later
 	Append(op OpT)
 
-	// Operations returns the ordered operations
-	Operations() []OpT
+	// Compile an Entity in an easily usable snapshot, staged operations included
+	Compile() SnapT
+}
 
-	// NeedCommit indicates that the in-memory state changed and need to be committed in the repository
-	NeedCommit() bool
+// Tracked is an Entity seen as its committed state: what is in the repository,
+// written to and reloaded from there without going through a staging area. It is
+// what can be shared between several holders staging operations of their own on
+// top of it, see Mutable.
+type Tracked[SnapT Snapshot, OpT Operation] interface {
+	entity.Interface
 
-	// Commit writes the staging area in Git and move the operations to the packs
-	Commit(repo repository.ClockedRepo) error
+	// Compile an Entity in an easily usable snapshot
+	Compile() SnapT
 
-	// CommitAsNeeded execute a Commit only if necessary. This function is useful to avoid getting an error if the Entity
-	// is already in sync with the repository.
-	CommitAsNeeded(repo repository.ClockedRepo) error
+	// CommitOperations writes the given operations in Git, on top of the committed
+	// state, leaving the staging area untouched
+	CommitOperations(repo repository.ClockedRepo, ops []OpT) error
+
+	// Repair reloads the committed state from the repository, typically after a
+	// commit failed with repository.ErrRefChanged, leaving the staging area untouched
+	Repair(repo repository.ClockedRepo, resolvers entity.Resolvers) error
 
 	// LastCommit returns the hash of the commit holding the last committed operations,
 	// that is what the Entity's reference points to as far as the Entity knows.
 	// It is empty if the Entity has never been committed.
 	LastCommit() repository.Hash
-
-	// FirstOp lookup for the very first operation of the Entity.
-	FirstOp() OpT
-
-	// LastOp lookup for the very last operation of the Entity.
-	// For a valid Entity, should never be nil
-	LastOp() OpT
-
-	// Compile an Entity in an easily usable snapshot
-	Compile() SnapT
 
 	// CreateLamportTime return the Lamport time of creation
 	CreateLamportTime() lamport.Time

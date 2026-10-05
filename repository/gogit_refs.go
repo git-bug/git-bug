@@ -1,5 +1,11 @@
 package repository
 
+// TODO: remove this file and its tests once go-git writes refs under a lock
+// file, skips lock files and broken loose refs when listing, and git-bug uses
+// that version (go-git branch ref-lockfile). UpdateRef and RemoveRef then go
+// through CheckAndSetReference and RemoveReference, ListRefs and
+// ListTrackingRefs through IterReferences.
+//
 // GoGitRepo writes and lists the refs of git-bug's namespaces itself, rather
 // than through go-git, which gets both wrong in ways git-bug depends on:
 //
@@ -242,6 +248,9 @@ func (repo *GoGitRepo) ListTrackingRefs(remote string, namespace string) (map[st
 	return repo.listRefs(trackingRefPrefix(remote, namespace))
 }
 
+// TODO: replace listRefs and listPackedRefs with IterReferences, see the top of
+// this file.
+//
 // listRefs returns the refs under prefix, by the rest of their name. Loose refs
 // take precedence over packed ones.
 //

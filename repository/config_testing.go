@@ -70,11 +70,18 @@ func testConfig(t *testing.T, config Config) {
 	err = config.RemoveAll("section.time")
 	require.NoError(t, err)
 
+	// a whole section
+	require.NoError(t, config.StoreString("section.key", "value"))
+	require.NoError(t, config.StoreString("section.key2", "value2"))
+
 	err = config.RemoveAll("section")
 	require.NoError(t, err)
 
 	_, err = config.ReadString("section.key")
-	require.Error(t, err)
+	require.ErrorIs(t, err, ErrNoConfigEntry)
+	configs, err = config.ReadAll("section")
+	require.NoError(t, err)
+	require.Empty(t, configs)
 
 	// section + subsections
 	require.NoError(t, config.StoreString("section.opt1", "foo"))

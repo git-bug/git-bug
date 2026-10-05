@@ -158,7 +158,7 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 			return entity.NewMergeError(err, id)
 		}
 
-		return entity.NewMergeNewStatus(id, remoteEntity)
+		return entity.NewMergeNewStatus(id)
 	}
 
 	// SCENARIO 4
@@ -178,7 +178,7 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 		if err != nil {
 			return entity.NewMergeError(err, id)
 		}
-		return entity.NewMergeUpdatedStatus(id, remoteEntity)
+		return entity.NewMergeUpdatedStatus(id)
 	}
 
 	// SCENARIO 5
@@ -220,14 +220,7 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 		return entity.NewMergeError(err, id)
 	}
 
-	// read the merged entity back, so that the returned entity holds the operations
-	// of both branches and can be committed on top of the merge commit.
-	mergedEntity, err := read[EntityT](def, wrapper, repo, resolvers, id, commitHash)
-	if err != nil {
-		return entity.NewMergeError(err, id)
-	}
-
-	return entity.NewMergeUpdatedStatus(id, mergedEntity)
+	return entity.NewMergeUpdatedStatus(id)
 }
 
 // Remove delete an Entity, as well as its tracking refs for every remote.
