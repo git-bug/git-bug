@@ -232,8 +232,7 @@ func TestSubCacheDerived(t *testing.T) {
 	t.Run("persisted, and loaded rather than rebuilt", func(t *testing.T) {
 		repo := repository.CreateGoGitTestRepo(t, false)
 
-		c, err := NewRepoCacheNoEvents(repo)
-		require.NoError(t, err)
+		c := openTestRepoCache(t, repo)
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
 		require.NoError(t, c.SetUserIdentity(rene))
@@ -253,8 +252,7 @@ func TestSubCacheDerived(t *testing.T) {
 	t.Run("an index without record is repaired on load", func(t *testing.T) {
 		repo := repository.CreateGoGitTestRepo(t, false)
 
-		c, err := NewRepoCacheNoEvents(repo)
-		require.NoError(t, err)
+		c := openTestRepoCache(t, repo)
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
 		require.NoError(t, c.SetUserIdentity(rene))
@@ -275,8 +273,7 @@ func TestSubCacheDerived(t *testing.T) {
 	t.Run("a commit recorded without its excerpt is repaired on load", func(t *testing.T) {
 		repo := repository.CreateGoGitTestRepo(t, false)
 
-		c, err := NewRepoCacheNoEvents(repo)
-		require.NoError(t, err)
+		c := openTestRepoCache(t, repo)
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
 		require.NoError(t, c.SetUserIdentity(rene))
@@ -297,8 +294,7 @@ func TestSubCacheDerived(t *testing.T) {
 	t.Run("an index ahead of the excerpts is repaired on load", func(t *testing.T) {
 		repo := repository.CreateGoGitTestRepo(t, false)
 
-		c, err := NewRepoCacheNoEvents(repo)
-		require.NoError(t, err)
+		c := openTestRepoCache(t, repo)
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
 		require.NoError(t, c.SetUserIdentity(rene))
@@ -492,8 +488,7 @@ func TestSubCacheDerived(t *testing.T) {
 		_, err = cacheA.Push("origin")
 		require.NoError(t, err)
 
-		cacheB, err := NewRepoCacheNoEvents(repoB)
-		require.NoError(t, err)
+		cacheB := openTestRepoCache(t, repoB)
 		require.NoError(t, cacheB.Pull("origin"))
 		require.Equal(t, 1, lenComments(t, cacheB, b.Id()))
 		require.NoError(t, cacheB.Close())
@@ -832,8 +827,7 @@ func TestSubCacheDerived(t *testing.T) {
 
 	t.Run("nothing is published once closed", func(t *testing.T) {
 		repo := repository.CreateGoGitTestRepo(t, false)
-		c, err := NewRepoCacheNoEvents(repo)
-		require.NoError(t, err)
+		c := openTestRepoCache(t, repo)
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
 		require.NoError(t, c.SetUserIdentity(rene))
@@ -958,6 +952,19 @@ func (r *listHookRepo) ListRefs(namespace string) (map[string]repository.Hash, e
 }
 
 func TestSubCacheWorker(t *testing.T) {
+	// open opens a cache on repo with a user identity set, its sync workers
+	// running, unlike newTestCacheWithUser
+	open := func(t *testing.T, repo repository.ClockedRepo) (*RepoCache, *IdentityCache) {
+		t.Helper()
+		c, err := NewRepoCacheNoEvents(repo)
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, c.Close()) })
+		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
+		require.NoError(t, err)
+		require.NoError(t, c.SetUserIdentity(rene))
+		return c, rene
+	}
+
 	// setup opens a cache on a mock repo, and hooks the listing of the bug refs.
 	// Run in a synctest bubble, time is fake, and synctest.Wait returns once
 	// every goroutine of the bubble, the workers included, is idle.
@@ -965,7 +972,7 @@ func TestSubCacheWorker(t *testing.T) {
 		t.Helper()
 		repo := repository.NewMockRepo()
 		hook := &listHookRepo{TestedRepo: repo}
-		c, rene := newTestCacheWithUser(t, hook)
+		c, rene := open(t, hook)
 		synctest.Wait()
 		return repo, c, rene, hook
 	}
@@ -1095,7 +1102,7 @@ func TestSubCacheWorker(t *testing.T) {
 	// the interval
 	t.Run("a bug modified outside with GoGitRepo", func(t *testing.T) {
 		repo := repository.CreateGoGitTestRepo(t, false)
-		c, rene := newTestCacheWithUser(t, repo)
+		c, rene := open(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
 

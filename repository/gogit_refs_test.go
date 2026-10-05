@@ -140,9 +140,11 @@ func TestGoGitRepo_Refs(t *testing.T) {
 			key := randomKey()
 			require.NoError(t, repo.UpdateRef(namespace, key, "", commits[0]))
 
-			reference := filepath.Join(t.TempDir(), "reference")
-			require.NoError(t, createFileExclusive(reference, nil))
-			want, err := os.Stat(reference)
+			// created normally, not by the code under test
+			reference, err := os.Create(filepath.Join(t.TempDir(), "reference"))
+			require.NoError(t, err)
+			require.NoError(t, reference.Close())
+			want, err := os.Stat(reference.Name())
 			require.NoError(t, err)
 
 			got, err := os.Stat(filepath.Join(gr.path, "refs", namespace, key))
