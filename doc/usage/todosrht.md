@@ -29,6 +29,7 @@ The SourceHut bridge supports the following functionality:
 ### Import Features
 - **Ticket Import**: Import all tickets from a tracker with full history
 - **Event Import**: Import comments, status changes, and label updates
+- **Edits**: Import current ticket title/body edits and linked comment revisions
 - **Label Import**: Import existing label names (label colors are not stored by git-bug)
 - **Assignment Events**: Handled gracefully (user assignments are not tracked in git-bug)
 - **User Mapping**: Automatically map SourceHut users to git-bug identities
@@ -85,9 +86,9 @@ Configuration looks up the tracker with your token. If it fails:
 - Check tracker permissions if label creation fails
 
 ### Assignment Events
-- Assignment events are imported but generate warnings
+- Assignment and mention events generate a warning when first encountered
 - git-bug doesn't have native assignment support
-- Events are preserved in import history for future compatibility
+- Processed-event metadata prevents the same warning on repeat pulls
 
 ### Authentication Issues
 - Ensure your token has all required scopes

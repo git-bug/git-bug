@@ -3,6 +3,7 @@ package todosrht
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
@@ -24,6 +26,7 @@ func TestImporterReusesExportedBug(t *testing.T) {
 	author, err := backend.Identities().New("Tester", "tester@example.com")
 	require.NoError(t, err)
 	author.SetMetadata(metaKeyTodoSourceHutLogin, "mcepl")
+	author.SetMetadata(metaKeyTodoSourceHutBaseUrl, "https://todo.sr.ht")
 	require.NoError(t, author.Commit())
 	require.NoError(t, backend.SetUserIdentity(author))
 	b, _, err := backend.Bugs().New("Local issue", "Body")
@@ -112,6 +115,21 @@ func TestExportRejectsUnverifiedTicketID(t *testing.T) {
 		assert.Equal(t, core.ExportEventNothing, res.Event)
 		assert.Contains(t, res.Reason, "tagged with tracker: ~other/tracker")
 	})
+
+	t.Run("ticket ID without instance metadata is rejected", func(t *testing.T) {
+		b, _, err := backend.Bugs().New("Unscoped Bug", "Body")
+		require.NoError(t, err)
+		_, err = b.SetMetadata(b.Snapshot().Operations[0].Id(), map[string]string{
+			metaKeyTodoSourceHutId: "42", metaKeyTodoSourceHutTracker: "~tester/mytracker",
+		})
+		require.NoError(t, err)
+		_, _, err = b.AddComment("Do not publish this")
+		require.NoError(t, err)
+		require.NoError(t, b.CommitAsNeeded())
+		out := make(chan core.ExportResult, 4)
+		require.NoError(t, exporter.exportBug(context.Background(), b, out))
+		assert.Equal(t, core.ExportEventNothing, (<-out).Event)
+	})
 }
 
 func TestImportReconcilesRemoteEdits(t *testing.T) {
@@ -183,6 +201,71 @@ func TestImportReconcilesRemoteEdits(t *testing.T) {
 	}
 	assert.True(t, gotTitleEdition, "expected TitleEdition event")
 	assert.True(t, gotCommentEdition, "expected CommentEdition event")
+
+	// Clearing a remote description is an edit too. Imported editions must
+	// carry mapping metadata so a subsequent push does not replay them.
+	importer.out = make(chan core.ImportResult, 8)
+	ticket.Body = ""
+	got, created, err = importer.ensureIssue(backend, ticket)
+	require.NoError(t, err)
+	require.False(t, created)
+	require.NoError(t, got.CommitAsNeeded())
+	assert.Empty(t, got.Snapshot().Comments[0].Message)
+	for _, op := range got.Snapshot().Operations {
+		if _, ok := op.(*bug.SetTitleOperation); ok {
+			_, mapped := op.GetMetadata(metaKeyTodoSourceHutId)
+			assert.True(t, mapped)
+		}
+		if _, ok := op.(*bug.EditCommentOperation); ok {
+			_, mapped := op.GetMetadata(metaKeyTodoSourceHutId)
+			assert.True(t, mapped)
+		}
+	}
+	count := len(got.Snapshot().Operations)
+	_, _, err = importer.ensureIssue(backend, ticket)
+	require.NoError(t, err)
+	assert.Len(t, got.Snapshot().Operations, count)
+}
+
+func TestImportCommentRevisions(t *testing.T) {
+	backend, err := cache.NewRepoCacheNoEvents(repository.NewMockRepo())
+	require.NoError(t, err)
+	author, err := backend.Identities().New("Tester", "tester@example.com")
+	require.NoError(t, err)
+	require.NoError(t, backend.SetUserIdentity(author))
+	b, _, err := backend.Bugs().New("Ticket", "Body")
+	require.NoError(t, err)
+	require.NoError(t, b.CommitAsNeeded())
+
+	user := json.RawMessage(`{"__typename":"User","canonicalName":"~tester","username":"tester"}`)
+	makeEvent := func(id int, message string, next *Comment) Event {
+		change, err := json.Marshal(struct {
+			Comment
+			TypeName string `json:"__typename"`
+		}{Comment: Comment{Author: &user, Text: message, SupersededBy: next}, TypeName: "Comment"})
+		require.NoError(t, err)
+		return Event{Id: id, Created: Time(time.Now()), Changes: []json.RawMessage{change}}
+	}
+	first := makeEvent(1, "Original", nil)
+	second := makeEvent(2, "Edited", nil)
+	third := makeEvent(3, "Edited again", nil)
+	importer := &todosrhtImporter{
+		conf: core.Configuration{confKeyBaseUrl: "https://todo.sr.ht"},
+		out:  make(chan core.ImportResult, 16),
+	}
+	require.NoError(t, importer.ensureEvent(backend, b, first))
+	require.NoError(t, b.CommitAsNeeded())
+	first = makeEvent(1, "Original", &Comment{Text: "Edited", Author: &user})
+	second = makeEvent(2, "Edited", &Comment{Text: "Edited again", Author: &user})
+	for pass := 0; pass < 2; pass++ {
+		roots := make(map[string]string)
+		for _, event := range []Event{first, second, third} {
+			require.NoError(t, importer.importEvent(backend, b, event, roots))
+		}
+		require.NoError(t, b.CommitAsNeeded())
+		require.Len(t, b.Snapshot().Comments, 2)
+		assert.Equal(t, "Edited again", b.Snapshot().Comments[1].Message)
+	}
 }
 
 func TestImportMultiChangeEvents(t *testing.T) {
@@ -253,6 +336,18 @@ func TestImportMultiChangeEvents(t *testing.T) {
 
 	// Ensure no duplicate operations
 	assert.Len(t, b.Snapshot().Comments, 2)
+
+	// A later change can fail after the comment has been buffered. Persist
+	// that progress, then retry the event with a valid editor.
+	event.Id = 556
+	event.Changes[1] = json.RawMessage(`{"__typename":"StatusChange","newStatus":"RESOLVED","editor":null}`)
+	require.Error(t, importer.ensureEvent(backend, b, event))
+	require.NoError(t, b.CommitAsNeeded())
+	event.Changes[1] = statusChange
+	require.NoError(t, importer.ensureEvent(backend, b, event))
+	require.NoError(t, b.CommitAsNeeded())
+	assert.Len(t, b.Snapshot().Comments, 3)
+	assert.Equal(t, common.ClosedStatus, b.Snapshot().Status)
 }
 
 func TestExportLabelIdempotency(t *testing.T) {
@@ -317,6 +412,44 @@ func TestExportLabelIdempotency(t *testing.T) {
 
 	// Since label was already present on the remote ticket, AddLabel should have been skipped
 	assert.False(t, addLabelCalled, "AddLabel should not be called for already-present label")
+
+	// Fail after one of two labels is added. Retry must not reapply it.
+	_, err = b.ForceChangeLabels([]string{"first", "second"}, nil)
+	require.NoError(t, err)
+	require.NoError(t, b.CommitAsNeeded())
+	remote := &Ticket{Id: 10}
+	mockClient.MockGetTicket = func(context.Context, int) (*Ticket, error) { return remote, nil }
+	mockClient.MockGetLabels = func(context.Context, string, *string) (*LabelCursor, error) {
+		return &LabelCursor{Results: []Label{{Id: 1, Name: "first"}, {Id: 2, Name: "second"}}}, nil
+	}
+	var firstCalls, secondCalls int
+	mockClient.MockAddLabel = func(ctx context.Context, tracker, ticket, label int) (*Event, error) {
+		if label == 1 {
+			firstCalls++
+			remote.Labels = append(remote.Labels, Label{Id: 1, Name: "first"})
+		} else {
+			secondCalls++
+			if secondCalls == 1 {
+				return nil, fmt.Errorf("temporary failure")
+			}
+			remote.Labels = append(remote.Labels, Label{Id: 2, Name: "second"})
+		}
+		return &Event{Id: 300 + label, Created: Time(time.Now())}, nil
+	}
+	require.Error(t, exporter.exportBug(context.Background(), b, out))
+	require.NoError(t, exporter.exportBug(context.Background(), b, out))
+	assert.Equal(t, 1, firstCalls)
+	assert.Equal(t, 2, secondCalls)
+
+	_, err = b.ForceChangeLabels([]string{"third"}, nil)
+	require.NoError(t, err)
+	require.NoError(t, b.CommitAsNeeded())
+	mockClient.MockGetTicket = func(context.Context, int) (*Ticket, error) {
+		return nil, fmt.Errorf("lookup failed")
+	}
+	require.ErrorContains(t, exporter.exportBug(context.Background(), b, out), "fetching ticket labels")
+	assert.Equal(t, 1, firstCalls)
+	assert.Equal(t, 2, secondCalls)
 }
 
 func TestInitTokensWithoutBaseURL(t *testing.T) {
@@ -332,9 +465,9 @@ func TestInitTokensWithoutBaseURL(t *testing.T) {
 	importer := &todosrhtImporter{}
 	conf := core.Configuration{
 		core.ConfigKeyTarget: target,
-		confKeyBaseUrl:      "https://todo.sr.ht",
-		confKeyDefaultLogin: "testuser",
-		confKeyTrackerName:  "~testuser/proj",
+		confKeyBaseUrl:       "https://todo.sr.ht",
+		confKeyDefaultLogin:  "testuser",
+		confKeyTrackerName:   "~testuser/proj",
 	}
 
 	err = importer.Init(context.Background(), backend, conf)
@@ -388,4 +521,73 @@ func TestIdentitiesSeparatedByBaseURL(t *testing.T) {
 	matchedB, err := importerB.ensurePerson(backend, userEntity)
 	require.NoError(t, err)
 	assert.Equal(t, userB.Id(), matchedB.Id(), "should match identity for instance B")
+
+	// An older identity with only a login is ambiguous and must not be
+	// attributed to a newly configured instance.
+	legacy, err := backend.Identities().NewRaw("Legacy", "legacy@example.org", "alice", "", nil,
+		map[string]string{metaKeyTodoSourceHutLogin: "alice"})
+	require.NoError(t, err)
+	importerB.conf[confKeyBaseUrl] = "https://instance-c.sr.ht"
+	matchedC, err := importerB.ensurePerson(backend, userEntity)
+	require.NoError(t, err)
+	assert.NotEqual(t, legacy.Id(), matchedC.Id())
+}
+
+func TestUnsupportedEventWarnsOnce(t *testing.T) {
+	backend, err := cache.NewRepoCacheNoEvents(repository.NewMockRepo())
+	require.NoError(t, err)
+	author, err := backend.Identities().New("Tester", "tester@example.com")
+	require.NoError(t, err)
+	require.NoError(t, backend.SetUserIdentity(author))
+	b, _, err := backend.Bugs().New("Ticket", "Body")
+	require.NoError(t, err)
+	out := make(chan core.ImportResult, 4)
+	importer := &todosrhtImporter{out: out}
+	event := Event{Id: 123, Changes: []json.RawMessage{json.RawMessage(`{"__typename":"Assignment","eventType":"ASSIGNED"}`)}}
+	require.NoError(t, importer.ensureEvent(backend, b, event))
+	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, importer.ensureEvent(backend, b, event))
+	assert.Len(t, out, 1)
+	assert.Equal(t, core.ImportEventWarning, (<-out).Event)
+}
+
+func TestImportOrdersEventsAcrossPages(t *testing.T) {
+	backend, err := cache.NewRepoCacheNoEvents(repository.NewMockRepo())
+	require.NoError(t, err)
+	user := json.RawMessage(`{"__typename":"User","canonicalName":"~tester","username":"tester"}`)
+	created := time.Now().Add(-time.Hour)
+	statusEvent := func(id int, status TicketStatus) Event {
+		change, err := json.Marshal(map[string]interface{}{
+			"__typename": "StatusChange", "editor": user, "newStatus": status,
+		})
+		require.NoError(t, err)
+		return Event{Id: id, Created: Time(created.Add(time.Duration(id) * time.Second)), Changes: []json.RawMessage{change}}
+	}
+	next := "older"
+	client := &MockClient{
+		MockGetTracker: func(context.Context, string) (*Tracker, error) { return &Tracker{Id: 1}, nil },
+		MockGetTickets: func(context.Context, string, *string) ([]Ticket, *string, error) {
+			return []Ticket{{Id: 1, Subject: "Ticket", Body: "Body", Created: Time(created), Updated: Time(time.Now()), Submitter: &user}}, nil, nil
+		},
+		MockGetEvents: func(ctx context.Context, tracker string, ticket int, cursor *string) ([]Event, *string, error) {
+			if cursor == nil {
+				return []Event{statusEvent(3, TicketStatusReported)}, &next, nil
+			}
+			return []Event{statusEvent(2, TicketStatusResolved)}, nil, nil
+		},
+	}
+	importer := &todosrhtImporter{
+		conf:   core.Configuration{confKeyBaseUrl: "https://todo.sr.ht", confKeyTrackerName: "~tester/proj"},
+		client: client,
+	}
+	for pass := 0; pass < 2; pass++ {
+		results, err := importer.ImportAll(context.Background(), backend, time.Time{})
+		require.NoError(t, err)
+		for result := range results {
+			require.NoError(t, result.Err)
+		}
+		b, err := backend.Bugs().ResolveBugCreateMetadata(metaKeyTodoSourceHutId, "1")
+		require.NoError(t, err)
+		assert.Equal(t, common.OpenStatus, b.Snapshot().Status)
+	}
 }

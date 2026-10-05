@@ -48,6 +48,9 @@ func TestExporter(t *testing.T) {
 	require.NoError(t, err)
 
 	mockClient := &MockClient{
+		MockGetTicket: func(ctx context.Context, id int) (*Ticket, error) {
+			return &Ticket{Id: id}, nil
+		},
 		MockGetTracker: func(ctx context.Context, name string) (*Tracker, error) {
 			return &Tracker{Id: 1, Name: name}, nil
 		},

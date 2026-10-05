@@ -24,7 +24,7 @@ git-bug uses binary status (`OpenStatus` and `ClosedStatus`). SourceHut uses `Ti
 | REPORTED, CONFIRMED, IN_PROGRESS, PENDING | UNRESOLVED | Open |
 | RESOLVED | FIXED (default on export) | Closed |
 
-On export of a closed bug, the status is set to `RESOLVED` with `FIXED` resolution. When reopened, the status is set to `IN_PROGRESS` with `UNRESOLVED` resolution.
+On export of a closed bug, the status is set to `RESOLVED` with `FIXED` resolution. When reopened, the status is set to `REPORTED` with `UNRESOLVED` resolution.
 
 ### Event Mapping
 
@@ -33,17 +33,17 @@ SourceHut tickets record changes as timeline events. Each event contains one or 
 | SourceHut Event / Change | git-bug Operation | Notes |
 |---|---|---|
 | `Created` | `CreateOperation` | Carries initial submitter and ticket ID |
-| `Comment` | `AddCommentOperation` | Text cleanup applied |
+| `Comment` | `AddCommentOperation` / `EditCommentOperation` | `supersededBy` links revisions to the original comment; text cleanup applied |
 | `StatusChange` | `SetStatusOperation` | Open or Close operations |
 | `LabelUpdate` | `LabelChangeOperation` | Labels added or removed |
-| `Assignment` | None | Skipped; user assignments not tracked in git-bug |
-| `UserMention` / `TicketMention` | None | Skipped; mentions are not stateful operations |
+| `Assignment` | Metadata marker | Warned once; user assignments not tracked in git-bug |
+| `UserMention` / `TicketMention` | Metadata marker | Warned once; mentions are not stateful operations |
 
 Operations created from events are tagged with `todosrht-id: <event.id>:<change.index>` to prevent multiple matching errors when repeat pulls occur on multi-change events.
 
 ### Identity and Multi-Instance Separation
 
-SourceHut instances (e.g. `https://todo.sr.ht` vs private self-hosted deployments) are partitioned using `todosrht-base-url`. When resolving or creating identities from ticket authors or commenters, the login and base URL are matched together to prevent account collisions across instances.
+Imported identities carry `todosrht-base-url` and `todosrht-login`. Configured identities use an instance-specific `todosrht-login:<base-url>` key, allowing an explicitly configured local identity to represent accounts on several instances. Unscoped logins alone are never used to match remote users.
 
 ## Authentication and Security
 

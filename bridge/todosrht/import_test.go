@@ -32,6 +32,7 @@ func TestImporter(t *testing.T) {
 	require.NoError(t, err)
 	userIdentity.SetMetadata(auth.MetaKeyLogin, "test-user")
 	userIdentity.SetMetadata(metaKeyTodoSourceHutLogin, "test-user")
+	userIdentity.SetMetadata(metaKeyTodoSourceHutBaseUrl, conf[confKeyBaseUrl])
 	err = userIdentity.Commit()
 	require.NoError(t, err)
 	err = backend.SetUserIdentity(userIdentity)
@@ -41,6 +42,7 @@ func TestImporter(t *testing.T) {
 	require.NoError(t, err)
 	submitterIdentity.SetMetadata(auth.MetaKeyLogin, "submitter")
 	submitterIdentity.SetMetadata(metaKeyTodoSourceHutLogin, "submitter")
+	submitterIdentity.SetMetadata(metaKeyTodoSourceHutBaseUrl, conf[confKeyBaseUrl])
 	err = submitterIdentity.Commit()
 	require.NoError(t, err)
 
