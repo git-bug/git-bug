@@ -101,6 +101,10 @@ func NewExportWarning(err error, entityId entity.Id) ExportResult {
 	}
 }
 
+// ReasonNothingExported is the reason given for an issue that needed no
+// update. Push does not list such issues among the skipped ones.
+const ReasonNothingExported = "nothing has been exported"
+
 func NewExportNothing(entityId entity.Id, reason string) ExportResult {
 	return ExportResult{
 		EntityId: entityId,

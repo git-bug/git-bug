@@ -21,7 +21,7 @@ git-bug bridge push [NAME] [flags]
 
 ```
       --foreign   Also push bugs imported from other bug trackers (needs an empty or mirror-only remote tracker)
-  -h, --help      help for push
+  -v, --verbose   Explain why issues were not pushed  -h, --help      help for push
 ```
 
 ### SEE ALSO
