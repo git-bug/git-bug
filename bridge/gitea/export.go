@@ -99,9 +99,6 @@ func (ge *giteaExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, s
 				send(ctx, out, core.NewExportNothing(b.Id(), "bug created before the since date"))
 				continue
 			}
-			if !snapshot.HasAnyActor(ge.exporter.Id()) {
-				continue
-			}
 			if !ge.exportBug(ctx, b, out) {
 				return
 			}
@@ -132,13 +129,30 @@ func (ge *giteaExporter) exportBug(ctx context.Context, b *cache.BugCache, out c
 	}
 
 	createOp := snapshot.Operations[0].(*bug.CreateOperation)
+	foreign := false
+	if _, ok := snapshot.GetCreateMetadata(metaKeyGiteaID); ok {
+		meta := func(key string) string { v, _ := snapshot.GetCreateMetadata(key); return v }
+		foreign = meta(metaKeyGiteaBaseURL) != ge.conf[confKeyBaseURL] ||
+			meta(metaKeyGiteaOwner) != ge.conf[confKeyOwner] ||
+			meta(metaKeyGiteaProject) != ge.conf[confKeyProject]
+	}
+	if !foreign && !snapshot.HasAnyActor(ge.exporter.Id()) {
+		reason := core.ReasonNothingExported
+		if hasUnsyncedOps(snapshot.Operations) {
+			reason = fmt.Sprintf("no changes by %s, the owner of the token", ge.conf[confKeyDefaultLogin])
+		}
+		send(ctx, out, core.NewExportNothing(b.Id(), reason))
+		return true
+	}
+
 	var index int64
 	if rawID, ok := snapshot.GetCreateMetadata(metaKeyGiteaID); ok {
 		meta := func(key string) string { v, _ := snapshot.GetCreateMetadata(key); return v }
 		if meta(metaKeyGiteaBaseURL) != ge.conf[confKeyBaseURL] ||
 			meta(metaKeyGiteaOwner) != ge.conf[confKeyOwner] ||
 			meta(metaKeyGiteaProject) != ge.conf[confKeyProject] {
-			send(ctx, out, core.NewExportNothing(b.Id(), "issue belongs to another Gitea repository"))
+			send(ctx, out, core.NewExportNothing(b.Id(), fmt.Sprintf("issue belongs to another Gitea repository (%s%s/%s)",
+				meta(metaKeyGiteaBaseURL), meta(metaKeyGiteaOwner), meta(metaKeyGiteaProject))))
 			return true
 		}
 		var err error
@@ -252,9 +266,23 @@ func (ge *giteaExporter) exportBug(ctx context.Context, b *cache.BugCache, out c
 	}
 
 	if !exported {
-		send(ctx, out, core.NewExportNothing(b.Id(), "nothing has been exported"))
+		send(ctx, out, core.NewExportNothing(b.Id(), core.ReasonNothingExported))
 	}
 	return true
+}
+
+// hasUnsyncedOps reports whether some operation never reached Gitea. An
+// issue without such operations is up to date, not skipped.
+func hasUnsyncedOps(ops []dag.Operation) bool {
+	for _, op := range ops {
+		if _, ok := op.(dag.OperationDoesntChangeSnapshot); ok {
+			continue
+		}
+		if !isExportedOrImported(op) {
+			return true
+		}
+	}
+	return false
 }
 
 func isExportedOrImported(op dag.Operation) bool {
