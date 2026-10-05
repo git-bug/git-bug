@@ -2,8 +2,10 @@ package todosrht
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/git-bug/git-bug/bridge/core"
@@ -103,10 +105,12 @@ func (ji *todosrhtImporter) ImportAll(ctx context.Context, repo *cache.RepoCache
 
 				var allEvents []Event
 				var eventCursor *string
+				eventsComplete := true
 				for {
 					events, nextEventCursor, err := ji.client.GetEvents(ctx, trackerName, ticket.Id, eventCursor)
 					if err != nil {
 						ji.out <- core.NewImportError(fmt.Errorf("failed to get events for ticket %d: %w", ticket.Id, err), b.Id())
+						eventsComplete = false
 						break
 					}
 					allEvents = append(allEvents, events...)
@@ -119,14 +123,19 @@ func (ji *todosrhtImporter) ImportAll(ctx context.Context, repo *cache.RepoCache
 
 				// Establish chronological order before applying stateful changes
 				sort.SliceStable(allEvents, func(i, j int) bool {
-					if allEvents[i].Created.Unix() != allEvents[j].Created.Unix() {
-						return allEvents[i].Created.Unix() < allEvents[j].Created.Unix()
+					if !time.Time(allEvents[i].Created).Equal(time.Time(allEvents[j].Created)) {
+						return time.Time(allEvents[i].Created).Before(time.Time(allEvents[j].Created))
 					}
 					return allEvents[i].Id < allEvents[j].Id
 				})
 
+				commentRoots := make(map[string]string)
+				if !eventsComplete {
+					// Wait for a complete history to preserve ordering on retry.
+					allEvents = nil
+				}
 				for _, event := range allEvents {
-					if err := ji.ensureEvent(repo, b, event); err != nil {
+					if err := ji.importEvent(repo, b, event, commentRoots); err != nil {
 						ji.out <- core.NewImportError(fmt.Errorf("failed to ensure event %d for ticket %d: %w", event.Id, ticket.Id, err), b.Id())
 						continue
 					}
@@ -191,10 +200,9 @@ func (ji *todosrhtImporter) ensurePerson(repo *cache.RepoCache, entities Entity)
 
 	// Look first in the cache
 	i, err := repo.Identities().ResolveMatcher(func(excerpt *cache.IdentityExcerpt) bool {
-		if baseURL, ok := excerpt.ImmutableMetadata[metaKeyTodoSourceHutBaseUrl]; ok && baseURL != ji.conf[confKeyBaseUrl] {
-			return false
-		}
-		return excerpt.ImmutableMetadata[metaKeyTodoSourceHutLogin] == login
+		return excerpt.ImmutableMetadata[identityLoginKey(ji.conf[confKeyBaseUrl])] == login ||
+			(excerpt.ImmutableMetadata[metaKeyTodoSourceHutBaseUrl] == ji.conf[confKeyBaseUrl] &&
+				excerpt.ImmutableMetadata[metaKeyTodoSourceHutLogin] == login)
 	})
 	if err == nil {
 		return i, nil
@@ -205,8 +213,9 @@ func (ji *todosrhtImporter) ensurePerson(repo *cache.RepoCache, entities Entity)
 
 	// If not found, create a new identity
 	metadata := map[string]string{
-		metaKeyTodoSourceHutLogin:   login,
-		metaKeyTodoSourceHutBaseUrl: ji.conf[confKeyBaseUrl],
+		metaKeyTodoSourceHutLogin:                 login,
+		metaKeyTodoSourceHutBaseUrl:               ji.conf[confKeyBaseUrl],
+		identityLoginKey(ji.conf[confKeyBaseUrl]): login,
 	}
 	if externalId != "" {
 		metadata[metaKeyTodoSourceHutUser] = externalId
@@ -250,8 +259,7 @@ func (ji *todosrhtImporter) ensureIssue(repo *cache.RepoCache, ticket Ticket) (*
 	}
 
 	b, err := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
-		if _, ok := excerpt.CreateMetadata[metaKeyTodoSourceHutBaseUrl]; ok &&
-			excerpt.CreateMetadata[metaKeyTodoSourceHutBaseUrl] != ji.conf[confKeyBaseUrl] {
+		if excerpt.CreateMetadata[metaKeyTodoSourceHutBaseUrl] != ji.conf[confKeyBaseUrl] {
 			return false
 		}
 
@@ -298,8 +306,9 @@ func (ji *todosrhtImporter) ensureIssue(repo *cache.RepoCache, ticket Ticket) (*
 	}
 
 	cleanSubject := text.CleanupOneLine(ticket.Subject)
+	metadata := map[string]string{metaKeyTodoSourceHutId: fmt.Sprintf("ticket:%d:%d", ticket.Id, editTime)}
 	if cleanSubject != "" && cleanSubject != snapshot.Title {
-		op, err := b.SetTitleRaw(author, editTime, cleanSubject, nil)
+		op, err := b.SetTitleRaw(author, editTime, cleanSubject, metadata)
 		if err != nil {
 			return nil, false, err
 		}
@@ -307,8 +316,8 @@ func (ji *todosrhtImporter) ensureIssue(repo *cache.RepoCache, ticket Ticket) (*
 	}
 
 	cleanBody := text.Cleanup(ticket.Body)
-	if ticket.Body != "" && len(snapshot.Comments) > 0 && cleanBody != snapshot.Comments[0].Message {
-		commentID, _, err := b.EditCreateCommentRaw(author, editTime, cleanBody, nil)
+	if len(snapshot.Comments) > 0 && cleanBody != snapshot.Comments[0].Message {
+		commentID, _, err := b.EditCreateCommentRaw(author, editTime, cleanBody, metadata)
 		if err != nil {
 			return nil, false, err
 		}
@@ -320,6 +329,9 @@ func (ji *todosrhtImporter) ensureIssue(repo *cache.RepoCache, ticket Ticket) (*
 
 func hasOperationWithMetadata(b *cache.BugCache, key string, values ...string) bool {
 	for _, op := range b.Snapshot().AllOperations() {
+		if _, ok := op.(*bug.CreateOperation); ok {
+			continue // Creation metadata contains a ticket ID, not an event ID.
+		}
 		if val, ok := op.GetMetadata(key); ok {
 			for _, target := range values {
 				if val == target {
@@ -333,6 +345,25 @@ func hasOperationWithMetadata(b *cache.BugCache, key string, values ...string) b
 
 // ensureEvent processes a SourceHut event and creates corresponding git-bug operations.
 func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache, event Event) error {
+	return ji.importEvent(repo, b, event, make(map[string]string))
+}
+
+// commentKey identifies a revision using the fields exposed by SourceHut's
+// Comment type, which has no ID of its own.
+func commentKey(c *Comment) (string, error) {
+	var author struct {
+		CanonicalName string `json:"canonicalName"`
+	}
+	if c.Author == nil {
+		return "", fmt.Errorf("comment author is nil")
+	}
+	if err := json.Unmarshal(*c.Author, &author); err != nil {
+		return "", err
+	}
+	return author.CanonicalName + "\x00" + c.Text, nil
+}
+
+func (ji *todosrhtImporter) importEvent(repo *cache.RepoCache, b *cache.BugCache, event Event, commentRoots map[string]string) error {
 	changes, err := event.GetChanges()
 	if err != nil {
 		return err
@@ -341,6 +372,26 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 	for i, change := range changes {
 		changeID := fmt.Sprintf("%d:%d", event.Id, i)
 		legacyID := fmt.Sprintf("%d", event.Id)
+		// Build revision links even for already imported events, so a later
+		// revision can edit the original local comment on a subsequent pull.
+		if c, ok := change.(*Comment); ok {
+			key, err := commentKey(c)
+			if err != nil {
+				return err
+			}
+			root := commentRoots[key]
+			if root == "" {
+				root = changeID
+			}
+			c.OriginalChangeID = root
+			if c.SupersededBy != nil {
+				nextKey, err := commentKey(c.SupersededBy)
+				if err != nil {
+					return err
+				}
+				commentRoots[nextKey] = root
+			}
+		}
 		if hasOperationWithMetadata(b, metaKeyTodoSourceHutId, changeID, legacyID) {
 			continue
 		}
@@ -379,6 +430,26 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 			}
 
 			// Add comment operation
+			if c.OriginalChangeID != changeID {
+				original, err := b.ResolveOperationWithMetadata(metaKeyTodoSourceHutId, c.OriginalChangeID)
+				if err == cache.ErrNoMatchingOp {
+					// Comments imported before change-level IDs used the event ID.
+					eventID := strings.SplitN(c.OriginalChangeID, ":", 2)[0]
+					original, err = b.ResolveOperationWithMetadata(metaKeyTodoSourceHutId, eventID)
+				}
+				if err != nil {
+					return err
+				}
+				target := entity.CombineIds(b.Id(), original)
+				_, err = b.EditCommentRaw(author, event.Created.Unix(), target, text.Cleanup(c.Text), map[string]string{
+					metaKeyTodoSourceHutId: changeID,
+				})
+				if err != nil {
+					return err
+				}
+				ji.out <- core.NewImportCommentEdition(b.Id(), target)
+				continue
+			}
 			commentId, _, err := b.AddCommentRaw(
 				author,
 				event.Created.Unix(),
@@ -465,9 +536,17 @@ func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache
 			ji.out <- core.NewImportLabelChange(b.Id(), op.Id())
 
 		case *Assignment, *UserMention, *TicketMention:
-			// Mentions and assignments are not tracked as state-changing operations in git-bug;
-			// skip quietly without emitting repetitive warnings on every pull.
-			continue
+			// Persist a marker on creation metadata, since these details have
+			// no equivalent state-changing operation in git-bug.
+			marker := "todosrht-processed:" + changeID
+			if _, ok := b.Snapshot().GetCreateMetadata(marker); ok {
+				continue
+			}
+			_, err := b.SetMetadata(b.Snapshot().Operations[0].Id(), map[string]string{marker: "true"})
+			if err != nil {
+				return err
+			}
+			ji.out <- core.NewImportWarning(fmt.Errorf("SourceHut %s event %d has no git-bug equivalent", c.GetEventType(), event.Id), b.Id())
 
 		default:
 			ji.out <- core.NewImportWarning(

@@ -280,6 +280,9 @@ type Comment struct {
 	Text         string           `json:"text"`
 	Authenticity Authenticity     `json:"authenticity"`
 	SupersededBy *Comment         `json:"supersededBy"`
+
+	// OriginalChangeID links a revision to its first comment event during import.
+	OriginalChangeID string `json:"-"`
 }
 
 func (c *Comment) GetEventType() EventType { return c.EventTypeVal }
@@ -698,6 +701,10 @@ const getEventsQuery = `
 								eventType
 								text
 								authenticity
+								supersededBy {
+									text
+									author { canonicalName }
+								}
 								author {
 									__typename
 									... on User {

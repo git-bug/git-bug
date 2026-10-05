@@ -110,10 +110,9 @@ func (je *todosrhtExporter) cacheAllClient(ctx context.Context, repo *cache.Repo
 		}
 
 		user, err := repo.Identities().ResolveMatcher(func(excerpt *cache.IdentityExcerpt) bool {
-			if baseURL, ok := excerpt.ImmutableMetadata[metaKeyTodoSourceHutBaseUrl]; ok && baseURL != je.conf[confKeyBaseUrl] {
-				return false
-			}
-			return excerpt.ImmutableMetadata[metaKeyTodoSourceHutLogin] == login
+			return excerpt.ImmutableMetadata[identityLoginKey(je.conf[confKeyBaseUrl])] == login ||
+				(excerpt.ImmutableMetadata[metaKeyTodoSourceHutBaseUrl] == je.conf[confKeyBaseUrl] &&
+					excerpt.ImmutableMetadata[metaKeyTodoSourceHutLogin] == login)
 		})
 		if entity.IsErrNotFound(err) {
 			continue
@@ -238,10 +237,10 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 					todosrhtIDStr, je.conf[confKeyTrackerName]))
 			return nil
 		}
-		if hasBaseURL && baseURLMeta != je.conf[confKeyBaseUrl] {
+		if !hasBaseURL || baseURLMeta != je.conf[confKeyBaseUrl] {
 			out <- core.NewExportNothing(
-				b.Id(), fmt.Sprintf("issue tagged with ticket ID %s but belongs to base URL %s",
-					todosrhtIDStr, baseURLMeta))
+				b.Id(), fmt.Sprintf("issue tagged with ticket ID %s but not verified for base URL %s",
+					todosrhtIDStr, je.conf[confKeyBaseUrl]))
 			return nil
 		}
 
@@ -404,11 +403,15 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 
 			// Fetch current remote ticket to reconcile labels idempotently
 			currentTicket, err := client.GetTicket(ctx, bugTodoSourceHutID)
+			if err != nil {
+				return errors.Wrap(err, "fetching ticket labels")
+			}
+			if currentTicket == nil {
+				return fmt.Errorf("ticket %d not found while fetching labels", bugTodoSourceHutID)
+			}
 			currentLabelNames := make(map[string]int)
-			if err == nil && currentTicket != nil {
-				for _, l := range currentTicket.Labels {
-					currentLabelNames[l.Name] = l.Id
-				}
+			for _, l := range currentTicket.Labels {
+				currentLabelNames[l.Name] = l.Id
 			}
 
 			// Add labels
@@ -461,11 +464,9 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 					out <- core.NewExportWarning(fmt.Errorf("label '%s' not found on SourceHut, cannot remove", labelName), b.Id())
 					continue
 				}
-				if currentTicket != nil {
-					if _, onTicket := currentLabelNames[labelName]; !onTicket {
-						// Label is already removed from ticket; skip
-						continue
-					}
+				if _, onTicket := currentLabelNames[labelName]; !onTicket {
+					// Label is already removed from ticket; skip
+					continue
 				}
 				labelEvent, err := removeTodoSRHTLabel(ctx, client, je.tracker.Id, bugTodoSourceHutID, labelID)
 				if err != nil {

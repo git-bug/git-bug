@@ -242,7 +242,7 @@ func (j *TodoSourceHut) Configure(repo *cache.RepoCache, params core.BridgeParam
 		return nil, err
 	}
 
-	err = core.FinishConfig(repo, metaKeyTodoSourceHutLogin, login)
+	err = core.FinishConfig(repo, identityLoginKey(baseURL), login)
 	if err != nil {
 		return nil, err
 	}
@@ -305,4 +305,10 @@ func promptToken(repo repository.RepoKeyring, login, baseURL string) (auth.Crede
 	default:
 		panic("missed case")
 	}
+}
+
+// Scope configured identities to an instance, including when the current local
+// identity is explicitly configured to use accounts on several instances.
+func identityLoginKey(baseURL string) string {
+	return metaKeyTodoSourceHutLogin + ":" + baseURL
 }
