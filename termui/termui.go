@@ -2,6 +2,7 @@
 package termui
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/awesome-gocui/gocui"
@@ -17,6 +18,8 @@ import (
 var errTerminateMainloop = errors.New("terminate gocui mainloop")
 
 type termUI struct {
+	// ctx quits the UI once done
+	ctx    context.Context
 	g      *gocui.Gui
 	gError chan error
 	cache  *cache.RepoCache
@@ -48,9 +51,11 @@ type window interface {
 	disable(g *gocui.Gui) error
 }
 
-// Run will launch the termUI in the terminal
-func Run(cache *cache.RepoCache) error {
+// Run will launch the termUI in the terminal, until the user quits or ctx is
+// done.
+func Run(ctx context.Context, cache *cache.RepoCache) error {
 	ui = &termUI{
+		ctx:         ctx,
 		gError:      make(chan error, 1),
 		cache:       cache,
 		bugTable:    newBugTable(cache),
@@ -113,7 +118,19 @@ func initGui(action func(ui *termUI) error) {
 		}
 	}
 
+	// quit once ctx is done, for as long as this gui runs: it is replaced
+	// around running an editor
+	loopDone := make(chan struct{})
+	go func() {
+		select {
+		case <-ui.ctx.Done():
+			g.Update(func(*gocui.Gui) error { return gocui.ErrQuit })
+		case <-loopDone:
+		}
+	}()
+
 	err = g.MainLoop()
+	close(loopDone)
 
 	if err != nil && err != errTerminateMainloop {
 		if ui.g != nil {

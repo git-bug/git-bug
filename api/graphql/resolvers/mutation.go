@@ -23,7 +23,8 @@ func (r mutationResolver) getRepo(ref *string) (*cache.RepoCache, error) {
 		return r.cache.ResolveRepo(*ref)
 	}
 
-	return r.cache.DefaultRepo()
+	_, repo, err := r.cache.DefaultRepo()
+	return repo, err
 }
 
 func (r mutationResolver) getBug(repoRef *string, bugPrefix string) (*cache.RepoCache, *cache.BugCache, error) {

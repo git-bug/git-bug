@@ -11,7 +11,7 @@ func newBugLabelNewCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "new [BUG_ID] LABEL...",
 		Short:   "Add a label to a bug",
-		PreRunE: execenv.LoadBackendEnsureUser(env),
+		PreRunE: execenv.LoadBackend(env, execenv.EnsureUser()),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBugLabelNew(env, args)
 		}),

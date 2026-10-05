@@ -8,6 +8,7 @@ Launch the web UI.
 
 Available git config:
   git-bug.webui.open [bool]: control the automatic opening of the web UI in the default browser
+  git-bug.changes.notifier [auto|watch|poll|periodic|none]: how changes made outside are noticed, see doc/usage/configuration.md
 
 
 ```

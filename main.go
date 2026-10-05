@@ -13,12 +13,19 @@ import (
 )
 
 func main() {
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer cancel()
+	// The first signal cancels ctx, for the command to stop gracefully. The
+	// default behavior is then restored: a second one kills the process,
+	// whatever the command does.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	go func() {
+		<-ctx.Done()
+		stop()
+	}()
 
 	v := getVersion()
 	root := commands.NewRootCommand(ctx, v)
-	if err := root.Execute(); err != nil {
+	if err := root.ExecuteContext(ctx); err != nil {
 		os.Exit(1)
 	}
 }

@@ -753,17 +753,13 @@ func checkBugPresence(t *testing.T, cache *RepoCache, bug *BugCache, presence bo
 	}
 }
 
-// openTestRepoCache opens a cache on repo, with its sync workers stopped. The
-// tests sync explicitly, and check what a sync does: a sync of a worker,
-// requested by any read, would race to do it first on a slow machine. The
-// caller closes the cache.
+// openTestRepoCache opens a cache on repo, with no change source: the tests
+// sync explicitly, and check what a sync does. The caller closes the cache.
 func openTestRepoCache(t testing.TB, repo repository.ClockedRepo) *RepoCache {
 	t.Helper()
 
-	cache, err := NewRepoCacheNoEvents(repo)
+	cache, err := NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
-	cache.bugs.closeSyncWorker()
-	cache.identities.closeSyncWorker()
 
 	return cache
 }

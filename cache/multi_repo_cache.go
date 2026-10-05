@@ -2,14 +2,12 @@ package cache
 
 import (
 	"fmt"
-
-	"github.com/git-bug/git-bug/repository"
 )
 
 const lockfile = "lock"
-const defaultRepoName = "__default"
 
-// MultiRepoCache is the root cache, holding multiple RepoCache.
+// MultiRepoCache is the root cache, holding multiple RepoCache by name. The
+// empty name is that of an unnamed repository, as in a single-repo setup.
 type MultiRepoCache struct {
 	repos map[string]*RepoCache
 }
@@ -20,41 +18,19 @@ func NewMultiRepoCache() *MultiRepoCache {
 	}
 }
 
-// RegisterRepository registers a named repository. Use this for multi-repo setup
-func (c *MultiRepoCache) RegisterRepository(repo repository.ClockedRepo, name string) (*RepoCache, chan BuildEvent) {
-	r, events := NewNamedRepoCache(repo, name)
-
-	// intercept events to make sure the cache building process succeeds properly
-	out := make(chan BuildEvent)
-	go func() {
-		defer close(out)
-
-		for event := range events {
-			out <- event
-			if event.Err != nil {
-				return
-			}
-		}
-
-		c.repos[name] = r
-	}()
-
-	return r, out
+// Add registers a loaded repository under name, empty for an unnamed one.
+func (c *MultiRepoCache) Add(name string, repo *RepoCache) {
+	c.repos[name] = repo
 }
 
-// RegisterDefaultRepository registers an unnamed repository. Use this for single-repo setup
-func (c *MultiRepoCache) RegisterDefaultRepository(repo repository.ClockedRepo) (*RepoCache, chan BuildEvent) {
-	return c.RegisterRepository(repo, defaultRepoName)
-}
-
-// DefaultRepo retrieves the default repository
-func (c *MultiRepoCache) DefaultRepo() (*RepoCache, error) {
+// DefaultRepo retrieves the repository, and its name, if there is only one.
+func (c *MultiRepoCache) DefaultRepo() (string, *RepoCache, error) {
 	if len(c.repos) != 1 {
-		return nil, fmt.Errorf("repository is not unique")
+		return "", nil, fmt.Errorf("repository is not unique")
 	}
 
-	for _, r := range c.repos {
-		return r, nil
+	for name, r := range c.repos {
+		return name, r, nil
 	}
 
 	panic("unreachable")
@@ -69,13 +45,9 @@ func (c *MultiRepoCache) ResolveRepo(name string) (*RepoCache, error) {
 	return r, nil
 }
 
-// AllRepos returns all registered repositories. Order is not guaranteed.
-func (c *MultiRepoCache) AllRepos() []*RepoCache {
-	result := make([]*RepoCache, 0, len(c.repos))
-	for _, r := range c.repos {
-		result = append(result, r)
-	}
-	return result
+// AllRepos returns all registered repositories, by name.
+func (c *MultiRepoCache) AllRepos() map[string]*RepoCache {
+	return c.repos
 }
 
 // RegisterObserver registers an Observer on repo and entity, according to nameFilter and typename.
@@ -102,9 +74,9 @@ func (c *MultiRepoCache) RegisterObserver(observer Observer, nameFilter string, 
 		return err
 	}
 	if typename == "" {
-		r.registerAllObservers(r.Name(), observer)
+		r.registerAllObservers(nameFilter, observer)
 	} else {
-		if err := r.registerObserver(r.Name(), typename, observer); err != nil {
+		if err := r.registerObserver(nameFilter, typename, observer); err != nil {
 			return err
 		}
 	}
