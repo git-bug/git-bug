@@ -733,7 +733,7 @@ func checkBugPresence(t *testing.T, cache *RepoCache, bug *BugCache, presence bo
 	}
 }
 
-func createTestRepoCacheNoEvents(t *testing.T, repo repository.TestedRepo) *RepoCache {
+func createTestRepoCacheNoEvents(t testing.TB, repo repository.TestedRepo) *RepoCache {
 	t.Helper()
 
 	cache, err := NewRepoCacheNoEvents(repo)
