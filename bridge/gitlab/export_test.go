@@ -230,6 +230,7 @@ func TestGitlabPushPull(t *testing.T) {
 	// create a second backend
 	backendTwo, err := cache.NewRepoCacheNoEvents(repoTwo)
 	require.NoError(t, err)
+	defer backendTwo.Close()
 
 	importer := &gitlabImporter{}
 	err = importer.Init(ctx, backend, core.Configuration{

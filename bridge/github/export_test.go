@@ -236,6 +236,7 @@ func TestGithubPushPull(t *testing.T) {
 	// create a second backend
 	backendTwo, err := cache.NewRepoCacheNoEvents(repoTwo)
 	require.NoError(t, err)
+	defer backendTwo.Close()
 
 	importer := &githubImporter{}
 	err = importer.Init(ctx, backend, core.Configuration{

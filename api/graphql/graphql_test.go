@@ -19,6 +19,7 @@ func TestQueries(t *testing.T) {
 	random_bugs.FillRepoWithSeed(repo, 10, 42)
 
 	mrc := cache.NewMultiRepoCache()
+	t.Cleanup(func() { require.NoError(t, mrc.Close()) })
 	_, events := mrc.RegisterDefaultRepository(repo)
 	for event := range events {
 		require.NoError(t, event.Err)
@@ -297,6 +298,7 @@ func TestGitBrowseQueries(t *testing.T) {
 	// ── set up GraphQL handler ─────────────────────────────────────────────────
 
 	mrc := cache.NewMultiRepoCache()
+	t.Cleanup(func() { require.NoError(t, mrc.Close()) })
 	_, events := mrc.RegisterDefaultRepository(repo)
 	for event := range events {
 		require.NoError(t, event.Err)
@@ -587,6 +589,7 @@ func TestBugEventsSubscription(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
 
 	mrc := cache.NewMultiRepoCache()
+	t.Cleanup(func() { require.NoError(t, mrc.Close()) })
 	rc, events := mrc.RegisterDefaultRepository(repo)
 	for event := range events {
 		require.NoError(t, event.Err)
