@@ -33,25 +33,28 @@ func (g *Gitea) ValidParams() map[string]interface{} {
 
 func (g *Gitea) Configure(repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
 	var err error
-	var baseURL, owner, project string
+	var urlStr string
 
 	// get project url
 	switch {
 	case params.URL != "":
-		baseURL, owner, project, err = splitURL(params.URL)
-		if err != nil {
-			return nil, err
-		}
+		urlStr = params.URL
 	default:
 		// terminal prompt
 		if !interactive {
 			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the gitea project URL via the --url option.")
 		}
-		baseURL, owner, project, err = promptURL(repo)
+		urlStr, err = promptURL(repo)
 		if err != nil {
 			return nil, errors.Wrap(err, "url prompt")
 		}
 	}
+
+	primary, alt, hasAlt, err := parseProjectURL(urlStr)
+	if err != nil {
+		return nil, err
+	}
+	baseURL, owner, project := primary.baseURL, primary.owner, primary.project
 
 	var login string
 	var cred auth.Credential
@@ -62,11 +65,27 @@ func (g *Gitea) Configure(repo *cache.RepoCache, params core.BridgeParams, inter
 		if err != nil {
 			return nil, err
 		}
+		if cred.Target() != target {
+			return nil, fmt.Errorf("credential target %q does not match expected target %q", cred.Target(), target)
+		}
+		baseURLMeta, ok := cred.GetMetadata(auth.MetaKeyBaseURL)
+		if !ok {
+			return nil, fmt.Errorf("credential has no base URL; supply the token explicitly or add it with --base-url")
+		}
+		if auth.NormalizeBaseURL(baseURLMeta) != auth.NormalizeBaseURL(baseURL) &&
+			(!hasAlt || auth.NormalizeBaseURL(baseURLMeta) != auth.NormalizeBaseURL(alt.baseURL)) {
+			return nil, fmt.Errorf("credential base URL %q does not match configured base URL %q", baseURLMeta, baseURL)
+		}
 		l, ok := cred.GetMetadata(auth.MetaKeyLogin)
 		if !ok {
 			return nil, fmt.Errorf("credential doesn't have a login")
 		}
 		login = l
+		if hasAlt && auth.NormalizeBaseURL(baseURLMeta) == auth.NormalizeBaseURL(alt.baseURL) &&
+			auth.NormalizeBaseURL(baseURLMeta) != auth.NormalizeBaseURL(baseURL) {
+			baseURL, owner, project = alt.baseURL, alt.owner, alt.project
+			hasAlt = false
+		}
 	case params.TokenRaw != "":
 		token := auth.NewToken(target, params.TokenRaw)
 		login, err = getLoginFromToken(baseURL, token)
@@ -109,6 +128,12 @@ func (g *Gitea) Configure(repo *cache.RepoCache, params core.BridgeParams, inter
 
 	// verify access to the repository with token
 	_, err = validateProject(baseURL, owner, project, token)
+	if err != nil && hasAlt && (params.CredPrefix == "" || auth.NormalizeBaseURL(alt.baseURL) == auth.NormalizeBaseURL(baseURL)) {
+		if _, altErr := validateProject(alt.baseURL, alt.owner, alt.project, token); altErr == nil {
+			baseURL, owner, project = alt.baseURL, alt.owner, alt.project
+			err = nil
+		}
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "project validation")
 	}
@@ -125,10 +150,18 @@ func (g *Gitea) Configure(repo *cache.RepoCache, params core.BridgeParams, inter
 		return nil, err
 	}
 
-	// don't forget to store the now known valid token
-	if !auth.IdExist(repo, cred.ID()) {
-		err = auth.Store(repo, cred)
-		if err != nil {
+	// Store the URL we actually validated, including when the alternate
+	// interpretation of an ambiguous repository URL succeeded.
+	cred.SetMetadata(auth.MetaKeyBaseURL, auth.NormalizeBaseURL(baseURL))
+	if existingCred, err := auth.LoadWithId(repo, cred.ID()); err == nil {
+		if baseURLMeta, ok := existingCred.GetMetadata(auth.MetaKeyBaseURL); !ok || baseURLMeta != auth.NormalizeBaseURL(baseURL) {
+			existingCred.SetMetadata(auth.MetaKeyBaseURL, auth.NormalizeBaseURL(baseURL))
+			if err = auth.Store(repo, existingCred); err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		if err = auth.Store(repo, cred); err != nil {
 			return nil, err
 		}
 	}
@@ -196,14 +229,9 @@ func promptToken(baseURL string) (*auth.Token, error) {
 	fmt.Printf("You can generate a new token by visiting %s.\n", tokenURL(baseURL))
 	fmt.Println()
 
-	re := regexp.MustCompile(`^[a-z0-9]{40}$`)
-
 	var login string
 
 	validator := func(name string, value string) (complaint string, err error) {
-		if !re.MatchString(value) {
-			return "token has incorrect format", nil
-		}
 		login, err = getLoginFromToken(baseURL, auth.NewToken(target, value))
 		if err != nil {
 			return fmt.Sprintf("token is invalid: %v", err), nil
@@ -223,10 +251,10 @@ func promptToken(baseURL string) (*auth.Token, error) {
 	return token, nil
 }
 
-func promptURL(repo repository.RepoCommon) (string, string, string, error) {
+func promptURL(repo repository.RepoCommon) (string, error) {
 	validRemotes, err := getRemoteURLs(repo)
 	if err != nil {
-		return "", "", "", err
+		return "", err
 	}
 
 	validator := func(name, value string) (string, error) {
@@ -237,12 +265,7 @@ func promptURL(repo repository.RepoCommon) (string, string, string, error) {
 		return "", nil
 	}
 
-	url, err := input.PromptURLWithRemote("Gitea project URL", "URL", validRemotes, input.Required, input.IsURL, validator)
-	if err != nil {
-		return "", "", "", err
-	}
-
-	return splitURL(url)
+	return input.PromptURLWithRemote("Gitea project URL", "URL", validRemotes, input.Required, validator)
 }
 
 // repoPageSegments are path segments Gitea and Forgejo put after
@@ -258,14 +281,13 @@ var repoPageSegments = map[string]bool{
 // scpURL matches scp-like git remotes such as git@gitea.com:owner/repo.git.
 var scpURL = regexp.MustCompile(`^[^@/]+@([^:/]+):(.+)$`)
 
-// splitURL splits a Gitea/Forgejo repository URL into the instance base URL
-// (with a trailing slash), the owner and the repository name.
-//
-// It accepts web URLs, including repository pages like /owner/repo/issues/1,
-// instances served under a subpath (https://host/gitea/owner/repo), clone URLs
-// ending in .git, and git://, ssh:// and scp-like remotes. Remote protocols are
-// mapped to https on the same host, since that is where the API lives.
-func splitURL(rawUrl string) (baseURL, owner, project string, err error) {
+type projectRef struct {
+	baseURL string
+	owner   string
+	project string
+}
+
+func parseProjectURL(rawUrl string) (primary, alt projectRef, hasAlt bool, err error) {
 	var scheme, host, urlPath string
 
 	if m := scpURL.FindStringSubmatch(rawUrl); m != nil && !strings.Contains(rawUrl, "://") {
@@ -273,7 +295,7 @@ func splitURL(rawUrl string) (baseURL, owner, project string, err error) {
 	} else {
 		parsed, perr := url.Parse(rawUrl)
 		if perr != nil || parsed.Host == "" {
-			return "", "", "", ErrBadProjectURL
+			return primary, alt, false, ErrBadProjectURL
 		}
 		switch parsed.Scheme {
 		case "http", "https":
@@ -282,7 +304,7 @@ func splitURL(rawUrl string) (baseURL, owner, project string, err error) {
 			// The SSH/git port says nothing about where the web API is served.
 			scheme, host = "https", parsed.Hostname()
 		default:
-			return "", "", "", ErrBadProjectURL
+			return primary, alt, false, ErrBadProjectURL
 		}
 		urlPath = parsed.Path
 	}
@@ -299,25 +321,64 @@ func splitURL(rawUrl string) (baseURL, owner, project string, err error) {
 	repoEnd := len(segments)
 	for i := 2; i < len(segments); i++ {
 		if repoPageSegments[segments[i]] {
+			// For a subpath instance where the repo itself is named after a page segment
+			// (e.g. /gitea/owner/issues or /forgejo/owner/issues), the last segment is the repo name.
+			if i == 2 && len(segments) == 3 && (strings.EqualFold(segments[0], "gitea") || strings.EqualFold(segments[0], "forgejo")) {
+				break
+			}
 			repoEnd = i
 			break
 		}
 	}
 	if repoEnd < 2 {
-		return "", "", "", ErrBadProjectURL
+		return primary, alt, false, ErrBadProjectURL
 	}
 
-	owner = segments[repoEnd-2]
-	project = strings.TrimSuffix(segments[repoEnd-1], ".git")
+	owner := segments[repoEnd-2]
+	project := strings.TrimSuffix(segments[repoEnd-1], ".git")
 	if owner == "" || project == "" {
-		return "", "", "", ErrBadProjectURL
+		return primary, alt, false, ErrBadProjectURL
 	}
 
 	base := url.URL{Scheme: scheme, Host: host, Path: "/"}
 	if prefix := segments[:repoEnd-2]; len(prefix) > 0 {
 		base.Path = "/" + strings.Join(prefix, "/") + "/"
 	}
-	return base.String(), owner, project, nil
+	primary = projectRef{baseURL: base.String(), owner: owner, project: project}
+
+	// If page segments were trimmed, the alternative interpretation is that
+	// the trimmed segment was actually part of the repository path (e.g. repo named "issues" under a subpath).
+	if repoEnd < len(segments) && len(segments) >= 2 {
+		altOwner := segments[len(segments)-2]
+		altProject := strings.TrimSuffix(segments[len(segments)-1], ".git")
+		if altOwner != "" && altProject != "" {
+			altBase := url.URL{Scheme: scheme, Host: host, Path: "/"}
+			if prefix := segments[:len(segments)-2]; len(prefix) > 0 {
+				altBase.Path = "/" + strings.Join(prefix, "/") + "/"
+			}
+			alt = projectRef{baseURL: altBase.String(), owner: altOwner, project: altProject}
+			if alt != primary {
+				hasAlt = true
+			}
+		}
+	}
+
+	return primary, alt, hasAlt, nil
+}
+
+// splitURL splits a Gitea/Forgejo repository URL into the instance base URL
+// (with a trailing slash), the owner and the repository name.
+//
+// It accepts web URLs, including repository pages like /owner/repo/issues/1,
+// instances served under a subpath (https://host/gitea/owner/repo), clone URLs
+// ending in .git, and git://, ssh:// and scp-like remotes. Remote protocols are
+// mapped to https on the same host, since that is where the API lives.
+func splitURL(rawUrl string) (baseURL, owner, project string, err error) {
+	primary, _, _, err := parseProjectURL(rawUrl)
+	if err != nil {
+		return "", "", "", err
+	}
+	return primary.baseURL, primary.owner, primary.project, nil
 }
 
 func getRemoteURLs(repo repository.RepoCommon) ([]string, error) {

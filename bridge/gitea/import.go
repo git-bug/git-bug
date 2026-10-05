@@ -76,34 +76,52 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 		for gi.iterator.NextIssue() {
 			issue := gi.iterator.IssueValue()
 
-			// create a record to point to
-			b, created, err := gi.ensureIssue(ctx, repo, issue)
-			if err != nil {
-				gi.reportError(ctx, err, "issue creation")
+			// Buffer a new issue's history before creation so its first title
+			// comes from the oldest rename, not the current issue listing.
+			_, lookupErr := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
+				return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
+					excerpt.CreateMetadata[metaKeyGiteaID] == strconv.FormatInt(issue.Index, 10) &&
+					excerpt.CreateMetadata[metaKeyGiteaBaseURL] == gi.conf[confKeyBaseURL] &&
+					excerpt.CreateMetadata[metaKeyGiteaOwner] == gi.conf[confKeyOwner] &&
+					excerpt.CreateMetadata[metaKeyGiteaProject] == gi.conf[confKeyProject]
+			})
+			if lookupErr != nil && !entity.IsErrNotFound(lookupErr) {
+				gi.reportError(ctx, lookupErr, "issue lookup")
 				return
 			}
-
-			// A newly discovered issue needs its entire history even when the
-			// issue listing itself was filtered by since.
-			if created {
+			newIssue := entity.IsErrNotFound(lookupErr)
+			if newIssue {
 				gi.iterator.SetTimelineSince(time.Time{})
 			} else {
 				gi.iterator.SetTimelineSince(since)
 			}
-
-			// Loop over all events
-			// TODO: make this a goroutine so we can import issues and events in parallel?
-			// The Github/Gitlab backends already do this. But maybe that's premature
-			// optimization.
+			var events []iterator.TimelineEvent
+			initialTitle := issue.Title
+			seenRename := false
 			for gi.iterator.NextEvent() {
-				if err = gi.importEvent(ctx, repo, b, gi.iterator.EventValue()); err != nil {
-					gi.reportBugError(ctx, err, "import timeline event", b.Id())
-					return
+				event := gi.iterator.EventValue()
+				events = append(events, event)
+				if newIssue {
+					if rename, ok := event.(*iterator.RenameEvent); ok && !seenRename && rename.OldName != "" {
+						initialTitle = rename.OldName
+						seenRename = true
+					}
 				}
+			}
+			b, _, err := gi.ensureIssue(ctx, repo, issue, initialTitle)
+			if err != nil {
+				gi.reportError(ctx, err, "issue creation")
+				return
 			}
 			if err = gi.iterator.Error(); err != nil {
 				gi.reportBugError(ctx, err, "fetch timeline", b.Id())
 				return
+			}
+			for _, event := range events {
+				if err = gi.importEvent(ctx, repo, b, event); err != nil {
+					gi.reportBugError(ctx, err, "import timeline event", b.Id())
+					return
+				}
 			}
 
 			if err = gi.reconcileLabels(ctx, repo, b, issue); err != nil {
@@ -209,6 +227,7 @@ func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCach
 	// Check if we're creating a new comment or just updating an existing one.
 	// Forgejo doesn't have an API for this unfortunately, so we're stuck with comparing
 	// the body text. Note this means we might miss intermediate edits.
+	body := text.Cleanup(remoteComment.Body)
 	if op != nil {
 		localComment, err := bug.Snapshot().SearchCommentByOpId(op.Id())
 		if err != nil {
@@ -218,30 +237,32 @@ func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCach
 			panic("found bug by metadata, but not by op ID?")
 		}
 
-		if localComment.Message == remoteComment.Body {
+		if localComment.Message == body || hasPendingCommentEdit(bug, op.Id()) {
 			return nil
 		}
-
-		_, err = bug.EditCommentRaw(
-			author,
-			remoteComment.Updated.Unix(),
-			localComment.CombinedId(),
-			remoteComment.Body,
-			metadata,
-		)
-
+		_, err = bug.EditCommentRaw(author, remoteComment.Updated.Unix(),
+			localComment.CombinedId(), body, metadata)
+		if err == nil {
+			gi.sendImportResult(ctx, core.NewImportCommentEdition(bug.Id(), localComment.CombinedId()))
+		}
 		return err
 	}
 
-	_, _, err = bug.AddCommentRaw(
-		author,
-		remoteComment.Created.Unix(),
-		remoteComment.Body,
-		// NOTE: attachments are not supported (none of the either backends support them either)
-		make([]repository.Hash, 0),
-		metadata,
-	)
+	id, _, err := bug.AddCommentRaw(author, remoteComment.Created.Unix(), body,
+		make([]repository.Hash, 0), metadata)
+	if err == nil {
+		gi.sendImportResult(ctx, core.NewImportComment(bug.Id(), id))
+	}
 	return err
+}
+
+func hasPendingCommentEdit(b *cache.BugCache, target entity.Id) bool {
+	for _, op := range b.Snapshot().Operations {
+		if edit, ok := op.(*bugpkg.EditCommentOperation); ok && edit.Target == target && !isExportedOrImported(op) {
+			return true
+		}
+	}
+	return false
 }
 
 func (gi *giteaImporter) importLabel(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, event *iterator.LabelEvent) error {
@@ -278,7 +299,7 @@ func (gi *giteaImporter) importLabel(ctx context.Context, repo *cache.RepoCache,
 		return err
 	}
 
-	_, err = bug.ForceChangeLabelsRaw(
+	op, err := bug.ForceChangeLabelsRaw(
 		author,
 		event.UpdatedAt.Unix(),
 		added,
@@ -288,6 +309,9 @@ func (gi *giteaImporter) importLabel(ctx context.Context, repo *cache.RepoCache,
 			metaKeyGiteaEvent: key,
 		},
 	)
+	if err == nil {
+		gi.sendImportResult(ctx, core.NewImportLabelChange(bug.Id(), op.Id()))
+	}
 	return err
 }
 
@@ -325,6 +349,9 @@ func (gi *giteaImporter) reconcileLabels(ctx context.Context, repo *cache.RepoCa
 		for _, l := range labelOp.Added {
 			imported[strings.ToLower(string(l))] = true
 		}
+		for _, l := range labelOp.Removed {
+			delete(imported, strings.ToLower(string(l)))
+		}
 	}
 
 	upstream := map[string]bool{}
@@ -359,8 +386,11 @@ func (gi *giteaImporter) reconcileLabels(ctx context.Context, repo *cache.RepoCa
 	if at.IsZero() {
 		at = time.Now()
 	}
-	_, err = bug.ForceChangeLabelsRaw(author, at.Unix(), added, removed,
+	op, err := bug.ForceChangeLabelsRaw(author, at.Unix(), added, removed,
 		map[string]string{metaKeyGiteaID: "reconcile"})
+	if err == nil {
+		gi.sendImportResult(ctx, core.NewImportLabelChange(bug.Id(), op.Id()))
+	}
 	return err
 }
 
@@ -382,6 +412,11 @@ func (gi *giteaImporter) reconcileStatus(ctx context.Context, repo *cache.RepoCa
 	if bug.Snapshot().Status == targetStatus {
 		return nil
 	}
+	for _, op := range bug.Snapshot().Operations {
+		if _, ok := op.(*bugpkg.SetStatusOperation); ok && !isExportedOrImported(op) {
+			return nil
+		}
+	}
 
 	// The timeline doesn't say who changed the status, so attribute the
 	// change to the issue author.
@@ -402,10 +437,14 @@ func (gi *giteaImporter) reconcileStatus(ctx context.Context, repo *cache.RepoCa
 	}
 
 	metadata := map[string]string{metaKeyGiteaID: "reconcile"}
+	var op dag.Operation
 	if targetStatus == common.ClosedStatus {
-		_, err = bug.CloseRaw(author, at.Unix(), metadata)
+		op, err = bug.CloseRaw(author, at.Unix(), metadata)
 	} else {
-		_, err = bug.OpenRaw(author, at.Unix(), metadata)
+		op, err = bug.OpenRaw(author, at.Unix(), metadata)
+	}
+	if err == nil {
+		gi.sendImportResult(ctx, core.NewImportStatusChange(bug.Id(), op.Id()))
 	}
 	return err
 }
@@ -421,12 +460,15 @@ func (gi *giteaImporter) importRename(ctx context.Context, repo *cache.RepoCache
 		return err
 	}
 
-	_, err = bug.SetTitleRaw(
+	op, err := bug.SetTitleRaw(
 		author,
 		rename.Updated.Unix(),
 		cleanTitle(rename.NewName),
 		map[string]string{metaKeyGiteaEvent: key},
 	)
+	if err == nil {
+		gi.sendImportResult(ctx, core.NewImportTitleEdition(bug.Id(), op.Id()))
+	}
 	return err
 }
 
@@ -452,10 +494,14 @@ func (gi *giteaImporter) importStatus(ctx context.Context, repo *cache.RepoCache
 	}
 
 	metadata := map[string]string{metaKeyGiteaEvent: key}
+	var op dag.Operation
 	if event.Closed {
-		_, err = bug.CloseRaw(author, event.Created.Unix(), metadata)
+		op, err = bug.CloseRaw(author, event.Created.Unix(), metadata)
 	} else {
-		_, err = bug.OpenRaw(author, event.Created.Unix(), metadata)
+		op, err = bug.OpenRaw(author, event.Created.Unix(), metadata)
+	}
+	if err == nil {
+		gi.sendImportResult(ctx, core.NewImportStatusChange(bug.Id(), op.Id()))
 	}
 	return err
 }
@@ -472,7 +518,7 @@ func cleanTitle(title string) string {
 	return title
 }
 
-func (gi *giteaImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache, issue *gitea.Issue) (*cache.BugCache, bool, error) {
+func (gi *giteaImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache, issue *gitea.Issue, initialTitle string) (*cache.BugCache, bool, error) {
 	author, err := gi.ensurePerson(ctx, repo, issue.Poster)
 	if err != nil {
 		return nil, false, err
@@ -489,17 +535,19 @@ func (gi *giteaImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache,
 			excerpt.CreateMetadata[metaKeyGiteaProject] == gi.conf[confKeyProject]
 	})
 	if err == nil {
+		if err := gi.reconcileDescription(ctx, repo, b, issue); err != nil {
+			return nil, false, err
+		}
 		return b, false, nil
 	}
 	if !entity.IsErrNotFound(err) {
 		return nil, false, err
 	}
 
-	// if bug was never imported, create bug
 	b, _, err = repo.Bugs().NewRaw(
 		author,
 		issue.Created.Unix(),
-		cleanTitle(issue.Title),
+		cleanTitle(initialTitle),
 		text.Cleanup(issue.Body),
 		nil,
 		map[string]string{
@@ -518,6 +566,28 @@ func (gi *giteaImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache,
 	gi.sendImportResult(ctx, core.NewImportBug(b.Id()))
 
 	return b, true, nil
+}
+
+func (gi *giteaImporter) reconcileDescription(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, issue *gitea.Issue) error {
+	body := text.Cleanup(issue.Body)
+	snap := b.Snapshot()
+	if len(snap.Comments) == 0 || snap.Comments[0].Message == body {
+		return nil
+	}
+	create := snap.Operations[0]
+	if hasPendingCommentEdit(b, create.Id()) {
+		return nil
+	}
+	author, err := gi.ensurePerson(ctx, repo, issue.Poster)
+	if err != nil {
+		return err
+	}
+	_, err = b.EditCommentRaw(author, issue.Updated.Unix(), snap.Comments[0].CombinedId(), body,
+		map[string]string{metaKeyGiteaID: "reconcile"})
+	if err == nil {
+		gi.sendImportResult(ctx, core.NewImportCommentEdition(b.Id(), snap.Comments[0].CombinedId()))
+	}
+	return err
 }
 
 func (gi *giteaImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache, poster *gitea.User) (*cache.IdentityCache, error) {
@@ -576,6 +646,11 @@ func (gi *giteaImporter) getCachedIdentity(repo *cache.RepoCache, loginName stri
 		// Bridge configuration tags the local user with the unscoped login.
 		// That login was verified against this instance's token.
 		i, err = repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, loginName)
+		if err == nil {
+			if scoped, ok := i.ImmutableMetadata()[metaKeyGiteaScopedLogin]; ok && scoped != scopedLogin(gi.conf[confKeyBaseURL], loginName) {
+				return nil, nil
+			}
+		}
 		if entity.IsErrMultipleMatch(err) {
 			// Ambiguous legacy identities; create a scoped one instead.
 			return nil, nil

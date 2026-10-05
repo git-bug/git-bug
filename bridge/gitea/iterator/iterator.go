@@ -2,7 +2,6 @@ package iterator
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"time"
 
@@ -72,6 +71,7 @@ func (*CommentEvent) sealed() {}
 
 type RenameEvent struct {
 	ID      int64
+	OldName string
 	NewName string
 	Poster  *gitea.User
 	Updated time.Time
@@ -336,6 +336,7 @@ func fetchTimeline(ctx context.Context, conf config, issue *gitea.Issue, page in
 			// new title in NewTitle; Body is empty for this event type.
 			event = &RenameEvent{
 				ID:      rawEvent.ID,
+				OldName: rawEvent.OldTitle,
 				NewName: rawEvent.NewTitle,
 				Poster:  rawEvent.Poster,
 				Updated: rawEvent.Created,
@@ -352,11 +353,11 @@ func fetchTimeline(ctx context.Context, conf config, issue *gitea.Issue, page in
 func reachedTotalCount(resp *gitea.Response, conf config, page, items_len int) (bool, error) {
 	header := resp.Header.Get("X-Total-Count")
 	if header == "" {
-		return false, errors.New("Missing X-Total-Count header")
+		return items_len < conf.capacity, nil
 	}
 	total, err := strconv.Atoi(header)
 	if err != nil {
-		return false, err
+		return items_len < conf.capacity, nil
 	}
 	return total <= page*conf.capacity, nil
 }

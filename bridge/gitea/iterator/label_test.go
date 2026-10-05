@@ -12,7 +12,7 @@ import (
 	"github.com/git-bug/git-bug/bridge/gitea/giteatest"
 )
 
-func TestLabelIteratorErrorOnMissingTotalCountHeader(t *testing.T) {
+func TestLabelIteratorSuccessOnMissingTotalCountHeader(t *testing.T) {
 	ts := time.Now()
 	fa := &giteatest.FakeAPI{
 		Owner:   "owner",
@@ -32,21 +32,21 @@ func TestLabelIteratorErrorOnMissingTotalCountHeader(t *testing.T) {
 	require.True(t, iter.NextIssue())
 
 	require.NotPanics(t, func() {
-		assert.False(t, iter.NextEvent())
+		assert.True(t, iter.NextEvent(), "Should be true")
 	})
-	assert.Error(t, iter.Error())
+	assert.NoError(t, iter.Error(), "No error expected.")
 }
 
 func TestLabelIteratorReturnsAPIError(t *testing.T) {
 	ts := time.Now()
 	fa := &giteatest.FakeAPI{
-		Owner:           "owner",
-		Project:         "repo",
-		TimelineErrPage: 1,
+		Owner:   "owner",
+		Project: "repo",
 		Issues: []*gitea.Issue{{
 			ID: 1, Index: 1, Title: "t",
 			Poster: &gitea.User{UserName: "u"}, Created: ts,
 		}},
+		TimelineErrPage: 1,
 	}
 	srv := fa.NewServer(t)
 

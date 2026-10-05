@@ -187,12 +187,11 @@ func normalizeOnlyBug(t testLike, backend *cache.RepoCache) normalizedBug {
 	snap := b.Snapshot()
 	comments := make([]string, 0, len(snap.Comments))
 	for _, comment := range snap.Comments {
-		comments = append(comments, comment.Message)
+		comments = append(comments, text.Cleanup(comment.Message))
 	}
 	body := ""
 	if len(comments) > 0 {
-		// The importer applies text.Cleanup to issue bodies.
-		body = text.Cleanup(comments[0])
+		body = comments[0]
 		comments = comments[1:]
 	}
 	labels := make([]string, 0, len(snap.Labels))
