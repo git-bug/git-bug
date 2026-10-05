@@ -16,6 +16,9 @@ NOTE: There are a few optional configuration values that you can additionally
 set in your git configuration to influence the behavior of the bridge. Please
 see the notes at:
 https://github.com/git-bug/git-bug/blob/trunk/doc/jira_bridge.md
+
+The bridge retains the credential validated during setup. To rotate it, add
+the replacement token with --base-url and reconfigure with --credential.
 `
 
 const credTypeText = `
