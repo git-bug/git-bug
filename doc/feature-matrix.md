@@ -121,15 +121,15 @@ Board support:
 
 |                                                 | Github | Gitlab | Jira | Gitea |
 | ----------------------------------------------- | :----: | :----: | :--: | :---: |
-| **incremental**<br/>(can export more than once) |   ✅   |   ✅   |  ✅  |  ❌   |
-| **with resume**<br/>(upload only new data)      |   ✅   |   ✅   |  ✅  |  ❌   |
-| **automated test suite**                        |   ✅   |   ✅   |  ❌  |  ❌   |
+| **incremental**<br/>(can export more than once) |   ✅   |   ✅   |  ✅  |  ✅   |
+| **with resume**<br/>(upload only new data)      |   ✅   |   ✅   |  ✅  |  ✅   |
+| **automated test suite**                        |   ✅   |   ✅   |  ❌  |  ✅   |
 
 **Identity support**:
 
 |                   | Github | Gitlab | Jira | Gitea |
 | ----------------- | :----: | :----: | :--: | :---: |
-| **identities**    |   ✅   |   ✅   |  ✅  |   ❌  |
+| **identities**    |   ✅   |   ✅   |  ✅  |   ✅  |
 | identities update |   ❌   |   ❌   |  ❌  |   ❌  |
 
 Note: as the target bug tracker require accounts and credentials, there is only
@@ -141,11 +141,11 @@ available, the corresponding changes can't be replicated.
 
 |                  | Github | Gitlab | Jira | Gitea |
 | ---------------- | :----: | :----: | :--: | :---: |
-| **bugs**         |   ✅   |   ✅   |  ✅  |  ❌   |
-| comments         |   ✅   |   ✅   |  ✅  |  ❌   |
-| comment editions |   ✅   |   ✅   |  ✅  |  ❌   |
-| labels           |   ✅   |   ✅   |  ✅  |  ❌   |
-| status           |   ✅   |   ✅   |  ✅  |  ❌   |
-| title edition    |   ✅   |   ✅   |  ✅  |  ❌   |
+| **bugs**         |   ✅   |   ✅   |  ✅  |  ✅   |
+| comments         |   ✅   |   ✅   |  ✅  |  ✅   |
+| comment editions |   ✅   |   ✅   |  ✅  |  ✅   |
+| labels           |   ✅   |   ✅   |  ✅  |  ✅   |
+| status           |   ✅   |   ✅   |  ✅  |  ✅   |
+| title edition    |   ✅   |   ✅   |  ✅  |  ✅   |
 | Assignee         |   ❌   |   ❌   |  ❌  |  ❌   |
 | Milestone        |   ❌   |   ❌   |  ❌  |  ❌   |

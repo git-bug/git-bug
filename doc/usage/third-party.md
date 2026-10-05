@@ -86,8 +86,7 @@ API operations, which determine the minimum permissions a token needs:
 
 - **pull**: read the issue list, issue bodies, comments, labels and
   status/title change events
-- **push** (GitHub, GitLab and Jira only; the Gitea bridge is pull-only for
-  now): create issues, edit title and body, add and edit comments, change
+- **push** (GitHub, GitLab, Jira and Gitea): create issues, edit title and body, add and edit comments, change
   labels and toggle the status (open/close)
 
 ### GitHub<a name="github"></a>
@@ -160,20 +159,24 @@ URL). Personal access tokens are created at
 GitHub Enterprise–like instances it may also be listed as
 `$BASE_URL/settings/tokens`).
 
-The bridge is pull-only for now, so the token only needs **read** access to
-the repository and its issues:
+Pulling needs **read** access to the repository and its issues. Pushing also
+needs **write** access to issues, and to labels when a pushed label does not
+exist upstream yet:
 
-- **Fine-grained scopes** (Gitea 1.22+ / Forgejo 15+ — the
-  `read:<category>` token model): `read:issue` to list issues and their
-timelines (comments, labels, status and title changes), `read:repository`
-to access the repository itself, and `read:user` to identify the account
-the token belongs to.
-- **Instances without fine-grained scopes** (older Gitea): any personal
-access token with read access to the repository (the classic `read-only`
-token, or a `all`-scoped one) is sufficient.
+- **Fine-grained scopes** (Gitea 1.22+ / Forgejo 15+, the
+  `<access>:<category>` token model): `write:issue` to create and edit issues,
+  comments and labels (`read:issue` is enough for pull only),
+  `read:repository` to access the repository itself, and `read:user` to
+  identify the account the token belongs to.
+- **Instances without fine-grained scopes** (older Gitea): a token with write
+  access to the repository, or a read-only token for pull only.
 
-No write scope is used or required, and the token owner simply needs read
-access to the repository (any role, or public repository visibility).
+The token owner needs at least read access to the repository to pull, and a
+role that can edit issues and labels to push.
+
+Push publishes only operations authored by the git-bug identity linked to the
+token's login, because Gitea records every remote change as the token owner.
+Labels missing upstream are created with a neutral color.
 
 Imports preserve the latest comment body but cannot recover earlier edits that
 Gitea or Forgejo does not expose. When timeline events are missing, the bridge
@@ -182,8 +185,7 @@ those changes to the issue author because the API does not identify the actor.
 The importer now scopes new identities to the instance URL. Older imported
 identities have only a username and cannot be assigned to an instance safely;
 subsequent imports may create a second identity for the same person. Existing
-issue history keeps references to the original identity. Export remains
-unsupported, so `git bug bridge push` cannot push to Gitea.
+issue history keeps references to the original identity.
 
 ## Interacting with the bridge<a name="interacting-with-the-bridge"></a>
 
