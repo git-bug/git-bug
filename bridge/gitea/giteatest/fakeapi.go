@@ -65,6 +65,7 @@ type FakeAPI struct {
 	// UserRequests accumulates every request made to the users endpoint.
 	UserRequests []*http.Request
 
+	nextCommentID  int64
 	nextIssueID    int64
 	nextIssueIndex int64
 	nextLabelID    int64
@@ -133,6 +134,13 @@ func (fa *FakeAPI) initSequences() {
 	for _, label := range append(append([]*gitea.Label{}, fa.RepoLabels...), fa.Labels...) {
 		if label.ID > fa.nextLabelID {
 			fa.nextLabelID = label.ID
+		}
+	}
+	for _, events := range fa.TimelineByIssue {
+		for _, event := range events {
+			if event.ID > fa.nextCommentID {
+				fa.nextCommentID = event.ID
+			}
 		}
 	}
 	for _, labels := range fa.LabelsByIssue {
@@ -358,6 +366,10 @@ func (fa *FakeAPI) handleIssueSubresource(issuesPrefix string) http.HandlerFunc 
 	return func(w http.ResponseWriter, r *http.Request) {
 		rest := strings.TrimPrefix(r.URL.Path, issuesPrefix)
 		parts := strings.SplitN(rest, "/", 2)
+		if parts[0] == "comments" && len(parts) == 2 {
+			fa.editComment(w, r, parts[1])
+			return
+		}
 		idx, err := strconv.ParseInt(parts[0], 10, 64)
 		if err != nil {
 			http.NotFound(w, r)
@@ -373,6 +385,8 @@ func (fa *FakeAPI) handleIssueSubresource(issuesPrefix string) http.HandlerFunc 
 			fa.handleIssueLabels(w, r, idx)
 		case "timeline":
 			fa.handleIssueTimeline(w, r, idx)
+		case "comments":
+			fa.createComment(w, r, idx)
 		default:
 			if strings.HasPrefix(parts[1], "labels/") && r.Method == http.MethodDelete {
 				identifier := strings.TrimPrefix(parts[1], "labels/")
@@ -480,6 +494,56 @@ func (fa *FakeAPI) handleIssueTimeline(w http.ResponseWriter, r *http.Request, i
 		w.Header().Set("X-Total-Count", strconv.Itoa(len(events)))
 	}
 	writeJSON(w, events[start:end])
+}
+
+// createComment stores a comment and exposes it in the issue timeline.
+func (fa *FakeAPI) createComment(w http.ResponseWriter, r *http.Request, idx int64) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if _, ok := fa.findIssue(idx); !ok {
+		http.NotFound(w, r)
+		return
+	}
+	opt, ok := decodeJSON[gitea.CreateIssueCommentOption](w, r)
+	if !ok {
+		return
+	}
+	fa.nextCommentID++
+	now := time.Now().UTC()
+	poster := &gitea.User{UserName: "testuser"}
+	if fa.TimelineByIssue == nil {
+		fa.TimelineByIssue = map[int64][]*gitea.TimelineComment{}
+	}
+	fa.TimelineByIssue[idx] = append(fa.TimelineByIssue[idx], &gitea.TimelineComment{
+		ID: fa.nextCommentID, Type: "comment", Body: opt.Body, Poster: poster, Created: now, Updated: now,
+	})
+	w.WriteHeader(http.StatusCreated)
+	writeJSON(w, &gitea.Comment{ID: fa.nextCommentID, Body: opt.Body, Poster: poster, Created: now, Updated: now})
+}
+
+func (fa *FakeAPI) editComment(w http.ResponseWriter, r *http.Request, rawID string) {
+	id, err := strconv.ParseInt(rawID, 10, 64)
+	if err != nil || r.Method != http.MethodPatch {
+		http.NotFound(w, r)
+		return
+	}
+	opt, ok := decodeJSON[gitea.EditIssueCommentOption](w, r)
+	if !ok {
+		return
+	}
+	for _, events := range fa.TimelineByIssue {
+		for _, event := range events {
+			if event.Type == "comment" && event.ID == id {
+				event.Body = opt.Body
+				event.Updated = time.Now().UTC()
+				writeJSON(w, &gitea.Comment{ID: id, Body: opt.Body, Poster: event.Poster, Created: event.Created, Updated: event.Updated})
+				return
+			}
+		}
+	}
+	http.NotFound(w, r)
 }
 
 func (fa *FakeAPI) addIssueLabels(w http.ResponseWriter, r *http.Request, idx int64) {
