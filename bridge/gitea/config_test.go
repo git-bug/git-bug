@@ -1,13 +1,41 @@
 package gitea
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/bridge/gitea/giteatest"
 )
+
+func TestConfigureRejectsUnboundCredentialBeforeContactingHost(t *testing.T) {
+	repo, backend := newRoundTripRepo(t)
+	for _, tc := range []struct {
+		name, target, baseURL string
+	}{
+		{"missing base URL", target, ""},
+		{"another instance", target, "https://other.example/"},
+		{"another bridge", "github", "https://example.com/"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cred := auth.NewToken(tc.target, "secret")
+			cred.SetMetadata(auth.MetaKeyLogin, "testuser")
+			if tc.baseURL != "" {
+				cred.SetMetadata(auth.MetaKeyBaseURL, tc.baseURL)
+			}
+			require.NoError(t, auth.Store(repo, cred))
+			_, err := (&Gitea{}).Configure(backend, core.BridgeParams{
+				URL: "https://example.com/owner/repo", CredPrefix: cred.ID().String(),
+			}, false)
+			require.Error(t, err)
+			assert.True(t, strings.Contains(err.Error(), "credential"), err)
+		})
+	}
+}
 
 func TestSplitURL(t *testing.T) {
 	type args struct {
@@ -98,6 +126,11 @@ func TestSplitURL(t *testing.T) {
 			name: "instance under a subpath",
 			args: args{url: "https://example.com/gitea/owner/repo/pulls"},
 			want: want{baseURL: "https://example.com/gitea/", owner: "owner", project: "repo"},
+		},
+		{
+			name: "instance under subpath with repo named issues",
+			args: args{url: "https://example.com/gitea/owner/issues"},
+			want: want{baseURL: "https://example.com/gitea/", owner: "owner", project: "issues"},
 		},
 		{
 			name: "ssh url with port",

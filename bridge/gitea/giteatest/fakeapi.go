@@ -408,6 +408,18 @@ func (fa *FakeAPI) handleIssueSubresource(issuesPrefix string) http.HandlerFunc 
 }
 
 func (fa *FakeAPI) handleIssueByIndex(w http.ResponseWriter, r *http.Request, idx int64) {
+	if r.Method == http.MethodDelete {
+		for i, issue := range fa.Issues {
+			if issue.Index == idx {
+				fa.Issues = append(fa.Issues[:i], fa.Issues[i+1:]...)
+				delete(fa.TimelineByIssue, idx)
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+		}
+		http.NotFound(w, r)
+		return
+	}
 	if r.Method != http.MethodPatch {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -442,6 +454,8 @@ func (fa *FakeAPI) handleIssueByIndex(w http.ResponseWriter, r *http.Request, id
 
 func (fa *FakeAPI) handleIssueLabels(w http.ResponseWriter, r *http.Request, idx int64) {
 	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, fa.labelsFor(idx))
 	case http.MethodPost:
 		fa.addIssueLabels(w, r, idx)
 	case http.MethodPut:
@@ -532,7 +546,24 @@ func (fa *FakeAPI) createComment(w http.ResponseWriter, r *http.Request, idx int
 
 func (fa *FakeAPI) editComment(w http.ResponseWriter, r *http.Request, rawID string) {
 	id, err := strconv.ParseInt(rawID, 10, 64)
-	if err != nil || r.Method != http.MethodPatch {
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	if r.Method == http.MethodDelete {
+		for idx, events := range fa.TimelineByIssue {
+			for i, event := range events {
+				if event.Type == "comment" && event.ID == id {
+					fa.TimelineByIssue[idx] = append(events[:i], events[i+1:]...)
+					w.WriteHeader(http.StatusNoContent)
+					return
+				}
+			}
+		}
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	if r.Method != http.MethodPatch {
 		http.NotFound(w, r)
 		return
 	}

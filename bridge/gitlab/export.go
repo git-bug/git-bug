@@ -141,6 +141,11 @@ func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 					continue
 				}
 
+				if reason, foreign := ge.foreignReason(b); foreign {
+					out <- core.NewExportNothing(b.Id(), reason)
+					continue
+				}
+
 				if snapshot.HasAnyActor(allIdentitiesIds...) {
 					// try to export the bug and it associated events
 					ge.exportBug(ctx, b, out)
@@ -155,6 +160,24 @@ func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 }
 
 // exportBug publish bugs and related events
+
+func (ge *gitlabExporter) foreignReason(b *cache.BugCache) (string, bool) {
+	snapshot := b.Snapshot()
+	origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin)
+	if ok && origin != target {
+		return fmt.Sprintf("issue tagged with origin: %s", origin), true
+	}
+	if _, ok := snapshot.GetCreateMetadata(metaKeyGitlabId); ok {
+		if baseURL, ok := snapshot.GetCreateMetadata(metaKeyGitlabBaseUrl); ok && baseURL != ge.conf[confKeyGitlabBaseUrl] {
+			return fmt.Sprintf("issue belongs to another GitLab instance (%s)", baseURL), true
+		}
+		if projectID, ok := snapshot.GetCreateMetadata(metaKeyGitlabProject); ok && projectID != ge.conf[confKeyProjectID] {
+			return fmt.Sprintf("issue belongs to another GitLab project (ID %s)", projectID), true
+		}
+	}
+	return "", false
+}
+
 func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out chan<- core.ExportResult) {
 	snapshot := b.Snapshot()
 
@@ -168,13 +191,6 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 	// Special case:
 	// if a user try to export a bug that is not already exported to Gitlab (or imported
 	// from Gitlab) and we do not have the token of the bug author, there is nothing we can do.
-
-	// skip bug if origin is not allowed
-	origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin)
-	if ok && origin != target {
-		out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue tagged with origin: %s", origin))
-		return
-	}
 
 	// first operation is always createOp
 	createOp := snapshot.Operations[0].(*bug.CreateOperation)

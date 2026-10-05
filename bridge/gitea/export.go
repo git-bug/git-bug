@@ -3,7 +3,6 @@ package gitea
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -71,6 +70,11 @@ func (ge *giteaExporter) Init(ctx context.Context, repo *cache.RepoCache, conf c
 		// Identities created by bridge configuration or older imports only
 		// carry the unscoped login.
 		ge.exporter, err = repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, login)
+		if err == nil {
+			if scoped, ok := ge.exporter.ImmutableMetadata()[metaKeyGiteaScopedLogin]; ok && scoped != scopedLogin(conf[confKeyBaseURL], login) {
+				return ErrMissingIdentityToken
+			}
+		}
 	}
 	if entity.IsErrNotFound(err) {
 		return ErrMissingIdentityToken
@@ -177,13 +181,16 @@ func (ge *giteaExporter) exportBug(ctx context.Context, b *cache.BugCache, out c
 			metaKeyGiteaProject: ge.conf[confKeyProject],
 			metaKeyGiteaBaseURL: ge.conf[confKeyBaseURL],
 		}); err != nil {
+			// Do not leave an untracked remote issue behind if local persistence fails.
+			if _, deleteErr := ge.client.Issues.DeleteIssue(ctx, ge.conf[confKeyOwner], ge.conf[confKeyProject], index); deleteErr != nil {
+				err = fmt.Errorf("%w; rollback issue %d: %v", err, index, deleteErr)
+			}
 			return fail(err, "mark issue as exported")
 		}
 		send(ctx, out, core.NewExportBug(b.Id()))
 	}
 
 	commentIDs := map[entity.Id]int64{}
-	labels := map[string]string{}
 	exported := false
 
 	for _, op := range snapshot.Operations {
@@ -191,16 +198,8 @@ func (ge *giteaExporter) exportBug(ctx context.Context, b *cache.BugCache, out c
 			continue
 		}
 
-		// Track state as it existed after each operation, including the
-		// operations that came from Gitea or other authors.
-		if lc, ok := op.(*bug.LabelChangeOperation); ok {
-			for _, l := range lc.Added {
-				labels[strings.ToLower(string(l))] = string(l)
-			}
-			for _, l := range lc.Removed {
-				delete(labels, strings.ToLower(string(l)))
-			}
-		}
+		// Imported comments and comments by other authors can be targets
+		// of a later edit authored by the token owner.
 		if raw, ok := op.GetMetadata(metaKeyGiteaCommentID); ok {
 			if id, err := strconv.ParseInt(raw, 10, 64); err == nil {
 				if _, isAdd := op.(*bug.AddCommentOperation); isAdd {
@@ -249,7 +248,7 @@ func (ge *giteaExporter) exportBug(ctx context.Context, b *cache.BugCache, out c
 			meta = map[string]string{metaKeyGiteaID: "export"}
 			result = core.NewExportStatusChange(b.Id())
 		case *bug.LabelChangeOperation:
-			err = ge.replaceLabels(ctx, index, labels)
+			err = ge.changeLabels(ctx, index, op)
 			meta = map[string]string{metaKeyGiteaID: "export"}
 			result = core.NewExportLabelChange(b.Id())
 		default:
@@ -259,6 +258,13 @@ func (ge *giteaExporter) exportBug(ctx context.Context, b *cache.BugCache, out c
 			return fail(err, fmt.Sprintf("export %T", op))
 		}
 		if err := ge.mark(b, op.Id(), meta); err != nil {
+			if add, ok := op.(*bug.AddCommentOperation); ok {
+				if id := commentIDs[add.Id()]; id != 0 {
+					if _, deleteErr := ge.client.Issues.DeleteIssueComment(ctx, ge.conf[confKeyOwner], ge.conf[confKeyProject], id); deleteErr != nil {
+						err = fmt.Errorf("%w; rollback comment %d: %v", err, id, deleteErr)
+					}
+				}
+			}
 			return fail(err, "mark operation as exported")
 		}
 		send(ctx, out, result)
@@ -319,27 +325,50 @@ func (ge *giteaExporter) addComment(ctx context.Context, index int64, body strin
 	return comment, err
 }
 
-func (ge *giteaExporter) replaceLabels(ctx context.Context, index int64, labels map[string]string) error {
+// Apply only this author's delta. Replacing the entire label set would
+// publish other local authors' changes and discard newer upstream labels.
+func (ge *giteaExporter) changeLabels(ctx context.Context, index int64, change *bug.LabelChangeOperation) error {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
-
-	names := make([]string, 0, len(labels))
-	for _, name := range labels {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-
-	ids := make([]int64, 0, len(names))
-	for _, name := range names {
-		label, err := ge.ensureLabel(ctx, name)
+	owner, project := ge.conf[confKeyOwner], ge.conf[confKeyProject]
+	for _, name := range change.Added {
+		label, err := ge.ensureLabel(ctx, string(name))
 		if err != nil {
 			return err
 		}
-		ids = append(ids, label.ID)
+		if _, _, err = ge.client.Issues.AddIssueLabels(ctx, owner, project, index,
+			gitea.IssueLabelsOption{Labels: []int64{label.ID}}); err != nil {
+			return err
+		}
 	}
-	_, _, err := ge.client.Issues.ReplaceIssueLabels(ctx, ge.conf[confKeyOwner], ge.conf[confKeyProject], index,
-		gitea.IssueLabelsOption{Labels: ids})
-	return err
+	if len(change.Removed) == 0 {
+		return nil
+	}
+	var removeIDs []int64
+	for page := 1; ; page++ {
+		labels, _, err := ge.client.Issues.GetIssueLabels(ctx, owner, project, index,
+			gitea.ListLabelsOptions{ListOptions: gitea.ListOptions{Page: page, PageSize: 50}})
+		if err != nil {
+			return err
+		}
+		for _, label := range labels {
+			for _, name := range change.Removed {
+				if strings.EqualFold(label.Name, string(name)) {
+					removeIDs = append(removeIDs, label.ID)
+					break
+				}
+			}
+		}
+		if len(labels) < 50 {
+			break
+		}
+	}
+	for _, id := range removeIDs {
+		if _, err := ge.client.Issues.DeleteIssueLabel(ctx, owner, project, index, id); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (ge *giteaExporter) ensureLabel(ctx context.Context, name string) (*gitea.Label, error) {

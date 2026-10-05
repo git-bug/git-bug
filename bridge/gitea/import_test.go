@@ -527,11 +527,114 @@ func TestImportLabelReconcileScopedToImportedBug(t *testing.T) {
 }
 
 func TestImportTitleChangeViaTypedComment(t *testing.T) {
-	t.Skip("gitea.dev/sdk@v1.1.0 Comment lacks Type/OldTitle/NewTitle fields; add this pin when the SDK is upgraded")
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	renamed := ts.Add(time.Hour)
+	poster := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"}
+	issue := &gitea.Issue{
+		ID: 1, Index: 1, Title: "renamed title", Body: "b",
+		State: gitea.StateOpen, Poster: poster, Created: ts, Updated: renamed,
+	}
+	fa := &giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues: []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {{
+				ID:       10,
+				Type:     "change_title",
+				OldTitle: "initial title",
+				NewTitle: "renamed title",
+				Poster:   poster,
+				Created:  renamed,
+				Updated:  renamed,
+			}},
+		},
+	}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+	results := runImport(t, gi, backend)
+
+	require.Empty(t, collectErrors(results))
+	b := onlyBug(t, backend)
+	assert.Equal(t, "renamed title", b.Snapshot().Title)
+	createOp, ok := b.Snapshot().Operations[0].(*bugpkg.CreateOperation)
+	require.True(t, ok)
+	assert.Equal(t, "initial title", createOp.Title,
+		"original issue title should be preserved in CreateOperation")
+
+	var titleOp *bugpkg.SetTitleOperation
+	for _, op := range b.Snapshot().Operations {
+		if to, ok := op.(*bugpkg.SetTitleOperation); ok {
+			titleOp = to
+			break
+		}
+	}
+	require.NotNil(t, titleOp, "expected a SetTitleOperation from timeline")
+	assert.Equal(t, "renamed title", titleOp.Title)
+
+	var titleResult *core.ImportResult
+	for i := range results {
+		if results[i].Event == core.ImportEventTitleEdition {
+			titleResult = &results[i]
+			break
+		}
+	}
+	assert.NotNil(t, titleResult, "expected ImportTitleEdition result")
 }
 
 func TestImportStateChangeViaTypedComment(t *testing.T) {
-	t.Skip("gitea.dev/sdk@v1.1.0 Comment lacks Type fields for close/reopen system comments; add this pin when the SDK is upgraded")
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	closedTime := ts.Add(time.Hour)
+	reopenedTime := ts.Add(2 * time.Hour)
+	poster := &gitea.User{UserName: "testuser", FullName: "Test User", Email: "u@example.com"}
+	issue := &gitea.Issue{
+		ID: 1, Index: 1, Title: "title", Body: "b",
+		State: gitea.StateOpen, Poster: poster, Created: ts, Updated: reopenedTime,
+	}
+	fa := &giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues: []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {
+				{
+					ID:      10,
+					Type:    "close",
+					Poster:  poster,
+					Created: closedTime,
+				},
+				{
+					ID:      11,
+					Type:    "reopen",
+					Poster:  poster,
+					Created: reopenedTime,
+				},
+			},
+		},
+	}
+	srv := fa.NewServer(t)
+	gi, backend := setupImporter(t, srv.URL)
+	results := runImport(t, gi, backend)
+
+	require.Empty(t, collectErrors(results))
+	b := onlyBug(t, backend)
+	assert.Equal(t, common.OpenStatus, b.Snapshot().Status)
+
+	var statusChanges []*bugpkg.SetStatusOperation
+	for _, op := range b.Snapshot().Operations {
+		if so, ok := op.(*bugpkg.SetStatusOperation); ok {
+			statusChanges = append(statusChanges, so)
+		}
+	}
+	require.Len(t, statusChanges, 2, "expected close and reopen operations from timeline")
+	assert.Equal(t, common.ClosedStatus, statusChanges[0].Status)
+	assert.Equal(t, common.OpenStatus, statusChanges[1].Status)
+
+	statusResultCount := 0
+	for i := range results {
+		if results[i].Event == core.ImportEventStatusChange {
+			statusResultCount++
+		}
+	}
+	assert.Equal(t, 2, statusResultCount, "expected two ImportStatusChange results")
 }
 
 func TestImportTitleUnsafeAfterCleanup(t *testing.T) {
@@ -1827,4 +1930,209 @@ func TestImportReconcilesStatusDrift(t *testing.T) {
 	require.Empty(t, collectErrors(runImport(t, gi3, backend)))
 	assert.Equal(t, common.OpenStatus, onlyBug(t, backend).Snapshot().Status,
 		"re-importing should reconcile open status even without timeline events")
+}
+
+func TestImportDoesNotRevertLocalStatusChange(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	author := &gitea.User{UserName: "alice", FullName: "Alice", Email: "alice@example.com"}
+	issue := &gitea.Issue{
+		ID: 1, Index: 1, Title: "title", Body: "body",
+		State: gitea.StateOpen, Poster: author,
+		Created: ts, Updated: ts,
+	}
+	fa := &giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues:          []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{},
+	}
+	srv := fa.NewServer(t)
+
+	gi, backend := setupImporter(t, srv.URL)
+	user, err := backend.Identities().New("Local User", "local@example.com")
+	require.NoError(t, err)
+	require.NoError(t, backend.SetUserIdentity(user))
+
+	require.Empty(t, collectErrors(runImport(t, gi, backend)))
+	b := onlyBug(t, backend)
+	require.Equal(t, common.OpenStatus, b.Snapshot().Status)
+
+	// User closes bug locally without exporting
+	_, err = b.Close()
+	require.NoError(t, err)
+	require.NoError(t, b.Commit())
+	require.Equal(t, common.ClosedStatus, b.Snapshot().Status)
+
+	// Subsequent pull must not reopen the bug
+	gi2 := setupImporterOnExistingBackend(t, srv.URL, backend)
+	require.Empty(t, collectErrors(runImport(t, gi2, backend)))
+	b = onlyBug(t, backend)
+	assert.Equal(t, common.ClosedStatus, b.Snapshot().Status,
+		"local unexported status change must not be reverted by pull")
+}
+
+func TestImportDoesNotRevertLocalCommentEdit(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	author := &gitea.User{UserName: "alice", FullName: "Alice", Email: "alice@example.com"}
+	issue := &gitea.Issue{
+		ID: 1, Index: 1, Title: "title", Body: "original body",
+		State: gitea.StateOpen, Poster: author,
+		Created: ts, Updated: ts,
+	}
+	fa := &giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues: []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {
+				{
+					ID:      10,
+					Type:    "comment",
+					Poster:  author,
+					Body:    "original comment",
+					Created: ts.Add(time.Minute),
+					Updated: ts.Add(time.Minute),
+				},
+			},
+		},
+	}
+	srv := fa.NewServer(t)
+
+	gi, backend := setupImporter(t, srv.URL)
+	user, err := backend.Identities().New("Local User", "local@example.com")
+	require.NoError(t, err)
+	require.NoError(t, backend.SetUserIdentity(user))
+
+	require.Empty(t, collectErrors(runImport(t, gi, backend)))
+	b := onlyBug(t, backend)
+	require.Len(t, b.Snapshot().Comments, 2)
+	comment := b.Snapshot().Comments[1]
+	require.Equal(t, "original comment", comment.Message)
+
+	// User edits comment locally
+	_, err = b.EditComment(comment.CombinedId(), "locally edited comment")
+	require.NoError(t, err)
+	require.NoError(t, b.Commit())
+	require.Equal(t, "locally edited comment", b.Snapshot().Comments[1].Message)
+
+	// Pull must not revert the local comment edit
+	gi2 := setupImporterOnExistingBackend(t, srv.URL, backend)
+	require.Empty(t, collectErrors(runImport(t, gi2, backend)))
+	b = onlyBug(t, backend)
+	assert.Equal(t, "locally edited comment", b.Snapshot().Comments[1].Message,
+		"local unexported comment edit must not be reverted by pull")
+}
+
+func TestImportUpstreamBodyEditPropagates(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	author := &gitea.User{UserName: "alice", FullName: "Alice", Email: "alice@example.com"}
+	issue := &gitea.Issue{
+		ID: 1, Index: 1, Title: "title", Body: "initial body",
+		State: gitea.StateOpen, Poster: author,
+		Created: ts, Updated: ts,
+	}
+	fa := &giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues:          []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{},
+	}
+	srv := fa.NewServer(t)
+
+	gi, backend := setupImporter(t, srv.URL)
+	require.Empty(t, collectErrors(runImport(t, gi, backend)))
+	b := onlyBug(t, backend)
+	require.Equal(t, "initial body", b.Snapshot().Comments[0].Message)
+
+	// Upstream issue body edited
+	issue.Body = "updated body from upstream"
+	issue.Updated = ts.Add(time.Hour)
+
+	gi2 := setupImporterOnExistingBackend(t, srv.URL, backend)
+	require.Empty(t, collectErrors(runImport(t, gi2, backend)))
+	b = onlyBug(t, backend)
+	assert.Equal(t, "updated body from upstream", b.Snapshot().Comments[0].Message,
+		"upstream issue description edits must propagate to bug cache")
+}
+
+func TestImportCommentControlCharacters(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	author := &gitea.User{UserName: "alice", FullName: "Alice", Email: "alice@example.com"}
+	issue := &gitea.Issue{
+		ID: 1, Index: 1, Title: "title", Body: "body",
+		State: gitea.StateOpen, Poster: author,
+		Created: ts, Updated: ts,
+	}
+	fa := &giteatest.FakeAPI{
+		Owner: "owner", Project: "project",
+		Issues: []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			1: {
+				{
+					ID:      10,
+					Type:    "comment",
+					Poster:  author,
+					Body:    "valid text \x1b[31mwith ansi\x1b[0m and \x00 null bytes",
+					Created: ts.Add(time.Minute),
+					Updated: ts.Add(time.Minute),
+				},
+			},
+		},
+	}
+	srv := fa.NewServer(t)
+
+	gi, backend := setupImporter(t, srv.URL)
+	require.Empty(t, collectErrors(runImport(t, gi, backend)))
+	b := onlyBug(t, backend)
+	require.Len(t, b.Snapshot().Comments, 2)
+	assert.Equal(t, "valid text [31mwith ansi[0m and  null bytes", b.Snapshot().Comments[1].Message)
+}
+
+func TestImportLocallyRestoredLabelNotRemoved(t *testing.T) {
+	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	author := &gitea.User{UserName: "alice", FullName: "Alice", Email: "alice@example.com"}
+	labelBug := &gitea.Label{ID: 1, Name: "bug"}
+	issue := &gitea.Issue{
+		ID: 1, Index: 1, Title: "title", Body: "body",
+		State: gitea.StateOpen, Poster: author,
+		Labels:  []*gitea.Label{labelBug},
+		Created: ts, Updated: ts,
+	}
+	fa := &giteatest.FakeAPI{
+		Owner:   "owner",
+		Project: "project",
+		Issues:  []*gitea.Issue{issue},
+		Labels:  []*gitea.Label{labelBug},
+	}
+	srv := fa.NewServer(t)
+
+	gi, backend := setupImporter(t, srv.URL)
+	user, err := backend.Identities().New("Local User", "local@example.com")
+	require.NoError(t, err)
+	require.NoError(t, backend.SetUserIdentity(user))
+
+	require.Empty(t, collectErrors(runImport(t, gi, backend)))
+	b := onlyBug(t, backend)
+	require.Contains(t, b.Snapshot().Labels, common.Label("bug"))
+
+	// Upstream removes label
+	fa.Labels = []*gitea.Label{}
+	issue.Labels = []*gitea.Label{}
+	issue.Updated = ts.Add(2 * time.Hour)
+
+	// Re-import reconciles removal
+	gi2 := setupImporterOnExistingBackend(t, srv.URL, backend)
+	require.Empty(t, collectErrors(runImport(t, gi2, backend)))
+	b = onlyBug(t, backend)
+	require.NotContains(t, b.Snapshot().Labels, common.Label("bug"))
+
+	// User locally re-adds label "bug"
+	_, _, err = b.ChangeLabels([]string{"bug"}, nil)
+	require.NoError(t, err)
+	require.NoError(t, b.Commit())
+	require.Contains(t, b.Snapshot().Labels, common.Label("bug"))
+
+	// Subsequent pull must NOT remove the locally restored label
+	gi3 := setupImporterOnExistingBackend(t, srv.URL, backend)
+	require.Empty(t, collectErrors(runImport(t, gi3, backend)))
+	b = onlyBug(t, backend)
+	assert.Contains(t, b.Snapshot().Labels, common.Label("bug"),
+		"locally restored label must not be stripped by label reconciliation")
 }

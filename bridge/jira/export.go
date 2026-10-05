@@ -170,6 +170,11 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 					continue
 				}
 
+				if reason, foreign := je.foreignReason(b); foreign {
+					out <- core.NewExportNothing(b.Id(), reason)
+					continue
+				}
+
 				if snapshot.HasAnyActor(allIdentitiesIds...) {
 					// try to export the bug and it associated events
 					err := je.exportBug(ctx, b, out)
@@ -188,6 +193,24 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 }
 
 // exportBug publish bugs and related events
+
+func (je *jiraExporter) foreignReason(b *cache.BugCache) (string, bool) {
+	snapshot := b.Snapshot()
+	origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin)
+	if ok && origin != target {
+		return fmt.Sprintf("issue tagged with origin: %s", origin), true
+	}
+	if _, ok := snapshot.GetCreateMetadata(metaKeyJiraId); ok {
+		if baseURL, ok := snapshot.GetCreateMetadata(metaKeyJiraBaseUrl); ok && baseURL != je.conf[confKeyBaseUrl] {
+			return fmt.Sprintf("issue belongs to another Jira instance (%s)", baseURL), true
+		}
+		if project, ok := snapshot.GetCreateMetadata(metaKeyJiraProject); ok && !stringInSlice(project, []string{je.project.ID, je.project.Key}) {
+			return fmt.Sprintf("issue belongs to another Jira project (%s)", project), true
+		}
+	}
+	return "", false
+}
+
 func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out chan<- core.ExportResult) error {
 	snapshot := b.Snapshot()
 
