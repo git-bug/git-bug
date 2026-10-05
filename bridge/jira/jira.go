@@ -10,6 +10,7 @@ import (
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/commands/input"
+	"github.com/git-bug/git-bug/repository"
 )
 
 const (
@@ -100,12 +101,19 @@ func buildClient(ctx context.Context, baseURL string, credType string, cred auth
 	return client, nil
 }
 
-func credentialKinds(credType string) []auth.ListOption {
-	opts := []auth.ListOption{auth.WithKind(auth.KindLoginPassword), auth.WithKind(auth.KindLogin)}
+// Prefer dedicated API tokens in TOKEN mode. Login/password credentials remain
+// a fallback for older configurations that stored API tokens as passwords.
+func listCredentials(repo repository.RepoKeyring, credType string, opts ...auth.ListOption) ([]auth.Credential, error) {
+	var credentials []auth.Credential
 	if credType == "TOKEN" {
-		opts = append(opts, auth.WithKind(auth.KindToken))
+		tokens, err := auth.List(repo, append(append([]auth.ListOption{}, opts...), auth.WithKind(auth.KindToken))...)
+		if err != nil {
+			return nil, err
+		}
+		credentials = append(credentials, tokens...)
 	}
-	return opts
+	passwords, err := auth.List(repo, append(append([]auth.ListOption{}, opts...), auth.WithKind(auth.KindLoginPassword), auth.WithKind(auth.KindLogin))...)
+	return append(credentials, passwords...), err
 }
 
 // stringInSlice returns true if needle is found in haystack
