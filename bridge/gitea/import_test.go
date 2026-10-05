@@ -1248,22 +1248,30 @@ func TestImportLabelAttributedToLabelPoster(t *testing.T) {
 	t.Error("no LabelChangeOperation found")
 }
 
-func TestImportSinceSentOnTimelineRequest(t *testing.T) {
+func TestImportSinceFetchesFullHistoryForNewIssue(t *testing.T) {
 	since := time.Date(2023, 6, 1, 12, 0, 0, 0, time.UTC)
 	issue := testIssue()
-	issue.Updated = since.Add(time.Hour) // must be after since or the issue is filtered out
+	issue.Updated = since.Add(time.Hour)
 	fa := &giteatest.FakeAPI{
 		Owner:   "owner",
 		Project: "project",
 		Issues:  []*gitea.Issue{issue},
+		TimelineByIssue: map[int64][]*gitea.TimelineComment{
+			issue.Index: {{ID: 42, Type: "comment", Body: "old comment", Poster: issue.Poster,
+				Created: since.Add(-time.Hour), Updated: since.Add(-time.Hour)}},
+		},
 	}
 	srv := fa.NewServer(t)
 	gi, backend := setupImporter(t, srv.URL)
 
-	_ = runImportSince(t, gi, backend, since)
-
+	require.Empty(t, collectErrors(runImportSince(t, gi, backend, since)))
+	require.Len(t, onlyBug(t, backend).Snapshot().Comments, 2)
 	require.NotEmpty(t, fa.TimelineRequests)
-	got := fa.TimelineRequests[0].URL.Query().Get("since")
+	assert.Empty(t, fa.TimelineRequests[0].URL.Query().Get("since"))
+
+	require.Empty(t, collectErrors(runImportSince(t, gi, backend, since)))
+	require.Len(t, fa.TimelineRequests, 2)
+	got := fa.TimelineRequests[1].URL.Query().Get("since")
 	parsed, err := time.Parse(time.RFC3339, got)
 	require.NoError(t, err)
 	assert.Equal(t, since, parsed.UTC())
@@ -1375,6 +1383,33 @@ func TestImportCommentAttributedToCommentPoster(t *testing.T) {
 // for dedup) and the AvatarUrl / Email / Name fetched from the user endpoint.
 // If the metadata key silently changed, TestImportIdentityReuseAcrossIssues
 // would still pass on a single run — this test catches that regression.
+func TestImportIdentityScopedToInstance(t *testing.T) {
+	first := (&giteatest.FakeAPI{Owner: "owner", Project: "project"}).NewServer(t)
+	second := (&giteatest.FakeAPI{Owner: "owner", Project: "project"}).NewServer(t)
+	gi, backend := setupImporter(t, first.URL)
+	gi.out = make(chan core.ImportResult, 2)
+	poster := &gitea.User{UserName: "same-user"}
+
+	one, err := gi.ensurePerson(context.Background(), backend, poster)
+	require.NoError(t, err)
+	gi.conf[confKeyBaseURL] = second.URL
+	gi.client, err = buildClient(second.URL, auth.NewToken(target, "test-token"))
+	require.NoError(t, err)
+	two, err := gi.ensurePerson(context.Background(), backend, poster)
+	require.NoError(t, err)
+	assert.NotEqual(t, one.Id(), two.Id())
+	assert.Len(t, backend.Identities().AllIds(), 2)
+}
+
+func TestImportIdentityLookupHonorsCancellation(t *testing.T) {
+	server := (&giteatest.FakeAPI{Owner: "owner", Project: "project"}).NewServer(t)
+	gi, backend := setupImporter(t, server.URL)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := gi.ensurePerson(ctx, backend, &gitea.User{UserName: "uncached"})
+	require.ErrorIs(t, err, context.Canceled)
+}
+
 func TestImportIdentityCarriesLoginAndProfile(t *testing.T) {
 	ts := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	// FakeAPI's user endpoint returns FullName=login, Email=login+"@example.com";

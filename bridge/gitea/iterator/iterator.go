@@ -31,9 +31,10 @@ type config struct {
 
 	timeout time.Duration
 
-	// if since is given the iterator will query only the issues
-	// updated after this date
+	// If since is given, list only issues updated after this date.
 	since time.Time
+	// Timeline history is fetched in full for newly discovered issues.
+	timelineSince time.Time
 
 	// name of the repository owner on Gitea
 	owner string
@@ -109,16 +110,23 @@ func NewIterator(ctx context.Context, client *gitea.Client, capacity int, owner,
 	return &Iterator{
 		ctx: ctx,
 		conf: config{
-			gc:       client,
-			timeout:  timeout,
-			since:    since,
-			owner:    owner,
-			project:  project,
-			capacity: capacity,
+			gc:            client,
+			timeout:       timeout,
+			since:         since,
+			timelineSince: since,
+			owner:         owner,
+			project:       project,
+			capacity:      capacity,
 		},
 		issue:    newPageIterator[gitea.Issue](fetchIssues),
 		timeline: newPageIterator[TimelineEvent](fetchTimeline),
 	}
+}
+
+// SetTimelineSince selects the history cutoff for the current issue.
+// Call it before NextEvent, after NextIssue has reset the timeline cursor.
+func (i *Iterator) SetTimelineSince(since time.Time) {
+	i.conf.timelineSince = since
 }
 
 // Return last encountered error
@@ -279,7 +287,7 @@ func fetchTimeline(ctx context.Context, conf config, issue *gitea.Issue, page in
 				Page:     page,
 				PageSize: conf.capacity,
 			},
-			Since: conf.since,
+			Since: conf.timelineSince,
 		},
 	)
 	if err != nil {

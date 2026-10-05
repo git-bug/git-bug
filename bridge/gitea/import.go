@@ -77,10 +77,18 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 			issue := gi.iterator.IssueValue()
 
 			// create a record to point to
-			b, err := gi.ensureIssue(ctx, repo, issue)
+			b, created, err := gi.ensureIssue(ctx, repo, issue)
 			if err != nil {
 				gi.reportError(ctx, err, "issue creation")
 				return
+			}
+
+			// A newly discovered issue needs its entire history even when the
+			// issue listing itself was filtered by since.
+			if created {
+				gi.iterator.SetTimelineSince(time.Time{})
+			} else {
+				gi.iterator.SetTimelineSince(since)
 			}
 
 			// Loop over all events
@@ -458,10 +466,10 @@ func cleanTitle(title string) string {
 	return title
 }
 
-func (gi *giteaImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache, issue *gitea.Issue) (*cache.BugCache, error) {
+func (gi *giteaImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache, issue *gitea.Issue) (*cache.BugCache, bool, error) {
 	author, err := gi.ensurePerson(ctx, repo, issue.Poster)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	giteaID := strconv.FormatInt(issue.Index, 10)
@@ -475,10 +483,10 @@ func (gi *giteaImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache,
 			excerpt.CreateMetadata[metaKeyGiteaProject] == gi.conf[confKeyProject]
 	})
 	if err == nil {
-		return b, nil
+		return b, false, nil
 	}
 	if !entity.IsErrNotFound(err) {
-		return nil, err
+		return nil, false, err
 	}
 
 	// if bug was never imported, create bug
@@ -498,12 +506,12 @@ func (gi *giteaImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache,
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	gi.sendImportResult(ctx, core.NewImportBug(b.Id()))
 
-	return b, nil
+	return b, true, nil
 }
 
 func (gi *giteaImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache, poster *gitea.User) (*cache.IdentityCache, error) {
@@ -514,12 +522,12 @@ func (gi *giteaImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache
 	username := poster.UserName
 
 	// Look first in the cache
-	i, err := getCachedIdentity(repo, username)
+	i, err := gi.getCachedIdentity(repo, username)
 	if i != nil || err != nil {
 		return i, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	user, resp, err := gi.client.Users.GetUserInfo(ctx, username)
@@ -537,7 +545,8 @@ func (gi *giteaImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache
 		nil,
 		map[string]string{
 			// because Gitea
-			metaKeyGiteaLogin: user.UserName,
+			metaKeyGiteaLogin:       user.UserName,
+			metaKeyGiteaScopedLogin: gi.conf[confKeyBaseURL] + "\x00" + user.UserName,
 		},
 	)
 	if err != nil {
@@ -548,8 +557,10 @@ func (gi *giteaImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache
 	return i, nil
 }
 
-func getCachedIdentity(repo *cache.RepoCache, loginName string) (*cache.IdentityCache, error) {
-	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, loginName)
+// Legacy identities carry only a username and cannot safely be assigned to
+// an instance. Keep them intact; create scoped identities on the next import.
+func (gi *giteaImporter) getCachedIdentity(repo *cache.RepoCache, loginName string) (*cache.IdentityCache, error) {
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaScopedLogin, gi.conf[confKeyBaseURL]+"\x00"+loginName)
 	if entity.IsErrNotFound(err) {
 		return nil, nil
 	}
@@ -557,7 +568,7 @@ func getCachedIdentity(repo *cache.RepoCache, loginName string) (*cache.Identity
 }
 
 func (gi *giteaImporter) deletedIdentity(ctx context.Context, repo *cache.RepoCache) (*cache.IdentityCache, error) {
-	i, err := getCachedIdentity(repo, DeletedIdentity)
+	i, err := gi.getCachedIdentity(repo, DeletedIdentity)
 	if i != nil || err != nil {
 		return i, err
 	}
@@ -569,7 +580,8 @@ func (gi *giteaImporter) deletedIdentity(ctx context.Context, repo *cache.RepoCa
 		nil,
 		map[string]string{
 			// because Gitea
-			metaKeyGiteaLogin: DeletedIdentity,
+			metaKeyGiteaLogin:       DeletedIdentity,
+			metaKeyGiteaScopedLogin: gi.conf[confKeyBaseURL] + "\x00" + DeletedIdentity,
 		},
 	)
 	if err != nil {

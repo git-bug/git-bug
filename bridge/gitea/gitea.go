@@ -16,11 +16,12 @@ const (
 	metaKeyGiteaCommentID = "gitea-comment-id"
 	// metaKeyGiteaEvent identifies the timeline event an operation was
 	// imported from, so re-imports don't duplicate it.
-	metaKeyGiteaEvent   = "gitea-timeline-event"
-	metaKeyGiteaLogin   = "gitea-login"
-	metaKeyGiteaOwner   = "gitea-owner"
-	metaKeyGiteaProject = "gitea-project"
-	metaKeyGiteaBaseURL = "gitea-base-url"
+	metaKeyGiteaEvent       = "gitea-timeline-event"
+	metaKeyGiteaLogin       = "gitea-login"
+	metaKeyGiteaScopedLogin = "gitea-instance-login"
+	metaKeyGiteaOwner       = "gitea-owner"
+	metaKeyGiteaProject     = "gitea-project"
+	metaKeyGiteaBaseURL     = "gitea-base-url"
 
 	confKeyOwner        = "owner"
 	confKeyProject      = "project"
