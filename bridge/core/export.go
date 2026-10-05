@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/entity/dag"
 )
 
 type ExportEvent int
@@ -104,6 +105,26 @@ func NewExportWarning(err error, entityId entity.Id) ExportResult {
 // ReasonNothingExported is the reason given for an issue that needed no
 // update. Push does not list such issues among the skipped ones.
 const ReasonNothingExported = "nothing has been exported"
+
+// ReasonNoTokenActor is the reason given for an issue without any change by
+// an identity that has a token for the bridge, so nothing can be pushed.
+const ReasonNoTokenActor = "no changes by an identity with a token for this bridge"
+
+// SkipReasonNoTokenActor returns the reason for an issue that push leaves
+// alone because no identity with a token changed it. An issue whose
+// operations all carry idKey is already in sync with the remote, so it is
+// reported as up to date rather than as skipped.
+func SkipReasonNoTokenActor(ops []dag.Operation, idKey string) string {
+	for _, op := range ops {
+		if _, ok := op.(dag.OperationDoesntChangeSnapshot); ok {
+			continue
+		}
+		if _, ok := op.GetMetadata(idKey); !ok {
+			return ReasonNoTokenActor
+		}
+	}
+	return ReasonNothingExported
+}
 
 func NewExportNothing(entityId entity.Id, reason string) ExportResult {
 	return ExportResult{
