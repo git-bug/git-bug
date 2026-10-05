@@ -140,6 +140,8 @@ func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 				if snapshot.HasAnyActor(allIdentitiesIds...) {
 					// try to export the bug and it associated events
 					ge.exportBug(ctx, b, out)
+				} else {
+					out <- core.NewExportNothing(b.Id(), core.SkipReasonNoTokenActor(snapshot.Operations, metaKeyGitlabId))
 				}
 			}
 		}
@@ -179,7 +181,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 	if ok {
 		gitlabBaseUrl, ok := snapshot.GetCreateMetadata(metaKeyGitlabBaseUrl)
 		if ok && gitlabBaseUrl != ge.conf[confKeyGitlabBaseUrl] {
-			out <- core.NewExportNothing(b.Id(), "skipping issue imported from another Gitlab instance")
+			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue belongs to another GitLab instance (%s)", gitlabBaseUrl))
 			return
 		}
 
@@ -191,7 +193,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		}
 
 		if projectID != ge.conf[confKeyProjectID] {
-			out <- core.NewExportNothing(b.Id(), "skipping issue imported from another repository")
+			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue belongs to another GitLab project (ID %s)", projectID))
 			return
 		}
 
@@ -208,7 +210,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		client, err := ge.getIdentityClient(author.Id())
 		if err != nil {
 			// if bug is still not exported and we do not have the author stop the execution
-			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("missing author token"))
+			out <- core.NewExportNothing(b.Id(), "missing a token for the issue author")
 			return
 		}
 
@@ -402,7 +404,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 	}
 
 	if !bugUpdated {
-		out <- core.NewExportNothing(b.Id(), "nothing has been exported")
+		out <- core.NewExportNothing(b.Id(), core.ReasonNothingExported)
 	}
 }
 
