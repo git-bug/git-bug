@@ -175,6 +175,16 @@ token, or a `all`-scoped one) is sufficient.
 No write scope is used or required, and the token owner simply needs read
 access to the repository (any role, or public repository visibility).
 
+Imports preserve the latest comment body but cannot recover earlier edits that
+Gitea or Forgejo does not expose. When timeline events are missing, the bridge
+reconciles labels and issue status against the current issue; it attributes
+those changes to the issue author because the API does not identify the actor.
+The importer now scopes new identities to the instance URL. Older imported
+identities have only a username and cannot be assigned to an instance safely;
+subsequent imports may create a second identity for the same person. Existing
+issue history keeps references to the original identity. Export remains
+unsupported, so `git bug bridge push` cannot push to Gitea.
+
 ## Interacting with the bridge<a name="interacting-with-the-bridge"></a>
 
 To push issues out to the bridge, run:
