@@ -195,19 +195,8 @@ To push issues out to the bridge, run:
 git bug bridge push [NAME]
 ```
 
-By default, push skips bugs imported from another bug tracker. To mirror them
-as well, so the same bug lives in several trackers, add `--foreign`:
-
-```bash
-git bug bridge push --foreign [NAME]
-```
-
-The remote tracker must contain no issues or pull requests before the first
-foreign push, and afterwards only issues created by mirroring. This keeps
-mirrored bugs from being mixed up with unrelated remote issues. The remote
-shows mirrored content as written by the owner of the bridge token, with a
-note naming the original author and date. Bridges have to support mirroring
-explicitly; for the others the option fails with an error.
+Push skips bugs imported from another bug tracker. Cross-tracker mirroring
+is not currently supported.
 
 To pull and integrate updates for issues from the bridge:
 

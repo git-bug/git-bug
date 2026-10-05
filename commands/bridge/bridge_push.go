@@ -17,23 +17,15 @@ import (
 )
 
 type bridgePushOptions struct {
-	foreign bool
-	verbose bool}
+	verbose bool
+}
 
 func newBridgePushCommand(env *execenv.Env) *cobra.Command {
 	options := bridgePushOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "push [NAME]",
-		Short: "Push updates to remote bug tracker",
-		Long: `Push updates to remote bug tracker.
-
-By default, bugs imported from another bug tracker are not pushed. With
---foreign they are mirrored too, which makes the same bug available in
-several trackers. The first foreign push needs a remote tracker without any
-issue or pull request; later ones need a tracker holding only mirrored
-issues. Mirrored content appears as written by the token owner, with a note
-naming the original author.`,
+		Use:     "push [NAME]",
+		Short:   "Push updates to remote bug tracker",
 		PreRunE: execenv.LoadBackendEnsureUser(env),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBridgePush(env, options, args)
@@ -44,8 +36,6 @@ naming the original author.`,
 
 	flags := cmd.Flags()
 	flags.SortFlags = false
-	flags.BoolVar(&options.foreign, "foreign", false,
-		"Also push bugs imported from other bug trackers (needs an empty or mirror-only remote tracker)")
 	flags.BoolVarP(&options.verbose, "verbose", "v", false,
 		"Explain why issues were not pushed")
 	return cmd
@@ -93,7 +83,7 @@ func runBridgePush(env *execenv.Env, opts bridgePushOptions, args []string) erro
 		return nil
 	})
 
-	events, err := b.ExportAllWithOptions(ctx, time.Time{}, core.ExportOptions{Foreign: opts.foreign})
+	events, err := b.ExportAll(ctx, time.Time{})
 	if err != nil {
 		return err
 	}

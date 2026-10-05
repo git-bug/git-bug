@@ -33,6 +33,8 @@ type giteaImporter struct {
 
 	// send only channel
 	out chan<- core.ImportResult
+	// Per-issue operation results wait for successful persistence.
+	pending *[]core.ImportResult
 }
 
 const DeletedIdentity = "@deleted-user"
@@ -74,6 +76,8 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 
 		// Loop over all matching issues
 		for gi.iterator.NextIssue() {
+			var pending []core.ImportResult
+			gi.pending = &pending
 			issue := gi.iterator.IssueValue()
 
 			// Buffer a new issue's history before creation so its first title
@@ -141,6 +145,10 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 				gi.reportBugError(ctx, err, "bug commit", b.Id())
 				return
 			}
+			gi.pending = nil
+			for _, result := range pending {
+				gi.sendImportResult(ctx, result)
+			}
 		}
 
 		if err := gi.iterator.Error(); err != nil {
@@ -161,6 +169,10 @@ func (gi *giteaImporter) reportBugError(ctx context.Context, err error, when str
 }
 
 func (gi *giteaImporter) sendImportResult(ctx context.Context, result core.ImportResult) {
+	if gi.pending != nil && result.Event != core.ImportEventError && result.Event != core.ImportEventBug && result.Event != core.ImportEventIdentity {
+		*gi.pending = append(*gi.pending, result)
+		return
+	}
 	select {
 	case gi.out <- result:
 	// Handle cancellation.
@@ -412,9 +424,13 @@ func (gi *giteaImporter) reconcileStatus(ctx context.Context, repo *cache.RepoCa
 	if bug.Snapshot().Status == targetStatus {
 		return nil
 	}
-	for _, op := range bug.Snapshot().Operations {
-		if _, ok := op.(*bugpkg.SetStatusOperation); ok && !isExportedOrImported(op) {
-			return nil
+	ops := bug.Snapshot().Operations
+	for i := len(ops) - 1; i >= 0; i-- {
+		if _, ok := ops[i].(*bugpkg.SetStatusOperation); ok {
+			if !isExportedOrImported(ops[i]) {
+				return nil
+			}
+			break
 		}
 	}
 
