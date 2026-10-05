@@ -155,3 +155,39 @@ func TestExportRemovesRenamedImportedLabel(t *testing.T) {
 	}
 	require.Empty(t, fa.LabelsByIssue[1])
 }
+
+func TestExportDoesNotReuseHistoricalLabelID(t *testing.T) {
+	renamed := &gitea.Label{ID: 42, Name: "renamed"}
+	local := &gitea.Label{ID: 43, Name: "original"}
+	issue := testIssue()
+	issue.Labels = []*gitea.Label{renamed, local}
+	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project", Issues: []*gitea.Issue{issue}, RepoLabels: []*gitea.Label{renamed, local}, LabelsByIssue: map[int64][]*gitea.Label{1: {renamed, local}}}
+	srv := fa.NewServer(t)
+	repo, backend := newRoundTripRepo(t)
+	storeRoundTripToken(t, repo, srv.URL)
+	seedRoundTripBug(t, backend, roundTripBug{Title: "mine", Body: "body"})
+	b := onlyBug(t, backend)
+	user := b.Snapshot().Author
+	_, err := b.SetMetadataRaw(user, time.Now().Unix(), b.Snapshot().Operations[0].Id(), map[string]string{
+		metaKeyGiteaID: "1", metaKeyGiteaBaseURL: srv.URL, metaKeyGiteaOwner: "owner", metaKeyGiteaProject: "project",
+	})
+	require.NoError(t, err)
+	_, _, err = b.ChangeLabelsRaw(user, time.Now().Unix(), []string{"original"}, nil, map[string]string{metaKeyGiteaID: "42"})
+	require.NoError(t, err)
+	_, _, err = b.ChangeLabelsRaw(user, time.Now().Unix(), []string{"renamed"}, []string{"original"}, map[string]string{metaKeyGiteaID: "reconcile"})
+	require.NoError(t, err)
+	_, _, err = b.ChangeLabelsRaw(user, time.Now().Unix(), []string{"original"}, nil, nil)
+	require.NoError(t, err)
+	_, _, err = b.ChangeLabelsRaw(user, time.Now().Unix(), nil, []string{"original"}, nil)
+	require.NoError(t, err)
+	require.NoError(t, b.Commit())
+	exporter := &giteaExporter{}
+	require.NoError(t, exporter.Init(context.Background(), backend, roundTripConfig(srv.URL)))
+	results, err := exporter.ExportAll(context.Background(), backend, time.Time{})
+	require.NoError(t, err)
+	for result := range results {
+		require.NoError(t, result.Err)
+	}
+	require.Len(t, fa.LabelsByIssue[1], 1)
+	require.Equal(t, int64(42), fa.LabelsByIssue[1][0].ID)
+}

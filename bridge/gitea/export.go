@@ -359,10 +359,14 @@ func (ge *giteaExporter) changeLabels(ctx context.Context, index int64, change *
 		}
 		raw, _ := op.GetMetadata(metaKeyGiteaID)
 		id, err := strconv.ParseInt(raw, 10, 64)
-		if err == nil {
-			for _, name := range labelOp.Added {
+		for _, name := range labelOp.Added {
+			delete(knownIDs, strings.ToLower(string(name)))
+			if err == nil {
 				knownIDs[strings.ToLower(string(name))] = id
 			}
+		}
+		for _, name := range labelOp.Removed {
+			delete(knownIDs, strings.ToLower(string(name)))
 		}
 	}
 	for page := 1; ; page++ {
