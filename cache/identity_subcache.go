@@ -14,11 +14,12 @@ func NewRepoCacheIdentity(repo repository.ClockedRepo,
 	resolvers func() entity.Resolvers,
 	getUserIdentity getUserIdentityFunc) *RepoCacheIdentity {
 
-	makeCached := func(i *identity.Identity, onCommit func() error) *IdentityCache {
-		return NewIdentityCache(i, repo, onCommit)
+	makeView := func(i *identity.Identity, onCommit func() error) *IdentityCache {
+		// a copy, so that what the view mutates stays its own until committed
+		return NewIdentityCache(i.Clone(), repo, onCommit)
 	}
 
-	makeIndex := func(i *IdentityCache) []string {
+	makeIndex := func(i *identity.Identity) []string {
 		// no indexing
 		return nil
 	}
@@ -29,13 +30,18 @@ func NewRepoCacheIdentity(repo repository.ClockedRepo,
 	//   entity. Ideally identities would be converted to the dag framework, but right now that could lead to potential attack: if an old
 	//   private key is leaked, it would be possible to craft a legal identity update that take over the most recent version. While this is
 	//   meaningless in the case of a normal entity, it's really an issues for identities.
+	//
+	//   Until then, identities get a simpler version of the write model of the other entities: an IdentityCache is a view
+	//   over a copy of the loaded identity, taken when it is resolved, that it mutates and commits on its own. The loaded
+	//   identity holds committed state only. A refresh replaces it rather than updating it in place, so a view, or a bug,
+	//   resolved before keeps the previous copy until it is resolved again.
 
 	actions := Actions[*identity.Identity]{
 		ReadWithResolver: func(repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (*identity.Identity, error) {
 			return identity.Read(repo, id)
 		},
-		ReadAllWithResolver: func(repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[*identity.Identity] {
-			return identity.ReadAll(repo)
+		Refresh: func(repo repository.ClockedRepo, resolvers entity.Resolvers, i *identity.Identity) (*identity.Identity, error) {
+			return identity.Read(repo, i.Id())
 		},
 		Remove:    identity.Remove,
 		RemoveAll: identity.RemoveAll,
@@ -48,7 +54,7 @@ func NewRepoCacheIdentity(repo repository.ClockedRepo,
 
 	sc := NewSubCache[*identity.Identity, *IdentityExcerpt, *IdentityCache](
 		repo, resolvers, getUserIdentity,
-		makeCached, NewIdentityExcerpt, makeIndex, actions,
+		makeView, newIdentityExcerpt, makeIndex, actions,
 		identity.Typename, identity.Namespace,
 		formatVersion, defaultMaxLoadedBugs,
 	)

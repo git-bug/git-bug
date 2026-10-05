@@ -102,6 +102,12 @@ func TestSetMetadata(t *testing.T) {
 	require.Len(t, target2Metadata, 2)
 	require.Equal(t, target2Metadata["key2"], "value2")
 	require.Equal(t, target2Metadata["key3"], "value3")
+
+	// the targets are replaced in the snapshot by copies, the originals are untouched
+	require.IsType(t, target1, snap.AllOperations()[0])
+	require.Equal(t, target1.Id(), snap.AllOperations()[0].Id())
+	require.Equal(t, map[string]string{"key": "value"}, target1.AllMetadata())
+	require.Equal(t, map[string]string{"key2": "value2"}, target2.AllMetadata())
 }
 
 func TestSetMetadataSerialize(t *testing.T) {
