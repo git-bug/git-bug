@@ -7,7 +7,9 @@ import (
 	"maps"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/go-git/go-billy/v5"
@@ -75,7 +77,7 @@ func lenComments(t *testing.T, c *RepoCache, id entity.Id) int {
 }
 
 // newTestCacheWithUser opens a cache on repo, with a user identity set.
-func newTestCacheWithUser(t *testing.T, repo repository.TestedRepo) (*RepoCache, *IdentityCache) {
+func newTestCacheWithUser(t testing.TB, repo repository.TestedRepo) (*RepoCache, *IdentityCache) {
 	t.Helper()
 	c := createTestRepoCacheNoEvents(t, repo)
 	rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
@@ -939,4 +941,175 @@ func TestSubCacheWriteNeverTorn(t *testing.T) {
 			require.NoError(t, readRaw())
 		}
 	}
+}
+
+// listHookRepo calls onList, if set, each time the bug refs are listed.
+type listHookRepo struct {
+	repository.TestedRepo
+	onList func() error
+}
+
+func (r *listHookRepo) ListRefs(namespace string) (map[string]repository.Hash, error) {
+	refs, err := r.TestedRepo.ListRefs(namespace)
+	if err == nil && namespace == bug.Namespace && r.onList != nil {
+		err = r.onList()
+	}
+	return refs, err
+}
+
+func TestSubCacheWorker(t *testing.T) {
+	// setup opens a cache on a mock repo, and hooks the listing of the bug refs.
+	// Run in a synctest bubble, time is fake, and synctest.Wait returns once
+	// every goroutine of the bubble, the workers included, is idle.
+	setup := func(t *testing.T) (repository.ClockedRepo, *RepoCache, *IdentityCache, *listHookRepo) {
+		t.Helper()
+		repo := repository.NewMockRepo()
+		hook := &listHookRepo{TestedRepo: repo}
+		c, rene := newTestCacheWithUser(t, hook)
+		synctest.Wait()
+		return repo, c, rene, hook
+	}
+	createOutside := func(t *testing.T, repo repository.ClockedRepo, author identity.Interface) entity.Id {
+		t.Helper()
+		b, _, err := bug.Create(author, time.Now().Unix(), "title", "message", nil, nil)
+		require.NoError(t, err)
+		require.NoError(t, b.Commit(repo))
+		return b.Id()
+	}
+	// hasExcerpt reads the maps directly: a read would request a sync
+	hasExcerpt := func(c *RepoCache, id entity.Id) bool {
+		c.bugs.muMaps.RLock()
+		defer c.bugs.muMaps.RUnlock()
+		_, ok := c.bugs.excerpts[id]
+		return ok
+	}
+	workerErr := func(c *RepoCache) error {
+		c.bugs.muSyncWorker.Lock()
+		defer c.bugs.muSyncWorker.Unlock()
+		return c.bugs.syncWorkerErr
+	}
+
+	t.Run("a read within the interval syncs once it passed", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, c, rene, hook := setup(t)
+			// atomic: the worker syncs on a timer, which orders nothing with the test
+			var syncs atomic.Int32
+			hook.onList = func() error { syncs.Add(1); return nil }
+			id := createOutside(t, repo, rene)
+
+			// the sync of Load just ended: the read is served without a sync,
+			// and nothing else reads
+			c.Bugs().AllIds()
+			synctest.Wait()
+			require.Zero(t, syncs.Load())
+
+			time.Sleep(syncInterval)
+			synctest.Wait()
+			require.EqualValues(t, 1, syncs.Load())
+			require.True(t, hasExcerpt(c, id))
+		})
+	})
+
+	t.Run("reads sync at most once per interval", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			_, c, _, hook := setup(t)
+			// atomic: the worker syncs on a timer, which orders nothing with the test
+			var syncs atomic.Int32
+			hook.onList = func() error { syncs.Add(1); return nil }
+
+			time.Sleep(syncInterval)
+			for range 3 {
+				c.Bugs().AllIds()
+			}
+			synctest.Wait()
+			require.EqualValues(t, 1, syncs.Load())
+
+			for range 3 {
+				c.Bugs().AllIds()
+			}
+			synctest.Wait()
+			require.EqualValues(t, 1, syncs.Load())
+
+			time.Sleep(syncInterval)
+			synctest.Wait()
+			require.EqualValues(t, 2, syncs.Load())
+		})
+	})
+
+	t.Run("the timer syncs while nothing reads", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, c, rene, _ := setup(t)
+			id := createOutside(t, repo, rene)
+
+			time.Sleep(syncPeriod)
+			synctest.Wait()
+			require.True(t, hasExcerpt(c, id))
+		})
+	})
+
+	t.Run("reads during a sync are not held", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, c, rene, hook := setup(t)
+			held, release := make(chan struct{}), make(chan struct{})
+			hook.onList = func() error {
+				close(held)
+				<-release
+				return nil
+			}
+			id := createOutside(t, repo, rene)
+
+			time.Sleep(syncInterval)
+			c.Bugs().AllIds()
+			<-held
+			require.Empty(t, searchBugs(t, c, "title"))
+			hook.onList = nil
+			close(release)
+
+			synctest.Wait()
+			require.Equal(t, []entity.Id{id}, searchBugs(t, c, "title"))
+		})
+	})
+
+	t.Run("a failed sync is kept, and retried", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, c, rene, hook := setup(t)
+			hook.onList = func() error { return fmt.Errorf("listing failed") }
+			id := createOutside(t, repo, rene)
+
+			time.Sleep(syncInterval)
+			c.Bugs().AllIds()
+			synctest.Wait()
+			require.ErrorContains(t, workerErr(c), "listing failed")
+
+			hook.onList = nil
+			time.Sleep(syncInterval)
+			c.Bugs().AllIds()
+			synctest.Wait()
+			require.NoError(t, workerErr(c))
+			require.True(t, hasExcerpt(c, id))
+		})
+	})
+
+	// with a real repository, outside of a bubble as bleve runs goroutines of
+	// its own: a bug modified outside of the cache shows up once a read follows
+	// the interval
+	t.Run("a bug modified outside with GoGitRepo", func(t *testing.T) {
+		repo := repository.CreateGoGitTestRepo(t, false)
+		c, rene := newTestCacheWithUser(t, repo)
+		b, _, err := c.Bugs().New("title", "message")
+		require.NoError(t, err)
+
+		other, err := bug.Read(repo, b.Id())
+		require.NoError(t, err)
+		_, _, err = bug.AddComment(other, rene, time.Now().Unix(), "markeroutside", nil, nil)
+		require.NoError(t, err)
+		require.NoError(t, other.Commit(repo))
+
+		require.Eventually(t, func() bool {
+			c.Bugs().AllIds()
+			return lenComments(t, c, b.Id()) == 2
+		}, 5*time.Second, 50*time.Millisecond)
+		require.Equal(t, []entity.Id{b.Id()}, searchBugs(t, c, "markeroutside"))
+		requireDerivedBuiltFromRefs(t, repo, c)
+	})
 }

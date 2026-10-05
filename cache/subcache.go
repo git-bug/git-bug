@@ -90,6 +90,18 @@ type SubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved] struct {
 
 	muObservers sync.RWMutex
 	observers   map[Observer]string // observer --> repo name
+
+	// syncTrigger asks the worker for a sync, see requestSync and startSyncWorker.
+	syncTrigger chan struct{}
+	// stopSyncWorker is closed by Close, to stop the worker.
+	stopSyncWorker chan struct{}
+	syncWorkerDone sync.WaitGroup
+	// muSyncWorker guards the state of the worker below. It is only held briefly.
+	muSyncWorker     sync.Mutex
+	syncWorkerClosed bool
+	// syncWorkerErr is the error of the latest sync of the worker, nil if it
+	// succeeded.
+	syncWorkerErr error
 }
 
 func NewSubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved](
@@ -116,6 +128,8 @@ func NewSubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved](
 		excerpts:        make(map[entity.Id]ExcerptT),
 		builtFrom:       make(map[entity.Id]repository.Hash),
 		cached:          make(map[entity.Id]SharedT),
+		syncTrigger:     make(chan struct{}, 1),
+		stopSyncWorker:  make(chan struct{}),
 		lru:             newLRUIdCache(),
 	}
 }
@@ -145,7 +159,9 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) Load() <-chan BuildEvent {
 		err := sc.syncAll(func(event BuildEvent) { out <- event })
 		if err != nil {
 			out <- BuildEvent{Typename: sc.typename, Err: err}
+			return
 		}
+		sc.startSyncWorker()
 	}()
 
 	return out
@@ -272,6 +288,14 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) SetCacheSize(size int) {
 }
 
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) Close() error {
+	sc.muSyncWorker.Lock()
+	if !sc.syncWorkerClosed {
+		sc.syncWorkerClosed = true
+		close(sc.stopSyncWorker)
+	}
+	sc.muSyncWorker.Unlock()
+	sc.syncWorkerDone.Wait()
+
 	sc.muDerived.Lock()
 	defer sc.muDerived.Unlock()
 	sc.muMaps.Lock()
@@ -300,6 +324,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) UnregisterObserver(observer Observ
 
 // AllIds return all known bug ids
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) AllIds() []entity.Id {
+	sc.requestSync()
 	sc.muMaps.RLock()
 	defer sc.muMaps.RUnlock()
 
@@ -318,6 +343,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) AllIds() []entity.Id {
 // view of the single loaded copy of the entity: what a caller stages on it is its
 // own until committed, while the committed state is shared.
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) Resolve(id entity.Id) (ViewT, error) {
+	sc.requestSync()
 	sc.muMaps.RLock()
 	shared, ok := sc.cached[id]
 	if ok {
@@ -368,6 +394,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) ResolveMatcher(f func(ExcerptT) bo
 
 // ResolveExcerpt retrieves an Excerpt matching the exact given id
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) ResolveExcerpt(id entity.Id) (ExcerptT, error) {
+	sc.requestSync()
 	sc.muMaps.RLock()
 	defer sc.muMaps.RUnlock()
 
@@ -397,6 +424,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) ResolveExcerptMatcher(f func(Excer
 }
 
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) resolveMatcher(f func(ExcerptT) bool) (entity.Id, error) {
+	sc.requestSync()
 	sc.muMaps.RLock()
 	defer sc.muMaps.RUnlock()
 
@@ -595,7 +623,96 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncAll(progress func(BuildEvent))
 	changes, err := sc.syncAllLocked(progress)
 	sc.muDerived.Unlock()
 	sc.notifyChanges(changes)
+
 	return err
+}
+
+// syncInterval is how long after a sync of the worker a read can start another,
+// see startSyncWorker.
+//
+// TODO: shrink it, or drop it, once a sync that finds nothing to do is cheap.
+// With 10k bugs it takes ~110ms and allocates ~20MB, 93% of the CPU and 80% of
+// the allocations in ListRefs, which opens and reads every loose ref file; the
+// rest mostly decodes the index record. Levers, by expected gain:
+//   - go-git keeping the refs it lists, and reading them again only when the
+//     stat of their directory or of packed-refs changed: no read at all when
+//     nothing changed;
+//   - packing the refs: listing 10k packed refs takes ~3ms instead of ~100ms,
+//     until new writes make them loose again;
+//   - keeping the decoded index record in memory rather than decoding it on
+//     each sync.
+const syncInterval = time.Second
+
+// syncPeriod is how often the worker syncs, whether anything reads or not, see
+// startSyncWorker.
+const syncPeriod = time.Minute
+
+// requestSync asks the worker for a sync of every entity, to bring the cache up
+// to date with changes made to the references outside of it, by another process
+// or the git binary. Every read calls it first. It never waits: the read is
+// served from the cache as it is, and a change made outside shows up shortly
+// after. Any number of requests collapse into one.
+func (sc *SubCache[SharedT, ExcerptT, ViewT]) requestSync() {
+	select {
+	case sc.syncTrigger <- struct{}{}:
+	default:
+	}
+}
+
+// startSyncWorker starts the worker, until Close. It syncs every entity in the
+// background, one sync at a time: every syncPeriod, which keeps the cache close
+// to the references while nothing reads so that the observers learn of changes
+// made outside, and on request, see requestSync. A request received less than
+// syncInterval after the latest sync ended is postponed until then, not
+// dropped: a change made outside then shows up at most syncInterval after a
+// read. When nothing changed, a sync only lists the references, which is why
+// it isn't done more often.
+//
+// A failed sync is kept in syncWorkerErr, and retried like any other.
+func (sc *SubCache[SharedT, ExcerptT, ViewT]) startSyncWorker() {
+	sc.muSyncWorker.Lock()
+	defer sc.muSyncWorker.Unlock()
+	if sc.syncWorkerClosed {
+		return
+	}
+
+	sc.syncWorkerDone.Add(1)
+	go func() {
+		defer sc.syncWorkerDone.Done()
+
+		ticker := time.NewTicker(syncPeriod)
+		defer ticker.Stop()
+		// started right after the sync of Load
+		lastSync := time.Now()
+		// postponed fires when a request received too soon after the latest
+		// sync can be served, nil if there is none
+		var postponed <-chan time.Time
+
+		for {
+			select {
+			case <-sc.stopSyncWorker:
+				return
+			case <-ticker.C:
+			case <-postponed:
+			case <-sc.syncTrigger:
+				if wait := syncInterval - time.Since(lastSync); wait > 0 {
+					if postponed == nil {
+						postponed = time.After(wait)
+					}
+					continue
+				}
+			}
+
+			// the sync serves any postponed request
+			postponed = nil
+			err := sc.syncAll(nil)
+			lastSync = time.Now()
+
+			sc.muSyncWorker.Lock()
+			sc.syncWorkerErr = err
+			sc.muSyncWorker.Unlock()
+		}
+	}()
 }
 
 // syncBatchSize is the number of entities applied to the index at once.
