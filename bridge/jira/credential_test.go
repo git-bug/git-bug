@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -35,6 +36,8 @@ func TestTokenCredentials(t *testing.T) {
 	token.SetMetadata(auth.MetaKeyLogin, "alice")
 	token.SetMetadata(auth.MetaKeyBaseURL, server.URL)
 	require.NoError(t, auth.Store(repo, token))
+	// Windows clocks can give back-to-back credentials the same timestamp.
+	time.Sleep(30 * time.Millisecond)
 	password := auth.NewLoginPassword(target, "alice", "account-password")
 	password.SetMetadata(auth.MetaKeyLogin, "alice")
 	password.SetMetadata(auth.MetaKeyBaseURL, server.URL)
