@@ -2,6 +2,7 @@ package bridgecmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -96,6 +97,7 @@ func runBridgePush(env *execenv.Env, opts bridgePushOptions, args []string) erro
 	}
 
 	exportedIssues := 0
+	exportErrors := 0
 	for result := range events {
 		if result.Event != core.ExportEventNothing {
 			env.Out.Println(result.String())
@@ -104,6 +106,8 @@ func runBridgePush(env *execenv.Env, opts bridgePushOptions, args []string) erro
 		switch result.Event {
 		case core.ExportEventBug:
 			exportedIssues++
+		case core.ExportEventError:
+			exportErrors++
 		}
 	}
 
@@ -111,5 +115,9 @@ func runBridgePush(env *execenv.Env, opts bridgePushOptions, args []string) erro
 
 	// send done signal
 	close(done)
+
+	if exportErrors > 0 {
+		return fmt.Errorf("%d export error(s) with %s bridge", exportErrors, b.Name)
+	}
 	return nil
 }

@@ -111,6 +111,7 @@ func runBridgePull(env *execenv.Env, opts bridgePullOptions, args []string) erro
 
 	importedIssues := 0
 	importedIdentities := 0
+	importErrors := 0
 	for result := range events {
 		switch result.Event {
 		case core.ImportEventNothing:
@@ -126,6 +127,7 @@ func runBridgePull(env *execenv.Env, opts bridgePullOptions, args []string) erro
 
 		case core.ImportEventError:
 			if result.Err != context.Canceled {
+				importErrors++
 				env.Out.Println(result.String())
 			}
 
@@ -139,6 +141,9 @@ func runBridgePull(env *execenv.Env, opts bridgePullOptions, args []string) erro
 	// send done signal
 	close(done)
 
+	if importErrors > 0 {
+		return fmt.Errorf("%d import error(s) with %s bridge", importErrors, b.Name)
+	}
 	return nil
 }
 
