@@ -139,7 +139,7 @@ func reportImportResults(out execenv.Out, name string, events <-chan core.Import
 			out.Println(result.String())
 
 		case core.ImportEventError:
-			if result.Err != context.Canceled {
+			if !errors.Is(result.Err, context.Canceled) {
 				importErrors++
 				out.Println(result.String())
 			}
