@@ -98,6 +98,18 @@ func runBridgePush(env *execenv.Env, opts bridgePushOptions, args []string) erro
 		return err
 	}
 
+	reportErr := reportExportResults(env.Out, b.Name, events, opts.verbose)
+
+	// send done signal
+	close(done)
+
+	return reportErr
+}
+
+// reportExportResults prints the outcome of a push and returns an error if
+// any issue failed to export. With verbose, it also summarizes why issues
+// were skipped.
+func reportExportResults(out execenv.Out, name string, events <-chan core.ExportResult, verbose bool) error {
 	exportedIssues := 0
 	exportErrors := 0
 	// Skipped issues are summarized by reason instead of listed one by one.
@@ -111,7 +123,7 @@ func runBridgePush(env *execenv.Env, opts bridgePushOptions, args []string) erro
 			skipped[result.Reason]++
 		}
 		if result.Event != core.ExportEventNothing {
-			env.Out.Println(result.String())
+			out.Println(result.String())
 		}
 
 		switch result.Event {
@@ -122,18 +134,15 @@ func runBridgePush(env *execenv.Env, opts bridgePushOptions, args []string) erro
 		}
 	}
 
-	if opts.verbose {
+	if verbose {
 		for _, reason := range skipOrder {
-			env.Out.Printf("skipped %d issues: %s\n", skipped[reason], reason)
+			out.Printf("skipped %d issues: %s\n", skipped[reason], reason)
 		}
 	}
-	env.Out.Printf("exported %d issues with %s bridge\n", exportedIssues, b.Name)
-
-	// send done signal
-	close(done)
+	out.Printf("exported %d issues with %s bridge\n", exportedIssues, name)
 
 	if exportErrors > 0 {
-		return fmt.Errorf("%d export error(s) with %s bridge", exportErrors, b.Name)
+		return fmt.Errorf("%d export error(s) with %s bridge", exportErrors, name)
 	}
 	return nil
 }
