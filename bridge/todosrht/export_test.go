@@ -17,8 +17,10 @@ import (
 
 func TestExporter(t *testing.T) {
 	repo := repository.NewMockRepo()
+	t.Cleanup(func() { require.NoError(t, repo.Close()) })
 	backend, err := cache.NewRepoCacheNoEvents(repo)
 	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, backend.Close()) })
 
 	conf := core.Configuration{
 		confKeyTrackerName:  "test-tracker",
@@ -110,6 +112,7 @@ func TestExporter(t *testing.T) {
 		require.NoError(t, err)
 		_, _, err = bugCache.AddComment("New comment")
 		require.NoError(t, err)
+		require.NoError(t, bugCache.Commit())
 
 		events, err := exporter.ExportAll(context.Background(), backend, time.Now().Add(time.Hour))
 		require.NoError(t, err)
@@ -129,6 +132,7 @@ func TestExporter(t *testing.T) {
 
 		_, _, err = bugCache.AddComment("A first comment")
 		require.NoError(t, err)
+		require.NoError(t, bugCache.Commit())
 
 		events, err := exporter.ExportAll(context.Background(), backend, time.Time{})
 		require.NoError(t, err)
@@ -144,6 +148,7 @@ func TestExporter(t *testing.T) {
 
 		_, err = bugCache.Close()
 		require.NoError(t, err)
+		require.NoError(t, bugCache.Commit())
 
 		events, err := exporter.ExportAll(context.Background(), backend, time.Time{})
 		require.NoError(t, err)
@@ -161,6 +166,7 @@ func TestExporter(t *testing.T) {
 		require.NoError(t, err)
 		_, _, err = bugCache.ChangeLabels(nil, []string{"bug"})
 		require.NoError(t, err)
+		require.NoError(t, bugCache.Commit())
 
 		events, err := exporter.ExportAll(context.Background(), backend, time.Time{})
 		require.NoError(t, err)
