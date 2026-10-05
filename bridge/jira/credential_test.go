@@ -74,6 +74,23 @@ func TestTokenCredentials(t *testing.T) {
 	credentials, err = configuredCredentials(repo, legacyConf, auth.WithTarget(target))
 	require.NoError(t, err)
 	require.Equal(t, password.ID(), credentials[0].ID(), "the validated legacy API credential must remain selected")
+	login := auth.NewLogin(target, "alice")
+	login.SetMetadata(auth.MetaKeyLogin, "alice")
+	login.SetMetadata(auth.MetaKeyBaseURL, server.URL)
+	require.NoError(t, auth.Store(repo, login))
+	legacyConf[confKeyCredentialID] = login.ID().String()
+	credentials, err = configuredCredentials(repo, legacyConf, auth.WithTarget(target))
+	require.NoError(t, err)
+	require.Equal(t, login.ID(), credentials[0].ID(), "a configured password prompt must not be replaced by a stored secret")
+	legacyConf[confKeyCredentialID] = token.ID().String()
+	time.Sleep(30 * time.Millisecond)
+	replacement := auth.NewToken(target, "replacement")
+	replacement.SetMetadata(auth.MetaKeyLogin, "alice")
+	replacement.SetMetadata(auth.MetaKeyBaseURL, server.URL)
+	require.NoError(t, auth.Store(repo, replacement))
+	credentials, err = configuredCredentials(repo, legacyConf, auth.WithTarget(target))
+	require.NoError(t, err)
+	require.Equal(t, replacement.ID(), credentials[0].ID(), "newer tokens must rotate the configured token")
 }
 
 func TestSessionCredentialsIgnoreNewerToken(t *testing.T) {
