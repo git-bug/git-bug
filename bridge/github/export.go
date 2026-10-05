@@ -192,6 +192,21 @@ func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 					// try to export the bug and it associated events
 					ge.exportBug(ctx, b, out)
 				} else {
+					if origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin); ok && origin != target {
+						out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue tagged with origin: %s", origin))
+						continue
+					}
+					if issueURL, ok := snapshot.GetCreateMetadata(metaKeyGithubUrl); ok {
+						owner, project, err := splitURL(issueURL)
+						if err != nil {
+							out <- core.NewExportError(fmt.Errorf("bad project url: %v", err), b.Id())
+							continue
+						}
+						if !strings.EqualFold(owner, ge.conf[confKeyOwner]) || !strings.EqualFold(project, ge.conf[confKeyProject]) {
+							out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue belongs to another GitHub repository (%s/%s)", owner, project))
+							continue
+						}
+					}
 					out <- core.NewExportNothing(b.Id(), core.SkipReasonNoTokenActor(snapshot.Operations, metaKeyGithubId))
 				}
 			}

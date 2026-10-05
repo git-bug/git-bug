@@ -178,6 +178,14 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 						return
 					}
 				} else {
+					if origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin); ok && origin != target {
+						out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue tagged with origin: %s", origin))
+						continue
+					}
+					if project, ok := snapshot.GetCreateMetadata(metaKeyJiraProject); ok && !stringInSlice(project, []string{je.project.ID, je.project.Key}) {
+						out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue belongs to another Jira project (%s)", project))
+						continue
+					}
 					out <- core.NewExportNothing(id, core.SkipReasonNoTokenActor(snapshot.Operations, metaKeyJiraId))
 				}
 			}
