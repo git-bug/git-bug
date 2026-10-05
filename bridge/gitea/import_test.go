@@ -1401,6 +1401,18 @@ func TestImportIdentityScopedToInstance(t *testing.T) {
 	assert.Len(t, backend.Identities().AllIds(), 2)
 }
 
+func TestImportReusesConfiguredUserIdentity(t *testing.T) {
+	server := (&giteatest.FakeAPI{Owner: "owner", Project: "project"}).NewServer(t)
+	gi, backend := setupImporter(t, server.URL)
+	configured, err := backend.Identities().NewRaw("Test User", "", "testuser", "", nil,
+		map[string]string{metaKeyGiteaLogin: "testuser"})
+	require.NoError(t, err)
+
+	got, err := gi.ensurePerson(context.Background(), backend, &gitea.User{UserName: "testuser"})
+	require.NoError(t, err)
+	assert.Equal(t, configured.Id(), got.Id())
+}
+
 func TestImportIdentityLookupHonorsCancellation(t *testing.T) {
 	server := (&giteatest.FakeAPI{Owner: "owner", Project: "project"}).NewServer(t)
 	gi, backend := setupImporter(t, server.URL)
