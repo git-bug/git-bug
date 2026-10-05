@@ -15,22 +15,41 @@ import (
 	"github.com/git-bug/git-bug/util/interrupt"
 )
 
+type bridgePushOptions struct {
+	foreign bool
+}
+
 func newBridgePushCommand(env *execenv.Env) *cobra.Command {
+	options := bridgePushOptions{}
+
 	cmd := &cobra.Command{
-		Use:     "push [NAME]",
-		Short:   "Push updates to remote bug tracker",
+		Use:   "push [NAME]",
+		Short: "Push updates to remote bug tracker",
+		Long: `Push updates to remote bug tracker.
+
+By default, bugs imported from another bug tracker are not pushed. With
+--foreign they are mirrored too, which makes the same bug available in
+several trackers. The first foreign push needs a remote tracker without any
+issue or pull request; later ones need a tracker holding only mirrored
+issues. Mirrored content appears as written by the token owner, with a note
+naming the original author.`,
 		PreRunE: execenv.LoadBackendEnsureUser(env),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
-			return runBridgePush(env, args)
+			return runBridgePush(env, options, args)
 		}),
 		Args:              cobra.MaximumNArgs(1),
 		ValidArgsFunction: completion.Bridge(env),
 	}
 
+	flags := cmd.Flags()
+	flags.SortFlags = false
+	flags.BoolVar(&options.foreign, "foreign", false,
+		"Also push bugs imported from other bug trackers (needs an empty or mirror-only remote tracker)")
+
 	return cmd
 }
 
-func runBridgePush(env *execenv.Env, args []string) error {
+func runBridgePush(env *execenv.Env, opts bridgePushOptions, args []string) error {
 	var b *core.Bridge
 	var err error
 
@@ -72,7 +91,7 @@ func runBridgePush(env *execenv.Env, args []string) error {
 		return nil
 	})
 
-	events, err := b.ExportAll(ctx, time.Time{})
+	events, err := b.ExportAllWithOptions(ctx, time.Time{}, core.ExportOptions{Foreign: opts.foreign})
 	if err != nil {
 		return err
 	}
