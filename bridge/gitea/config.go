@@ -369,6 +369,9 @@ func validateProject(baseURL, owner, project string, token *auth.Token) (bool, e
 	if err != nil {
 		return false, errors.Wrap(err, "wrong token scope or non-existent project")
 	}
+	if err := checkIssueTracker(ctx, client, owner, project); err != nil {
+		return false, err
+	}
 
 	return true, nil
 }

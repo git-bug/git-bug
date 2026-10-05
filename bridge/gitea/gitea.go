@@ -1,6 +1,8 @@
 package gitea
 
 import (
+	"context"
+	"fmt"
 	"time"
 
 	"gitea.dev/sdk"
@@ -58,4 +60,26 @@ func buildClient(baseURL string, token *auth.Token) (*gitea.Client, error) {
 	}
 
 	return giteaClient, nil
+}
+
+// checkIssueTracker fails when the repository's issues do not live in Gitea.
+// With issues disabled or redirected to an external tracker, the issue API
+// lists nothing and rejects writes, which would otherwise look like an empty
+// but working bridge.
+func checkIssueTracker(ctx context.Context, client *gitea.Client, owner, project string) error {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+
+	repo, _, err := client.Repositories.GetRepo(ctx, owner, project)
+	if err != nil {
+		return fmt.Errorf("fetch repository %s/%s: %w", owner, project, err)
+	}
+	if repo.ExternalTracker != nil {
+		return fmt.Errorf("repository %s/%s uses the external issue tracker %s; the Gitea bridge needs the built-in issue tracker",
+			owner, project, repo.ExternalTracker.ExternalTrackerURL)
+	}
+	if !repo.HasIssues {
+		return fmt.Errorf("repository %s/%s has issues disabled", owner, project)
+	}
+	return nil
 }

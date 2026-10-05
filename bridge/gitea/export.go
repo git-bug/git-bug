@@ -40,7 +40,7 @@ type giteaExporter struct {
 	labels map[string]*gitea.Label
 }
 
-func (ge *giteaExporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
+func (ge *giteaExporter) Init(ctx context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	ge.conf = conf
 	ge.labels = nil
 
@@ -59,6 +59,9 @@ func (ge *giteaExporter) Init(_ context.Context, repo *cache.RepoCache, conf cor
 
 	ge.client, err = buildClient(conf[confKeyBaseURL], creds[0].(*auth.Token))
 	if err != nil {
+		return err
+	}
+	if err := checkIssueTracker(ctx, ge.client, conf[confKeyOwner], conf[confKeyProject]); err != nil {
 		return err
 	}
 

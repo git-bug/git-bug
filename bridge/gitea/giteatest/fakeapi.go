@@ -49,6 +49,13 @@ type FakeAPI struct {
 	// status (e.g. 500). Takes precedence over RepoNotFound.
 	RepoErrStatus int
 
+	// ExternalTracker, if set, makes the repository point issues to an
+	// external tracker, so the Gitea issue API is unusable.
+	ExternalTracker *gitea.ExternalTracker
+
+	// IssuesDisabled turns off the repository issue tracker.
+	IssuesDisabled bool
+
 	// IssueRequests accumulates every request made to the issues endpoint.
 	// Inspect after running to verify query parameters such as `since`.
 	IssueRequests []*http.Request
@@ -680,7 +687,17 @@ func (fa *FakeAPI) registerMiscHandlers(mux *http.ServeMux) {
 			http.Error(w, "not found", http.StatusNotFound)
 			return
 		}
-		writeJSON(w, &gitea.Repository{Name: fa.Project, Owner: &gitea.User{UserName: fa.Owner}})
+		repo := &gitea.Repository{
+			Name:      fa.Project,
+			Owner:     &gitea.User{UserName: fa.Owner},
+			HasIssues: !fa.IssuesDisabled,
+		}
+		if fa.ExternalTracker != nil {
+			repo.ExternalTracker = fa.ExternalTracker
+		} else if repo.HasIssues {
+			repo.InternalTracker = &gitea.InternalTracker{EnableTimeTracker: true}
+		}
+		writeJSON(w, repo)
 	})
 
 	// https://codeberg.org/api/swagger#/user/userGet
