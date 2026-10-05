@@ -68,6 +68,14 @@ func buildClient(ctx context.Context, baseURL string, credType string, cred auth
 	var login, password string
 
 	switch cred := cred.(type) {
+	case *auth.Token:
+		var ok bool
+		login, ok = cred.GetMetadata(auth.MetaKeyLogin)
+		if !ok || login == "" {
+			return nil, fmt.Errorf("Jira token has no login")
+		}
+		password = cred.Value
+		credType = "TOKEN"
 	case *auth.LoginPassword:
 		login = cred.Login
 		password = cred.Password
@@ -78,6 +86,8 @@ func buildClient(ctx context.Context, baseURL string, credType string, cred auth
 			return nil, err
 		}
 		password = p
+	default:
+		return nil, fmt.Errorf("unsupported Jira credential %T", cred)
 	}
 
 	err := client.Login(credType, login, password)
