@@ -385,9 +385,27 @@ func (b *Bridge) ImportAll(ctx context.Context) (<-chan ImportResult, error) {
 }
 
 func (b *Bridge) ExportAll(ctx context.Context, since time.Time) (<-chan ExportResult, error) {
+	return b.ExportAllWithOptions(ctx, since, ExportOptions{})
+}
+
+// ExportAllWithOptions is ExportAll with per-push options.
+func (b *Bridge) ExportAllWithOptions(ctx context.Context, since time.Time, opts ExportOptions) (<-chan ExportResult, error) {
 	exporter := b.getExporter()
 	if exporter == nil {
 		return nil, ErrExportNotSupported
+	}
+
+	if opts.Foreign {
+		fe, ok := exporter.(ForeignExporter)
+		if !ok {
+			return nil, fmt.Errorf("the %s bridge cannot push bugs from other bug trackers", b.impl.Target())
+		}
+		// Must happen before Init, which checks that the remote tracker
+		// can receive foreign bugs.
+		if b.initExportDone {
+			return nil, fmt.Errorf("foreign push must be requested before the exporter is initialized")
+		}
+		fe.EnableForeign()
 	}
 
 	err := b.ensureConfig()
