@@ -76,6 +76,13 @@ func RepoStorageTest(t *testing.T, repo RepoStorage) {
 	err = f.Close()
 	require.NoError(t, err)
 
+	f, err = storage.Open("foo/bar/foofoo")
+	require.NoError(t, err)
+	content, err := io.ReadAll(f)
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+	require.Equal(t, []byte("hello"), content)
+
 	// remove all
 	err = storage.RemoveAll(".")
 	require.NoError(t, err)
@@ -404,12 +411,14 @@ func RepoIndexTest(t *testing.T, repo RepoIndex) {
 		require.NoError(t, b.Set("id2", []string{"hello"}, commit2))
 		require.NoError(t, b.Apply())
 		requireSearch(t, idx, "foo", "id1")
+		requireSearch(t, idx, "hello", "id2")
 
 		b = idx.NewBatch()
 		b.Remove("id1")
 		require.NoError(t, b.Apply())
 		requireSearch(t, idx, "foo")
 
+		requireSearch(t, idx, "hello", "id2")
 		require.NoError(t, idx.Clear())
 		requireSearch(t, idx, "hello")
 	})
@@ -772,7 +781,7 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		require.NoError(t, err)
 		require.Equal(t, readmeV3, data)
 		require.Equal(t, int64(len(readmeV3)), size)
-		require.NotEmpty(t, hash)
+		require.Equal(t, hReadmeV3, hash)
 
 		// feature branch still has readmeV1
 		rc2, _, _, err := repo.BlobAtPath("feature", "README.md")
@@ -901,25 +910,26 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 	})
 
 	t.Run("LastCommitForEntries_cache-subset", func(t *testing.T) {
-		// First call with one name — seeds (or hits) the cache for this directory.
-		r1, err := repo.LastCommitForEntries("main", "", []string{"README.md"})
+		// The root tree at v1.0 is queried by no other subtest, so the cache is
+		// cold for it: the first call below is the one that fills the cache.
+		r1, err := repo.LastCommitForEntries("v1.0", "", []string{"README.md"})
 		require.NoError(t, err)
 		require.Contains(t, r1, "README.md")
-		require.Equal(t, c3, r1["README.md"].Hash)
+		require.Equal(t, c1, r1["README.md"].Hash)
 
 		// Second call for the same directory but a different name.
 		// A buggy implementation that caches only the requested subset would
 		// return an empty map here (cache hit, but "main.go" was never stored).
-		r2, err := repo.LastCommitForEntries("main", "", []string{"main.go"})
+		r2, err := repo.LastCommitForEntries("v1.0", "", []string{"main.go"})
 		require.NoError(t, err)
 		require.Contains(t, r2, "main.go", "second call with different name should hit correct result, not empty cache")
-		require.Equal(t, c2, r2["main.go"].Hash)
+		require.Equal(t, c1, r2["main.go"].Hash)
 
 		// Third call requesting both names should also work.
-		r3, err := repo.LastCommitForEntries("main", "", []string{"README.md", "main.go"})
+		r3, err := repo.LastCommitForEntries("v1.0", "", []string{"README.md", "main.go"})
 		require.NoError(t, err)
-		require.Equal(t, c3, r3["README.md"].Hash)
-		require.Equal(t, c2, r3["main.go"].Hash)
+		require.Equal(t, c1, r3["README.md"].Hash)
+		require.Equal(t, c1, r3["main.go"].Hash)
 	})
 
 	t.Run("LastCommitForEntries_concurrent", func(t *testing.T) {
@@ -958,19 +968,20 @@ func RepoBrowseTest(t *testing.T, repo browsable) {
 		require.Equal(t, c2, detail.Hash)
 		require.Equal(t, []Hash{c1}, detail.Parents)
 
-		filesByPath := make(map[string]ChangedFile)
-		for _, f := range detail.Files {
-			filesByPath[f.Path] = f
-		}
-		require.Equal(t, ChangeStatusModified, filesByPath["main.go"].Status)
-		require.Equal(t, ChangeStatusAdded, filesByPath["src/util.go"].Status)
+		// only the changed files are listed
+		require.ElementsMatch(t, []ChangedFile{
+			{Path: "main.go", Status: ChangeStatusModified},
+			{Path: "src/util.go", Status: ChangeStatusAdded},
+		}, detail.Files)
 
 		// initial commit: diffs against empty tree, everything is "added"
 		initDetail, err := repo.CommitDetail(c1)
 		require.NoError(t, err)
-		for _, f := range initDetail.Files {
-			require.Equal(t, ChangeStatusAdded, f.Status, "file %s", f.Path)
-		}
+		require.ElementsMatch(t, []ChangedFile{
+			{Path: "README.md", Status: ChangeStatusAdded},
+			{Path: "main.go", Status: ChangeStatusAdded},
+			{Path: "src/lib.go", Status: ChangeStatusAdded},
+		}, initDetail.Files)
 
 		// unknown hash
 		_, err = repo.CommitDetail(randomHash())

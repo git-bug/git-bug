@@ -288,13 +288,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) SetCacheSize(size int) {
 }
 
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) Close() error {
-	sc.muSyncWorker.Lock()
-	if !sc.syncWorkerClosed {
-		sc.syncWorkerClosed = true
-		close(sc.stopSyncWorker)
-	}
-	sc.muSyncWorker.Unlock()
-	sc.syncWorkerDone.Wait()
+	sc.closeSyncWorker()
 
 	sc.muDerived.Lock()
 	defer sc.muDerived.Unlock()
@@ -713,6 +707,18 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) startSyncWorker() {
 			sc.muSyncWorker.Unlock()
 		}
 	}()
+}
+
+// closeSyncWorker stops the worker, and waits for it to end. It won't start
+// again.
+func (sc *SubCache[SharedT, ExcerptT, ViewT]) closeSyncWorker() {
+	sc.muSyncWorker.Lock()
+	if !sc.syncWorkerClosed {
+		sc.syncWorkerClosed = true
+		close(sc.stopSyncWorker)
+	}
+	sc.muSyncWorker.Unlock()
+	sc.syncWorkerDone.Wait()
 }
 
 // syncBatchSize is the number of entities applied to the index at once.

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-git/go-billy/v5/util"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/entities/bug"
@@ -62,8 +61,7 @@ func TestCache(t *testing.T) {
 		require.Len(t, obs.removed, removed)
 	}
 
-	cache, err := NewRepoCacheNoEvents(repo)
-	require.NoError(t, err)
+	cache := openTestRepoCache(t, repo)
 
 	var obsIdentity, obsBug observer
 	require.NoError(t, cache.registerObserver("repotest", identity.Typename, &obsIdentity))
@@ -151,9 +149,11 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 	assertOberserverEvent(obsIdentity, 2, 0, 0)
 	assertOberserverEvent(obsBug, 2, 0, 0)
+	require.Equal(t, 1, lenComments(t, cache, bug1.Id()))
 	require.NoError(t, bug1.Commit())
 	assertOberserverEvent(obsIdentity, 2, 0, 0)
 	assertOberserverEvent(obsBug, 2, 1, 0)
+	require.Equal(t, 2, lenComments(t, cache, bug1.Id()))
 
 	// Close
 	require.NoError(t, cache.Close())
@@ -162,10 +162,8 @@ func TestCache(t *testing.T) {
 	require.Empty(t, cache.identities.cached)
 	require.Empty(t, cache.identities.excerpts)
 
-	// Reload, only excerpt are loaded, but as we need to load the identities used in the bugs
-	// to check the signatures, we also load the identity used above
-	cache, err = NewRepoCacheNoEvents(repo)
-	require.NoError(t, err)
+	// Reload, only the excerpts are loaded
+	cache = openTestRepoCache(t, repo)
 	require.NoError(t, cache.registerObserver("repotest", identity.Typename, &obsIdentity))
 	require.NoError(t, cache.registerObserver("repotest", bug.Typename, &obsBug))
 
@@ -563,7 +561,7 @@ func TestRemove(t *testing.T) {
 	err = repoCache.SetUserIdentity(rene)
 	require.NoError(t, err)
 
-	_, _, err = repoCache.Bugs().New("title", "message")
+	kept, _, err := repoCache.Bugs().New("title", "message")
 	require.NoError(t, err)
 
 	// and one more for testing
@@ -582,13 +580,29 @@ func TestRemove(t *testing.T) {
 	_, err = repoCache.Fetch("remoteB")
 	require.NoError(t, err)
 
+	for _, remote := range []string{"remoteA", "remoteB"} {
+		_, err = repo.ResolveTrackingRef(remote, bug.Namespace, b1.Id().String())
+		require.NoError(t, err)
+	}
+
 	err = repoCache.Bugs().Remove(b1.Id().String())
 	require.NoError(t, err)
-	assert.Len(t, repoCache.bugs.cached, 1)
-	assert.Len(t, repoCache.bugs.excerpts, 1)
+	require.Len(t, repoCache.bugs.cached, 1)
+	require.Len(t, repoCache.bugs.excerpts, 1)
 
 	_, err = repoCache.Bugs().Resolve(b1.Id())
-	assert.ErrorAs(t, entity.ErrNotFound{}, err)
+	require.True(t, entity.IsErrNotFound(err))
+
+	// the local reference is removed, and so are the tracking ones on every
+	// remote, leaving the other bug alone
+	_, err = repo.ResolveRef(bug.Namespace, b1.Id().String())
+	require.ErrorIs(t, err, repository.ErrNotFound)
+	for _, remote := range []string{"remoteA", "remoteB"} {
+		_, err = repo.ResolveTrackingRef(remote, bug.Namespace, b1.Id().String())
+		require.ErrorIs(t, err, repository.ErrNotFound)
+		_, err = repo.ResolveTrackingRef(remote, bug.Namespace, kept.Id().String())
+		require.NoError(t, err)
+	}
 }
 
 func TestCacheEviction(t *testing.T) {
@@ -631,14 +645,20 @@ func TestCacheEviction(t *testing.T) {
 	checkBugPresence(t, repoCache, bug2, true)
 	checkBugPresence(t, repoCache, bug3, true)
 
-	// Accessing bug should update position in lruCache, and therefore it should not be evicted
-	repoCache.bugs.lru.Get(bug2.Id())
+	// Resolving a bug makes it the most recently used, so the next one to be
+	// evicted is bug3, not bug2
+	_, err = repoCache.Bugs().Resolve(bug2.Id())
+	require.NoError(t, err)
 	oldestId, _ := repoCache.bugs.lru.GetOldest()
 	require.Equal(t, bug3.Id(), oldestId)
 
+	bug4, _, err := repoCache.Bugs().New("title", "message")
+	require.NoError(t, err)
+
 	checkBugPresence(t, repoCache, bug1, false)
 	checkBugPresence(t, repoCache, bug2, true)
-	checkBugPresence(t, repoCache, bug3, true)
+	checkBugPresence(t, repoCache, bug3, false)
+	checkBugPresence(t, repoCache, bug4, true)
 	require.Len(t, repoCache.bugs.cached, 2)
 	require.Equal(t, 2, repoCache.bugs.lru.Len())
 }
@@ -657,13 +677,14 @@ func TestBuildConcurrentResolve(t *testing.T) {
 		b, err := repoCache.Bugs().Resolve(id)
 		require.NoError(t, err)
 
+		// the author was resolved through the identities subcache, which
+		// loaded it
 		author := b.Snapshot().Author
-		cached, err := repoCache.Identities().Resolve(author.Id())
-		require.NoError(t, err)
-
-		// both are views of the single loaded copy of that identity
-		require.Equal(t, cached.Id(), author.Id())
-		require.Contains(t, repoCache.identities.cached, author.Id())
+		require.IsType(t, &IdentityCache{}, author)
+		repoCache.identities.muMaps.RLock()
+		_, loaded := repoCache.identities.cached[author.Id()]
+		repoCache.identities.muMaps.RUnlock()
+		require.True(t, loaded)
 	}
 }
 
@@ -691,8 +712,7 @@ func TestResolveOperationWithMetadataFromSetMetadata(t *testing.T) {
 
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	backend, err := NewRepoCacheNoEvents(repo)
-	require.NoError(t, err)
+	backend := openTestRepoCache(t, repo)
 
 	i, err := backend.Identities().New("René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
@@ -733,11 +753,27 @@ func checkBugPresence(t *testing.T, cache *RepoCache, bug *BugCache, presence bo
 	}
 }
 
-func createTestRepoCacheNoEvents(t testing.TB, repo repository.TestedRepo) *RepoCache {
+// openTestRepoCache opens a cache on repo, with its sync workers stopped. The
+// tests sync explicitly, and check what a sync does: a sync of a worker,
+// requested by any read, would race to do it first on a slow machine. The
+// caller closes the cache.
+func openTestRepoCache(t testing.TB, repo repository.ClockedRepo) *RepoCache {
 	t.Helper()
 
 	cache, err := NewRepoCacheNoEvents(repo)
 	require.NoError(t, err)
+	cache.bugs.closeSyncWorker()
+	cache.identities.closeSyncWorker()
+
+	return cache
+}
+
+// createTestRepoCacheNoEvents opens a cache on repo like openTestRepoCache,
+// closed at the end of the test.
+func createTestRepoCacheNoEvents(t testing.TB, repo repository.ClockedRepo) *RepoCache {
+	t.Helper()
+
+	cache := openTestRepoCache(t, repo)
 
 	t.Cleanup(func() {
 		require.NoError(t, cache.Close())
@@ -780,8 +816,7 @@ func TestCacheRebuildsUnusableClocks(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			repo := repository.CreateGoGitTestRepo(t, false)
 
-			cache, err := NewRepoCacheNoEvents(repo)
-			require.NoError(t, err)
+			cache := openTestRepoCache(t, repo)
 
 			iden, err := cache.Identities().New("René Descartes", "rene@descartes.fr")
 			require.NoError(t, err)
@@ -805,8 +840,7 @@ func TestCacheRebuildsUnusableClocks(t *testing.T) {
 
 			// opening the cache brings the clocks back from the bugs, exactly
 			// where they were since every time issued went into a commit
-			cache, err = NewRepoCacheNoEvents(repo)
-			require.NoError(t, err)
+			cache = openTestRepoCache(t, repo)
 			require.Equal(t, before, clockTimes(t, repo))
 
 			iden, err = cache.Identities().Resolve(iden.Id())
@@ -817,8 +851,7 @@ func TestCacheRebuildsUnusableClocks(t *testing.T) {
 			require.NoError(t, cache.Close())
 
 			// and what was written reads back
-			cache, err = NewRepoCacheNoEvents(repo)
-			require.NoError(t, err)
+			cache = openTestRepoCache(t, repo)
 			iden, err = cache.Identities().Resolve(iden.Id())
 			require.NoError(t, err)
 			require.Equal(t, "René", iden.Name())

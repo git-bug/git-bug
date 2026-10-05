@@ -25,10 +25,13 @@ const (
 	Submodule             // git submodule     (160000)
 )
 
+// ParseTreeEntry parses a git ls-tree line: "<mode> <type> <hash>\t<name>",
+// where the name can hold spaces.
 func ParseTreeEntry(line string) (TreeEntry, error) {
-	fields := strings.Fields(line)
+	meta, name, ok := strings.Cut(line, "\t")
+	fields := strings.Fields(meta)
 
-	if len(fields) < 4 {
+	if !ok || len(fields) != 3 || name == "" {
 		return TreeEntry{}, fmt.Errorf("Invalid input to parse as a TreeEntry")
 	}
 
@@ -39,7 +42,6 @@ func ParseTreeEntry(line string) (TreeEntry, error) {
 	}
 
 	hash := Hash(fields[2])
-	name := strings.Join(fields[3:], "")
 
 	return TreeEntry{
 		ObjectType: objType,
