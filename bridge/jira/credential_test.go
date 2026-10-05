@@ -2,6 +2,7 @@ package jira
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -58,4 +59,38 @@ func TestTokenCredentials(t *testing.T) {
 		require.Equal(t, server.URL+"/", configured[confKeyBaseUrl], "preserve the URL used by existing imported issues")
 		require.Equal(t, "TOKEN", configured[confKeyCredentialType])
 	}
+}
+
+func TestSessionCredentialsIgnoreNewerToken(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "/rest/auth/1/session", r.URL.Path)
+		var credentials SessionQuery
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&credentials))
+		require.Equal(t, "alice", credentials.Username)
+		require.Equal(t, "password", credentials.Password)
+		_, _ = w.Write([]byte(`{"session":{"name":"session","value":"cookie"}}`))
+	}))
+	defer server.Close()
+	repo := repository.NewMockRepo()
+	defer repo.Close()
+	backend, err := cache.NewRepoCacheNoEvents(repo)
+	require.NoError(t, err)
+	defer backend.Close()
+	password := auth.NewLoginPassword(target, "alice", "password")
+	token := auth.NewToken(target, "revoked-token")
+	for _, credential := range []auth.Credential{password, token} {
+		credential.SetMetadata(auth.MetaKeyLogin, "alice")
+		credential.SetMetadata(auth.MetaKeyBaseURL, server.URL)
+		require.NoError(t, auth.Store(repo, credential))
+	}
+	identity, err := backend.Identities().New("Alice", "alice@example.com")
+	require.NoError(t, err)
+	identity.SetMetadata(metaKeyJiraLogin, "alice")
+	require.NoError(t, identity.Commit())
+	conf := core.Configuration{confKeyBaseUrl: server.URL, confKeyDefaultLogin: "alice", confKeyCredentialType: "SESSION"}
+	require.NoError(t, (&jiraImporter{}).Init(context.Background(), backend, conf))
+	exporter := &jiraExporter{conf: conf, identityClient: make(map[entity.Id]*Client)}
+	require.NoError(t, exporter.cacheAllClient(context.Background(), backend))
+	_, err = buildClient(context.Background(), server.URL, "SESSION", token)
+	require.ErrorContains(t, err, "requires Jira TOKEN")
 }
