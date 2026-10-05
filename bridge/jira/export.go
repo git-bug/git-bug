@@ -178,7 +178,7 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 						return
 					}
 				} else {
-					out <- core.NewExportNothing(id, "not an actor")
+					out <- core.NewExportNothing(id, core.SkipReasonNoTokenActor(snapshot.Operations, metaKeyJiraId))
 				}
 			}
 		}
@@ -215,7 +215,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 	project, ok := snapshot.GetCreateMetadata(metaKeyJiraProject)
 	if ok && !stringInSlice(project, []string{je.project.ID, je.project.Key}) {
 		out <- core.NewExportNothing(
-			b.Id(), fmt.Sprintf("issue tagged with project: %s", project))
+			b.Id(), fmt.Sprintf("issue belongs to another Jira project (%s)", project))
 		return nil
 	}
 
@@ -230,10 +230,8 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 		if err != nil {
 			// if bug is not yet exported and we do not have the author's credentials
 			// then there is nothing we can do, so just skip this bug
-			out <- core.NewExportNothing(
-				b.Id(), fmt.Sprintf("missing author credentials for user %.8s",
-					author.Id().String()))
-			return err
+			out <- core.NewExportNothing(b.Id(), "missing credentials for the issue author")
+			return nil
 		}
 
 		// Load any custom fields required to create an issue from the git
