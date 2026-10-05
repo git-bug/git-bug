@@ -35,6 +35,10 @@ func TestTokenCredentials(t *testing.T) {
 	token.SetMetadata(auth.MetaKeyLogin, "alice")
 	token.SetMetadata(auth.MetaKeyBaseURL, server.URL)
 	require.NoError(t, auth.Store(repo, token))
+	password := auth.NewLoginPassword(target, "alice", "account-password")
+	password.SetMetadata(auth.MetaKeyLogin, "alice")
+	password.SetMetadata(auth.MetaKeyBaseURL, server.URL)
+	require.NoError(t, auth.Store(repo, password))
 	identity, err := backend.Identities().New("Alice", "alice@example.com")
 	require.NoError(t, err)
 	identity.SetMetadata(metaKeyJiraLogin, "alice")
@@ -93,4 +97,27 @@ func TestSessionCredentialsIgnoreNewerToken(t *testing.T) {
 	require.NoError(t, exporter.cacheAllClient(context.Background(), backend))
 	_, err = buildClient(context.Background(), server.URL, "SESSION", token)
 	require.ErrorContains(t, err, "requires Jira TOKEN")
+}
+
+func TestConfigureRejectsForeignCredentialBeforeNetworkAccess(t *testing.T) {
+	for _, targetName := range []string{"github", target} {
+		t.Run(targetName, func(t *testing.T) {
+			repo := repository.NewMockRepo()
+			defer repo.Close()
+			backend, err := cache.NewRepoCacheNoEvents(repo)
+			require.NoError(t, err)
+			defer backend.Close()
+			token := auth.NewToken(targetName, "secret")
+			token.SetMetadata(auth.MetaKeyLogin, "alice")
+			token.SetMetadata(auth.MetaKeyBaseURL, "https://original.example")
+			require.NoError(t, auth.Store(repo, token))
+			_, err = (&Jira{}).Configure(backend, core.BridgeParams{BaseURL: "https://different.example", Project: "TEST", CredPrefix: token.ID().String()}, false)
+			require.Error(t, err)
+			if targetName == target {
+				require.ErrorContains(t, err, "not bound")
+			} else {
+				require.ErrorContains(t, err, "not Jira")
+			}
+		})
+	}
 }

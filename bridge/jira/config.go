@@ -108,7 +108,7 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 				return nil, err
 			}
 			credType = []string{"SESSION", "TOKEN"}[credTypeInput]
-			cred, err = promptCredOptions(repo, login, baseURL)
+			cred, err = promptCredOptions(repo, login, baseURL, credType)
 			if err != nil {
 				return nil, err
 			}
@@ -118,6 +118,13 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 			cred.SetMetadata(auth.MetaKeyLogin, login)
 			cred.SetMetadata(auth.MetaKeyBaseURL, baseURL)
 		}
+	}
+
+	if cred.Target() != target {
+		return nil, fmt.Errorf("credential is for %s, not Jira", cred.Target())
+	}
+	if boundURL, ok := cred.GetMetadata(auth.MetaKeyBaseURL); !ok || auth.NormalizeBaseURL(boundURL) != auth.NormalizeBaseURL(baseURL) {
+		return nil, fmt.Errorf("credential is not bound to this Jira instance")
 	}
 
 	conf := make(core.Configuration)
@@ -188,11 +195,9 @@ func (*Jira) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-func promptCredOptions(repo repository.RepoKeyring, login, baseUrl string) (auth.Credential, error) {
-	creds, err := auth.List(repo,
+func promptCredOptions(repo repository.RepoKeyring, login, baseUrl, credType string) (auth.Credential, error) {
+	creds, err := listCredentials(repo, credType,
 		auth.WithTarget(target),
-		auth.WithKind(auth.KindToken),
-		auth.WithKind(auth.KindLoginPassword), auth.WithKind(auth.KindLogin),
 		auth.WithMeta(auth.MetaKeyLogin, login),
 		auth.WithMeta(auth.MetaKeyBaseURL, baseUrl),
 	)
