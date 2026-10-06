@@ -2,6 +2,7 @@ package bridgecmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -15,22 +16,32 @@ import (
 	"github.com/git-bug/git-bug/util/interrupt"
 )
 
+type bridgePushOptions struct {
+	verbose bool
+}
+
 func newBridgePushCommand(env *execenv.Env) *cobra.Command {
+	options := bridgePushOptions{}
+
 	cmd := &cobra.Command{
 		Use:     "push [NAME]",
 		Short:   "Push updates to remote bug tracker",
 		PreRunE: execenv.LoadBackend(env, execenv.EnsureUser()),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
-			return runBridgePush(env, args)
+			return runBridgePush(env, options, args)
 		}),
 		Args:              cobra.MaximumNArgs(1),
 		ValidArgsFunction: completion.Bridge(env),
 	}
 
+	flags := cmd.Flags()
+	flags.SortFlags = false
+	flags.BoolVarP(&options.verbose, "verbose", "v", false,
+		"Explain why issues were not pushed")
 	return cmd
 }
 
-func runBridgePush(env *execenv.Env, args []string) error {
+func runBridgePush(env *execenv.Env, opts bridgePushOptions, args []string) error {
 	var b *core.Bridge
 	var err error
 
@@ -77,21 +88,51 @@ func runBridgePush(env *execenv.Env, args []string) error {
 		return err
 	}
 
+	reportErr := reportExportResults(env.Out, b.Name, events, opts.verbose)
+
+	// send done signal
+	close(done)
+
+	return reportErr
+}
+
+// reportExportResults prints the outcome of a push and returns an error if
+// any issue failed to export. With verbose, it also summarizes why issues
+// were skipped.
+func reportExportResults(out execenv.Out, name string, events <-chan core.ExportResult, verbose bool) error {
 	exportedIssues := 0
+	exportErrors := 0
+	// Skipped issues are summarized by reason instead of listed one by one.
+	skipped := map[string]int{}
+	var skipOrder []string
 	for result := range events {
+		if result.Event == core.ExportEventNothing && result.Reason != core.ReasonNothingExported {
+			if skipped[result.Reason] == 0 {
+				skipOrder = append(skipOrder, result.Reason)
+			}
+			skipped[result.Reason]++
+		}
 		if result.Event != core.ExportEventNothing {
-			env.Out.Println(result.String())
+			out.Println(result.String())
 		}
 
 		switch result.Event {
 		case core.ExportEventBug:
 			exportedIssues++
+		case core.ExportEventError:
+			exportErrors++
 		}
 	}
 
-	env.Out.Printf("exported %d issues with %s bridge\n", exportedIssues, b.Name)
+	if verbose {
+		for _, reason := range skipOrder {
+			out.Printf("skipped %d issues: %s\n", skipped[reason], reason)
+		}
+	}
+	out.Printf("exported %d issues with %s bridge\n", exportedIssues, name)
 
-	// send done signal
-	close(done)
+	if exportErrors > 0 {
+		return fmt.Errorf("%d export error(s) with %s bridge", exportErrors, name)
+	}
 	return nil
 }

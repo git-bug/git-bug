@@ -104,13 +104,18 @@ func (ge *githubExporter) cacheAllClient(repo *cache.RepoCache) error {
 			continue
 		}
 
-		client := buildClient(creds[0].(*auth.Token))
+		token, ok := cred.(*auth.Token)
+		if !ok {
+			continue
+		}
+
+		client := buildClient(token)
 		ge.identityClient[user.Id()] = client
 
 		// assign the default client and token as well
 		if ge.defaultClient == nil && login == ge.conf[confKeyDefaultLogin] {
 			ge.defaultClient = client
-			ge.defaultToken = creds[0].(*auth.Token)
+			ge.defaultToken = token
 		}
 	}
 
@@ -188,9 +193,31 @@ func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 					continue
 				}
 
+				if reason, foreign := ge.foreignReason(b); foreign {
+					out <- core.NewExportNothing(b.Id(), reason)
+					continue
+				}
+
 				if snapshot.HasAnyActor(allIdentitiesIds...) {
 					// try to export the bug and it associated events
 					ge.exportBug(ctx, b, out)
+				} else {
+					if origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin); ok && origin != target {
+						out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue tagged with origin: %s", origin))
+						continue
+					}
+					if issueURL, ok := snapshot.GetCreateMetadata(metaKeyGithubUrl); ok {
+						owner, project, err := splitURL(issueURL)
+						if err != nil {
+							out <- core.NewExportError(fmt.Errorf("bad project url: %v", err), b.Id())
+							continue
+						}
+						if !strings.EqualFold(owner, ge.conf[confKeyOwner]) || !strings.EqualFold(project, ge.conf[confKeyProject]) {
+							out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue belongs to another GitHub repository (%s/%s)", owner, project))
+							continue
+						}
+					}
+					out <- core.NewExportNothing(b.Id(), core.SkipReasonNoTokenActor(snapshot.Operations, metaKeyGithubId))
 				}
 			}
 		}
@@ -200,6 +227,24 @@ func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 }
 
 // exportBug publish bugs and related events
+
+func (ge *githubExporter) foreignReason(b *cache.BugCache) (string, bool) {
+	snapshot := b.Snapshot()
+	origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin)
+	if ok && origin != target {
+		return fmt.Sprintf("issue tagged with origin: %s", origin), true
+	}
+	if githubURL, ok := snapshot.GetCreateMetadata(metaKeyGithubUrl); ok {
+		owner, project, err := splitURL(githubURL)
+		if err == nil {
+			if !strings.EqualFold(owner, ge.conf[confKeyOwner]) || !strings.EqualFold(project, ge.conf[confKeyProject]) {
+				return fmt.Sprintf("issue belongs to another GitHub repository (%s/%s)", owner, project), true
+			}
+		}
+	}
+	return "", false
+}
+
 func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out chan<- core.ExportResult) {
 	snapshot := b.Snapshot()
 	var bugUpdated bool
@@ -215,13 +260,6 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 	createOp := snapshot.Operations[0].(*bug.CreateOperation)
 	author := snapshot.Author
 
-	// skip bug if origin is not allowed
-	origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin)
-	if ok && origin != target {
-		out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue tagged with origin: %s", origin))
-		return
-	}
-
 	// get github bug ID
 	githubID, ok := snapshot.GetCreateMetadata(metaKeyGithubId)
 	if ok {
@@ -234,17 +272,10 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		}
 
 		// extract owner and project
-		owner, project, err := splitURL(githubURL)
+		_, _, err := splitURL(githubURL)
 		if err != nil {
 			err := fmt.Errorf("bad project url: %v", err)
 			out <- core.NewExportError(err, b.Id())
-			return
-		}
-
-		// ignore issue coming from other repositories
-		// (Github owner and project names are case-insensitive)
-		if !strings.EqualFold(owner, ge.conf[confKeyOwner]) || !strings.EqualFold(project, ge.conf[confKeyProject]) {
-			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("skipping issue from url:%s", githubURL))
 			return
 		}
 
@@ -257,7 +288,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		client, err := ge.getClientForIdentity(author.Id())
 		if err != nil {
 			// if bug is still not exported and we do not have the author stop the execution
-			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("missing author token"))
+			out <- core.NewExportNothing(b.Id(), "missing a token for the issue author")
 			return
 		}
 
@@ -426,7 +457,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 	}
 
 	if !bugUpdated {
-		out <- core.NewExportNothing(b.Id(), "nothing has been exported")
+		out <- core.NewExportNothing(b.Id(), core.ReasonNothingExported)
 	}
 }
 

@@ -12,6 +12,7 @@ import (
 
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 )
 
@@ -145,8 +146,7 @@ func LoadBackend(env *Env, opts ...LoadOption) func(*cobra.Command, []string) er
 		}
 
 		if o.ensureUser {
-			_, err = identity.GetUserIdentity(env.Repo)
-			return err
+			return ensureUser(env.Repo)
 		}
 		return nil
 	}
@@ -224,4 +224,15 @@ func CloseBackend(env *Env, runE func(cmd *cobra.Command, args []string) error) 
 		}
 		return err
 	}
+}
+
+// ensureUser checks that a valid user identity is configured for the repo.
+func ensureUser(repo repository.Repo) error {
+	_, err := identity.GetUserIdentity(repo)
+	if entity.IsErrNotFound(err) {
+		// GetUserIdentity already removed the dangling configuration
+		return fmt.Errorf("the configured user identity doesn't exist in this repository and has been unset; " +
+			"select an existing one with \"git bug user adopt\" or create one with \"git bug user new\"")
+	}
+	return err
 }

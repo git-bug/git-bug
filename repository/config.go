@@ -72,12 +72,18 @@ func GetDefaultString(key string, cfg ConfigRead, def string) (string, error) {
 }
 
 func ParseTimestamp(s string) (time.Time, error) {
-	timestamp, err := strconv.Atoi(s)
+	if t, err := time.Parse(time.RFC3339Nano, s); err == nil {
+		return t, nil
+	}
+	timestamp, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		return time.Time{}, err
 	}
 
-	return time.Unix(int64(timestamp), 0), nil
+	if timestamp > 1e14 {
+		return time.Unix(0, timestamp), nil
+	}
+	return time.Unix(timestamp, 0), nil
 }
 
 // mergeConfig is a helper to easily support RepoConfig.AnyConfig()

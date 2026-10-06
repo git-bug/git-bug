@@ -37,6 +37,18 @@ You can avoid all the terminal prompts by passing all the necessary flags to con
 
 Authentication tokens and required permissions by target:
 
+Gitea:
+  Requires a personal access token created at $BASE_URL/user/settings/applications
+  (e.g. https://codeberg.org/user/settings/applications; works with any Gitea
+  or Forgejo instance).
+  With fine-grained scopes the minimum set is:
+    - 'write:issue' (push issues, comments and labels; 'read:issue' is
+      enough for pull only)
+    - 'read:repository' (repository access check)
+    - 'read:user' (identify the token's owner account)
+  On instances without fine-grained scopes, use a token with write access
+  to the repository, or a read-only token for pull only.
+
 GitHub:
   Requires a classic personal access token (https://github.com/settings/tokens;
   fine-grained tokens starting with 'github_pat_' are not supported).
@@ -68,12 +80,13 @@ Launchpad:
   No token required: the Launchpad bridge is read-only and currently uses
   the public Launchpad API without any authentication.`,
 		Example: `# Interactive example
-[1]: github
-[2]: gitlab
-[3]: jira
-[4]: launchpad-preview
+[1]: gitea
+[2]: github
+[3]: gitlab
+[4]: jira
+[5]: launchpad-preview
 
-target: 1
+target: 2
 name [default]: default
 
 Detected projects:
@@ -98,6 +111,13 @@ Private:
 
 Enter token: 87cf5c03b64029f18ea5f9ca5679daa08ccbd700
 Successfully configured bridge: default
+
+# For Gitea
+git bug bridge new \
+    --name=default \
+    --target=gitea \
+    --url=https://codeberg.org/example-owner/example-repo \
+    --token=$TOKEN
 
 # For GitHub
 git bug bridge new \
@@ -149,6 +169,7 @@ git bug bridge new \
 	flags.BoolVar(&options.tokenStdin, "token-stdin", false, "Will read the token from stdin and ignore --token")
 	flags.StringVarP(&options.params.Owner, "owner", "o", "", "The owner of the remote repository")
 	flags.StringVarP(&options.params.Project, "project", "p", "", "The name of the remote repository")
+	flags.StringVar(&options.params.AuthMode, "auth-mode", "", "Jira authentication mechanism: SESSION or TOKEN (overrides legacy credential detection)")
 	flags.BoolVar(&options.nonInteractive, "non-interactive", false, "Do not ask for user input")
 
 	return cmd

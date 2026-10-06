@@ -85,9 +85,8 @@ func (je *jiraExporter) Init(ctx context.Context, repo *cache.RepoCache, conf co
 }
 
 func (je *jiraExporter) cacheAllClient(ctx context.Context, repo *cache.RepoCache) error {
-	creds, err := auth.List(repo,
+	creds, err := configuredCredentials(repo, je.conf,
 		auth.WithTarget(target),
-		auth.WithKind(auth.KindLoginPassword), auth.WithKind(auth.KindLogin),
 		auth.WithMeta(auth.MetaKeyBaseURL, je.conf[confKeyBaseUrl]),
 	)
 	if err != nil {
@@ -170,6 +169,11 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 					continue
 				}
 
+				if reason, foreign := je.foreignReason(b); foreign {
+					out <- core.NewExportNothing(b.Id(), reason)
+					continue
+				}
+
 				if snapshot.HasAnyActor(allIdentitiesIds...) {
 					// try to export the bug and it associated events
 					err := je.exportBug(ctx, b, out)
@@ -178,7 +182,15 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 						return
 					}
 				} else {
-					out <- core.NewExportNothing(id, "not an actor")
+					if origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin); ok && origin != target {
+						out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue tagged with origin: %s", origin))
+						continue
+					}
+					if project, ok := snapshot.GetCreateMetadata(metaKeyJiraProject); ok && !stringInSlice(project, []string{je.project.ID, je.project.Key}) {
+						out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue belongs to another Jira project (%s)", project))
+						continue
+					}
+					out <- core.NewExportNothing(id, core.SkipReasonNoTokenActor(snapshot.Operations, metaKeyJiraId))
 				}
 			}
 		}
@@ -188,6 +200,24 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 }
 
 // exportBug publish bugs and related events
+
+func (je *jiraExporter) foreignReason(b *cache.BugCache) (string, bool) {
+	snapshot := b.Snapshot()
+	origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin)
+	if ok && origin != target {
+		return fmt.Sprintf("issue tagged with origin: %s", origin), true
+	}
+	if _, ok := snapshot.GetCreateMetadata(metaKeyJiraId); ok {
+		if baseURL, ok := snapshot.GetCreateMetadata(metaKeyJiraBaseUrl); ok && baseURL != je.conf[confKeyBaseUrl] {
+			return fmt.Sprintf("issue belongs to another Jira instance (%s)", baseURL), true
+		}
+		if project, ok := snapshot.GetCreateMetadata(metaKeyJiraProject); ok && !stringInSlice(project, []string{je.project.ID, je.project.Key}) {
+			return fmt.Sprintf("issue belongs to another Jira project (%s)", project), true
+		}
+	}
+	return "", false
+}
+
 func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out chan<- core.ExportResult) error {
 	snapshot := b.Snapshot()
 
@@ -215,7 +245,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 	project, ok := snapshot.GetCreateMetadata(metaKeyJiraProject)
 	if ok && !stringInSlice(project, []string{je.project.ID, je.project.Key}) {
 		out <- core.NewExportNothing(
-			b.Id(), fmt.Sprintf("issue tagged with project: %s", project))
+			b.Id(), fmt.Sprintf("issue belongs to another Jira project (%s)", project))
 		return nil
 	}
 
@@ -230,10 +260,8 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 		if err != nil {
 			// if bug is not yet exported and we do not have the author's credentials
 			// then there is nothing we can do, so just skip this bug
-			out <- core.NewExportNothing(
-				b.Id(), fmt.Sprintf("missing author credentials for user %.8s",
-					author.Id().String()))
-			return err
+			out <- core.NewExportNothing(b.Id(), "missing credentials for the issue author")
+			return nil
 		}
 
 		// Load any custom fields required to create an issue from the git

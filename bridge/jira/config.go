@@ -16,6 +16,9 @@ NOTE: There are a few optional configuration values that you can additionally
 set in your git configuration to influence the behavior of the bridge. Please
 see the notes at:
 https://github.com/git-bug/git-bug/blob/trunk/doc/jira_bridge.md
+
+The bridge retains the credential validated during setup. To rotate it, add
+the replacement token with --base-url and reconfigure with --credential.
 `
 
 const credTypeText = `
@@ -34,12 +37,16 @@ func (*Jira) ValidParams() map[string]interface{} {
 		"CredPrefix": nil,
 		"Project":    nil,
 		"TokenRaw":   nil,
+		"AuthMode":   nil,
 	}
 }
 
 // Configure sets up the bridge configuration
 func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
 	var err error
+	if params.AuthMode != "" && params.AuthMode != "SESSION" && params.AuthMode != "TOKEN" {
+		return nil, fmt.Errorf("--auth-mode must be SESSION or TOKEN")
+	}
 
 	baseURL := params.BaseURL
 	if baseURL == "" {
@@ -65,7 +72,7 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 	}
 
 	var login string
-	var credType string
+	credType := params.AuthMode
 	var cred auth.Credential
 
 	switch {
@@ -79,6 +86,21 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 			return nil, fmt.Errorf("credential doesn't have a login")
 		}
 		login = l
+		if credType == "" {
+			credType, _ = cred.GetMetadata(confKeyCredentialType)
+		}
+		if credType == "" {
+			// Legacy password credentials may contain API tokens. Their Go
+			// type does not identify the server's authentication mechanism.
+			credType = "TOKEN"
+			if interactive && cred.Kind() != auth.KindToken {
+				choice, err := input.PromptChoice("Authentication mechanism", []string{"SESSION", "TOKEN"})
+				if err != nil {
+					return nil, err
+				}
+				credType = []string{"SESSION", "TOKEN"}[choice]
+			}
+		}
 	default:
 		if params.Login == "" {
 			if !interactive {
@@ -97,19 +119,33 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 			if !interactive {
 				return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the access token via the --token option.")
 			}
-			fmt.Println(credTypeText)
-			credTypeInput, err := input.PromptChoice("Authentication mechanism", []string{"SESSION", "TOKEN"})
-			if err != nil {
-				return nil, err
+			if credType == "" {
+				fmt.Println(credTypeText)
+				credTypeInput, err := input.PromptChoice("Authentication mechanism", []string{"SESSION", "TOKEN"})
+				if err != nil {
+					return nil, err
+				}
+				credType = []string{"SESSION", "TOKEN"}[credTypeInput]
 			}
-			credType = []string{"SESSION", "TOKEN"}[credTypeInput]
-			cred, err = promptCredOptions(repo, login, baseURL)
+			cred, err = promptCredOptions(repo, login, baseURL, credType)
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			credType = "TOKEN"
+			if credType == "" {
+				credType = "TOKEN"
+			}
+			cred = auth.NewToken(target, params.TokenRaw)
+			cred.SetMetadata(auth.MetaKeyLogin, login)
+			cred.SetMetadata(auth.MetaKeyBaseURL, baseURL)
 		}
+	}
+
+	if cred.Target() != target {
+		return nil, fmt.Errorf("credential is for %s, not Jira", cred.Target())
+	}
+	if boundURL, ok := cred.GetMetadata(auth.MetaKeyBaseURL); !ok || auth.NormalizeBaseURL(boundURL) != auth.NormalizeBaseURL(baseURL) {
+		return nil, fmt.Errorf("credential is not bound to this Jira instance")
 	}
 
 	conf := make(core.Configuration)
@@ -118,6 +154,7 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 	conf[confKeyProject] = project
 	conf[confKeyCredentialType] = credType
 	conf[confKeyDefaultLogin] = login
+	conf[confKeyCredentialID] = cred.ID().String()
 
 	err = j.ValidateConfig(conf)
 	if err != nil {
@@ -141,11 +178,10 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 	}
 
 	// don't forget to store the now known valid token
-	if !auth.IdExist(repo, cred.ID()) {
-		err = auth.Store(repo, cred)
-		if err != nil {
-			return nil, err
-		}
+	cred.SetMetadata(confKeyCredentialType, credType)
+	err = auth.Store(repo, cred)
+	if err != nil {
+		return nil, err
 	}
 
 	err = core.FinishConfig(repo, metaKeyJiraLogin, login)
@@ -180,10 +216,9 @@ func (*Jira) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-func promptCredOptions(repo repository.RepoKeyring, login, baseUrl string) (auth.Credential, error) {
-	creds, err := auth.List(repo,
+func promptCredOptions(repo repository.RepoKeyring, login, baseUrl, credType string) (auth.Credential, error) {
+	creds, err := listCredentials(repo, credType,
 		auth.WithTarget(target),
-		auth.WithKind(auth.KindToken),
 		auth.WithMeta(auth.MetaKeyLogin, login),
 		auth.WithMeta(auth.MetaKeyBaseURL, baseUrl),
 	)
