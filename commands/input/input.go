@@ -7,22 +7,44 @@ package input
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 
-	"github.com/go-git/go-billy/v5/util"
-
 	"github.com/git-bug/git-bug/repository"
 )
 
 // LaunchEditorWithTemplate will launch an editor as LaunchEditor do, but with a
 // provided template.
+//
+// Like git with its COMMIT_EDITMSG, the file is created exclusively: if it
+// already exists, another message is being edited, or a previous edit crashed,
+// and this fails rather than taking over that file.
 func LaunchEditorWithTemplate(repo repository.RepoCommonStorage, fileName string, template string) (string, error) {
-	err := util.WriteFile(repo.LocalStorage(), fileName, []byte(template), 0644)
+	storage := repo.LocalStorage()
+
+	f, err := storage.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+	if errors.Is(err, os.ErrExist) {
+		path := filepath.Join(storage.Root(), fileName)
+		return "", fmt.Errorf("unable to create '%s': file exists.\n\n"+
+			"Another git-bug process seems to be editing a message in this repository.\n"+
+			"Please make sure all editors are closed, then try again. If it still fails,\n"+
+			"a git-bug process may have crashed in this repository earlier:\n"+
+			"remove the file manually to continue", path)
+	}
 	if err != nil {
+		return "", err
+	}
+
+	_, err = f.Write([]byte(template))
+	if closeErr := f.Close(); err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		_ = storage.Remove(fileName)
 		return "", err
 	}
 
