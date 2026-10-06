@@ -22,7 +22,7 @@ func newUserShowCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "show [USER_ID]",
 		Short:   "Display a user identity",
-		PreRunE: execenv.LoadBackendEnsureUser(env),
+		PreRunE: execenv.LoadBackend(env, execenv.EnsureUser()),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runUserShow(env, options, args)
 		}),

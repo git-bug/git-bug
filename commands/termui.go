@@ -12,15 +12,11 @@ func newTermUICommand(env *execenv.Env) *cobra.Command {
 		Use:     "termui",
 		Aliases: []string{"tui"},
 		Short:   "Launch the terminal UI",
-		PreRunE: execenv.LoadBackendEnsureUser(env),
+		PreRunE: execenv.LoadBackend(env, execenv.EnsureUser(), execenv.FollowChanges()),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
-			return runTermUI(env)
+			return termui.Run(cmd.Context(), env.Backend)
 		}),
 	}
 
 	return cmd
-}
-
-func runTermUI(env *execenv.Env) error {
-	return termui.Run(env.Backend)
 }

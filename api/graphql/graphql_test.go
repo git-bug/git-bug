@@ -19,10 +19,10 @@ func TestQueries(t *testing.T) {
 	random_bugs.FillRepoWithSeed(repo, 10, 42)
 
 	mrc := cache.NewMultiRepoCache()
-	_, events := mrc.RegisterDefaultRepository(repo)
-	for event := range events {
-		require.NoError(t, event.Err)
-	}
+	t.Cleanup(func() { require.NoError(t, mrc.Close()) })
+	rc, err := cache.NewRepoCacheNoEvents(repo, nil)
+	require.NoError(t, err)
+	mrc.Add("", rc)
 
 	handler := NewHandler(mrc, nil, false)
 
@@ -216,7 +216,7 @@ func TestQueries(t *testing.T) {
 		}
 	}
 
-	err := c.Post(query, &resp)
+	err = c.Post(query, &resp)
 	assert.NoError(t, err)
 }
 
@@ -297,10 +297,10 @@ func TestGitBrowseQueries(t *testing.T) {
 	// ── set up GraphQL handler ─────────────────────────────────────────────────
 
 	mrc := cache.NewMultiRepoCache()
-	_, events := mrc.RegisterDefaultRepository(repo)
-	for event := range events {
-		require.NoError(t, event.Err)
-	}
+	t.Cleanup(func() { require.NoError(t, mrc.Close()) })
+	rc, err := cache.NewRepoCacheNoEvents(repo, nil)
+	require.NoError(t, err)
+	mrc.Add("", rc)
 	c := client.New(NewHandler(mrc, nil, false))
 
 	// ── commit ────────────────────────────────────────────────────────────────
@@ -587,10 +587,10 @@ func TestBugEventsSubscription(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
 
 	mrc := cache.NewMultiRepoCache()
-	rc, events := mrc.RegisterDefaultRepository(repo)
-	for event := range events {
-		require.NoError(t, event.Err)
-	}
+	t.Cleanup(func() { require.NoError(t, mrc.Close()) })
+	rc, err := cache.NewRepoCacheNoEvents(repo, nil)
+	require.NoError(t, err)
+	mrc.Add("", rc)
 
 	h := NewHandler(mrc, nil, false)
 	c := client.New(h)

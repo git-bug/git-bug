@@ -15,7 +15,7 @@ import (
 func TestForeignIssueSkipWithoutCredentials(t *testing.T) {
 	repo := repository.NewMockRepo()
 	defer repo.Close()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	defer backend.Close()
 	author, err := backend.Identities().New("Alice", "alice@example.com")

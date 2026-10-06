@@ -26,10 +26,10 @@ func TestGitFileHandlers(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
 
 	mrc := cache.NewMultiRepoCache()
-	repoCache, events := mrc.RegisterDefaultRepository(repo)
-	for event := range events {
-		require.NoError(t, event.Err)
-	}
+	t.Cleanup(func() { require.NoError(t, mrc.Close()) })
+	repoCache, err := cache.NewRepoCacheNoEvents(repo, nil)
+	require.NoError(t, err)
+	mrc.Add("", repoCache)
 
 	author, err := repoCache.Identities().New("test identity", "test@test.org")
 	require.NoError(t, err)

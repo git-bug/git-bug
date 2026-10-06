@@ -1,13 +1,17 @@
 package cache
 
 import (
+	"context"
 	"encoding/gob"
 	"errors"
 	"fmt"
 	"maps"
 	"path/filepath"
+	"slices"
 	"sync"
+	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/go-git/go-billy/v5"
@@ -75,7 +79,7 @@ func lenComments(t *testing.T, c *RepoCache, id entity.Id) int {
 }
 
 // newTestCacheWithUser opens a cache on repo, with a user identity set.
-func newTestCacheWithUser(t *testing.T, repo repository.TestedRepo) (*RepoCache, *IdentityCache) {
+func newTestCacheWithUser(t testing.TB, repo repository.TestedRepo) (*RepoCache, *IdentityCache) {
 	t.Helper()
 	c := createTestRepoCacheNoEvents(t, repo)
 	rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
@@ -230,8 +234,7 @@ func TestSubCacheDerived(t *testing.T) {
 	t.Run("persisted, and loaded rather than rebuilt", func(t *testing.T) {
 		repo := repository.CreateGoGitTestRepo(t, false)
 
-		c, err := NewRepoCacheNoEvents(repo)
-		require.NoError(t, err)
+		c := openTestRepoCache(t, repo)
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
 		require.NoError(t, c.SetUserIdentity(rene))
@@ -251,8 +254,7 @@ func TestSubCacheDerived(t *testing.T) {
 	t.Run("an index without record is repaired on load", func(t *testing.T) {
 		repo := repository.CreateGoGitTestRepo(t, false)
 
-		c, err := NewRepoCacheNoEvents(repo)
-		require.NoError(t, err)
+		c := openTestRepoCache(t, repo)
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
 		require.NoError(t, c.SetUserIdentity(rene))
@@ -273,8 +275,7 @@ func TestSubCacheDerived(t *testing.T) {
 	t.Run("a commit recorded without its excerpt is repaired on load", func(t *testing.T) {
 		repo := repository.CreateGoGitTestRepo(t, false)
 
-		c, err := NewRepoCacheNoEvents(repo)
-		require.NoError(t, err)
+		c := openTestRepoCache(t, repo)
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
 		require.NoError(t, c.SetUserIdentity(rene))
@@ -295,8 +296,7 @@ func TestSubCacheDerived(t *testing.T) {
 	t.Run("an index ahead of the excerpts is repaired on load", func(t *testing.T) {
 		repo := repository.CreateGoGitTestRepo(t, false)
 
-		c, err := NewRepoCacheNoEvents(repo)
-		require.NoError(t, err)
+		c := openTestRepoCache(t, repo)
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
 		require.NoError(t, c.SetUserIdentity(rene))
@@ -385,6 +385,8 @@ func TestSubCacheDerived(t *testing.T) {
 		c.setCacheSize(0)
 		require.Empty(t, c.bugs.cached)
 
+		obs := &observer{}
+		require.NoError(t, c.registerObserver("repotest", bug.Typename, obs))
 		reads, refreshes, batches := counted(c.bugs)
 
 		changeOutside(t, repo, rene, ids[1], "markeroutside")
@@ -392,6 +394,9 @@ func TestSubCacheDerived(t *testing.T) {
 		require.Equal(t, 1, *reads)
 		require.Zero(t, *refreshes)
 		require.Equal(t, 1, *batches)
+		require.Equal(t, []observerEvent{{bug.Typename, ids[1]}}, obs.updated)
+		require.Empty(t, obs.created)
+		require.Empty(t, obs.removed)
 		require.Equal(t, 2, lenComments(t, c, ids[1]))
 		require.Empty(t, c.bugs.cached)
 		requireDerivedBuiltFromRefs(t, repo, c)
@@ -490,8 +495,7 @@ func TestSubCacheDerived(t *testing.T) {
 		_, err = cacheA.Push("origin")
 		require.NoError(t, err)
 
-		cacheB, err := NewRepoCacheNoEvents(repoB)
-		require.NoError(t, err)
+		cacheB := openTestRepoCache(t, repoB)
 		require.NoError(t, cacheB.Pull("origin"))
 		require.Equal(t, 1, lenComments(t, cacheB, b.Id()))
 		require.NoError(t, cacheB.Close())
@@ -830,8 +834,7 @@ func TestSubCacheDerived(t *testing.T) {
 
 	t.Run("nothing is published once closed", func(t *testing.T) {
 		repo := repository.CreateGoGitTestRepo(t, false)
-		c, err := NewRepoCacheNoEvents(repo)
-		require.NoError(t, err)
+		c := openTestRepoCache(t, repo)
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
 		require.NoError(t, c.SetUserIdentity(rene))
@@ -939,4 +942,389 @@ func TestSubCacheWriteNeverTorn(t *testing.T) {
 			require.NoError(t, readRaw())
 		}
 	}
+}
+
+// listHookRepo calls onList, if set, each time the bug refs are listed.
+type listHookRepo struct {
+	repository.TestedRepo
+	onList func() error
+}
+
+func (r *listHookRepo) ListRefs(namespace string) (map[string]repository.Hash, error) {
+	refs, err := r.TestedRepo.ListRefs(namespace)
+	if err == nil && namespace == bug.Namespace && r.onList != nil {
+		err = r.onList()
+	}
+	return refs, err
+}
+
+// chanSource is a change source reporting what the test sends on it.
+type chanSource struct {
+	changes chan repository.Change
+	// ctx is the context of the latest subscription
+	ctx atomic.Pointer[context.Context]
+}
+
+func newChanSource() *chanSource {
+	return &chanSource{changes: make(chan repository.Change)}
+}
+
+func (s *chanSource) Subscribe(ctx context.Context, _ []string) (<-chan repository.Change, error) {
+	s.ctx.Store(&ctx)
+	out := make(chan repository.Change)
+	go func() {
+		defer close(out)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case change := <-s.changes:
+				select {
+				case <-ctx.Done():
+					return
+				case out <- change:
+				}
+			}
+		}
+	}()
+	return out, nil
+}
+
+// failingSource is a change source that can't work.
+type failingSource struct{}
+
+func (failingSource) Subscribe(context.Context, []string) (<-chan repository.Change, error) {
+	return nil, errors.New("no notification here")
+}
+
+func TestSubCacheWorker(t *testing.T) {
+	// open opens a cache on repo following source, with a user identity set
+	open := func(t *testing.T, repo repository.ClockedRepo, source repository.ChangeSource) (*RepoCache, *IdentityCache) {
+		t.Helper()
+		c, err := NewRepoCacheNoEvents(repo, source)
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, c.Close()) })
+		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
+		require.NoError(t, err)
+		require.NoError(t, c.SetUserIdentity(rene))
+		return c, rene
+	}
+
+	// setup opens a cache on a mock repo following a chanSource, and hooks the
+	// listing of the bug refs. Run in a synctest bubble, time is fake, and
+	// synctest.Wait returns once every goroutine of the bubble, the workers
+	// included, is idle.
+	setup := func(t *testing.T) (repository.ClockedRepo, *RepoCache, *IdentityCache, *listHookRepo, *chanSource) {
+		t.Helper()
+		repo := repository.NewMockRepo()
+		hook := &listHookRepo{TestedRepo: repo}
+		source := newChanSource()
+		c, rene := open(t, hook, source)
+		synctest.Wait()
+		return repo, c, rene, hook, source
+	}
+	createOutside := func(t *testing.T, repo repository.ClockedRepo, author identity.Interface) entity.Id {
+		t.Helper()
+		b, _, err := bug.Create(author, time.Now().Unix(), "title", "message", nil, nil)
+		require.NoError(t, err)
+		require.NoError(t, b.Commit(repo))
+		return b.Id()
+	}
+	hasExcerpt := func(t *testing.T, c *RepoCache, id entity.Id) bool {
+		t.Helper()
+		_, err := c.Bugs().ResolveExcerpt(id)
+		return err == nil
+	}
+	workerErr := func(c *RepoCache) error {
+		c.bugs.muSyncWorker.Lock()
+		defer c.bugs.muSyncWorker.Unlock()
+		return c.bugs.syncWorkerErr
+	}
+	naming := func(ids ...entity.Id) repository.Change {
+		keys := make([]string, len(ids))
+		for i, id := range ids {
+			keys[i] = id.String()
+		}
+		return repository.Change{Keys: map[string][]string{bug.Namespace: keys}}
+	}
+
+	t.Run("a change naming entities syncs only those", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, c, rene, hook, source := setup(t)
+			// atomic: the worker syncs on its own, which orders nothing with the test
+			var lists atomic.Int32
+			hook.onList = func() error { lists.Add(1); return nil }
+			named := createOutside(t, repo, rene)
+			other := createOutside(t, repo, rene)
+
+			time.Sleep(syncInterval)
+			source.changes <- naming(named)
+			synctest.Wait()
+			require.True(t, hasExcerpt(t, c, named))
+			require.False(t, hasExcerpt(t, c, other))
+			require.Zero(t, lists.Load())
+		})
+	})
+
+	t.Run("an empty change syncs every entity", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, c, rene, hook, source := setup(t)
+			var lists atomic.Int32
+			hook.onList = func() error { lists.Add(1); return nil }
+			first := createOutside(t, repo, rene)
+			second := createOutside(t, repo, rene)
+
+			time.Sleep(syncInterval)
+			source.changes <- repository.Change{}
+			synctest.Wait()
+			require.True(t, hasExcerpt(t, c, first))
+			require.True(t, hasExcerpt(t, c, second))
+			require.EqualValues(t, 1, lists.Load())
+		})
+	})
+
+	t.Run("changes within the interval are synced together once it passed", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, c, rene, hook, source := setup(t)
+			var lists atomic.Int32
+			hook.onList = func() error { lists.Add(1); return nil }
+			first := createOutside(t, repo, rene)
+			second := createOutside(t, repo, rene)
+			third := createOutside(t, repo, rene)
+
+			// the sync of Load just ended
+			source.changes <- naming(first)
+			source.changes <- naming(second)
+			synctest.Wait()
+			require.False(t, hasExcerpt(t, c, first))
+			require.False(t, hasExcerpt(t, c, second))
+
+			time.Sleep(syncInterval)
+			synctest.Wait()
+			require.True(t, hasExcerpt(t, c, first))
+			require.True(t, hasExcerpt(t, c, second))
+			require.False(t, hasExcerpt(t, c, third))
+			require.Zero(t, lists.Load())
+
+			// an empty change turns the next sync into a full one
+			source.changes <- naming(first)
+			source.changes <- repository.Change{}
+			time.Sleep(syncInterval)
+			synctest.Wait()
+			require.True(t, hasExcerpt(t, c, third))
+			require.EqualValues(t, 1, lists.Load())
+		})
+	})
+
+	t.Run("keys of other namespaces or not entities are ignored", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, c, rene, hook, source := setup(t)
+			var lists atomic.Int32
+			hook.onList = func() error { lists.Add(1); return nil }
+			id := createOutside(t, repo, rene)
+
+			time.Sleep(syncInterval)
+			source.changes <- repository.Change{Keys: map[string][]string{
+				bug.Namespace: {"not-an-id"},
+				"elsewhere":   {id.String()},
+			}}
+			synctest.Wait()
+			require.False(t, hasExcerpt(t, c, id))
+			require.Zero(t, lists.Load())
+		})
+	})
+
+	t.Run("reads start no sync", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, c, rene, hook, _ := setup(t)
+			var lists atomic.Int32
+			hook.onList = func() error { lists.Add(1); return nil }
+			id := createOutside(t, repo, rene)
+
+			for range 3 {
+				c.Bugs().AllIds()
+				searchBugs(t, c, "title")
+				time.Sleep(time.Hour)
+			}
+			synctest.Wait()
+			require.Zero(t, lists.Load())
+			require.False(t, hasExcerpt(t, c, id))
+		})
+	})
+
+	t.Run("reads during a sync are not held", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, c, rene, hook, source := setup(t)
+			held, release := make(chan struct{}), make(chan struct{})
+			hook.onList = func() error {
+				close(held)
+				<-release
+				return nil
+			}
+			id := createOutside(t, repo, rene)
+
+			time.Sleep(syncInterval)
+			source.changes <- repository.Change{}
+			<-held
+			require.Empty(t, searchBugs(t, c, "title"))
+			hook.onList = nil
+			close(release)
+
+			synctest.Wait()
+			require.Equal(t, []entity.Id{id}, searchBugs(t, c, "title"))
+		})
+	})
+
+	t.Run("a failed sync is kept, and retried at the next change", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, c, rene, hook, source := setup(t)
+			hook.onList = func() error { return fmt.Errorf("listing failed") }
+			id := createOutside(t, repo, rene)
+
+			time.Sleep(syncInterval)
+			source.changes <- repository.Change{}
+			synctest.Wait()
+			require.ErrorContains(t, workerErr(c), "listing failed")
+
+			hook.onList = nil
+			time.Sleep(syncInterval)
+			source.changes <- repository.Change{}
+			synctest.Wait()
+			require.NoError(t, workerErr(c))
+			require.True(t, hasExcerpt(t, c, id))
+		})
+	})
+
+	t.Run("entities of a failed sync are retried at the next change, whatever it names", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, c, rene, _, source := setup(t)
+
+			// a bug whose author isn't in the repository yet can't be read
+			author, err := identity.NewIdentity(repo, "Blaise Pascal", "blaise@pascal.fr")
+			require.NoError(t, err)
+			failing := createOutside(t, repo, author)
+
+			time.Sleep(syncInterval)
+			source.changes <- naming(failing)
+			synctest.Wait()
+			require.Error(t, workerErr(c))
+			require.False(t, hasExcerpt(t, c, failing))
+
+			require.NoError(t, author.Commit(repo))
+			other := createOutside(t, repo, rene)
+			time.Sleep(syncInterval)
+			source.changes <- naming(other)
+			synctest.Wait()
+			require.NoError(t, workerErr(c))
+			require.True(t, hasExcerpt(t, c, failing))
+			require.True(t, hasExcerpt(t, c, other))
+		})
+	})
+
+	t.Run("observers are notified of changes made outside", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, c, rene, _, source := setup(t)
+			observer := &recordingObserver{}
+			c.registerAllObservers("repo", observer)
+			id := createOutside(t, repo, rene)
+
+			time.Sleep(syncInterval)
+			source.changes <- naming(id)
+			synctest.Wait()
+			require.Equal(t, []recordedEvent{{EntityEventCreated, id}}, observer.events())
+
+			changeOutside(t, repo, rene, id, "markeroutside")
+			time.Sleep(syncInterval)
+			source.changes <- naming(id)
+			synctest.Wait()
+			require.Equal(t, []recordedEvent{{EntityEventCreated, id}, {EntityEventUpdated, id}}, observer.events())
+		})
+	})
+
+	t.Run("Close ends the subscription", func(t *testing.T) {
+		repo := repository.NewMockRepo()
+		source := newChanSource()
+		c, err := NewRepoCacheNoEvents(repo, source)
+		require.NoError(t, err)
+		ctx := *source.ctx.Load()
+		require.NoError(t, ctx.Err())
+		require.NoError(t, c.Close())
+		require.Error(t, ctx.Err())
+	})
+
+	t.Run("a source that can't work is a warning", func(t *testing.T) {
+		repo := repository.NewMockRepo()
+		c, events := NewRepoCache(repo, failingSource{})
+		var warnings []error
+		for event := range events {
+			require.NoError(t, event.Err)
+			if event.Event == BuildEventWarning {
+				warnings = append(warnings, event.Warning)
+			}
+		}
+		t.Cleanup(func() { require.NoError(t, c.Close()) })
+		require.Len(t, warnings, 1)
+		require.ErrorContains(t, warnings[0], "no notification here")
+
+		_, err := c.Identities().New("René Descartes", "rene@descartes.fr")
+		require.NoError(t, err)
+	})
+
+	// with a real repository and its own sources, outside of a bubble as bleve
+	// and the sources run goroutines of their own: a bug modified outside of
+	// the cache shows up with nothing reading
+	for name, source := range map[string]func(*repository.GoGitRepo) repository.ChangeSource{
+		"watch": repository.NewWatchSource,
+		"poll": func(repo *repository.GoGitRepo) repository.ChangeSource {
+			return repository.NewPollSource(repo, 50*time.Millisecond)
+		},
+	} {
+		t.Run("a bug modified outside with GoGitRepo, "+name, func(t *testing.T) {
+			repo := repository.CreateGoGitTestRepo(t, false)
+			// the test repo wraps its GoGitRepo: the source gets its own,
+			// opened on the same repository, found from its local storage
+			// (.git/git-bug)
+			watched, err := repository.OpenGoGitRepo(filepath.Dir(repo.LocalStorage().Root()), "git-bug")
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, watched.Close()) })
+			c, rene := open(t, repo, source(watched))
+			b, _, err := c.Bugs().New("title", "message")
+			require.NoError(t, err)
+
+			other, err := bug.Read(repo, b.Id())
+			require.NoError(t, err)
+			_, _, err = bug.AddComment(other, rene, time.Now().Unix(), "markeroutside", nil, nil)
+			require.NoError(t, err)
+			require.NoError(t, other.Commit(repo))
+
+			require.Eventually(t, func() bool {
+				return lenComments(t, c, b.Id()) == 2
+			}, 5*time.Second, 20*time.Millisecond)
+			require.Equal(t, []entity.Id{b.Id()}, searchBugs(t, c, "markeroutside"))
+			requireDerivedBuiltFromRefs(t, repo, c)
+		})
+	}
+}
+
+// recordingObserver records the events it is notified of.
+type recordingObserver struct {
+	mu   sync.Mutex
+	seen []recordedEvent
+}
+
+type recordedEvent struct {
+	event EntityEventType
+	id    entity.Id
+}
+
+func (o *recordingObserver) EntityEvent(event EntityEventType, _ string, _ string, id entity.Id) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	o.seen = append(o.seen, recordedEvent{event, id})
+}
+
+func (o *recordingObserver) events() []recordedEvent {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	return slices.Clone(o.seen)
 }

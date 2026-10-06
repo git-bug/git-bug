@@ -20,7 +20,7 @@ func TestFinishConfigDanglingUserIdentity(t *testing.T) {
 	dangling := entity.Id(strings.Repeat("a", 64))
 	require.NoError(t, repo.LocalConfig().StoreString("git-bug.identity", dangling.String()))
 
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	defer backend.Close()
 
@@ -43,7 +43,7 @@ func TestFinishConfigDanglingUserIdentity(t *testing.T) {
 func TestFinishConfigDanglingUserIdentityWithExisting(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	defer backend.Close()
 

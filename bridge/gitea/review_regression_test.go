@@ -28,7 +28,7 @@ func TestImportDoesNotReportUncommittedOperations(t *testing.T) {
 	baseRepo := repository.NewMockRepo()
 	repo := &failingIndexRepo{ClockedRepo: baseRepo}
 	defer repo.Close()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	defer backend.Close()
 	storeRoundTripToken(t, baseRepo, srv.URL)
@@ -59,7 +59,7 @@ func TestExportKeepsRemoteContentAfterRefreshFailure(t *testing.T) {
 			baseRepo := repository.NewMockRepo()
 			repo := &failingIndexRepo{ClockedRepo: baseRepo}
 			defer repo.Close()
-			backend, err := cache.NewRepoCacheNoEvents(repo)
+			backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 			require.NoError(t, err)
 			defer backend.Close()
 			storeRoundTripToken(t, baseRepo, srv.URL)

@@ -264,10 +264,14 @@ type commit struct {
 	message  string
 }
 
-// mockRepoDataBrowse keeps everything in unguarded maps: it is not safe for
-// concurrent use. That also makes UpdateRef trivially atomic, as RepoData
-// requires; tests exercising concurrency use GoGitRepo.
+// mockRepoDataBrowse keeps everything in maps, guarded by mu: it is safe for
+// concurrent use, as a cache syncing in the background requires. Each public
+// method touching the maps holds mu, which also makes UpdateRef atomic, as
+// RepoData requires; StoreCommit and ListCommits only delegate to such
+// methods, and the private helpers run under the caller's lock.
 type mockRepoDataBrowse struct {
+	mu sync.Mutex
+
 	blobs   map[Hash][]byte
 	trees   map[Hash]string
 	commits map[Hash]commit
@@ -292,6 +296,9 @@ func (r *mockRepoDataBrowse) PushRefs(remote string, namespaces ...string) (stri
 }
 
 func (r *mockRepoDataBrowse) StoreData(data []byte) (Hash, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	rawHash := sha1.Sum(data)
 	hash := Hash(fmt.Sprintf("%x", rawHash))
 	r.blobs[hash] = data
@@ -299,6 +306,9 @@ func (r *mockRepoDataBrowse) StoreData(data []byte) (Hash, error) {
 }
 
 func (r *mockRepoDataBrowse) ReadData(hash Hash) (io.ReadCloser, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	data, ok := r.blobs[hash]
 	if !ok {
 		return nil, ErrNotFound
@@ -308,6 +318,9 @@ func (r *mockRepoDataBrowse) ReadData(hash Hash) (io.ReadCloser, error) {
 }
 
 func (r *mockRepoDataBrowse) StoreTree(entries []TreeEntry) (Hash, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	buffer := prepareTreeEntries(entries)
 	rawHash := sha1.Sum(buffer.Bytes())
 	hash := Hash(fmt.Sprintf("%x", rawHash))
@@ -317,6 +330,9 @@ func (r *mockRepoDataBrowse) StoreTree(entries []TreeEntry) (Hash, error) {
 }
 
 func (r *mockRepoDataBrowse) ReadTree(hash Hash) ([]TreeEntry, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	var data string
 
 	data, ok := r.trees[hash]
@@ -344,6 +360,9 @@ func (r *mockRepoDataBrowse) StoreCommit(treeHash Hash, parents ...Hash) (Hash, 
 }
 
 func (r *mockRepoDataBrowse) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	hasher := sha1.New()
 	hasher.Write([]byte(treeHash))
 	for _, parent := range parents {
@@ -369,6 +388,9 @@ func (r *mockRepoDataBrowse) StoreSignedCommit(treeHash Hash, signKey *openpgp.E
 }
 
 func (r *mockRepoDataBrowse) ReadCommit(hash Hash) (Commit, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	c, ok := r.commits[hash]
 	if !ok {
 		return Commit{}, ErrNotFound
@@ -391,14 +413,23 @@ func (r *mockRepoDataBrowse) ReadCommit(hash Hash) (Commit, error) {
 }
 
 func (r *mockRepoDataBrowse) ListRefs(namespace string) (map[string]Hash, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.listRefs(refPrefix(namespace)), nil
 }
 
 func (r *mockRepoDataBrowse) ResolveRef(namespace string, key string) (Hash, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.lookupRef(refPrefix(namespace) + key)
 }
 
 func (r *mockRepoDataBrowse) UpdateRef(namespace string, key string, old Hash, commit Hash) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	ref := refPrefix(namespace) + key
 	if r.refs[ref] != old {
 		return fmt.Errorf("%w: %s", ErrRefChanged, ref)
@@ -408,19 +439,31 @@ func (r *mockRepoDataBrowse) UpdateRef(namespace string, key string, old Hash, c
 }
 
 func (r *mockRepoDataBrowse) RemoveRef(namespace string, key string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	delete(r.refs, refPrefix(namespace)+key)
 	return nil
 }
 
 func (r *mockRepoDataBrowse) ListTrackingRefs(remote string, namespace string) (map[string]Hash, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.listRefs(trackingRefPrefix(remote, namespace)), nil
 }
 
 func (r *mockRepoDataBrowse) ResolveTrackingRef(remote string, namespace string, key string) (Hash, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.lookupRef(trackingRefPrefix(remote, namespace) + key)
 }
 
 func (r *mockRepoDataBrowse) RemoveTrackingRef(remote string, namespace string, key string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	delete(r.refs, trackingRefPrefix(remote, namespace)+key)
 	return nil
 }
@@ -578,6 +621,9 @@ func mockCommitMeta(hash Hash, c commit) CommitMeta {
 }
 
 func (r *mockRepoDataBrowse) Branches() ([]BranchInfo, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	var branches []BranchInfo
 	for ref, hash := range r.refs {
 		name, ok := strings.CutPrefix(ref, "refs/heads/")
@@ -593,6 +639,9 @@ func (r *mockRepoDataBrowse) Branches() ([]BranchInfo, error) {
 }
 
 func (r *mockRepoDataBrowse) Tags() ([]TagInfo, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	var tags []TagInfo
 	for ref, hash := range r.refs {
 		name, ok := strings.CutPrefix(ref, "refs/tags/")
@@ -605,6 +654,9 @@ func (r *mockRepoDataBrowse) Tags() ([]TagInfo, error) {
 }
 
 func (r *mockRepoDataBrowse) TreeAtPath(rev, path string) ([]TreeEntry, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	startHash, err := r.resolveRev(rev)
 	if err != nil {
 		return nil, ErrNotFound
@@ -617,6 +669,9 @@ func (r *mockRepoDataBrowse) TreeAtPath(rev, path string) ([]TreeEntry, error) {
 }
 
 func (r *mockRepoDataBrowse) BlobAtPath(rev, path string) (io.ReadCloser, int64, Hash, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	startHash, err := r.resolveRev(rev)
 	if err != nil {
 		return nil, 0, "", ErrNotFound
@@ -637,6 +692,9 @@ func (r *mockRepoDataBrowse) BlobAtPath(rev, path string) (io.ReadCloser, int64,
 }
 
 func (r *mockRepoDataBrowse) CommitLog(rev, path string, limit int, after Hash, since, until *time.Time) ([]CommitMeta, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	startHash, err := r.resolveRev(rev)
 	if err != nil {
 		return nil, ErrNotFound
@@ -715,6 +773,9 @@ func (r *mockRepoDataBrowse) CommitLog(rev, path string, limit int, after Hash, 
 }
 
 func (r *mockRepoDataBrowse) LastCommitForEntries(rev, path string, names []string) (map[string]CommitMeta, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	startHash, err := r.resolveRev(rev)
 	if err != nil {
 		return nil, ErrNotFound
@@ -780,6 +841,9 @@ func (r *mockRepoDataBrowse) LastCommitForEntries(rev, path string, names []stri
 }
 
 func (r *mockRepoDataBrowse) CommitDetail(hash Hash) (CommitDetail, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	c, ok := r.commits[hash]
 	if !ok {
 		return CommitDetail{}, ErrNotFound
@@ -797,6 +861,9 @@ func (r *mockRepoDataBrowse) CommitDetail(hash Hash) (CommitDetail, error) {
 }
 
 func (r *mockRepoDataBrowse) CommitFileDiff(hash Hash, filePath string) (FileDiff, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	c, ok := r.commits[hash]
 	if !ok {
 		return FileDiff{}, ErrNotFound
@@ -837,6 +904,9 @@ func (r *mockRepoDataBrowse) CommitFileDiff(hash Hash, filePath string) (FileDif
 }
 
 func (r *mockRepoDataBrowse) Head() (RefMeta, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	hash, ok := r.refs["HEAD"]
 	if !ok {
 		return RefMeta{}, ErrNotFound
@@ -978,11 +1048,15 @@ func (r mockRepoTest) EraseFromDisk() error {
 }
 
 func (r *mockRepoTest) SetBranch(name string, commit Hash) error {
+	r.data.mu.Lock()
+	defer r.data.mu.Unlock()
 	r.data.refs["refs/heads/"+name] = commit
 	return nil
 }
 
 func (r *mockRepoTest) SetTag(name string, commit Hash) error {
+	r.data.mu.Lock()
+	defer r.data.mu.Unlock()
 	r.data.refs["refs/tags/"+name] = commit
 	return nil
 }

@@ -44,7 +44,7 @@ func setupImporter(t *testing.T, serverURL string) (*giteaImporter, *cache.RepoC
 	err := auth.Store(repo, token)
 	require.NoError(t, err)
 
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = backend.Close() })
 
@@ -1083,7 +1083,7 @@ func TestImportNegativeDedupAcrossRepos(t *testing.T) {
 		token.SetMetadata(auth.MetaKeyBaseURL, baseURL)
 		require.NoError(t, auth.Store(repo, token))
 	}
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = backend.Close() })
 
@@ -1577,7 +1577,7 @@ func TestImportIdentityCarriesLoginAndProfile(t *testing.T) {
 
 func TestImportInitNoToken(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = backend.Close() })
 
@@ -1605,7 +1605,7 @@ func TestImportRepoNotFound(t *testing.T) {
 	token.SetMetadata(auth.MetaKeyBaseURL, srv.URL)
 	require.NoError(t, auth.Store(repo, token))
 
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = backend.Close() })
 

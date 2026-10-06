@@ -10,7 +10,7 @@ func newBugStatusOpenCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "open [BUG_ID]",
 		Short:   "Mark a bug as open",
-		PreRunE: execenv.LoadBackendEnsureUser(env),
+		PreRunE: execenv.LoadBackend(env, execenv.EnsureUser()),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBugStatusOpen(env, args)
 		}),

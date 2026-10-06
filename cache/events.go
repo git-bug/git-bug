@@ -22,6 +22,9 @@ const (
 	BuildEventProgress
 	// BuildEventFinished signal the end of a cache build for an entity
 	BuildEventFinished
+	// BuildEventWarning signal a problem that doesn't prevent using the cache,
+	// carried in Warning
+	BuildEventWarning
 )
 
 // BuildEvent carry an event happening during the cache build process.
@@ -36,6 +39,8 @@ type BuildEvent struct {
 	Total int64
 	// Progress is the current count of processed elements. Set if Event is BuildEventProgress.
 	Progress int64
+	// Warning is the problem signaled. Set if Event is BuildEventWarning.
+	Warning error
 }
 
 type EntityEventType int

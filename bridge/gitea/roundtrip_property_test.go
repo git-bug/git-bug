@@ -112,7 +112,7 @@ func newRoundTripRepo(t testLike) (repository.TestedRepo, *cache.RepoCache) {
 		}
 	})
 
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	requireNoError(t, err)
 	t.Cleanup(func() { _ = backend.Close() })
 	return repo, backend

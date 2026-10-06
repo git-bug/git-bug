@@ -50,11 +50,26 @@ func newWebUICommand(env *execenv.Env) *cobra.Command {
 
 Available git config:
   git-bug.webui.open [bool]: control the automatic opening of the web UI in the default browser
+  git-bug.changes.notifier [auto|watch|poll|periodic|none]: how changes made outside are noticed, see doc/usage/configuration.md
 `,
-		PreRunE: execenv.LoadRepo(env),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return runWebUI(env, options)
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if !webui.Available {
+				return errors.New(`this binary was built without the web UI
+
+The web UI is a separate frontend that has to be built with Node.js and
+compiled into the binary. Binaries produced by "go build" or "go install" do
+not include it.
+
+To get a binary with the web UI, either download an official release from
+https://github.com/git-bug/git-bug/releases, or build one from a clone of the
+repository with "make build" (or "make install"), which builds the frontend
+first and then compiles it in.`)
+			}
+			return execenv.LoadBackend(env, execenv.FollowChanges())(cmd, args)
 		},
+		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
+			return runWebUI(env, options)
+		}),
 	}
 
 	flags := cmd.Flags()
@@ -73,20 +88,7 @@ Available git config:
 }
 
 // setupRoutes builds the router and registers all API and UI routes.
-func setupRoutes(env *execenv.Env, opts webUIOptions) (*mux.Router, func() error, error) {
-	if !webui.Available {
-		return nil, nil, errors.New(`this binary was built without the web UI
-
-The web UI is a separate frontend that has to be built with Node.js and
-compiled into the binary. Binaries produced by "go build" or "go install" do
-not include it.
-
-To get a binary with the web UI, either download an official release from
-https://github.com/git-bug/git-bug/releases, or build one from a clone of the
-repository with "make build" (or "make install"), which builds the frontend
-first and then compiles it in.`)
-	}
-
+func setupRoutes(env *execenv.Env, opts webUIOptions) (*mux.Router, error) {
 	router := mux.NewRouter()
 
 	// If the webUI is not read-only, use an authentication middleware with a
@@ -95,16 +97,13 @@ first and then compiles it in.`)
 	if !opts.readOnly {
 		author, err := identity.GetUserIdentity(env.Repo)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		router.Use(auth.Middleware(author.Id()))
 	}
 
 	mrc := cache.NewMultiRepoCache()
-	_, events := mrc.RegisterDefaultRepository(env.Repo)
-	if err := execenv.CacheBuildProgressBar(env, events); err != nil {
-		return nil, nil, err
-	}
+	mrc.Add("", env.Backend)
 
 	var errOut io.Writer
 	if opts.dev || opts.logErrors {
@@ -122,19 +121,14 @@ first and then compiles it in.`)
 	}
 	router.PathPrefix("/").Handler(webui.NewHandler())
 
-	return router, mrc.Close, nil
+	return router, nil
 }
 
 func runWebUI(env *execenv.Env, opts webUIOptions) error {
-	router, closeRoutes, err := setupRoutes(env, opts)
+	router, err := setupRoutes(env, opts)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if err := closeRoutes(); err != nil {
-			env.Err.Println(err)
-		}
-	}()
 
 	if opts.port == 0 {
 		opts.port, err = freeport.GetFreePort()

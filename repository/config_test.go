@@ -16,6 +16,7 @@ func TestMergedConfig(t *testing.T) {
 	require.NoError(t, global.StoreBool("bool", true))
 	require.NoError(t, global.StoreString("string", "foo"))
 	require.NoError(t, global.StoreTimestamp("timestamp", time.Unix(1234, 0)))
+	require.NoError(t, global.StoreString("globalonly", "global"))
 
 	val1, err := merged.ReadBool("bool")
 	require.NoError(t, err)
@@ -47,11 +48,13 @@ func TestMergedConfig(t *testing.T) {
 
 	all, err := merged.ReadAll("")
 	require.NoError(t, err)
-	require.Equal(t, all, map[string]string{
-		"bool":      "false",
-		"string":    "bar",
-		"timestamp": "5678",
-	})
+	// local values win, and global ones not overridden are kept
+	require.Equal(t, map[string]string{
+		"bool":       "false",
+		"string":     "bar",
+		"timestamp":  "5678",
+		"globalonly": "global",
+	}, all)
 }
 
 func TestGetDefaultString(t *testing.T) {

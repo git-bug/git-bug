@@ -154,7 +154,7 @@ func TestGithubPushPull(t *testing.T) {
 	// create repo backend
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 
 	// set author identity
@@ -234,8 +234,9 @@ func TestGithubPushPull(t *testing.T) {
 	repoTwo := repository.CreateGoGitTestRepo(t, false)
 
 	// create a second backend
-	backendTwo, err := cache.NewRepoCacheNoEvents(repoTwo)
+	backendTwo, err := cache.NewRepoCacheNoEvents(repoTwo, nil)
 	require.NoError(t, err)
+	defer backendTwo.Close()
 
 	importer := &githubImporter{}
 	err = importer.Init(ctx, backend, core.Configuration{
@@ -540,7 +541,7 @@ func deleteRepository(ctx context.Context, project, owner, token string) error {
 
 func TestCacheAllClient_MultipleLogins(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	defer backend.Close()
 

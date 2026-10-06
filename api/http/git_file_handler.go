@@ -41,7 +41,7 @@ func (gfh *gitFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	switch repoVar := vars["repo"]; repoVar {
 	case "", "_":
-		repo, err = gfh.mrc.DefaultRepo()
+		_, repo, err = gfh.mrc.DefaultRepo()
 	default:
 		repo, err = gfh.mrc.ResolveRepo(repoVar)
 	}

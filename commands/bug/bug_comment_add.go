@@ -20,7 +20,7 @@ func newBugCommentNewCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "new [BUG_ID]",
 		Short:   "Add a new comment to a bug",
-		PreRunE: execenv.LoadBackendEnsureUser(env),
+		PreRunE: execenv.LoadBackend(env, execenv.EnsureUser()),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBugCommentNew(env, options, args)
 		}),

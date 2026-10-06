@@ -14,6 +14,9 @@ type ConnectionInput struct {
 }
 
 type Repository struct {
+	// Name is the name of the repository in the MultiRepoCache, empty for an
+	// unnamed one.
+	Name string
 	Repo *cache.RepoCache
 }
 

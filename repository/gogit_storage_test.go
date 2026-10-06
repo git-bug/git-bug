@@ -161,12 +161,15 @@ func TestGoGitStorage(t *testing.T) {
 		repo, _ := setupPrimedRepo(t)
 		s := repo.r.Storer.(*reindexingStorage)
 		packs := s.packs
+		require.NotEmpty(t, packs)
 
 		missing := plumbing.NewHash("0123456789abcdef0123456789abcdef01234567")
 		_, err := s.EncodedObject(plumbing.AnyObject, missing)
 		require.ErrorIs(t, err, plumbing.ErrObjectNotFound)
 		require.False(t, s.stale)
-		require.Equal(t, packs, s.packs)
+		// a rebuild would record a new list of the same packs: compare the lists
+		// themselves, not their content
+		require.Same(t, &packs[0], &s.packs[0], "the index was rebuilt")
 
 		_, err = repo.ReadCommit(Hash(missing.String()))
 		require.ErrorIs(t, err, ErrNotFound)

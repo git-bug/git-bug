@@ -31,7 +31,7 @@ func (gufh *gitUploadFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Requ
 	repoVar := mux.Vars(r)["repo"]
 	switch repoVar {
 	case "", "_":
-		repo, err = gufh.mrc.DefaultRepo()
+		_, repo, err = gufh.mrc.DefaultRepo()
 	default:
 		repo, err = gufh.mrc.ResolveRepo(repoVar)
 	}
