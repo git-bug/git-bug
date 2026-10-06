@@ -82,10 +82,18 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 			return nil, fmt.Errorf("credential doesn't have a login")
 		}
 		login = l
-		if cred.Kind() == auth.KindToken {
+		credType, _ = cred.GetMetadata(confKeyCredentialType)
+		if credType == "" {
+			// Legacy password credentials may contain API tokens. Their Go
+			// type does not identify the server's authentication mechanism.
 			credType = "TOKEN"
-		} else {
-			credType = "SESSION"
+			if interactive && cred.Kind() != auth.KindToken {
+				choice, err := input.PromptChoice("Authentication mechanism", []string{"SESSION", "TOKEN"})
+				if err != nil {
+					return nil, err
+				}
+				credType = []string{"SESSION", "TOKEN"}[choice]
+			}
 		}
 	default:
 		if params.Login == "" {
@@ -160,11 +168,10 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 	}
 
 	// don't forget to store the now known valid token
-	if !auth.IdExist(repo, cred.ID()) {
-		err = auth.Store(repo, cred)
-		if err != nil {
-			return nil, err
-		}
+	cred.SetMetadata(confKeyCredentialType, credType)
+	err = auth.Store(repo, cred)
+	if err != nil {
+		return nil, err
 	}
 
 	err = core.FinishConfig(repo, metaKeyJiraLogin, login)

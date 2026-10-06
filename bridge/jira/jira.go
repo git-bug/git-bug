@@ -66,7 +66,9 @@ func (*Jira) NewExporter() core.Exporter {
 }
 
 func buildClient(ctx context.Context, baseURL string, credType string, cred auth.Credential) (*Client, error) {
-	client := NewClient(ctx, baseURL)
+	// Keep stored URLs intact for historical issue mappings, but normalize
+	// the transport URL before the client appends /rest/... paths.
+	client := NewClient(ctx, auth.NormalizeBaseURL(baseURL))
 
 	var login, password string
 

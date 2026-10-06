@@ -19,6 +19,7 @@ import (
 
 func TestTokenCredentials(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NotContains(t, r.URL.Path, "//", "transport URLs must not contain a doubled slash")
 		login, password, ok := r.BasicAuth()
 		require.True(t, ok)
 		require.Equal(t, "alice", login)
@@ -70,6 +71,13 @@ func TestTokenCredentials(t *testing.T) {
 		require.Equal(t, server.URL+"/", configured[confKeyBaseUrl], "preserve the URL used by existing imported issues")
 		require.Equal(t, "TOKEN", configured[confKeyCredentialType])
 	}
+	legacyToken := auth.NewLoginPassword(target, "alice", "api-token")
+	legacyToken.SetMetadata(auth.MetaKeyLogin, "alice")
+	legacyToken.SetMetadata(auth.MetaKeyBaseURL, server.URL)
+	require.NoError(t, auth.Store(repo, legacyToken))
+	configured, err := (&Jira{}).Configure(backend, core.BridgeParams{BaseURL: server.URL + "/", Project: "TEST", CredPrefix: legacyToken.ID().String()}, false)
+	require.NoError(t, err)
+	require.Equal(t, "TOKEN", configured[confKeyCredentialType])
 	legacyConf := core.Configuration{confKeyCredentialType: "TOKEN", confKeyCredentialID: password.ID().String()}
 	credentials, err = configuredCredentials(repo, legacyConf, auth.WithTarget(target))
 	require.NoError(t, err)
