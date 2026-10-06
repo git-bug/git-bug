@@ -143,7 +143,7 @@ func TestSessionCredentialsIgnoreNewerToken(t *testing.T) {
 	require.NoError(t, exporter.cacheAllClient(context.Background(), backend))
 	_, err = buildClient(context.Background(), server.URL, "SESSION", token)
 	require.ErrorContains(t, err, "requires Jira TOKEN")
-	configured, err := (&Jira{}).Configure(backend, core.BridgeParams{BaseURL: server.URL, Project: "TEST", CredPrefix: password.ID().String(), AuthMode: "SESSION"}, false)
+	configured, err := (&Jira{}).Configure(backend, core.BridgeParams{BaseURL: server.URL, Project: "TEST", CredPrefix: password.ID().String(), AuthMode: "SESSION"}, true)
 	require.NoError(t, err)
 	require.Equal(t, "SESSION", configured[confKeyCredentialType])
 	configured, err = (&Jira{}).Configure(backend, core.BridgeParams{BaseURL: server.URL, Project: "TEST", CredPrefix: password.ID().String()}, false)
