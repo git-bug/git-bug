@@ -110,8 +110,11 @@ func TestTokenCredentials(t *testing.T) {
 
 func TestSessionCredentialsIgnoreNewerToken(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(t, "/rest/auth/1/session", r.URL.Path)
 		var credentials SessionQuery
+		if r.URL.Path != "/rest/auth/1/session" {
+			_, _ = w.Write([]byte(`{"id":"1","key":"TEST"}`))
+			return
+		}
 		require.NoError(t, json.NewDecoder(r.Body).Decode(&credentials))
 		require.Equal(t, "alice", credentials.Username)
 		require.Equal(t, "password", credentials.Password)
@@ -140,6 +143,12 @@ func TestSessionCredentialsIgnoreNewerToken(t *testing.T) {
 	require.NoError(t, exporter.cacheAllClient(context.Background(), backend))
 	_, err = buildClient(context.Background(), server.URL, "SESSION", token)
 	require.ErrorContains(t, err, "requires Jira TOKEN")
+	configured, err := (&Jira{}).Configure(backend, core.BridgeParams{BaseURL: server.URL, Project: "TEST", CredPrefix: password.ID().String(), AuthMode: "SESSION"}, false)
+	require.NoError(t, err)
+	require.Equal(t, "SESSION", configured[confKeyCredentialType])
+	configured, err = (&Jira{}).Configure(backend, core.BridgeParams{BaseURL: server.URL, Project: "TEST", CredPrefix: password.ID().String()}, false)
+	require.NoError(t, err)
+	require.Equal(t, "SESSION", configured[confKeyCredentialType], "validated mode is retained for later setup")
 }
 
 func TestConfigureRejectsForeignCredentialBeforeNetworkAccess(t *testing.T) {

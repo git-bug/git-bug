@@ -169,6 +169,7 @@ git bug bridge new \
 	flags.BoolVar(&options.tokenStdin, "token-stdin", false, "Will read the token from stdin and ignore --token")
 	flags.StringVarP(&options.params.Owner, "owner", "o", "", "The owner of the remote repository")
 	flags.StringVarP(&options.params.Project, "project", "p", "", "The name of the remote repository")
+	flags.StringVar(&options.params.AuthMode, "auth-mode", "", "Jira authentication mechanism: SESSION or TOKEN (overrides legacy credential detection)")
 	flags.BoolVar(&options.nonInteractive, "non-interactive", false, "Do not ask for user input")
 
 	return cmd

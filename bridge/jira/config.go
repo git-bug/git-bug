@@ -37,6 +37,7 @@ func (*Jira) ValidParams() map[string]interface{} {
 		"CredPrefix": nil,
 		"Project":    nil,
 		"TokenRaw":   nil,
+		"AuthMode":   nil,
 	}
 }
 
@@ -131,6 +132,12 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 		}
 	}
 
+	if params.AuthMode != "" {
+		if params.AuthMode != "SESSION" && params.AuthMode != "TOKEN" {
+			return nil, fmt.Errorf("--auth-mode must be SESSION or TOKEN")
+		}
+		credType = params.AuthMode
+	}
 	if cred.Target() != target {
 		return nil, fmt.Errorf("credential is for %s, not Jira", cred.Target())
 	}
