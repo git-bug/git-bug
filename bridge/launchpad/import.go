@@ -57,6 +57,7 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 	}
 
 	go func() {
+		defer close(out)
 		for _, lpBug := range lpBugs {
 			select {
 			case <-ctx.Done():

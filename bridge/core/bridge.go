@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"sort"
@@ -19,6 +20,7 @@ import (
 
 var ErrImportNotSupported = errors.New("import is not supported")
 var ErrExportNotSupported = errors.New("export is not supported")
+var ErrBridgeRunning = errors.New("a bridge is already running in this repository")
 
 const (
 	ConfigKeyTarget = "target"
@@ -26,6 +28,12 @@ const (
 	MetaKeyOrigin = "origin"
 
 	bridgeConfigKeyPrefix = "git-bug.bridge"
+
+	// bridgeLockFile is locked while a bridge imports or exports, so that only
+	// one runs at a time in a repository: concurrent runs would import or export
+	// the same items twice. Every bridge shares it, as two bridges can target the
+	// same remote, and the import and export of a bridge race too.
+	bridgeLockFile = "bridge.lock"
 )
 
 var bridgeImpl map[string]reflect.Type
@@ -336,24 +344,33 @@ func (b *Bridge) ImportAllSince(ctx context.Context, since time.Time) (<-chan Im
 		return nil, ErrImportNotSupported
 	}
 
-	err := b.ensureConfig()
+	unlock, err := lockBridges(b.repo)
 	if err != nil {
+		return nil, err
+	}
+
+	err = b.ensureConfig()
+	if err != nil {
+		unlock()
 		return nil, err
 	}
 
 	err = b.ensureImportInit(ctx)
 	if err != nil {
+		unlock()
 		return nil, err
 	}
 
 	events, err := importer.ImportAll(ctx, b.repo, since)
 	if err != nil {
+		unlock()
 		return nil, err
 	}
 
 	out := make(chan ImportResult)
 	go func() {
 		defer close(out)
+		defer unlock()
 		noError := true
 
 		// relay all events while checking that everything went well
@@ -390,15 +407,65 @@ func (b *Bridge) ExportAll(ctx context.Context, since time.Time) (<-chan ExportR
 		return nil, ErrExportNotSupported
 	}
 
-	err := b.ensureConfig()
+	unlock, err := lockBridges(b.repo)
 	if err != nil {
+		return nil, err
+	}
+
+	err = b.ensureConfig()
+	if err != nil {
+		unlock()
 		return nil, err
 	}
 
 	err = b.ensureExportInit(ctx)
 	if err != nil {
+		unlock()
 		return nil, err
 	}
 
-	return exporter.ExportAll(ctx, b.repo, since)
+	events, err := exporter.ExportAll(ctx, b.repo, since)
+	if err != nil {
+		unlock()
+		return nil, err
+	}
+
+	out := make(chan ExportResult)
+	go func() {
+		defer close(out)
+		defer unlock()
+
+		for event := range events {
+			out <- event
+		}
+	}()
+
+	return out, nil
+}
+
+// lockBridges takes the bridge lock of the repository, see bridgeLockFile, and
+// returns the function releasing it. Like git with its index.lock, the lock is a
+// file created exclusively: if it exists, it fails with ErrBridgeRunning rather
+// than waiting.
+func lockBridges(repo repository.RepoStorage) (unlock func(), err error) {
+	storage := repo.LocalStorage()
+
+	f, err := storage.OpenFile(bridgeLockFile, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+	if errors.Is(err, os.ErrExist) {
+		path := filepath.Join(storage.Root(), bridgeLockFile)
+		return nil, fmt.Errorf("%w: '%s' exists.\n\n"+
+			"If no other git-bug bridge is running, a previous one may have crashed:\n"+
+			"remove the file manually to continue", ErrBridgeRunning, path)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	err = f.Close()
+	if err != nil {
+		_ = storage.Remove(bridgeLockFile)
+		return nil, err
+	}
+
+	return func() { _ = storage.Remove(bridgeLockFile) }, nil
 }
