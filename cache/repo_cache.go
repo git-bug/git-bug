@@ -1,12 +1,14 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/identity"
@@ -42,6 +44,9 @@ type cacheMgmt interface {
 	GetNamespace() string
 	RegisterObserver(repoName string, observer Observer)
 	UnregisterObserver(observer Observer)
+	// requestSync asks for a sync of the given entities, or of every entity
+	// if none is given, in the background.
+	requestSync(ids ...entity.Id)
 	Close() error
 }
 
@@ -63,9 +68,6 @@ type RepoCache struct {
 	// the underlying repo
 	repo repository.ClockedRepo
 
-	// the name of the repository, as defined in the MultiRepoCache
-	name string
-
 	// resolvers for all known entities and excerpts
 	resolvers entity.Resolvers
 
@@ -77,22 +79,30 @@ type RepoCache struct {
 	// the user identity's id, if known
 	muUserIdentity sync.RWMutex
 	userIdentityId entity.Id
+
+	// changes, if not nil, is what tells the cache that the repository may
+	// have changed outside of it, see followChanges.
+	changes repository.ChangeSource
+	// muChanges guards the state of the subscription below.
+	muChanges           sync.Mutex
+	changesClosed       bool
+	stopChanges         context.CancelFunc
+	changesFollowerDone sync.WaitGroup
 }
 
 // NewRepoCache create or open a cache on top of a raw repository.
 // The caller is expected to read all returned events before the cache is considered
 // ready to use.
-func NewRepoCache(r repository.ClockedRepo) (*RepoCache, chan BuildEvent) {
-	return NewNamedRepoCache(r, defaultRepoName)
-}
-
-// NewNamedRepoCache create or open a named cache on top of a raw repository.
-// The caller is expected to read all returned events before the cache is considered
-// ready to use.
-func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan BuildEvent) {
+//
+// The cache follows the changes made to the repository outside of it, by
+// another process or the git binary, as reported by changes. With a nil
+// source, it only knows of the changes made through it, and of those made
+// outside before it was loaded: a one-shot command needs nothing more, but a
+// long-running process does.
+func NewRepoCache(r repository.ClockedRepo, changes repository.ChangeSource) (*RepoCache, chan BuildEvent) {
 	c := &RepoCache{
-		repo: r,
-		name: name,
+		repo:    r,
+		changes: changes,
 	}
 
 	c.identities = NewRepoCacheIdentity(r, c.getResolvers, c.GetUserIdentity)
@@ -130,14 +140,20 @@ func NewNamedRepoCache(r repository.ClockedRepo, name string) (*RepoCache, chan 
 			}
 		}
 
-		c.load(events)
+		// Subscribed before loading, so that a change made while loading isn't
+		// missed: the syncs it requests wait for the sync workers, started at
+		// the end of the load.
+		c.followChanges(events)
+		if !c.load(events) {
+			c.stopFollowingChanges()
+		}
 	}()
 
 	return c, events
 }
 
-func NewRepoCacheNoEvents(r repository.ClockedRepo) (*RepoCache, error) {
-	cache, events := NewRepoCache(r)
+func NewRepoCacheNoEvents(r repository.ClockedRepo, changes repository.ChangeSource) (*RepoCache, error) {
+	cache, events := NewRepoCache(r, changes)
 	for event := range events {
 		if event.Err != nil {
 			for range events {
@@ -170,9 +186,11 @@ func (c *RepoCache) setCacheSize(size int) {
 }
 
 // load reads the cache files, and brings them up to date with the repository.
-func (c *RepoCache) load(events chan BuildEvent) {
+// It returns whether it succeeded.
+func (c *RepoCache) load(events chan BuildEvent) bool {
 	// announced once, before the first subcache starts building
 	var announce sync.Once
+	var failed atomic.Bool
 
 	var wg sync.WaitGroup
 	for _, subcache := range c.subcaches {
@@ -183,11 +201,73 @@ func (c *RepoCache) load(events chan BuildEvent) {
 				if event.Event == BuildEventStarted {
 					announce.Do(func() { events <- BuildEvent{Event: BuildEventCacheIsBuilt} })
 				}
+				if event.Err != nil {
+					failed.Store(true)
+				}
 				events <- event
 			}
 		}(subcache)
 	}
 	wg.Wait()
+
+	return !failed.Load()
+}
+
+// followChanges subscribes to the change source, if any, until
+// stopFollowingChanges: each change it reports has the subcaches sync the
+// entities it names, or every entity if it names none. A source that can't work
+// here is reported as a warning: the cache works without it, only knowing less
+// of the changes made outside.
+func (c *RepoCache) followChanges(events chan BuildEvent) {
+	if c.changes == nil {
+		return
+	}
+
+	namespaces := make([]string, len(c.subcaches))
+	for i, subcache := range c.subcaches {
+		namespaces[i] = subcache.GetNamespace()
+	}
+
+	c.muChanges.Lock()
+	if c.changesClosed {
+		c.muChanges.Unlock()
+		return
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	changes, err := c.changes.Subscribe(ctx, namespaces)
+	if changes == nil {
+		cancel()
+	} else {
+		c.stopChanges = cancel
+		c.changesFollowerDone.Go(func() {
+			for change := range changes {
+				if len(change.Keys) == 0 {
+					for _, subcache := range c.subcaches {
+						subcache.requestSync()
+					}
+					continue
+				}
+				for _, subcache := range c.subcaches {
+					keys := change.Keys[subcache.GetNamespace()]
+					ids := make([]entity.Id, 0, len(keys))
+					for _, key := range keys {
+						// not a ref of an entity: nothing to sync
+						if id := entity.Id(key); id.Validate() == nil {
+							ids = append(ids, id)
+						}
+					}
+					if len(ids) > 0 {
+						subcache.requestSync(ids...)
+					}
+				}
+			}
+		})
+	}
+	c.muChanges.Unlock()
+
+	if err != nil {
+		events <- BuildEvent{Event: BuildEventWarning, Warning: fmt.Errorf("following changes made outside: %w", err)}
+	}
 }
 
 func (c *RepoCache) lock(events chan BuildEvent) error {
@@ -211,7 +291,21 @@ func (c *RepoCache) lock(events chan BuildEvent) error {
 	return f.Close()
 }
 
+// stopFollowingChanges ends the subscription to the change source, and waits
+// for the changes it reported to be passed on. It won't start again.
+func (c *RepoCache) stopFollowingChanges() {
+	c.muChanges.Lock()
+	c.changesClosed = true
+	if c.stopChanges != nil {
+		c.stopChanges()
+	}
+	c.muChanges.Unlock()
+	c.changesFollowerDone.Wait()
+}
+
 func (c *RepoCache) Close() error {
+	c.stopFollowingChanges()
+
 	var errWait multierr.ErrWaitGroup
 	for _, mgmt := range c.subcaches {
 		errWait.Go(mgmt.Close)

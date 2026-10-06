@@ -2,6 +2,8 @@ package resolvers
 
 import (
 	"context"
+	"maps"
+	"slices"
 
 	"github.com/git-bug/git-bug/api/graphql/connections"
 	"github.com/git-bug/git-bug/api/graphql/graph"
@@ -16,13 +18,15 @@ type rootQueryResolver struct {
 }
 
 func (r rootQueryResolver) Repository(_ context.Context, ref *string) (*models.Repository, error) {
+	var name string
 	var repo *cache.RepoCache
 	var err error
 
 	if ref == nil {
-		repo, err = r.cache.DefaultRepo()
+		name, repo, err = r.cache.DefaultRepo()
 	} else {
-		repo, err = r.cache.ResolveRepo(*ref)
+		name = *ref
+		repo, err = r.cache.ResolveRepo(name)
 	}
 
 	if err != nil {
@@ -30,6 +34,7 @@ func (r rootQueryResolver) Repository(_ context.Context, ref *string) (*models.R
 	}
 
 	return &models.Repository{
+		Name: name,
 		Repo: repo,
 	}, nil
 }
@@ -43,19 +48,21 @@ func (r rootQueryResolver) Repositories(_ context.Context, after *string, before
 		Last:   last,
 	}
 
-	source := r.cache.AllRepos()
+	// sorted by name, for the cursors to be stable
+	repos := r.cache.AllRepos()
+	source := make([]*models.Repository, 0, len(repos))
+	for _, name := range slices.Sorted(maps.Keys(repos)) {
+		source = append(source, &models.Repository{Name: name, Repo: repos[name]})
+	}
 
-	edger := func(repo *cache.RepoCache, offset int) connections.Edge {
+	edger := func(repo *models.Repository, offset int) connections.Edge {
 		return models.RepositoryEdge{
-			Node:   &models.Repository{Repo: repo},
+			Node:   repo,
 			Cursor: connections.OffsetToCursor(offset),
 		}
 	}
 
-	// NodeType is *cache.RepoCache (the source slice element), but the connection
-	// nodes field wants []*models.Repository. Extract them from the edges, which
-	// already hold the wrapped Repository built by the edger above.
-	conMaker := func(edges []*models.RepositoryEdge, _ []*cache.RepoCache, info *models.PageInfo, totalCount int) (*models.RepositoryConnection, error) {
+	conMaker := func(edges []*models.RepositoryEdge, _ []*models.Repository, info *models.PageInfo, totalCount int) (*models.RepositoryConnection, error) {
 		nodes := make([]*models.Repository, len(edges))
 		for i, e := range edges {
 			nodes[i] = e.Node

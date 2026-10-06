@@ -44,12 +44,13 @@ Git configuration is layered: the repository-local `.git/config`, your global
 `~/.gitconfig`, and the system-wide file. `git-bug` does not read every key from
 every layer.
 
-| Keys                | Read from                    |
-| ------------------- | ---------------------------- |
-| `git-bug.remote`    | local, then global           |
-| `git-bug.webui.open`| local, then global           |
-| `git-bug.identity`  | local only                   |
-| `git-bug.bridge.*`  | local only                   |
+| Keys                       | Read from          |
+|----------------------------|--------------------|
+| `git-bug.remote`           | local, then global |
+| `git-bug.webui.open`       | local, then global |
+| `git-bug.changes.notifier` | local, then global |
+| `git-bug.identity`         | local only         |
+| `git-bug.bridge.*`         | local only         |
 
 Where both layers are consulted, the local value wins. Identity and bridge
 configuration are deliberately local-only: they describe *this* repository, and
@@ -61,13 +62,33 @@ configuration.
 
 ## General options<a name="general-options"></a>
 
-| Key                  | Type   | Default  | Description                                                                                            |
-| -------------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------ |
+| Key                  | Type   | Default  | Description                                                                                                                  |
+|----------------------|--------|----------|------------------------------------------------------------------------------------------------------------------------------|
 | `git-bug.remote`     | string | `origin` | The remote used by [`git bug pull`][doc/cli/pull] and [`git bug push`][doc/cli/push] when none is given on the command line. |
-| `git-bug.webui.open` | bool   | `true`   | Whether [`git bug webui`][doc/cli/webui] opens the web UI in your default browser on startup.            |
+| `git-bug.webui.open` | bool   | `true`   | Whether [`git bug webui`][doc/cli/webui] opens the web UI in your default browser on startup.                                |
 
 `git bug webui --no-open` suppresses the browser for a single run without
 changing the configuration, and `--open` forces it on.
+
+### Noticing changes made outside<a name="noticing-changes-made-outside"></a>
+
+The commands that keep running, [`git bug webui`][doc/cli/webui] and
+[`git bug termui`][doc/cli/termui], notice the changes made to the repository
+outside of them, such as a `git push` into it or another `git-bug` command,
+and show them shortly after. `git-bug.changes.notifier` chooses how:
+
+| Value      | Behavior                                                                                                                                                                                                                                                                                                |
+|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `auto`     | The default: `watch` where it works, `poll` otherwise. If watching stops working while the command runs, it switches to `poll`.                                                                                                                                                                         |
+| `watch`    | Be notified by the operating system as changes happen. Supported on Linux and Windows, on a local filesystem.                                                                                                                                                                                           |
+| `poll`     | Check for changes every five seconds. Works everywhere, including on network filesystems (NFS, SMB), where watching sees nothing that another machine writes. On NFS, the client caches directory attributes, by default for 30 to 60 seconds, which delays changes made by another machine by as much. |
+| `periodic` | Only rely on the full check made once a minute, see below.                                                                                                                                                                                                                                              |
+| `none`     | Don't look for changes made outside at all: only those made through the command itself show up. For a repository that only `git-bug` writes to, through that one command.                                                                                                                               |
+
+With any value but `none`, every change is also caught by a full check made
+once a minute, so a wrong choice only delays the update, it never leaves
+anything stale. Other commands don't need any of this: they check the
+repository when they start.
 
 ## Identity<a name="identity"></a>
 
@@ -94,9 +115,9 @@ or adjust an existing bridge.
 
 Every bridge has:
 
-| Key                                    | Type      | Description                                                     |
-| -------------------------------------- | --------- | --------------------------------------------------------------- |
-| `git-bug.bridge.<name>.target`         | string    | The bridge implementation: `github`, `gitlab`, `jira` or `launchpad`. |
+| Key                                    | Type      | Description                                                            |
+|----------------------------------------|-----------|------------------------------------------------------------------------|
+| `git-bug.bridge.<name>.target`         | string    | The bridge implementation: `github`, `gitlab`, `jira` or `launchpad`.  |
 | `git-bug.bridge.<name>.lastImportTime` | timestamp | Bookkeeping for incremental imports. Written by `git bug bridge pull`. |
 
 The remaining keys depend on the target.
@@ -119,21 +140,21 @@ The remaining keys depend on the target.
 
 #### Jira<a name="jira"></a>
 
-| Key                      | Description                                                                      |
-| ------------------------ | -------------------------------------------------------------------------------- |
-| `base-url`               | The Jira instance URL.                                                           |
-| `project`                | The Jira project key.                                                            |
-| `default-login`          | The Jira login used when no credential matches explicitly.                       |
-| `credentials-type`       | `SESSION` or `TOKEN`.                                                            |
-| `bug-id-map`             | Mapping from `git-bug` ids to Jira ids.                                          |
-| `bug-id-revmap`          | The reverse mapping.                                                             |
+| Key                      | Description                                                                           |
+|--------------------------|---------------------------------------------------------------------------------------|
+| `base-url`               | The Jira instance URL.                                                                |
+| `project`                | The Jira project key.                                                                 |
+| `default-login`          | The Jira login used when no credential matches explicitly.                            |
+| `credentials-type`       | `SESSION` or `TOKEN`.                                                                 |
+| `bug-id-map`             | Mapping from `git-bug` ids to Jira ids.                                               |
+| `bug-id-revmap`          | The reverse mapping.                                                                  |
 | `create-issue-defaults`  | Default fields for issues created by an export. Defaults to the Story type (`10001`). |
-| `create-issue-gitbug-id` | If set, the Jira field to fill with the `git-bug` id when exporting.             |
+| `create-issue-gitbug-id` | If set, the Jira field to fill with the `git-bug` id when exporting.                  |
 
 #### Launchpad<a name="launchpad"></a>
 
-| Key       | Description               |
-| --------- | ------------------------- |
+| Key       | Description                 |
+|-----------|-----------------------------|
 | `project` | The Launchpad project name. |
 
 **Credentials are not stored in the git configuration.** Bridge tokens and
@@ -181,6 +202,7 @@ and `emacs` found on your `PATH`, and finally `ed`.
 [doc/cli/pull]: ../md/git-bug_pull.md
 [doc/cli/push]: ../md/git-bug_push.md
 [doc/cli/user]: ../md/git-bug_user.md
+[doc/cli/termui]: ../md/git-bug_termui.md
 [doc/cli/webui]: ../md/git-bug_webui.md
 [docs/home]: ../README.md
 [docs/usage/bridges]: ./third-party.md

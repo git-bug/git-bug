@@ -19,7 +19,7 @@ func newBridgePushCommand(env *execenv.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "push [NAME]",
 		Short:   "Push updates to remote bug tracker",
-		PreRunE: execenv.LoadBackendEnsureUser(env),
+		PreRunE: execenv.LoadBackend(env, execenv.EnsureUser()),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBridgePush(env, args)
 		}),

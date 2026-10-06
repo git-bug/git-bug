@@ -25,11 +25,10 @@ var _ graph.RepositoryResolver = &repoResolver{}
 type repoResolver struct{}
 
 func (repoResolver) Name(_ context.Context, obj *models.Repository) (*string, error) {
-	if obj.Repo.IsDefaultRepo() {
+	if obj.Name == "" {
 		return nil, nil
 	}
-	name := obj.Repo.Name()
-	return &name, nil
+	return &obj.Name, nil
 }
 
 func (repoResolver) AllBugs(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, queryStr *string) (*models.BugConnection, error) {

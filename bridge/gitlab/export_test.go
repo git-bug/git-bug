@@ -153,7 +153,7 @@ func TestGitlabPushPull(t *testing.T) {
 	// create repo backend
 	repo := repository.CreateGoGitTestRepo(t, false)
 
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 
 	// set author identity
@@ -228,7 +228,7 @@ func TestGitlabPushPull(t *testing.T) {
 	repoTwo := repository.CreateGoGitTestRepo(t, false)
 
 	// create a second backend
-	backendTwo, err := cache.NewRepoCacheNoEvents(repoTwo)
+	backendTwo, err := cache.NewRepoCacheNoEvents(repoTwo, nil)
 	require.NoError(t, err)
 	defer backendTwo.Close()
 

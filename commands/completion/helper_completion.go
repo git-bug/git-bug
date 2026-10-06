@@ -20,7 +20,7 @@ func HandleError(err error) (completions []string, directives cobra.ShellCompDir
 
 func Bridge(env *execenv.Env) ValidArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if err := execenv.LoadBackend(env)(cmd, args); err != nil {
+		if err := execenv.LoadBackend(env, execenv.NoProgressBar())(cmd, args); err != nil {
 			return HandleError(err)
 		}
 		defer func() {
@@ -43,7 +43,7 @@ func Bridge(env *execenv.Env) ValidArgsFunction {
 
 func BridgeAuth(env *execenv.Env) ValidArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if err := execenv.LoadBackend(env)(cmd, args); err != nil {
+		if err := execenv.LoadBackend(env, execenv.NoProgressBar())(cmd, args); err != nil {
 			return HandleError(err)
 		}
 		defer func() {
@@ -79,7 +79,7 @@ func From(choices []string) ValidArgsFunction {
 
 func GitRemote(env *execenv.Env) ValidArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if err := execenv.LoadBackend(env)(cmd, args); err != nil {
+		if err := execenv.LoadBackend(env, execenv.NoProgressBar())(cmd, args); err != nil {
 			return HandleError(err)
 		}
 		defer func() {
@@ -101,7 +101,7 @@ func GitRemote(env *execenv.Env) ValidArgsFunction {
 
 func Label(env *execenv.Env) ValidArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if err := execenv.LoadBackend(env)(cmd, args); err != nil {
+		if err := execenv.LoadBackend(env, execenv.NoProgressBar())(cmd, args); err != nil {
 			return HandleError(err)
 		}
 		defer func() {
@@ -139,7 +139,7 @@ func Ls(env *execenv.Env) ValidArgsFunction {
 		}
 
 		if needBackend {
-			if err := execenv.LoadBackend(env)(cmd, args); err != nil {
+			if err := execenv.LoadBackend(env, execenv.NoProgressBar())(cmd, args); err != nil {
 				return HandleError(err)
 			}
 			defer func() {
@@ -201,7 +201,7 @@ func Ls(env *execenv.Env) ValidArgsFunction {
 
 func User(env *execenv.Env) ValidArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if err := execenv.LoadBackend(env)(cmd, args); err != nil {
+		if err := execenv.LoadBackend(env, execenv.NoProgressBar())(cmd, args); err != nil {
 			return HandleError(err)
 		}
 		defer func() {
@@ -223,7 +223,7 @@ func User(env *execenv.Env) ValidArgsFunction {
 
 func UserForQuery(env *execenv.Env) ValidArgsFunction {
 	return func(cmd *cobra.Command, args []string, toComplete string) (completions []string, directives cobra.ShellCompDirective) {
-		if err := execenv.LoadBackend(env)(cmd, args); err != nil {
+		if err := execenv.LoadBackend(env, execenv.NoProgressBar())(cmd, args); err != nil {
 			return HandleError(err)
 		}
 		defer func() {

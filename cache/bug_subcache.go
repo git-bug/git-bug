@@ -82,7 +82,6 @@ func (c *RepoCacheBug) ResolveBugCreateMetadata(key string, value string) (*BugC
 // bug/comment Id prefix. Returns the Bug containing the Comment and the Comment's
 // Id.
 func (c *RepoCacheBug) ResolveComment(prefix string) (*BugCache, entity.CombinedId, error) {
-	c.requestSync()
 	bugPrefix, _ := entity.SeparateIds(prefix)
 	bugCandidate := make([]entity.Id, 0, 5)
 
@@ -128,7 +127,6 @@ func (c *RepoCacheBug) ResolveComment(prefix string) (*BugCache, entity.Combined
 
 // Query return the id of all Bug matching the given Query
 func (c *RepoCacheBug) Query(q *query.Query) ([]entity.Id, error) {
-	c.requestSync()
 	c.muMaps.RLock()
 	defer c.muMaps.RUnlock()
 
@@ -210,7 +208,6 @@ func (c *RepoCacheBug) Query(q *query.Query) ([]entity.Id, error) {
 // labels are defined in a configuration file. Until that, the default behavior
 // is to return the list of labels already used.
 func (c *RepoCacheBug) ValidLabels() []common.Label {
-	c.requestSync()
 	c.muMaps.RLock()
 	defer c.muMaps.RUnlock()
 
