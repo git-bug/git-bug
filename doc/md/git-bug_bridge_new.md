@@ -143,6 +143,7 @@ git bug bridge new \
       --token-stdin         Will read the token from stdin and ignore --token
   -o, --owner string        The owner of the remote repository
   -p, --project string      The name of the remote repository
+      --auth-mode string    Jira authentication mechanism: SESSION or TOKEN (overrides legacy credential detection)
       --non-interactive     Do not ask for user input
   -h, --help                help for new
 ```
