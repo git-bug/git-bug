@@ -14,8 +14,23 @@ func TestParse(t *testing.T) {
 		output *Query
 	}{
 		// KV
+		{"id:", nil},
+		{`id:""`, nil},
 		{"status:", nil},
 		{":value", nil},
+
+		{"id:265e26f", &Query{
+			Filters: Filters{Id: []string{"265e26f"}},
+		}},
+		{`id:"265e26f"`, &Query{
+			Filters: Filters{Id: []string{"265e26f"}},
+		}},
+		{"id:265e26f id:9ed1af4 status:open", &Query{
+			Filters: Filters{
+				Id:     []string{"265e26f", "9ed1af4"},
+				Status: []common.Status{common.OpenStatus},
+			},
+		}},
 
 		{"status:open", &Query{
 			Filters: Filters{Status: []common.Status{common.OpenStatus}},
