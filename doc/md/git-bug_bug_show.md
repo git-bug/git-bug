@@ -3,7 +3,7 @@
 Display the details of a bug
 
 ```
-git-bug bug show [BUG_ID] [flags]
+git-bug bug show [BUG_ID...] [flags]
 ```
 
 ### Options
