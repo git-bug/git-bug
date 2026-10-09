@@ -12,7 +12,7 @@ LDFLAGS:=-X main.version="${TAG}"
 # `git-bug webui` then refuses to run and says so (see //webui:assets_stub.go).
 WEBUI?=1
 ifeq ($(WEBUI),0)
-WEBUI_DEP:
+WEBUI_DEP=
 WEBUI_TAG=
 else
 WEBUI_DEP=build-webui
