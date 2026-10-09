@@ -26,6 +26,7 @@ and verify your installation.
 - [MacOS](#macos)
 - [Windows](#windows)
 - [Build from source](#build-from-source)
+- [Building without the web UI](#building-without-the-web-ui)
 - [Verify your installation](#verify-your-installation)
 
 <!-- mdformat-toc end -->
@@ -210,6 +211,10 @@ dependencies:
 - `git`
 - `go`
 - `make`
+- [Node.js][node] and [pnpm][pnpm], but only for the default build, which
+  compiles the web UI in. See
+  [building without the web UI](#building-without-the-web-ui) below to skip
+  both.
 
 Ensure that the `go` binary directory (`$GOPATH/bin`) is in your `PATH`. It is
 recommended to set this within your shell configuration file(s), such as
@@ -325,6 +330,26 @@ This will build <code>git-bug</code> and place it in your Go binary directory.
 
 </details>
 
+## Building without the web UI<a name="building-without-the-web-ui"></a>
+
+The default `build`, `install` and `build/debug` targets compile the web UI in,
+which requires a Node.js and `pnpm` toolchain. If you don't need the web UI --
+on a minimal system, or when cross-compiling -- pass `WEBUI=0` to skip that
+toolchain entirely:
+
+<pre>
+make install WEBUI=0
+</pre>
+
+The resulting binary behaves identically apart from `git-bug webui`, which
+reports that it was built without the web UI and how to get one that has it.
+Plain `go build` and `go install` already produce such a binary; `WEBUI=0` just
+avoids requiring the frontend toolchain to get there.
+
+> [!TIP]
+> Official releases always include the web UI. Build with the default targets
+> if you want parity with them.
+
 ## Verify your installation<a name="verify-your-installation"></a>
 
 To verify that `git-bug` was installed correctly, you can run the following
@@ -374,9 +399,11 @@ ______________________________________________________________________
 [brew.sh]: https://brew.sh
 [cosign]: https://docs.sigstore.dev/cosign/system_config/installation/
 [docs/home]: ./doc
+[node]: https://nodejs.org
 [p/arch-repo]: https://archlinux.org/packages/extra/x86_64/git-bug/
 [p/aur]: https://aur.archlinux.org/packages/git-bug-bin
 [p/nix]: https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/applications/version-management/git-bug/default.nix
+[pnpm]: https://pnpm.io
 [pkg/linux_amd64.apk]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_amd64.apk
 [pkg/linux_amd64.arch]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_amd64.pkg.tar.zst
 [pkg/linux_amd64.deb]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_amd64.deb

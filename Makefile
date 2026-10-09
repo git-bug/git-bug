@@ -7,6 +7,18 @@ endif
 TAG:=$(shell git describe --tags --match 'v*' --always --dirty --broken)
 LDFLAGS:=-X main.version="${TAG}"
 
+# Set WEBUI=0 to build without the web UI, which spares you a Node.js/pnpm
+# toolchain entirely. The resulting binary simply has none compiled in:
+# `git-bug webui` then refuses to run and says so (see //webui:assets_stub.go).
+WEBUI?=1
+ifeq ($(WEBUI),0)
+WEBUI_DEP:
+WEBUI_TAG=
+else
+WEBUI_DEP=build-webui
+WEBUI_TAG=-tags webui
+endif
+
 all: build
 
 .PHONY: build-webui
@@ -14,20 +26,20 @@ build-webui:
 	cd webui && pnpm install && pnpm run build
 
 .PHONY: build
-build: build-webui
+build: $(WEBUI_DEP)
 	go generate
-	go build -tags webui -ldflags "$(LDFLAGS)" .
+	go build $(WEBUI_TAG) -ldflags "$(LDFLAGS)" .
 
 # produce a debugger-friendly build
 .PHONY: build/debug
-build/debug: build-webui
+build/debug: $(WEBUI_DEP)
 	go generate
-	go build -tags webui -ldflags "$(LDFLAGS)" -gcflags=all="-N -l" .
+	go build $(WEBUI_TAG) -ldflags "$(LDFLAGS)" -gcflags=all="-N -l" .
 
 .PHONY: install
-install: build-webui
+install: $(WEBUI_DEP)
 	go generate
-	go install -tags webui -ldflags "$(LDFLAGS)" .
+	go install $(WEBUI_TAG) -ldflags "$(LDFLAGS)" .
 
 .PHONY: secure
 secure:
