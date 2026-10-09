@@ -18,6 +18,7 @@ and verify your installation.
 
 - [Download a pre-compiled release binary](#download-a-pre-compiled-release-binary)
   - [Verify a download](#verify-a-download)
+- [Using mise](#using-mise)
 - [Linux](#linux)
   - [Arch Linux](#arch-linux)
   - [Nixpkgs](#nixpkgs)
@@ -64,6 +65,17 @@ cosign verify-blob checksums.txt \
 
 sha256sum --ignore-missing -c checksums.txt
 ```
+
+## Using mise<a name="using-mise"></a>
+
+`git-bug` can be installed with [mise][p/mise], a cross-platform tool runtime
+and package manager, through its [aqua][p/aqua] backend:
+
+```sh
+mise install aqua:git-bug/git-bug
+```
+
+This downloads the binary for the current platform and keeps it up to date.
 
 ## Linux<a name="linux"></a>
 
@@ -377,6 +389,8 @@ ______________________________________________________________________
 [p/arch-repo]: https://archlinux.org/packages/extra/x86_64/git-bug/
 [p/aur]: https://aur.archlinux.org/packages/git-bug-bin
 [p/nix]: https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/applications/version-management/git-bug/default.nix
+[p/mise]: https://mise.jdx.dev
+[p/aqua]: https://aquaproj.github.io
 [pkg/linux_amd64.apk]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_amd64.apk
 [pkg/linux_amd64.arch]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_amd64.pkg.tar.zst
 [pkg/linux_amd64.deb]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_amd64.deb
