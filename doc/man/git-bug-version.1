@@ -37,10 +37,19 @@ Format Description:
 .PP
  is the target architecture (GOARCH).
 
+.PP
+With --raw, print  alone, on a line of its own, with no "git-bug"
+prefix and no build metadata. That is the form to compare against another
+version or to embed in a script.
+
 
 .SH OPTIONS
 \fB-h\fP, \fB--help\fP[=false]
 	help for version
+
+.PP
+\fB--raw\fP[=false]
+	Print only the version string, with no prefix or build metadata
 
 
 .SH EXAMPLE

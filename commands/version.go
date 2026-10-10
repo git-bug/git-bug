@@ -2,6 +2,7 @@ package commands
 
 import (
 	"log/slog"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -16,7 +17,9 @@ var (
 )
 
 func newVersionCommand(env *execenv.Env) *cobra.Command {
-	return &cobra.Command{
+	var raw bool
+
+	cmd := &cobra.Command{
 		Use:     "version",
 		Short:   "Print version information",
 		Example: "git bug version",
@@ -41,12 +44,34 @@ Format Description:
   <platform> is the target platform (GOOS).
 
   <arch> is the target architecture (GOARCH).
+
+With --raw, print <version> alone, on a line of its own, with no "git-bug"
+prefix and no build metadata. That is the form to compare against another
+version or to embed in a script.
 `,
 		Run: func(cmd *cobra.Command, args []string) {
 			defer warnDeprecated()
+			if raw {
+				// <version> is always the first space-separated field of the
+				// full string, so the raw form stays a prefix of the default
+				// output rather than a second source of truth.
+				env.Out.Printf("%s\n", rawVersion(cmd.Root().Version))
+				return
+			}
 			env.Out.Printf("%s %s", execenv.RootCommandName, cmd.Root().Version)
 		},
 	}
+
+	cmd.Flags().BoolVar(&raw, "raw", false, "Print only the version string, with no prefix or build metadata")
+
+	return cmd
+}
+
+// rawVersion returns <version> on its own, extracted from the same string
+// `git-bug version` prints, so the two can never disagree.
+func rawVersion(full string) string {
+	version, _, _ := strings.Cut(full, " ")
+	return version
 }
 
 // warnDeprecated warns about deprecated build variables
