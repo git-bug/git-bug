@@ -11,6 +11,7 @@ import (
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 // TODO: move to entity/dag?
@@ -141,7 +142,7 @@ func TestMetadata(t *testing.T) {
 }
 
 func TestID(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	repos := []repository.ClockedRepo{
 		repository.NewMockRepo(),

@@ -5,11 +5,11 @@ import (
 
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/misc/random_bugs"
-	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 func TestReadBugs(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	random_bugs.FillRepoWithSeed(repo, 15, 42)
 
@@ -22,7 +22,7 @@ func TestReadBugs(t *testing.T) {
 }
 
 func benchmarkReadBugs(bugNumber int, t *testing.B) {
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	random_bugs.FillRepoWithSeed(repo, bugNumber, 42)
 	t.ResetTimer()

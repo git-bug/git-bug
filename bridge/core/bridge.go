@@ -3,6 +3,7 @@ package core
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -13,7 +14,6 @@ import (
 	"time"
 
 	"github.com/git-bug/gitconfig"
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/repository"
@@ -131,7 +131,7 @@ func LoadBridge(repo *cache.RepoCache, name string) (*Bridge, error) {
 
 	err = bridge.impl.ValidateConfig(conf)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid configuration")
+		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 
 	// will avoid reloading configuration before an export or import call
@@ -163,7 +163,7 @@ func DefaultBridge(repo *cache.RepoCache) (*Bridge, error) {
 func ConfiguredBridges(repo repository.RepoConfig) ([]string, error) {
 	cfg, err := repo.Config().Read()
 	if err != nil {
-		return nil, errors.Wrap(err, "can't read configured bridges")
+		return nil, fmt.Errorf("can't read configured bridges: %w", err)
 	}
 
 	var result []string
@@ -246,7 +246,10 @@ func (b *Bridge) storeConfig(conf Configuration) error {
 		}
 		return nil
 	})
-	return errors.Wrap(err, "error while storing bridge configuration")
+	if err != nil {
+		return fmt.Errorf("error while storing bridge configuration: %w", err)
+	}
+	return nil
 }
 
 func (b *Bridge) ensureConfig() error {
@@ -264,7 +267,7 @@ func (b *Bridge) ensureConfig() error {
 func loadConfig(repo repository.RepoConfig, name string) (Configuration, error) {
 	cfg, err := repo.Config().Read()
 	if err != nil {
-		return nil, errors.Wrap(err, "error while reading bridge configuration")
+		return nil, fmt.Errorf("error while reading bridge configuration: %w", err)
 	}
 
 	result := make(Configuration)

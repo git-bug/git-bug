@@ -17,7 +17,7 @@ import (
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity/dag"
-	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 func TestGithubImporter(t *testing.T) {
@@ -26,7 +26,7 @@ func TestGithubImporter(t *testing.T) {
 		t.Skip("missing required environment variable: GITHUB_TOKEN")
 	}
 
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)

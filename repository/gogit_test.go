@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -9,12 +10,68 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/99designs/keyring"
+	"github.com/git-bug/gitconfig"
 	"github.com/go-git/go-billy/v5/util"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/util/lamport"
 )
+
+const namespace = "git-bug"
+
+// newTestGoGitRepo creates a GoGitRepo in a directory removed with the test.
+// It doesn't touch the configuration or the keyring of the user or the system,
+// and has a git user set.
+func newTestGoGitRepo(t testing.TB, bare bool) *GoGitRepo {
+	t.Helper()
+
+	create := InitGoGitRepo
+	if bare {
+		create = InitBareGoGitRepo
+	}
+	repo, err := create(t.TempDir(), namespace,
+		WithConfigEnv(gitconfig.Env{
+			GlobalConfig: []string{filepath.Join(t.TempDir(), ".gitconfig")},
+		}),
+		WithKeyring(keyring.NewArrayKeyring(nil)),
+	)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		if err := repo.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	err = repo.Config().Update(func(f *gitconfig.File) error {
+		return errors.Join(
+			f.Set("user.name", "testuser"),
+			f.Set("user.email", "testuser@example.com"),
+		)
+	})
+	require.NoError(t, err)
+
+	return repo
+}
+
+// goGitRepoDir returns the directory of repo: its working tree, or its git
+// directory if it is bare.
+func goGitRepoDir(t *testing.T, repo *GoGitRepo) string {
+	t.Helper()
+
+	dir := repo.path
+	if strings.HasSuffix(dir, ".git") {
+		dir, _ = filepath.Split(dir)
+	}
+
+	if dir[len(dir)-1] == filepath.Separator {
+		dir = dir[:len(dir)-1]
+	}
+
+	return dir
+}
 
 // requireGitBinary skips the test when the git binary is not available.
 func requireGitBinary(t *testing.T) {
@@ -60,13 +117,13 @@ func runGit(t *testing.T, dir string, args ...string) string {
 
 func TestNewGoGitRepo(t *testing.T) {
 	// Plain
-	plainRepo := CreateGoGitTestRepo(t, false)
+	plainRepo := newTestGoGitRepo(t, false)
 	plainRoot := goGitRepoDir(t, plainRepo)
 	require.NoError(t, plainRepo.Close())
 	plainGitDir := filepath.Join(plainRoot, ".git")
 
 	// Bare
-	bareRepo := CreateGoGitTestRepo(t, true)
+	bareRepo := newTestGoGitRepo(t, true)
 	bareRoot := goGitRepoDir(t, bareRepo)
 	require.NoError(t, bareRepo.Close())
 	bareGitDir := bareRoot
@@ -105,19 +162,16 @@ func TestNewGoGitRepo(t *testing.T) {
 	}
 }
 
-func TestGoGitRepo(t *testing.T) {
-	RepoTest(t, CreateGoGitTestRepo)
-}
-
 func TestGoGitRepo_Head(t *testing.T) {
-	repo := CreateGoGitTestRepo(t, false)
+	repo := newTestGoGitRepo(t, false)
 
 	// a new repository's HEAD points to refs/heads/master, which doesn't exist yet
 	_, err := repo.Head()
 	require.ErrorIs(t, err, ErrNotFound)
 
 	commit := storeTestCommits(t, repo, 1)[0]
-	require.NoError(t, repo.SetBranch("master", commit))
+	require.NoError(t, repo.r.Storer.SetReference(plumbing.NewHashReference(
+		plumbing.NewBranchReferenceName("master"), plumbing.NewHash(commit.String()))))
 
 	meta, err := repo.Head()
 	require.NoError(t, err)
@@ -133,7 +187,7 @@ func TestGoGitRepo_Indexes(t *testing.T) {
 	const commit1 = Hash("1111111111111111111111111111111111111111")
 
 	t.Run("created on disk", func(t *testing.T) {
-		repo := CreateGoGitTestRepo(t, false)
+		repo := newTestGoGitRepo(t, false)
 		plainRoot := goGitRepoDir(t, repo)
 
 		// Can create indices
@@ -155,7 +209,7 @@ func TestGoGitRepo_Indexes(t *testing.T) {
 	})
 
 	t.Run("documents and their record survive a reopen", func(t *testing.T) {
-		repo := CreateGoGitTestRepo(t, false)
+		repo := newTestGoGitRepo(t, false)
 
 		idx, err := repo.GetIndex("a")
 		require.NoError(t, err)
@@ -176,7 +230,7 @@ func TestGoGitRepo_Indexes(t *testing.T) {
 	})
 
 	t.Run("search", func(t *testing.T) {
-		repo := CreateGoGitTestRepo(t, false)
+		repo := newTestGoGitRepo(t, false)
 
 		idx, err := repo.GetIndex("a")
 		require.NoError(t, err)
@@ -223,7 +277,7 @@ func TestGoGitRepo_Indexes(t *testing.T) {
 	})
 
 	t.Run("a document without text is recorded, not indexed", func(t *testing.T) {
-		repo := CreateGoGitTestRepo(t, false)
+		repo := newTestGoGitRepo(t, false)
 
 		idx, err := repo.GetIndex("a")
 		require.NoError(t, err)
@@ -253,7 +307,7 @@ func TestGoGitRepo_Indexes(t *testing.T) {
 	})
 
 	t.Run("an index with another layout is replaced by an empty one", func(t *testing.T) {
-		repo := CreateGoGitTestRepo(t, false)
+		repo := newTestGoGitRepo(t, false)
 
 		idx, err := repo.GetIndex("a")
 		require.NoError(t, err)
@@ -286,7 +340,7 @@ func TestGoGitRepo_Indexes(t *testing.T) {
 	})
 
 	t.Run("a malformed record is rejected", func(t *testing.T) {
-		repo := CreateGoGitTestRepo(t, false)
+		repo := newTestGoGitRepo(t, false)
 
 		idx, err := repo.GetIndex("a")
 		require.NoError(t, err)
@@ -298,7 +352,7 @@ func TestGoGitRepo_Indexes(t *testing.T) {
 	})
 
 	t.Run("a batch that fails leaves neither documents nor record", func(t *testing.T) {
-		repo := CreateGoGitTestRepo(t, false)
+		repo := newTestGoGitRepo(t, false)
 
 		idx, err := repo.GetIndex("a")
 		require.NoError(t, err)
@@ -321,7 +375,7 @@ func TestGoGitRepo_Indexes(t *testing.T) {
 }
 
 func TestGoGit_DetectsSubmodules(t *testing.T) {
-	repo := CreateGoGitTestRepo(t, false)
+	repo := newTestGoGitRepo(t, false)
 	expected := filepath.Join(goGitRepoDir(t, repo), "/.git")
 
 	d := t.TempDir()
@@ -336,7 +390,7 @@ func TestGoGit_DetectsSubmodules(t *testing.T) {
 // An empty clock file is one being created, or whose creation was interrupted:
 // not a clock yet, and not a reason to fail listing the others.
 func TestGoGitRepo_AllClocksSkipsEmpty(t *testing.T) {
-	repo := CreateGoGitTestRepo(t, false)
+	repo := newTestGoGitRepo(t, false)
 
 	foo, err := repo.GetOrCreateClock("foo", 1)
 	require.NoError(t, err)
@@ -353,7 +407,7 @@ func TestGoGitRepo_AllClocksSkipsEmpty(t *testing.T) {
 // A corrupted clock is listed and handed out, but can't be used until it's
 // created again, at a value the caller vouches for.
 func TestGoGitRepo_CorruptedClock(t *testing.T) {
-	repo := CreateGoGitTestRepo(t, false)
+	repo := newTestGoGitRepo(t, false)
 
 	clockFile := filepath.Join(clockPath, "foo")
 	require.NoError(t, util.WriteFile(repo.LocalStorage(), clockFile, []byte("garbage"), 0644))

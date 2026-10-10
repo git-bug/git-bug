@@ -24,6 +24,7 @@ import (
 	"github.com/git-bug/git-bug/misc/random_bugs"
 	"github.com/git-bug/git-bug/query"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 // requireDerivedBuiltFromRefs checks that the cache and the index recorded, for
@@ -79,7 +80,7 @@ func lenComments(t *testing.T, c *RepoCache, id entity.Id) int {
 }
 
 // newTestCacheWithUser opens a cache on repo, with a user identity set.
-func newTestCacheWithUser(t testing.TB, repo repository.TestedRepo) (*RepoCache, *IdentityCache) {
+func newTestCacheWithUser(t testing.TB, repo repository.ClockedRepo) (*RepoCache, *IdentityCache) {
 	t.Helper()
 	c := createTestRepoCacheNoEvents(t, repo)
 	rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
@@ -155,7 +156,7 @@ func (i unreadableRecordIndex) Clear() error {
 
 func TestSubCacheDerived(t *testing.T) {
 	t.Run("built from git", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		random_bugs.FillRepoWithSeed(repo, 5, 42)
 
 		c := createTestRepoCacheNoEvents(t, repo)
@@ -168,7 +169,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("built from git, over several index batches", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		// more than twice the batch size, and not a multiple of it
 		random_bugs.FillRepoWithSeed(repo, 200, 42)
 
@@ -177,7 +178,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("created", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 
 		_, _, err := c.Bugs().New("title", "message")
@@ -186,7 +187,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("pending changes are visible only once committed", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -213,7 +214,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("identity changes are visible only once committed", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, rene := newTestCacheWithUser(t, repo)
 
 		require.NoError(t, rene.Mutate(repo, func(m *identity.Mutator) {
@@ -232,7 +233,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("persisted, and loaded rather than rebuilt", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 
 		c := openTestRepoCache(t, repo)
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
@@ -252,7 +253,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("an index without record is repaired on load", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 
 		c := openTestRepoCache(t, repo)
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
@@ -273,7 +274,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("a commit recorded without its excerpt is repaired on load", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 
 		c := openTestRepoCache(t, repo)
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
@@ -294,7 +295,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("an index ahead of the excerpts is repaired on load", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 
 		c := openTestRepoCache(t, repo)
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
@@ -341,7 +342,7 @@ func TestSubCacheDerived(t *testing.T) {
 	}
 
 	t.Run("a change from outside is synced, refreshing only that entity", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, rene := newTestCacheWithUser(t, repo)
 		var views []*BugCache
 		for i := 0; i < 3; i++ {
@@ -374,7 +375,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("a change from outside to an entity not loaded is synced, reading only that entity", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, rene := newTestCacheWithUser(t, repo)
 		var ids []entity.Id
 		for i := 0; i < 3; i++ {
@@ -403,7 +404,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("many changes from outside are applied in a few batches", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, rene := newTestCacheWithUser(t, repo)
 
 		// more than twice the batch size, and not a multiple of it
@@ -426,7 +427,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("an index behind is repaired, the excerpts left as they are", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "markerindexed")
 		require.NoError(t, err)
@@ -456,7 +457,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("excerpts behind are repaired, the index left as it is", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -488,7 +489,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("changes fetched outside git-bug are picked up on load", func(t *testing.T) {
-		repoA, repoB, _ := repository.SetupGoGitReposAndRemote(t)
+		repoA, repoB, _ := repotest.SetupGoGitReposAndRemote(t)
 		cacheA, _ := newTestCacheWithUser(t, repoA)
 		b, _, err := cacheA.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -533,7 +534,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("merged", func(t *testing.T) {
-		repoA, repoB, _ := repository.SetupGoGitReposAndRemote(t)
+		repoA, repoB, _ := repotest.SetupGoGitReposAndRemote(t)
 		cacheA, _ := newTestCacheWithUser(t, repoA)
 		cacheB := createTestRepoCacheNoEvents(t, repoB)
 
@@ -557,7 +558,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("removed", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		b1, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -572,7 +573,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("a loaded copy without derived state is dropped once removed", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, rene := newTestCacheWithUser(t, repo)
 
 		// created outside, and loaded before any sync
@@ -590,7 +591,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("a missing author is not a removal", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 
 		author, err := identity.NewIdentity(repo, "Blaise Pascal", "blaise@pascal.fr")
@@ -619,7 +620,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("an unreadable index record has a single sync repair every entity", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		b1, _, err := c.Bugs().New("title", "markerfirst")
 		require.NoError(t, err)
@@ -637,7 +638,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("an evicted copy keeps working, and the loaded one follows its commits", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		c.setCacheSize(1)
 
@@ -682,7 +683,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("a new entity evicted right away is still usable", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		c.setCacheSize(0)
 
@@ -699,7 +700,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("synced from git while a loaded copy has pending changes", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -722,7 +723,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("pending changes on a loaded copy don't hold back a commit", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, rene := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -753,7 +754,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("a repeated or late callback changes nothing", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -771,7 +772,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("a late callback doesn't resurrect a removed entity", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -783,7 +784,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("an entity removed while being added is not registered", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -802,7 +803,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("an entity removed outside the cache is dropped", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -819,7 +820,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("a search hit without excerpt is skipped", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 
 		// the index is written before the excerpt is published
@@ -833,7 +834,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("nothing is published once closed", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c := openTestRepoCache(t, repo)
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
@@ -854,7 +855,7 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 
 	t.Run("concurrent commits", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -889,7 +890,7 @@ func TestSubCacheDerived(t *testing.T) {
 }
 
 func TestSubCacheWriteNeverTorn(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 	random_bugs.FillRepoWithSeed(repo, 50, 42)
 	c := createTestRepoCacheNoEvents(t, repo)
 
@@ -946,12 +947,12 @@ func TestSubCacheWriteNeverTorn(t *testing.T) {
 
 // listHookRepo calls onList, if set, each time the bug refs are listed.
 type listHookRepo struct {
-	repository.TestedRepo
+	repository.ClockedRepo
 	onList func() error
 }
 
 func (r *listHookRepo) ListRefs(namespace string) (map[string]repository.Hash, error) {
-	refs, err := r.TestedRepo.ListRefs(namespace)
+	refs, err := r.ClockedRepo.ListRefs(namespace)
 	if err == nil && namespace == bug.Namespace && r.onList != nil {
 		err = r.onList()
 	}
@@ -1017,7 +1018,7 @@ func TestSubCacheWorker(t *testing.T) {
 	setup := func(t *testing.T) (repository.ClockedRepo, *RepoCache, *IdentityCache, *listHookRepo, *chanSource) {
 		t.Helper()
 		repo := repository.NewMockRepo()
-		hook := &listHookRepo{TestedRepo: repo}
+		hook := &listHookRepo{ClockedRepo: repo}
 		source := newChanSource()
 		c, rene := open(t, hook, source)
 		synctest.Wait()
@@ -1280,7 +1281,7 @@ func TestSubCacheWorker(t *testing.T) {
 		},
 	} {
 		t.Run("a bug modified outside with GoGitRepo, "+name, func(t *testing.T) {
-			repo := repository.CreateGoGitTestRepo(t, false)
+			repo := repotest.NewGoGitRepo(t, false)
 			// the test repo wraps its GoGitRepo: the source gets its own,
 			// opened on the same repository, found from its local storage
 			// (.git/git-bug)

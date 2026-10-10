@@ -11,17 +11,17 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
+	"github.com/git-bug/git-bug/repository/repotest"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/cache"
-	"github.com/git-bug/git-bug/repository"
 )
 
 const (
@@ -151,7 +151,7 @@ func TestGitlabPushPull(t *testing.T) {
 	}
 
 	// create repo backend
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
@@ -225,7 +225,7 @@ func TestGitlabPushPull(t *testing.T) {
 
 	fmt.Printf("repository exported in %f seconds\n", time.Since(start).Seconds())
 
-	repoTwo := repository.CreateGoGitTestRepo(t, false)
+	repoTwo := repotest.NewGoGitRepo(t, false)
 
 	// create a second backend
 	backendTwo, err := cache.NewRepoCacheNoEvents(repoTwo, nil)
