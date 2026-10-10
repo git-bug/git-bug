@@ -191,6 +191,23 @@ func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 				if snapshot.HasAnyActor(allIdentitiesIds...) {
 					// try to export the bug and it associated events
 					ge.exportBug(ctx, b, out)
+				} else {
+					if origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin); ok && origin != target {
+						out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue tagged with origin: %s", origin))
+						continue
+					}
+					if issueURL, ok := snapshot.GetCreateMetadata(metaKeyGithubUrl); ok {
+						owner, project, err := splitURL(issueURL)
+						if err != nil {
+							out <- core.NewExportError(fmt.Errorf("bad project url: %v", err), b.Id())
+							continue
+						}
+						if !strings.EqualFold(owner, ge.conf[confKeyOwner]) || !strings.EqualFold(project, ge.conf[confKeyProject]) {
+							out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue belongs to another GitHub repository (%s/%s)", owner, project))
+							continue
+						}
+					}
+					out <- core.NewExportNothing(b.Id(), core.SkipReasonNoTokenActor(snapshot.Operations, metaKeyGithubId))
 				}
 			}
 		}
@@ -244,7 +261,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		// ignore issue coming from other repositories
 		// (Github owner and project names are case-insensitive)
 		if !strings.EqualFold(owner, ge.conf[confKeyOwner]) || !strings.EqualFold(project, ge.conf[confKeyProject]) {
-			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("skipping issue from url:%s", githubURL))
+			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue belongs to another GitHub repository (%s/%s)", owner, project))
 			return
 		}
 
@@ -257,7 +274,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		client, err := ge.getClientForIdentity(author.Id())
 		if err != nil {
 			// if bug is still not exported and we do not have the author stop the execution
-			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("missing author token"))
+			out <- core.NewExportNothing(b.Id(), "missing a token for the issue author")
 			return
 		}
 
@@ -426,7 +443,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 	}
 
 	if !bugUpdated {
-		out <- core.NewExportNothing(b.Id(), "nothing has been exported")
+		out <- core.NewExportNothing(b.Id(), core.ReasonNothingExported)
 	}
 }
 

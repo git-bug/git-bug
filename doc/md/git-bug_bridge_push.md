@@ -9,7 +9,8 @@ git-bug bridge push [NAME] [flags]
 ### Options
 
 ```
-  -h, --help   help for push
+  -v, --verbose   Explain why issues were not pushed
+  -h, --help      help for push
 ```
 
 ### SEE ALSO

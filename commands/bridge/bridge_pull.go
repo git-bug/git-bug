@@ -111,8 +111,20 @@ func runBridgePull(env *execenv.Env, opts bridgePullOptions, args []string) erro
 		return err
 	}
 
+	reportErr := reportImportResults(env.Out, b.Name, events)
+
+	// send done signal
+	close(done)
+
+	return reportErr
+}
+
+// reportImportResults prints the outcome of a pull and returns an error if
+// any import failed. Cancellation does not count as a failure.
+func reportImportResults(out execenv.Out, name string, events <-chan core.ImportResult) error {
 	importedIssues := 0
 	importedIdentities := 0
+	importErrors := 0
 	for result := range events {
 		switch result.Event {
 		case core.ImportEventNothing:
@@ -120,27 +132,28 @@ func runBridgePull(env *execenv.Env, opts bridgePullOptions, args []string) erro
 
 		case core.ImportEventBug:
 			importedIssues++
-			env.Out.Println(result.String())
+			out.Println(result.String())
 
 		case core.ImportEventIdentity:
 			importedIdentities++
-			env.Out.Println(result.String())
+			out.Println(result.String())
 
 		case core.ImportEventError:
 			if result.Err != context.Canceled {
-				env.Out.Println(result.String())
+				importErrors++
+				out.Println(result.String())
 			}
 
 		default:
-			env.Out.Println(result.String())
+			out.Println(result.String())
 		}
 	}
 
-	env.Out.Printf("imported %d issues and %d identities with %s bridge\n", importedIssues, importedIdentities, b.Name)
+	out.Printf("imported %d issues and %d identities with %s bridge\n", importedIssues, importedIdentities, name)
 
-	// send done signal
-	close(done)
-
+	if importErrors > 0 {
+		return fmt.Errorf("%d import error(s) with %s bridge", importErrors, name)
+	}
 	return nil
 }
 
