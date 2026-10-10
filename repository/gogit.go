@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/git-bug/gitconfig"
 	"github.com/go-git/go-billy/v5/osfs"
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -54,6 +55,9 @@ type GoGitRepo struct {
 	r      *gogit.Repository
 	path   string
 
+	// configEnv says where the git configuration comes from, as git finds it.
+	configEnv gitconfig.Env
+
 	clocksMutex sync.Mutex
 	clocks      map[string]lamport.Clock
 
@@ -84,6 +88,11 @@ func OpenGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 		return nil, err
 	}
 
+	configEnv, err := gitconfig.Discover(path)
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO: the possible resource leak is an existing issue in go-git v5
 	// it's fixed in v6
 	r, err := gogit.Open(newReindexingStorage(path), nil)
@@ -99,6 +108,7 @@ func OpenGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 	repo := &GoGitRepo{
 		r:               r,
 		path:            path,
+		configEnv:       configEnv,
 		clocks:          make(map[string]lamport.Clock),
 		indexes:         make(map[string]Index),
 		lastCommitCache: must(lru.New[string, map[string]CommitMeta](lastCommitCacheSize)),
@@ -124,6 +134,11 @@ func InitGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 		return nil, err
 	}
 
+	configEnv, err := gitconfig.Discover(path)
+	if err != nil {
+		return nil, err
+	}
+
 	k, err := defaultKeyring()
 	if err != nil {
 		return nil, err
@@ -132,6 +147,7 @@ func InitGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 	return &GoGitRepo{
 		r:               r,
 		path:            filepath.Join(path, ".git"),
+		configEnv:       configEnv,
 		clocks:          make(map[string]lamport.Clock),
 		indexes:         make(map[string]Index),
 		lastCommitCache: must(lru.New[string, map[string]CommitMeta](lastCommitCacheSize)),
@@ -155,6 +171,11 @@ func InitBareGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 		return nil, err
 	}
 
+	configEnv, err := gitconfig.Discover(path)
+	if err != nil {
+		return nil, err
+	}
+
 	k, err := defaultKeyring()
 	if err != nil {
 		return nil, err
@@ -163,6 +184,7 @@ func InitBareGoGitRepo(path, namespace string) (*GoGitRepo, error) {
 	return &GoGitRepo{
 		r:               r,
 		path:            path,
+		configEnv:       configEnv,
 		clocks:          make(map[string]lamport.Clock),
 		indexes:         make(map[string]Index),
 		lastCommitCache: must(lru.New[string, map[string]CommitMeta](lastCommitCacheSize)),
@@ -268,19 +290,9 @@ func (repo *GoGitRepo) Close() error {
 	return firstErr
 }
 
-// LocalConfig give access to the repository scoped configuration
-func (repo *GoGitRepo) LocalConfig() Config {
-	return newGoGitLocalConfig(repo.r)
-}
-
-// GlobalConfig give access to the global scoped configuration
-func (repo *GoGitRepo) GlobalConfig() Config {
-	return newGoGitGlobalConfig()
-}
-
-// AnyConfig give access to a merged local/global configuration
-func (repo *GoGitRepo) AnyConfig() ConfigRead {
-	return mergeConfig(repo.LocalConfig(), repo.GlobalConfig())
+// Config give access to the git configuration
+func (repo *GoGitRepo) Config() Config {
+	return &gitConfig{env: repo.configEnv}
 }
 
 // Keyring give access to a user-wide storage for secrets
@@ -288,14 +300,22 @@ func (repo *GoGitRepo) Keyring() Keyring {
 	return repo.keyring
 }
 
-// GetUserName returns the name the user has used to configure git
+// GetUserName returns the name the user has used to configure git, "" if unset
 func (repo *GoGitRepo) GetUserName() (string, error) {
-	return repo.AnyConfig().ReadString("user.name")
+	cfg, err := repo.Config().Read()
+	if err != nil {
+		return "", err
+	}
+	return cfg.Value("user.name", ""), nil
 }
 
-// GetUserEmail returns the email address that the user has used to configure git.
+// GetUserEmail returns the email address that the user has used to configure git, "" if unset
 func (repo *GoGitRepo) GetUserEmail() (string, error) {
-	return repo.AnyConfig().ReadString("user.email")
+	cfg, err := repo.Config().Read()
+	if err != nil {
+		return "", err
+	}
+	return cfg.Value("user.email", ""), nil
 }
 
 // GetCoreEditor returns the name of the editor that the user has used to configure git.
@@ -307,12 +327,12 @@ func (repo *GoGitRepo) GetCoreEditor() (string, error) {
 		return val, nil
 	}
 
-	val, err := repo.AnyConfig().ReadString("core.editor")
-	if err == nil && val != "" {
-		return val, nil
-	}
-	if err != nil && !errors.Is(err, ErrNoConfigEntry) {
+	cfg, err := repo.Config().Read()
+	if err != nil {
 		return "", err
+	}
+	if val := cfg.Value("core.editor", ""); val != "" {
+		return val, nil
 	}
 
 	if val, ok := os.LookupEnv("VISUAL"); ok {
@@ -1635,17 +1655,6 @@ func (repo *GoGitRepo) Head() (RefMeta, error) {
 		Type:      refType,
 		Hash:      ref.Hash().String(),
 	}, nil
-}
-
-// AddRemote add a new remote to the repository
-// Not in the interface because it's only used for testing
-func (repo *GoGitRepo) AddRemote(name string, url string) error {
-	_, err := repo.r.CreateRemote(&config.RemoteConfig{
-		Name: name,
-		URLs: []string{url},
-	})
-
-	return err
 }
 
 // SetBranch points the branch name to commit, creating it if needed.

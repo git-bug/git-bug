@@ -1,12 +1,14 @@
 package repository
 
 import (
+	"errors"
 	"log"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/99designs/keyring"
+	"github.com/git-bug/gitconfig"
 )
 
 const namespace = "git-bug"
@@ -38,12 +40,20 @@ func CreateGoGitTestRepo(t testing.TB, bare bool) TestedRepo {
 		}
 	})
 
-	config := repo.LocalConfig()
-	if err := config.StoreString("user.name", "testuser"); err != nil {
-		log.Fatal("failed to set user.name for test repository: ", err)
+	// don't read or write the configuration of the user or the system
+	repo.configEnv = gitconfig.Env{
+		GitDir:       repo.path,
+		GlobalConfig: []string{filepath.Join(t.TempDir(), ".gitconfig")},
 	}
-	if err := config.StoreString("user.email", "testuser@example.com"); err != nil {
-		log.Fatal("failed to set user.email for test repository: ", err)
+
+	err = repo.Config().Update(func(f *gitconfig.File) error {
+		return errors.Join(
+			f.Set("user.name", "testuser"),
+			f.Set("user.email", "testuser@example.com"),
+		)
+	})
+	if err != nil {
+		log.Fatal("failed to set the user for test repository: ", err)
 	}
 
 	// make sure we use a mock keyring for testing to not interact with the global system
@@ -60,15 +70,8 @@ func SetupGoGitReposAndRemote(t *testing.T) (repoA, repoB, remote TestedRepo) {
 	repoB = CreateGoGitTestRepo(t, false)
 	remote = CreateGoGitTestRepo(t, true)
 
-	err := repoA.AddRemote("origin", remote.GetLocalRemote())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = repoB.AddRemote("origin", remote.GetLocalRemote())
-	if err != nil {
-		log.Fatal(err)
-	}
+	AddRemote(t, repoA, "origin", remote.GetLocalRemote())
+	AddRemote(t, repoB, "origin", remote.GetLocalRemote())
 
 	return repoA, repoB, remote
 }

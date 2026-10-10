@@ -52,30 +52,18 @@ func NewMockRepo() *mockRepo {
 var _ RepoConfig = &mockRepoConfig{}
 
 type mockRepoConfig struct {
-	localConfig  *MemConfig
-	globalConfig *MemConfig
+	config *memConfig
 }
 
 func NewMockRepoConfig() *mockRepoConfig {
 	return &mockRepoConfig{
-		localConfig:  NewMemConfig(),
-		globalConfig: NewMemConfig(),
+		config: &memConfig{},
 	}
 }
 
-// LocalConfig give access to the repository scoped configuration
-func (r *mockRepoConfig) LocalConfig() Config {
-	return r.localConfig
-}
-
-// GlobalConfig give access to the git global configuration
-func (r *mockRepoConfig) GlobalConfig() Config {
-	return r.globalConfig
-}
-
-// AnyConfig give access to a merged local/global configuration
-func (r *mockRepoConfig) AnyConfig() ConfigRead {
-	return mergeConfig(r.localConfig, r.globalConfig)
+// Config give access to the git configuration
+func (r *mockRepoConfig) Config() Config {
+	return r.config
 }
 
 var _ RepoKeyring = &mockRepoKeyring{}
@@ -1032,10 +1020,6 @@ type mockRepoTest struct {
 
 func NewMockRepoTest(data *mockRepoDataBrowse) *mockRepoTest {
 	return &mockRepoTest{data: data}
-}
-
-func (r *mockRepoTest) AddRemote(name string, url string) error {
-	panic("implement me")
 }
 
 func (r mockRepoTest) GetLocalRemote() string {

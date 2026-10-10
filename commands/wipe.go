@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"github.com/git-bug/gitconfig"
 	"github.com/spf13/cobra"
 
 	"github.com/git-bug/git-bug/commands/execenv"
@@ -34,7 +35,15 @@ func runWipe(env *execenv.Env) error {
 		return err
 	}
 
-	err = env.Backend.LocalConfig().RemoveAll("git-bug")
+	err = env.Backend.Config().Update(func(f *gitconfig.File) error {
+		for _, sub := range f.Config().Subsections("git-bug") {
+			if _, err := f.RemoveSubsection("git-bug", sub); err != nil {
+				return err
+			}
+		}
+		_, err := f.RemoveSection("git-bug")
+		return err
+	})
 	if err != nil {
 		_ = env.Backend.Close()
 		return err
