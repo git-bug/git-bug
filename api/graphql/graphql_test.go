@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/client"
+	"github.com/git-bug/gitconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -229,7 +230,9 @@ func TestQueries(t *testing.T) {
 //	c1 ←── refs/tags/v1.0
 func TestGitBrowseQueries(t *testing.T) {
 	repo := repository.CreateGoGitTestRepo(t, false)
-	require.NoError(t, repo.LocalConfig().StoreString("init.defaultBranch", "main"))
+	require.NoError(t, repo.Config().Update(func(f *gitconfig.File) error {
+		return f.Set("init.defaultBranch", "main")
+	}))
 
 	// ── build fixture ─────────────────────────────────────────────────────────
 

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/git-bug/gitconfig"
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/util/lamport"
@@ -56,9 +58,79 @@ func RepoTest(t *testing.T, creator RepoCreator) {
 	}
 }
 
+// AddRemote adds a remote to repo, as git remote add does.
+func AddRemote(t testing.TB, repo RepoConfig, name, url string) {
+	t.Helper()
+
+	err := repo.Config().Update(func(f *gitconfig.File) error {
+		return errors.Join(
+			f.Set("remote."+name+".url", url),
+			f.Set("remote."+name+".fetch", "+refs/heads/*:refs/remotes/"+name+"/*"),
+		)
+	})
+	require.NoError(t, err)
+}
+
 // helper to test a RepoConfig
 func RepoConfigTest(t *testing.T, repo RepoConfig) {
-	testConfig(t, repo.LocalConfig())
+	t.Run("an update is seen by later reads", func(t *testing.T) {
+		require.NoError(t, repo.Config().Update(func(f *gitconfig.File) error {
+			return errors.Join(
+				f.Set("section.key", "value"),
+				f.Set("section.sub.key", "subvalue"),
+			)
+		}))
+
+		cfg, err := repo.Config().Read()
+		require.NoError(t, err)
+		require.Equal(t, "value", cfg.Value("section.key", ""))
+		require.Equal(t, "subvalue", cfg.Value("section.sub.key", ""))
+		require.Equal(t, []string{"sub"}, cfg.Subsections("section"))
+
+		require.NoError(t, repo.Config().Update(func(f *gitconfig.File) error {
+			_, err := f.RemoveSection("section")
+			if err != nil {
+				return err
+			}
+			_, err = f.RemoveSubsection("section", "sub")
+			return err
+		}))
+
+		cfg, err = repo.Config().Read()
+		require.NoError(t, err)
+		_, ok := cfg.Get("section.key")
+		require.False(t, ok)
+		require.Empty(t, cfg.Subsections("section"))
+	})
+
+	t.Run("a failed update writes nothing", func(t *testing.T) {
+		failure := fmt.Errorf("failure")
+		err := repo.Config().Update(func(f *gitconfig.File) error {
+			if err := f.Set("failed.key", "value"); err != nil {
+				return err
+			}
+			return failure
+		})
+		require.ErrorIs(t, err, failure)
+
+		cfg, err := repo.Config().Read()
+		require.NoError(t, err)
+		_, ok := cfg.Get("failed.key")
+		require.False(t, ok)
+	})
+
+	t.Run("a read is a snapshot", func(t *testing.T) {
+		require.NoError(t, repo.Config().Update(func(f *gitconfig.File) error {
+			return f.Set("snapshot.key", "before")
+		}))
+		cfg, err := repo.Config().Read()
+		require.NoError(t, err)
+
+		require.NoError(t, repo.Config().Update(func(f *gitconfig.File) error {
+			return f.Set("snapshot.key", "after")
+		}))
+		require.Equal(t, "before", cfg.Value("snapshot.key", ""))
+	})
 }
 
 func RepoStorageTest(t *testing.T, repo RepoStorage) {
@@ -642,7 +714,9 @@ type browsable interface {
 func RepoBrowseTest(t *testing.T, repo browsable) {
 	t.Helper()
 
-	require.NoError(t, repo.LocalConfig().StoreString("init.defaultBranch", "main"))
+	require.NoError(t, repo.Config().Update(func(f *gitconfig.File) error {
+		return f.Set("init.defaultBranch", "main")
+	}))
 
 	// ── build fixture ─────────────────────────────────────────────────────────
 

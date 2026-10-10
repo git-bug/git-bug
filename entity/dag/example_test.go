@@ -2,9 +2,12 @@ package dag_test
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/git-bug/gitconfig"
 
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
@@ -309,8 +312,16 @@ func Example_entity() {
 	defer repoRene.Close()
 	repoIsaac, _ := repository.InitGoGitRepo(repoIsaacPath, gitBugNamespace)
 	defer repoIsaac.Close()
-	_ = repoRene.AddRemote("origin", repoIsaacPath)
-	_ = repoIsaac.AddRemote("origin", repoRenePath)
+	addRemote := func(repo repository.RepoConfig, name, url string) {
+		_ = repo.Config().Update(func(f *gitconfig.File) error {
+			return errors.Join(
+				f.Set("remote."+name+".url", url),
+				f.Set("remote."+name+".fetch", "+refs/heads/*:refs/remotes/"+name+"/*"),
+			)
+		})
+	}
+	addRemote(repoRene, "origin", repoIsaacPath)
+	addRemote(repoIsaac, "origin", repoRenePath)
 
 	// Now we need identities and to propagate them
 	rene, _ := identity.NewIdentity(repoRene, "René Descartes", "rene@descartes.fr")

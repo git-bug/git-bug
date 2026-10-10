@@ -8,9 +8,11 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/git-bug/gitconfig"
 	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/cache"
@@ -25,8 +27,17 @@ const (
 
 	MetaKeyOrigin = "origin"
 
-	bridgeConfigKeyPrefix = "git-bug.bridge"
+	// the configuration of bridge <name> is in [git-bug "bridge.<name>"]
+	bridgeConfigSection          = "git-bug"
+	bridgeConfigSubsectionPrefix = "bridge."
+
+	configKeyLastImportTime = "lastImportTime"
 )
+
+// bridgeConfigKey returns the key of the configuration entry name of the bridge.
+func bridgeConfigKey(bridge, name string) string {
+	return bridgeConfigSection + "." + bridgeConfigSubsectionPrefix + bridge + "." + name
+}
 
 var bridgeImpl map[string]reflect.Type
 var bridgeLoginMetaKey map[string]string
@@ -150,31 +161,16 @@ func DefaultBridge(repo *cache.RepoCache) (*Bridge, error) {
 // ConfiguredBridges return the list of bridge that are configured for the given
 // repo
 func ConfiguredBridges(repo repository.RepoConfig) ([]string, error) {
-	configs, err := repo.LocalConfig().ReadAll(bridgeConfigKeyPrefix + ".")
+	cfg, err := repo.Config().Read()
 	if err != nil {
 		return nil, errors.Wrap(err, "can't read configured bridges")
 	}
 
-	re := regexp.MustCompile(bridgeConfigKeyPrefix + `.([^.]+)`)
-
-	set := make(map[string]interface{})
-
-	for key := range configs {
-		res := re.FindStringSubmatch(key)
-
-		if res == nil {
-			continue
+	var result []string
+	for _, sub := range cfg.Subsections(bridgeConfigSection) {
+		if name, ok := strings.CutPrefix(sub, bridgeConfigSubsectionPrefix); ok {
+			result = append(result, name)
 		}
-
-		set[res[1]] = nil
-	}
-
-	result := make([]string, len(set))
-
-	i := 0
-	for key := range set {
-		result[i] = key
-		i++
 	}
 
 	return result, nil
@@ -182,11 +178,15 @@ func ConfiguredBridges(repo repository.RepoConfig) ([]string, error) {
 
 // Check if a bridge exist
 func BridgeExist(repo repository.RepoConfig, name string) bool {
-	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.", name)
+	cfg, err := repo.Config().Read()
+	if err != nil {
+		return false
+	}
 
-	conf, err := repo.LocalConfig().ReadAll(keyPrefix)
-
-	return err == nil && len(conf) > 0
+	for range cfg.Subsection(bridgeConfigSection, bridgeConfigSubsectionPrefix+name) {
+		return true
+	}
+	return false
 }
 
 // Remove a configured bridge
@@ -197,8 +197,10 @@ func RemoveBridge(repo repository.RepoConfig, name string) error {
 		return fmt.Errorf("bad bridge fullname: %s", name)
 	}
 
-	keyPrefix := fmt.Sprintf("git-bug.bridge.%s", name)
-	return repo.LocalConfig().RemoveAll(keyPrefix)
+	return repo.Config().Update(func(f *gitconfig.File) error {
+		_, err := f.RemoveSubsection(bridgeConfigSection, bridgeConfigSubsectionPrefix+name)
+		return err
+	})
 }
 
 // Configure run the target specific configuration process
@@ -236,16 +238,15 @@ func validateParams(params BridgeParams, impl BridgeImpl) {
 }
 
 func (b *Bridge) storeConfig(conf Configuration) error {
-	for key, val := range conf {
-		storeKey := fmt.Sprintf("git-bug.bridge.%s.%s", b.Name, key)
-
-		err := b.repo.LocalConfig().StoreString(storeKey, val)
-		if err != nil {
-			return errors.Wrap(err, "error while storing bridge configuration")
+	err := b.repo.Config().Update(func(f *gitconfig.File) error {
+		for key, val := range conf {
+			if err := f.ReplaceAll(bridgeConfigKey(b.Name, key), val); err != nil {
+				return err
+			}
 		}
-	}
-
-	return nil
+		return nil
+	})
+	return errors.Wrap(err, "error while storing bridge configuration")
 }
 
 func (b *Bridge) ensureConfig() error {
@@ -261,17 +262,14 @@ func (b *Bridge) ensureConfig() error {
 }
 
 func loadConfig(repo repository.RepoConfig, name string) (Configuration, error) {
-	keyPrefix := fmt.Sprintf("git-bug.bridge.%s.", name)
-
-	pairs, err := repo.LocalConfig().ReadAll(keyPrefix)
+	cfg, err := repo.Config().Read()
 	if err != nil {
 		return nil, errors.Wrap(err, "error while reading bridge configuration")
 	}
 
-	result := make(Configuration, len(pairs))
-	for key, value := range pairs {
-		key := strings.TrimPrefix(key, keyPrefix)
-		result[key] = value
+	result := make(Configuration)
+	for e := range cfg.Subsection(bridgeConfigSection, bridgeConfigSubsectionPrefix+name) {
+		result[e.Key.Name] = e.Value
 	}
 
 	return result, nil
@@ -366,8 +364,9 @@ func (b *Bridge) ImportAllSince(ctx context.Context, since time.Time) (<-chan Im
 
 		// store the last import time ONLY if no error happened
 		if noError {
-			key := fmt.Sprintf("git-bug.bridge.%s.lastImportTime", b.Name)
-			err = b.repo.LocalConfig().StoreTimestamp(key, importStartTime)
+			err = b.repo.Config().Update(func(f *gitconfig.File) error {
+				return f.ReplaceAll(bridgeConfigKey(b.Name, configKeyLastImportTime), strconv.FormatInt(importStartTime.Unix(), 10))
+			})
 		}
 	}()
 
@@ -376,9 +375,13 @@ func (b *Bridge) ImportAllSince(ctx context.Context, since time.Time) (<-chan Im
 
 func (b *Bridge) ImportAll(ctx context.Context) (<-chan ImportResult, error) {
 	// If possible, restart from the last import time
-	lastImport, err := b.repo.LocalConfig().ReadTimestamp(fmt.Sprintf("git-bug.bridge.%s.lastImportTime", b.Name))
-	if err == nil {
-		return b.ImportAllSince(ctx, lastImport)
+	cfg, err := b.repo.Config().Read()
+	if err != nil {
+		return nil, err
+	}
+	lastImport, err := cfg.Int(bridgeConfigKey(b.Name, configKeyLastImportTime), 0)
+	if err == nil && lastImport != 0 {
+		return b.ImportAllSince(ctx, time.Unix(lastImport, 0))
 	}
 
 	return b.ImportAllSince(ctx, time.Time{})

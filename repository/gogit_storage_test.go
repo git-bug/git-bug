@@ -218,7 +218,7 @@ func TestGoGitStorage(t *testing.T) {
 			repo, _ := setupPrimedRepo(t)
 			src := setupSource(t)
 			runGit(t, src, "update-ref", "refs/bugs/b1", "main")
-			require.NoError(t, repo.AddRemote("src", src))
+			AddRemote(t, repo, "src", src)
 			return repo, Hash(runGit(t, src, "rev-parse", "main"))
 		}
 
