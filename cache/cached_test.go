@@ -15,6 +15,7 @@ import (
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 // commentsInGit returns the comments of a bug as stored in the repository, read
@@ -46,7 +47,7 @@ func changeOutside(t *testing.T, repo repository.ClockedRepo, author identity.In
 
 func TestViews(t *testing.T) {
 	t.Run("each caller gets its own view, sharing the committed state", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		created, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -89,7 +90,7 @@ func TestViews(t *testing.T) {
 	})
 
 	t.Run("staged metadata is the view's own", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		created, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -128,7 +129,7 @@ func TestViews(t *testing.T) {
 	})
 
 	t.Run("concurrent views stage metadata independently", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		created, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -169,7 +170,7 @@ func TestViews(t *testing.T) {
 	})
 
 	t.Run("staged operations are committed as one", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -190,7 +191,7 @@ func TestViews(t *testing.T) {
 	})
 
 	t.Run("a commit on a reference moved outside is redone on the new state", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, rene := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -216,7 +217,7 @@ func TestViews(t *testing.T) {
 	})
 
 	t.Run("a failed commit keeps the staged operations", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -248,7 +249,7 @@ func TestViews(t *testing.T) {
 	})
 
 	t.Run("a commit failed on a transient error succeeds once retried", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -257,7 +258,7 @@ func TestViews(t *testing.T) {
 		require.NoError(t, err)
 
 		// a lock held by someone else on the reference fails the commit
-		lockPath := filepath.Join(repo.GetLocalRemote(), "refs", bug.Namespace, b.Id().String()+".lock")
+		lockPath := filepath.Join(repo.GitDir, "refs", bug.Namespace, b.Id().String()+".lock")
 		require.NoError(t, os.WriteFile(lockPath, []byte("held"), 0666))
 		require.Error(t, b.Commit())
 		require.True(t, b.NeedCommit())
@@ -272,7 +273,7 @@ func TestViews(t *testing.T) {
 	})
 
 	t.Run("a loaded copy follows a reference moved outside on sync", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, rene := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -291,7 +292,7 @@ func TestViews(t *testing.T) {
 	})
 
 	t.Run("concurrent views commit independently", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
 		created, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
@@ -331,7 +332,7 @@ func TestViews(t *testing.T) {
 	})
 
 	t.Run("identity views stage their own versions", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, rene := newTestCacheWithUser(t, repo)
 		other, err := c.Identities().Resolve(rene.Id())
 		require.NoError(t, err)
@@ -358,7 +359,7 @@ func TestViews(t *testing.T) {
 	})
 
 	t.Run("a refreshed identity replaces the loaded one", func(t *testing.T) {
-		repo := repository.CreateGoGitTestRepo(t, false)
+		repo := repotest.NewGoGitRepo(t, false)
 		c, rene := newTestCacheWithUser(t, repo)
 
 		// changed outside the cache

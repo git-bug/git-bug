@@ -6,11 +6,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/entity"
-	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 func TestIdentityPushPull(t *testing.T) {
-	repoA, repoB, _ := repository.SetupGoGitReposAndRemote(t)
+	repoA, repoB, _ := repotest.SetupGoGitReposAndRemote(t)
 
 	identity1, err := NewIdentity(repoA, "name1", "email1")
 	require.NoError(t, err)

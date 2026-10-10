@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/git-bug/gitconfig"
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
@@ -36,7 +35,7 @@ func GetUserIdentity(repo repository.Repo) (*Identity, error) {
 	if entity.IsErrNotFound(err) {
 		innerErr := ClearUserIdentity(repo)
 		if innerErr != nil {
-			_, _ = fmt.Fprintln(os.Stderr, errors.Wrap(innerErr, "can't clear user identity").Error())
+			_, _ = fmt.Fprintln(os.Stderr, fmt.Errorf("can't clear user identity: %w", innerErr).Error())
 		}
 		return nil, err
 	}

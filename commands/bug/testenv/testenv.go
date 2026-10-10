@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/commands/execenv/envtest"
 	"github.com/git-bug/git-bug/entity"
 )
 
@@ -34,7 +35,7 @@ func NewTestEnvAndUser(t *testing.T) (*execenv.Env, entity.Id) {
 	// - https://github.com/golang/go/issues/34877
 	color.NoColor = true
 
-	testEnv := execenv.NewTestEnv(t)
+	testEnv := envtest.NewEnv(t)
 
 	i, err := testEnv.Backend.Identities().New(testUserName, testUserEmail)
 	require.NoError(t, err)
