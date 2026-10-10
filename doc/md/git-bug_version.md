@@ -26,6 +26,10 @@ Format Description:
 
   <arch> is the target architecture (GOARCH).
 
+With --raw, print <version> alone, on a line of its own, with no "git-bug"
+prefix and no build metadata. That is the form to compare against another
+version or to embed in a script.
+
 
 ```
 git-bug version [flags]
@@ -41,6 +45,7 @@ git bug version
 
 ```
   -h, --help   help for version
+      --raw    Print only the version string, with no prefix or build metadata
 ```
 
 ### SEE ALSO
