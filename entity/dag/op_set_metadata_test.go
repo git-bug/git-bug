@@ -111,7 +111,7 @@ func TestSetMetadata(t *testing.T) {
 }
 
 func TestSetMetadataSerialize(t *testing.T) {
-	SerializeRoundTripTest(t, func(raw json.RawMessage, resolver entity.Resolvers) (Operation, error) {
+	before, after, err := SerializeRoundTrip(func(raw json.RawMessage, resolver entity.Resolvers) (Operation, error) {
 		var op SetMetadataOperation[*snapshotMock]
 		err := json.Unmarshal(raw, &op)
 		return &op, err
@@ -121,4 +121,6 @@ func TestSetMetadataSerialize(t *testing.T) {
 			"key2": "value2",
 		}), nil
 	})
+	require.NoError(t, err)
+	require.Equal(t, before, after)
 }

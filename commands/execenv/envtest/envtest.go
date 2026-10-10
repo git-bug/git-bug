@@ -1,4 +1,6 @@
-package execenv
+// Package envtest provides an execenv.Env for tests, over a test repository,
+// with in-memory input and outputs.
+package envtest
 
 import (
 	"bytes"
@@ -10,10 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/cache"
-	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
-var _ In = &TestIn{}
+var _ execenv.In = &TestIn{}
 
 type TestIn struct {
 	*bytes.Buffer
@@ -28,7 +31,7 @@ func (t *TestIn) ForceIsTerminal(value bool) {
 	t.forceIsTerminal = value
 }
 
-var _ Out = &TestOut{}
+var _ execenv.Out = &TestOut{}
 
 type TestOut struct {
 	*bytes.Buffer
@@ -72,18 +75,18 @@ func (te *TestOut) ForceIsTerminal(value bool) {
 	te.forceIsTerminal = value
 }
 
-func NewTestEnv(t *testing.T) *Env {
+func NewEnv(t *testing.T) *execenv.Env {
 	t.Helper()
-	return newTestEnv(t, false)
+	return newEnv(t, false)
 }
 
-func NewTestEnvTerminal(t *testing.T) *Env {
+func NewEnvTerminal(t *testing.T) *execenv.Env {
 	t.Helper()
-	return newTestEnv(t, true)
+	return newEnv(t, true)
 }
 
-func newTestEnv(t *testing.T, isTerminal bool) *Env {
-	repo := repository.CreateGoGitTestRepo(t, false)
+func newEnv(t *testing.T, isTerminal bool) *execenv.Env {
+	repo := repotest.NewGoGitRepo(t, false)
 
 	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
@@ -92,7 +95,7 @@ func newTestEnv(t *testing.T, isTerminal bool) *Env {
 		backend.Close()
 	})
 
-	return &Env{
+	return &execenv.Env{
 		Ctx:     t.Context(),
 		Repo:    repo,
 		Backend: backend,

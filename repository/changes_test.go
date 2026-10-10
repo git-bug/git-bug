@@ -160,10 +160,10 @@ func TestMerge(t *testing.T) {
 // commits to point refs to.
 func newWatchedRepo(t *testing.T) (*GoGitRepo, []Hash) {
 	t.Helper()
-	repo := CreateGoGitTestRepo(t, false)
+	repo := newTestGoGitRepo(t, false)
 	commits := storeTestCommits(t, repo, 2)
 	require.NoError(t, repo.UpdateRef("bugs", randomKey(), "", commits[0]))
-	return goGitRepo(t, repo), commits
+	return repo, commits
 }
 
 func TestWatchSource(t *testing.T) {

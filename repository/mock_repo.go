@@ -19,7 +19,6 @@ import (
 )
 
 var _ ClockedRepo = &mockRepo{}
-var _ TestedRepo = &mockRepo{}
 
 // mockRepo defines an instance of Repo that can be used for testing.
 type mockRepo struct {
@@ -1012,23 +1011,12 @@ func (r *mockRepoClock) Witness(name string, time lamport.Time) error {
 	return c.Witness(time)
 }
 
-var _ repoTest = &mockRepoTest{}
-
 type mockRepoTest struct {
 	data *mockRepoDataBrowse
 }
 
 func NewMockRepoTest(data *mockRepoDataBrowse) *mockRepoTest {
 	return &mockRepoTest{data: data}
-}
-
-func (r mockRepoTest) GetLocalRemote() string {
-	panic("implement me")
-}
-
-func (r mockRepoTest) EraseFromDisk() error {
-	// nothing to do
-	return nil
 }
 
 func (r *mockRepoTest) SetBranch(name string, commit Hash) error {

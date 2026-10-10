@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,9 +17,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func goGitRepo(t *testing.T, repo TestedRepo) *GoGitRepo {
-	t.Helper()
-	return repo.(*replaceKeyring).TestedRepo.(*GoGitRepo)
+func randomKey() string {
+	var letterRunes = "abcdef0123456789"
+	b := make([]byte, idLengthSHA256)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
+}
+
+func randomData() []byte {
+	var letterRunes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	b := make([]byte, 32)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return b
 }
 
 func storeTestCommits(t *testing.T, repo RepoData, n int) []Hash {
@@ -66,7 +80,7 @@ func requireNoTempFiles(t *testing.T, repo *GoGitRepo) {
 	require.Empty(t, tmp)
 }
 
-func requireRef(t *testing.T, repo TestedRepo, namespace string, key string, expected Hash) {
+func requireRef(t *testing.T, repo RepoData, namespace string, key string, expected Hash) {
 	t.Helper()
 	h, err := repo.ResolveRef(namespace, key)
 	require.NoError(t, err)
@@ -83,8 +97,8 @@ func shortenLockTimeout(t *testing.T) {
 
 func TestGoGitRepo_Refs(t *testing.T) {
 	t.Run("UpdateRef", func(t *testing.T) {
-		repo := CreateGoGitTestRepo(t, false)
-		gr := goGitRepo(t, repo)
+		repo := newTestGoGitRepo(t, false)
+		gr := repo
 		commits := storeTestCommits(t, repo, 3)
 
 		// A rejected update must leave nothing behind, including on a packed ref:
@@ -157,8 +171,8 @@ func TestGoGitRepo_Refs(t *testing.T) {
 	// must succeed, the others being rejected.
 	t.Run("concurrent UpdateRef", func(t *testing.T) {
 		const namespace = "concurrent"
-		repo := CreateGoGitTestRepo(t, false)
-		gr := goGitRepo(t, repo)
+		repo := newTestGoGitRepo(t, false)
+		gr := repo
 		commits := storeTestCommits(t, repo, 21)
 
 		for _, tc := range []struct {
@@ -201,8 +215,8 @@ func TestGoGitRepo_Refs(t *testing.T) {
 
 	t.Run("RemoveRef", func(t *testing.T) {
 		const namespace = "removing"
-		repo := CreateGoGitTestRepo(t, false)
-		gr := goGitRepo(t, repo)
+		repo := newTestGoGitRepo(t, false)
+		gr := repo
 		commits := storeTestCommits(t, repo, 2)
 
 		for _, tc := range []struct {
@@ -244,8 +258,8 @@ func TestGoGitRepo_Refs(t *testing.T) {
 	// would then recreate the removed ref.
 	t.Run("held lock", func(t *testing.T) {
 		const namespace = "locked"
-		repo := CreateGoGitTestRepo(t, false)
-		gr := goGitRepo(t, repo)
+		repo := newTestGoGitRepo(t, false)
+		gr := repo
 		commits := storeTestCommits(t, repo, 2)
 		shortenLockTimeout(t)
 
@@ -280,8 +294,8 @@ func TestGoGitRepo_Refs(t *testing.T) {
 	})
 
 	t.Run("ListRefs", func(t *testing.T) {
-		repo := CreateGoGitTestRepo(t, false)
-		gr := goGitRepo(t, repo)
+		repo := newTestGoGitRepo(t, false)
+		gr := repo
 		commits := storeTestCommits(t, repo, 1)
 
 		// Listing refs must survive what another writer leaves in the ref directory
@@ -318,7 +332,7 @@ func TestGoGitRepo_Refs(t *testing.T) {
 	})
 
 	t.Run("invalid ref names", func(t *testing.T) {
-		repo := CreateGoGitTestRepo(t, false)
+		repo := newTestGoGitRepo(t, false)
 		commits := storeTestCommits(t, repo, 1)
 
 		for _, tc := range []struct {
@@ -369,8 +383,8 @@ func TestGoGitRepo_Refs(t *testing.T) {
 	t.Run("with git binary", func(t *testing.T) {
 		requireGitBinary(t)
 
-		repo := CreateGoGitTestRepo(t, false)
-		gr := goGitRepo(t, repo)
+		repo := newTestGoGitRepo(t, false)
+		gr := repo
 		commits := storeTestCommits(t, repo, 3)
 
 		// createPackedRefs creates two refs pointing to commits[0], packed by git.

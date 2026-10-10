@@ -1,10 +1,9 @@
 package cache
 
 import (
+	"fmt"
 	"io"
 	"sync"
-
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
@@ -141,7 +140,7 @@ func (c *RepoCache) Pull(remote string) error {
 			return merge.Err
 		}
 		if merge.Status == entity.MergeStatusInvalid {
-			return errors.Errorf("merge failure: %s", merge.Reason)
+			return fmt.Errorf("merge failure: %s", merge.Reason)
 		}
 	}
 

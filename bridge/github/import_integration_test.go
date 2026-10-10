@@ -2,11 +2,11 @@ package github
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/shurcooL/githubv4"
 	m "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,7 +15,7 @@ import (
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
-	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 // using testify/mock and mockery
@@ -33,7 +33,7 @@ func TestGithubImporterIntegration(t *testing.T) {
 	importer.client = &rateLimitHandlerClient{sc: clientMock}
 
 	// arrange
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 

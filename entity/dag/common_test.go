@@ -10,6 +10,7 @@ import (
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 // This file contains an example dummy entity to be used in the tests
@@ -110,20 +111,20 @@ func makeTestContext() (repository.ClockedRepo, identity.Interface, identity.Int
 }
 
 func makeTestContextGoGit(t *testing.T) (repository.ClockedRepo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 	id1, id2, resolvers, def := makeTestContextInternal(repo)
 	return repo, id1, id2, resolvers, def
 }
 
 func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.ClockedRepo, repository.ClockedRepo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
-	repoA := repository.CreateGoGitTestRepo(t, false)
-	repoB := repository.CreateGoGitTestRepo(t, false)
-	remote := repository.CreateGoGitTestRepo(t, true)
+	repoA := repotest.NewGoGitRepo(t, false)
+	repoB := repotest.NewGoGitRepo(t, false)
+	remote := repotest.NewGoGitRepo(t, true)
 
-	repository.AddRemote(t, repoA, "remote", remote.GetLocalRemote())
-	repository.AddRemote(t, repoA, "repoB", repoB.GetLocalRemote())
-	repository.AddRemote(t, repoB, "remote", remote.GetLocalRemote())
-	repository.AddRemote(t, repoB, "repoA", repoA.GetLocalRemote())
+	repotest.AddRemote(t, repoA, "remote", remote.GitDir)
+	repotest.AddRemote(t, repoA, "repoB", repoB.GitDir)
+	repotest.AddRemote(t, repoB, "remote", remote.GitDir)
+	repotest.AddRemote(t, repoB, "repoA", repoA.GitDir)
 
 	id1, id2, resolver, def := makeTestContextInternal(repoA)
 

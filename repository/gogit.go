@@ -44,7 +44,6 @@ const lastCommitDepthLimit = 1000
 const lastCommitCacheSize = 256
 
 var _ ClockedRepo = &GoGitRepo{}
-var _ TestedRepo = &GoGitRepo{}
 
 type GoGitRepo struct {
 	// Unfortunately, some parts of go-git are not thread-safe so we have to cover them with a big fat mutex here.
@@ -78,118 +77,110 @@ type GoGitRepo struct {
 	localStorage LocalStorage
 }
 
+// Option configures a GoGitRepo when it is opened or created.
+type Option func(*goGitOptions)
+
+type goGitOptions struct {
+	configEnv *gitconfig.Env
+	keyring   Keyring
+}
+
+// WithConfigEnv sets where the git configuration comes from, instead of
+// finding it from the process as git does, for embedders and tests that must
+// not read the configuration of the user or the system. Its GitDir is
+// ignored: the repository's own is used.
+func WithConfigEnv(env gitconfig.Env) Option {
+	return func(o *goGitOptions) { o.configEnv = &env }
+}
+
+// WithKeyring sets the keyring holding the secrets, instead of the user's.
+func WithKeyring(k Keyring) Option {
+	return func(o *goGitOptions) { o.keyring = k }
+}
+
 // OpenGoGitRepo opens an already existing repo at the given path and
 // with the specified LocalStorage namespace.  Given a repository path
 // of "~/myrepo" and a namespace of "git-bug", local storage for the
 // GoGitRepo will be configured at "~/myrepo/.git/git-bug".
-func OpenGoGitRepo(path, namespace string) (*GoGitRepo, error) {
+func OpenGoGitRepo(path, namespace string, opts ...Option) (*GoGitRepo, error) {
 	path, err := detectGitPath(path, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	configEnv, err := gitconfig.Discover(path)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: the possible resource leak is an existing issue in go-git v5
-	// it's fixed in v6
-	r, err := gogit.Open(newReindexingStorage(path), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	k, err := defaultKeyring()
-	if err != nil {
-		return nil, err
-	}
-
-	repo := &GoGitRepo{
-		r:               r,
-		path:            path,
-		configEnv:       configEnv,
-		clocks:          make(map[string]lamport.Clock),
-		indexes:         make(map[string]Index),
-		lastCommitCache: must(lru.New[string, map[string]CommitMeta](lastCommitCacheSize)),
-		keyring:         k,
-		localStorage:    billyLocalStorage{Filesystem: osfs.New(filepath.Join(path, namespace))},
-	}
-
-	return repo, nil
+	return newGoGitRepo(path, path, namespace, opts)
 }
 
 // InitGoGitRepo creates a new empty git repo at the given path and
 // with the specified LocalStorage namespace.  Given a repository path
 // of "~/myrepo" and a namespace of "git-bug", local storage for the
 // GoGitRepo will be configured at "~/myrepo/.git/git-bug".
-func InitGoGitRepo(path, namespace string) (*GoGitRepo, error) {
+func InitGoGitRepo(path, namespace string, opts ...Option) (*GoGitRepo, error) {
 	_, err := gogit.PlainInit(path, false)
 	if err != nil {
 		return nil, err
 	}
 
-	r, err := gogit.Open(newReindexingStorage(filepath.Join(path, ".git")), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	configEnv, err := gitconfig.Discover(path)
-	if err != nil {
-		return nil, err
-	}
-
-	k, err := defaultKeyring()
-	if err != nil {
-		return nil, err
-	}
-
-	return &GoGitRepo{
-		r:               r,
-		path:            filepath.Join(path, ".git"),
-		configEnv:       configEnv,
-		clocks:          make(map[string]lamport.Clock),
-		indexes:         make(map[string]Index),
-		lastCommitCache: must(lru.New[string, map[string]CommitMeta](lastCommitCacheSize)),
-		keyring:         k,
-		localStorage:    billyLocalStorage{Filesystem: osfs.New(filepath.Join(path, ".git", namespace))},
-	}, nil
+	return newGoGitRepo(path, filepath.Join(path, ".git"), namespace, opts)
 }
 
 // InitBareGoGitRepo creates a new --bare empty git repo at the given
 // path and with the specified LocalStorage namespace.  Given a repository
 // path of "~/myrepo" and a namespace of "git-bug", local storage for the
 // GoGitRepo will be configured at "~/myrepo/.git/git-bug".
-func InitBareGoGitRepo(path, namespace string) (*GoGitRepo, error) {
+func InitBareGoGitRepo(path, namespace string, opts ...Option) (*GoGitRepo, error) {
 	_, err := gogit.PlainInit(path, true)
 	if err != nil {
 		return nil, err
 	}
 
-	r, err := gogit.Open(newReindexingStorage(path), nil)
+	return newGoGitRepo(path, path, namespace, opts)
+}
+
+// newGoGitRepo returns the GoGitRepo of the git directory gitDir, found at
+// dir: a working tree or a git directory.
+func newGoGitRepo(dir, gitDir, namespace string, opts []Option) (*GoGitRepo, error) {
+	var o goGitOptions
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	var configEnv gitconfig.Env
+	if o.configEnv != nil {
+		configEnv = *o.configEnv
+		configEnv.GitDir = gitDir
+	} else {
+		var err error
+		configEnv, err = gitconfig.Discover(dir)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// TODO: the possible resource leak is an existing issue in go-git v5
+	// it's fixed in v6
+	r, err := gogit.Open(newReindexingStorage(gitDir), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	configEnv, err := gitconfig.Discover(path)
-	if err != nil {
-		return nil, err
-	}
-
-	k, err := defaultKeyring()
-	if err != nil {
-		return nil, err
+	k := o.keyring
+	if k == nil {
+		k, err = defaultKeyring()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &GoGitRepo{
 		r:               r,
-		path:            path,
+		path:            gitDir,
 		configEnv:       configEnv,
 		clocks:          make(map[string]lamport.Clock),
 		indexes:         make(map[string]Index),
 		lastCommitCache: must(lru.New[string, map[string]CommitMeta](lastCommitCacheSize)),
 		keyring:         k,
-		localStorage:    billyLocalStorage{Filesystem: osfs.New(filepath.Join(path, namespace))},
+		localStorage:    billyLocalStorage{Filesystem: osfs.New(filepath.Join(gitDir, namespace))},
 	}, nil
 }
 
@@ -1655,36 +1646,4 @@ func (repo *GoGitRepo) Head() (RefMeta, error) {
 		Type:      refType,
 		Hash:      ref.Hash().String(),
 	}, nil
-}
-
-// SetBranch points the branch name to commit, creating it if needed.
-// Not in the interface because it's only used for testing
-func (repo *GoGitRepo) SetBranch(name string, commit Hash) error {
-	return repo.r.Storer.SetReference(plumbing.NewHashReference(
-		plumbing.NewBranchReferenceName(name), plumbing.NewHash(commit.String())))
-}
-
-// SetTag points the lightweight tag name to commit, creating it if needed.
-// Not in the interface because it's only used for testing
-func (repo *GoGitRepo) SetTag(name string, commit Hash) error {
-	return repo.r.Storer.SetReference(plumbing.NewHashReference(
-		plumbing.NewTagReferenceName(name), plumbing.NewHash(commit.String())))
-}
-
-// GetLocalRemote return the URL to use to add this repo as a local remote
-func (repo *GoGitRepo) GetLocalRemote() string {
-	return repo.path
-}
-
-// EraseFromDisk delete this repository entirely from the disk
-func (repo *GoGitRepo) EraseFromDisk() error {
-	err := repo.Close()
-	if err != nil {
-		return err
-	}
-
-	path := filepath.Clean(strings.TrimSuffix(repo.path, string(filepath.Separator)+".git"))
-
-	// fmt.Println("Cleaning repo:", path)
-	return os.RemoveAll(path)
 }

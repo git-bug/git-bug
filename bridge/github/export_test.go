@@ -24,7 +24,7 @@ import (
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
-	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 const (
@@ -152,7 +152,7 @@ func TestGithubPushPull(t *testing.T) {
 	}
 
 	// create repo backend
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
@@ -231,7 +231,7 @@ func TestGithubPushPull(t *testing.T) {
 
 	fmt.Printf("test repository exported in %f seconds\n", time.Since(start).Seconds())
 
-	repoTwo := repository.CreateGoGitTestRepo(t, false)
+	repoTwo := repotest.NewGoGitRepo(t, false)
 
 	// create a second backend
 	backendTwo, err := cache.NewRepoCacheNoEvents(repoTwo, nil)
