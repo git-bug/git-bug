@@ -16,19 +16,9 @@ func (c *RepoCache) BrowseRepo() repository.RepoBrowse {
 	return c.repo
 }
 
-// LocalConfig give access to the repository scoped configuration
-func (c *RepoCache) LocalConfig() repository.Config {
-	return c.repo.LocalConfig()
-}
-
-// GlobalConfig give access to the global scoped configuration
-func (c *RepoCache) GlobalConfig() repository.Config {
-	return c.repo.GlobalConfig()
-}
-
-// AnyConfig give access to a merged local/global configuration
-func (c *RepoCache) AnyConfig() repository.ConfigRead {
-	return c.repo.AnyConfig()
+// Config give access to the git configuration
+func (c *RepoCache) Config() repository.Config {
+	return c.repo.Config()
 }
 
 // Keyring give access to a user-wide storage for secrets
