@@ -50,7 +50,7 @@ function RouteComponent() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       <BackLink to="/$repo/issues" params={{ repo }} search={{ q: "status:open", after: "" }}>
         Back to issues
       </BackLink>
