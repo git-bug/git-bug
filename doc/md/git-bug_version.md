@@ -26,7 +26,7 @@ Format Description:
 
   <arch> is the target architecture (GOARCH).
 
-With --raw, print <version> alone, on a line of its own, with no "git-bug"
+With --raw, print the version string alone, on a line of its own, with no "git-bug"
 prefix and no build metadata. That is the form to compare against another
 version or to embed in a script.
 
