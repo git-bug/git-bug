@@ -49,14 +49,8 @@ type ClockedRepo interface {
 
 // RepoConfig access the configuration of a repository
 type RepoConfig interface {
-	// LocalConfig give access to the repository scoped configuration
-	LocalConfig() Config
-
-	// GlobalConfig give access to the global scoped configuration
-	GlobalConfig() Config
-
-	// AnyConfig give access to a merged local/global configuration
-	AnyConfig() ConfigRead
+	// Config give access to the git configuration
+	Config() Config
 }
 
 // RepoKeyring give access to a user-wide storage for secrets
@@ -300,9 +294,6 @@ type TestedRepo interface {
 
 // repoTest give access to test-only functions
 type repoTest interface {
-	// AddRemote add a new remote to the repository
-	AddRemote(name string, url string) error
-
 	// GetLocalRemote return the URL to use to add this repo as a local remote
 	GetLocalRemote() string
 

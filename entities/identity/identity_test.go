@@ -372,11 +372,8 @@ func TestIdentityRemove(t *testing.T) {
 	remoteA := repository.CreateGoGitTestRepo(t, true)
 	remoteB := repository.CreateGoGitTestRepo(t, true)
 
-	err := repo.AddRemote("remoteA", remoteA.GetLocalRemote())
-	require.NoError(t, err)
-
-	err = repo.AddRemote("remoteB", remoteB.GetLocalRemote())
-	require.NoError(t, err)
+	repository.AddRemote(t, repo, "remoteA", remoteA.GetLocalRemote())
+	repository.AddRemote(t, repo, "remoteB", remoteB.GetLocalRemote())
 
 	// generate an identity for testing
 	rene, err := NewIdentity(repo, "René Descartes", "rene@descartes.fr")

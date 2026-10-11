@@ -23,7 +23,6 @@ import (
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/commands/execenv"
 	"github.com/git-bug/git-bug/entities/identity"
-	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/webui"
 )
 
@@ -156,11 +155,12 @@ func runWebUI(env *execenv.Env, opts webUIOptions) error {
 	if len(opts.query) > 0 {
 		toOpen = fmt.Sprintf("%s/?q=%s", baseURL, url.QueryEscape(opts.query))
 	}
-	configOpen, err := env.Repo.AnyConfig().ReadBool(webUIOpenConfigKey)
-	if errors.Is(err, repository.ErrNoConfigEntry) {
-		// default to true
-		configOpen = true
-	} else if err != nil {
+	cfg, err := env.Repo.Config().Read()
+	if err != nil {
+		return err
+	}
+	configOpen, err := cfg.Bool(webUIOpenConfigKey, true)
+	if err != nil {
 		return err
 	}
 	if (configOpen && !opts.noOpen) || opts.open {

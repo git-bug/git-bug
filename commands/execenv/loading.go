@@ -172,10 +172,11 @@ const changesBackstopPeriod = time.Minute
 //   - none: no source at all, nil, for a repository only written through this
 //     process.
 func changeSource(env *Env) (repository.ChangeSource, error) {
-	notifier, err := repository.GetDefaultString(changesNotifierConfigKey, env.Repo.AnyConfig(), "auto")
+	cfg, err := env.Repo.Config().Read()
 	if err != nil {
 		return nil, err
 	}
+	notifier := cfg.Value(changesNotifierConfigKey, "auto")
 
 	backstop := repository.Periodic(changesBackstopPeriod)
 

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/git-bug/gitconfig"
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/util/lamport"
@@ -37,10 +39,6 @@ func RepoTest(t *testing.T, creator RepoCreator) {
 				RepoBrowseTest(t, repo)
 			})
 
-			t.Run("Config", func(t *testing.T) {
-				RepoConfigTest(t, repo)
-			})
-
 			t.Run("Storage", func(t *testing.T) {
 				RepoStorageTest(t, repo)
 			})
@@ -56,9 +54,17 @@ func RepoTest(t *testing.T, creator RepoCreator) {
 	}
 }
 
-// helper to test a RepoConfig
-func RepoConfigTest(t *testing.T, repo RepoConfig) {
-	testConfig(t, repo.LocalConfig())
+// AddRemote adds a remote to repo, as git remote add does.
+func AddRemote(t testing.TB, repo RepoConfig, name, url string) {
+	t.Helper()
+
+	err := repo.Config().Update(func(f *gitconfig.File) error {
+		return errors.Join(
+			f.Set("remote."+name+".url", url),
+			f.Set("remote."+name+".fetch", "+refs/heads/*:refs/remotes/"+name+"/*"),
+		)
+	})
+	require.NoError(t, err)
 }
 
 func RepoStorageTest(t *testing.T, repo RepoStorage) {
@@ -642,7 +648,9 @@ type browsable interface {
 func RepoBrowseTest(t *testing.T, repo browsable) {
 	t.Helper()
 
-	require.NoError(t, repo.LocalConfig().StoreString("init.defaultBranch", "main"))
+	require.NoError(t, repo.Config().Update(func(f *gitconfig.File) error {
+		return f.Set("init.defaultBranch", "main")
+	}))
 
 	// ── build fixture ─────────────────────────────────────────────────────────
 

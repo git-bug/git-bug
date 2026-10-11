@@ -120,19 +120,15 @@ func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.Clo
 	repoB := repository.CreateGoGitTestRepo(t, false)
 	remote := repository.CreateGoGitTestRepo(t, true)
 
-	err := repoA.AddRemote("remote", remote.GetLocalRemote())
-	require.NoError(t, err)
-	err = repoA.AddRemote("repoB", repoB.GetLocalRemote())
-	require.NoError(t, err)
-	err = repoB.AddRemote("remote", remote.GetLocalRemote())
-	require.NoError(t, err)
-	err = repoB.AddRemote("repoA", repoA.GetLocalRemote())
-	require.NoError(t, err)
+	repository.AddRemote(t, repoA, "remote", remote.GetLocalRemote())
+	repository.AddRemote(t, repoA, "repoB", repoB.GetLocalRemote())
+	repository.AddRemote(t, repoB, "remote", remote.GetLocalRemote())
+	repository.AddRemote(t, repoB, "repoA", repoA.GetLocalRemote())
 
 	id1, id2, resolver, def := makeTestContextInternal(repoA)
 
 	// distribute the identities
-	_, err = identity.Push(repoA, "remote")
+	_, err := identity.Push(repoA, "remote")
 	require.NoError(t, err)
 	err = identity.Pull(repoB, "remote")
 	require.NoError(t, err)

@@ -7,7 +7,6 @@ import (
 
 	"github.com/git-bug/git-bug/commands/completion"
 	"github.com/git-bug/git-bug/commands/execenv"
-	"github.com/git-bug/git-bug/repository"
 )
 
 func newPushCommand(env *execenv.Env) *cobra.Command {
@@ -32,11 +31,11 @@ func runPush(env *execenv.Env, args []string) error {
 	case len(args) == 1:
 		remote = args[0]
 	default:
-		v, err := repository.GetDefaultString("git-bug.remote", env.Repo.AnyConfig(), "origin")
+		cfg, err := env.Repo.Config().Read()
 		if err != nil {
 			return err
 		}
-		remote = v
+		remote = cfg.Value("git-bug.remote", "origin")
 	}
 
 	stdout, err := env.Backend.Push(remote)
