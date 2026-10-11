@@ -8,8 +8,6 @@ import (
 
 	"github.com/git-bug/git-bug/commands/completion"
 	"github.com/git-bug/git-bug/commands/execenv"
-	"github.com/git-bug/git-bug/entities/bug"
-	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 )
 
@@ -72,6 +70,7 @@ func runPull(env *execenv.Env, args []string, verbose bool) error {
 	newIdentities := 0
 	updatedIdentities := 0
 	failedMerges := 0
+	var changes []entity.MergeResult
 
 	for result := range env.Backend.MergeAll(remote) {
 		if result.Err != nil {
@@ -89,22 +88,23 @@ func runPull(env *execenv.Env, args []string, verbose bool) error {
 				env.Err.Printf("%s: %s\n", result.Id.Human(), result)
 			}
 
-			// Count entity changes by checking the entity type
-			if result.Entity != nil {
-				switch result.Entity.(type) {
-				case *bug.Bug:
-					if result.Status == entity.MergeStatusNew {
-						newBugs++
-					} else if result.Status == entity.MergeStatusUpdated {
-						updatedBugs++
-					}
-				case *identity.Identity:
-					if result.Status == entity.MergeStatusNew {
-						newIdentities++
-					} else if result.Status == entity.MergeStatusUpdated {
-						updatedIdentities++
-					}
-				}
+			changes = append(changes, result)
+		}
+	}
+
+	// MergeAll refreshes the caches before closing its results channel.
+	for _, result := range changes {
+		if _, err := env.Backend.Bugs().ResolveExcerpt(result.Id); err == nil {
+			if result.Status == entity.MergeStatusNew {
+				newBugs++
+			} else if result.Status == entity.MergeStatusUpdated {
+				updatedBugs++
+			}
+		} else if _, err := env.Backend.Identities().ResolveExcerpt(result.Id); err == nil {
+			if result.Status == entity.MergeStatusNew {
+				newIdentities++
+			} else if result.Status == entity.MergeStatusUpdated {
+				updatedIdentities++
 			}
 		}
 	}
