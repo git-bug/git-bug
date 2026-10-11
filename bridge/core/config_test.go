@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/git-bug/gitconfig"
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/cache"
@@ -18,7 +19,9 @@ func TestFinishConfigDanglingUserIdentity(t *testing.T) {
 	// Point the user identity to an identity that doesn't exist in the repo,
 	// as happens when the identity has been removed or the config copied over.
 	dangling := entity.Id(strings.Repeat("a", 64))
-	require.NoError(t, repo.LocalConfig().StoreString("git-bug.identity", dangling.String()))
+	require.NoError(t, repo.Config().Update(func(f *gitconfig.File) error {
+		return f.Set("git-bug.identity", dangling.String())
+	}))
 
 	backend, err := cache.NewRepoCacheNoEvents(repo)
 	require.NoError(t, err)
@@ -57,7 +60,9 @@ func TestFinishConfigDanglingUserIdentityWithExisting(t *testing.T) {
 
 	// Set a dangling user identity in git config
 	dangling := entity.Id(strings.Repeat("a", 64))
-	require.NoError(t, repo.LocalConfig().StoreString("git-bug.identity", dangling.String()))
+	require.NoError(t, repo.Config().Update(func(f *gitconfig.File) error {
+		return f.Set("git-bug.identity", dangling.String())
+	}))
 
 	err = FinishConfig(backend, metaKey, "jdoe")
 	require.NoError(t, err)
