@@ -136,8 +136,10 @@ describe("CommitList — commits", () => {
 
   it("renders valid commit link with null repo", async () => {
     const { mock } = makeQueryMock([makeCommit(1)], false, null);
-    renderList({ repo: null, ref_: "main"}, [mock]);
-    await waitFor(() => expect(screen.getByText("Commit message 1")).toHaveAttribute("href", "/_/commit/hash1"));
+    renderList({ repo: null, ref_: "main" }, [mock]);
+    await waitFor(() =>
+      expect(screen.getByText("Commit message 1")).toHaveAttribute("href", "/_/commit/hash1"),
+    );
   });
 });
 
