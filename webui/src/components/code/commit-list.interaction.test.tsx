@@ -83,7 +83,7 @@ function renderList(
     // type policy Apollo cannot resolve the entity across pages, and re-issues
     // the first query after every fetchMore.
     <MockedProvider mocks={mocks} showWarnings={false} cache={new InMemoryCache({ typePolicies })}>
-      <CommitList repo={props.repo ?? "myrepo"} ref_={props.ref_ ?? "main"} path={props.path} />
+      <CommitList repo={props.repo ?? null} ref_={props.ref_ ?? "main"} path={props.path} />
     </MockedProvider>,
   );
 }
@@ -132,6 +132,12 @@ describe("CommitList — commits", () => {
     const { mock } = makeQueryMock([makeCommit(1)], false, null);
     renderList({}, [mock]);
     await waitFor(() => expect(screen.getByText("h1")).toBeInTheDocument());
+  });
+
+  it("renders valid commit link with null repo", async () => {
+    const { mock } = makeQueryMock([makeCommit(1)], false, null);
+    renderList({ repo: null, ref_: "main"}, [mock]);
+    await waitFor(() => expect(screen.getByText("Commit message 1")).toHaveAttribute("href", "/_/commit/hash1"));
   });
 });
 
