@@ -140,7 +140,7 @@ export function CommitList({ repo, ref_, path }: CommitListProps) {
 }
 
 function CommitRow({ commit, repo }: { commit: CommitNode; repo: string | null }) {
-  const commitPath = repo ? `/${repo}/commit/${commit.hash}` : `/commit/${commit.hash}`;
+  const commitPath = `/${repo ?? "_"}/commit/${commit.hash}`;
   return (
     <div className="bg-background hover:bg-muted/30 flex items-center gap-3 px-4 py-3">
       <GitCommit className="text-muted-foreground size-4 shrink-0" />
