@@ -36,7 +36,7 @@ const PAGE_SIZE = 30;
 
 interface CommitListProps {
   repo: string | null;
-  ref_: string;
+  gitRef: string;
   path?: string;
 }
 
@@ -55,10 +55,10 @@ type MorePages = {
   hasNextPage: boolean;
 } | null;
 
-export function CommitList({ repo, ref_, path }: CommitListProps) {
+export function CommitList({ repo, gitRef, path }: CommitListProps) {
   const { data, loading, error, fetchMore } = useQuery(COMMITS_QUERY, {
-    variables: { repo, ref: ref_, path: path ?? null, after: null, first: PAGE_SIZE },
-    skip: !ref_,
+    variables: { repo, ref: gitRef, path: path ?? null, after: null, first: PAGE_SIZE },
+    skip: !gitRef,
   });
 
   // The query result is the first page; pages pulled in by "Load more" are

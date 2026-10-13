@@ -1,6 +1,6 @@
 import rehypeShikiFromHighlighter from "@shikijs/rehype/core";
 import { Link } from "@tanstack/react-router";
-import { useMemo, useState, useEffect } from "react";
+import { createContext, useContext, useMemo, useState, useEffect } from "react";
 import ReactMarkdown, { type ExtraProps } from "react-markdown";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeExternalLinks from "rehype-external-links";
@@ -119,89 +119,87 @@ function PreBlock({ node: _node, ...props }: PreProps) {
   return <pre {...props} tabIndex={0} />;
 }
 
+// The repo the rendered document belongs to, read by MarkdownImage and
+// MarkdownLink to route repo-local URLs.  Null outside of a repo document.
+const RepoContextContext = createContext<RepoContext | null>(null);
+
+// Wraps repo-local images (rewritten to /gitfile/ by urlTransform) in a Link to
+// the blob view.
+function MarkdownImage({ node: _node, src, alt, ...props }: ImgProps) {
+  const repoContext = useContext(RepoContextContext);
+  if (repoContext && src) {
+    const { repo, ref } = repoContext;
+    const gitfilePrefix = `/gitfile/${repo}/${ref}/`;
+    if (src.startsWith(gitfilePrefix)) {
+      const path = src.slice(gitfilePrefix.length);
+      return (
+        <Link to="/$repo/blob/$ref/$" params={{ repo, ref, _splat: path }}>
+          <img src={src} alt={alt} {...props} />
+        </Link>
+      );
+    }
+  }
+  return <img src={src} alt={alt} {...props} />;
+}
+
+// Routes repo-local links client-side.  urlTransform has already rewritten
+// them to /{repo}/blob/{ref}/{path}.
+function MarkdownLink({ node: _node, href, children, ...props }: AnchorProps) {
+  const repoContext = useContext(RepoContextContext);
+  if (repoContext && href && !href.startsWith("#")) {
+    const { repo, ref, basePath } = repoContext;
+
+    const prefix = `/${repo}/blob/${ref}/`;
+    if (href.startsWith(prefix)) {
+      return (
+        <Link
+          to="/$repo/blob/$ref/$"
+          params={{ repo, ref, _splat: href.slice(prefix.length) }}
+          {...props}
+        >
+          {children}
+        </Link>
+      );
+    }
+
+    // Also handle raw relative URLs that urlTransform didn't process
+    // (shouldn't happen but defensive)
+    if (isRelativeUrl(href)) {
+      const resolved = resolveRelativePath(basePath, href);
+      return (
+        <Link to="/$repo/blob/$ref/$" params={{ repo, ref, _splat: resolved }} {...props}>
+          {children}
+        </Link>
+      );
+    }
+  }
+
+  return (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  );
+}
+
+const components = { pre: PreBlock, img: MarkdownImage, a: MarkdownLink };
+
 export function Markdown({ content, className, repoContext, size = "comment" }: MarkdownProps) {
   const highlighter = useShikiHighlighter();
 
-  // Rewrite image src to /gitfile for raw content serving.
-  // Links are handled by the custom `a` component below.
+  // Rewrite image src to /gitfile for raw content serving, and other relative
+  // URLs to /{repo}/blob/{ref}/ for MarkdownLink to route.
+  const { repo, ref, basePath } = repoContext ?? {};
   const urlTransform = useMemo(() => {
-    if (!repoContext) return undefined;
-    const { repo, ref, basePath } = repoContext;
+    if (repo === undefined || ref === undefined || basePath === undefined) return undefined;
     return (url: string) => {
       if (!isRelativeUrl(url)) return url;
       const resolved = resolveRelativePath(basePath, url);
       if (isImagePath(resolved)) {
         return `/gitfile/${repo}/${ref}/${resolved}`;
       }
-      // Non-image relative URLs are handled by the `a` component override,
-      // but urlTransform runs first, so we still need to return something.
-      // Return the resolved path prefixed so the `a` component can detect it.
       return `/${repo}/blob/${ref}/${resolved}`;
     };
-  }, [repoContext]);
-
-  const components = useMemo(() => {
-    if (!repoContext) return undefined;
-    const { repo, ref, basePath } = repoContext;
-    const gitfilePrefix = `/gitfile/${repo}/${ref}/`;
-    return {
-      // `node` is dropped here for the same reason as in PreBlock above: spread
-      // onto an element it renders as node="[object Object]".
-      img: ({ node: _node, src, alt, ...props }: ImgProps) => {
-        // Wrap repo-local images in a Link to the blob view
-        if (src?.startsWith(gitfilePrefix)) {
-          const path = src.slice(gitfilePrefix.length);
-          return (
-            <Link to="/$repo/blob/$ref/$" params={{ repo, ref, _splat: path }}>
-              <img src={src} alt={alt} {...props} />
-            </Link>
-          );
-        }
-        return <img src={src} alt={alt} {...props} />;
-      },
-      a: ({ node: _node, href, children, ...props }: AnchorProps) => {
-        if (!href) return <a {...props}>{children}</a>;
-
-        // Anchor links stay as-is
-        if (href.startsWith("#"))
-          return (
-            <a href={href} {...props}>
-              {children}
-            </a>
-          );
-
-        // Check if this is a relative URL that we should route client-side.
-        // After urlTransform, repo-local links look like /{repo}/blob/{ref}/{path}
-        const prefix = `/${repo}/blob/${ref}/`;
-        if (href.startsWith(prefix)) {
-          const path = href.slice(prefix.length);
-          return (
-            <Link to="/$repo/blob/$ref/$" params={{ repo, ref, _splat: path }} {...props}>
-              {children}
-            </Link>
-          );
-        }
-
-        // Also handle raw relative URLs that urlTransform didn't process
-        // (shouldn't happen but defensive)
-        if (isRelativeUrl(href)) {
-          const resolved = resolveRelativePath(basePath, href);
-          return (
-            <Link to="/$repo/blob/$ref/$" params={{ repo, ref, _splat: resolved }} {...props}>
-              {children}
-            </Link>
-          );
-        }
-
-        // External links — render as normal anchor
-        return (
-          <a href={href} {...props}>
-            {children}
-          </a>
-        );
-      },
-    };
-  }, [repoContext]);
+  }, [repo, ref, basePath]);
 
   return (
     <div
@@ -222,29 +220,31 @@ export function Markdown({ content, className, repoContext, size = "comment" }: 
         className,
       )}
     >
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkEmoji]}
-        rehypePlugins={[
-          rehypeRaw,
-          [rehypeSanitize, sanitizeSchema],
-          ...(highlighter
-            ? [
-                [
-                  rehypeShikiFromHighlighter,
-                  highlighter,
-                  { themes: SHIKI_THEMES, defaultColor: false },
-                ] as PluggableList[number],
-              ]
-            : []),
-          rehypeSlug,
-          [rehypeAutolinkHeadings, { behavior: "append" }],
-          [rehypeExternalLinks, { target: "_blank", rel: ["noopener", "noreferrer"] }],
-        ]}
-        urlTransform={urlTransform}
-        components={{ pre: PreBlock, ...components }}
-      >
-        {content}
-      </ReactMarkdown>
+      <RepoContextContext value={repoContext ?? null}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm, remarkEmoji]}
+          rehypePlugins={[
+            rehypeRaw,
+            [rehypeSanitize, sanitizeSchema],
+            ...(highlighter
+              ? [
+                  [
+                    rehypeShikiFromHighlighter,
+                    highlighter,
+                    { themes: SHIKI_THEMES, defaultColor: false },
+                  ] as PluggableList[number],
+                ]
+              : []),
+            rehypeSlug,
+            [rehypeAutolinkHeadings, { behavior: "append" }],
+            [rehypeExternalLinks, { target: "_blank", rel: ["noopener", "noreferrer"] }],
+          ]}
+          urlTransform={urlTransform}
+          components={components}
+        >
+          {content}
+        </ReactMarkdown>
+      </RepoContextContext>
     </div>
   );
 }

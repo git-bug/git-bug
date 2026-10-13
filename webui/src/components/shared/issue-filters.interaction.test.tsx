@@ -25,7 +25,7 @@ vi.mock("@/lib/auth", () => ({
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function makeLabel(name: string, R = 255, G = 0, B = 0): LabelItem {
-  return { name, color: { R, G, B } } as LabelItem;
+  return { name, color: { R, G, B } };
 }
 
 function makeIdentity(

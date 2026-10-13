@@ -24,19 +24,19 @@ interface TitleEditorProps {
   title: string;
   humanId: string;
   /** Current repo slug, passed as `ref` in refetch query variables. */
-  ref_?: string | null;
+  repo?: string | null;
 }
 
 // Inline title editor in BugDetailPage. Shows the title as plain text with a
 // pencil icon on hover (auth-gated). Enter saves, Escape cancels.
-export function TitleEditor({ bugPrefix, title, humanId, ref_ }: TitleEditorProps) {
+export function TitleEditor({ bugPrefix, title, humanId, repo }: TitleEditorProps) {
   const { user } = useAuth();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(title);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [setTitle, { loading }] = useMutation(BUG_SET_TITLE_MUTATION, {
-    refetchQueries: [{ query: BugDetailDocument, variables: { ref: ref_, prefix: bugPrefix } }],
+    refetchQueries: [{ query: BugDetailDocument, variables: { ref: repo, prefix: bugPrefix } }],
   });
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export function TitleEditor({ bugPrefix, title, humanId, ref_ }: TitleEditorProp
     const trimmed = value.trim();
     if (trimmed && trimmed !== title) {
       await setTitle({
-        variables: { input: { prefix: bugPrefix, title: trimmed, repoRef: ref_ } },
+        variables: { input: { prefix: bugPrefix, title: trimmed, repoRef: repo } },
       });
     }
     setEditing(false);

@@ -34,19 +34,19 @@ type LabelData = { name: string; color: { R: number; G: number; B: number } } & 
   typeof LABEL_FIELDS_FRAGMENT
 >;
 
-const LABEL_BUG: LabelData = { name: "bug", color: { R: 255, G: 0, B: 0 } } as LabelData;
-const LABEL_URGENT: LabelData = { name: "urgent", color: { R: 255, G: 165, B: 0 } } as LabelData;
+const LABEL_BUG: LabelData = { name: "bug", color: { R: 255, G: 0, B: 0 } };
+const LABEL_URGENT: LabelData = { name: "urgent", color: { R: 255, G: 165, B: 0 } };
 
 function renderEditor(props: {
   currentLabels?: LabelData[];
   validLabels?: LabelData[];
-  ref_?: string | null;
+  repo?: string | null;
   mocks?: MockedResponse<any, any>[];
 }) {
   const {
     currentLabels = [],
     validLabels = [LABEL_BUG, LABEL_URGENT],
-    ref_ = "myrepo",
+    repo = "myrepo",
     mocks = [],
   } = props;
 
@@ -57,7 +57,7 @@ function renderEditor(props: {
           bugPrefix="bug1"
           currentLabels={currentLabels}
           validLabels={validLabels}
-          ref_={ref_}
+          repo={repo}
         />
       </Suspense>
     </MockedProvider>,
@@ -154,7 +154,7 @@ describe("LabelEditor — mutation variables", () => {
       result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] } } } },
     };
 
-    renderEditor({ currentLabels: [], ref_: null, mocks: [mock, REFETCH_MOCK] });
+    renderEditor({ currentLabels: [], repo: null, mocks: [mock, REFETCH_MOCK] });
     openPopover();
     fireEvent.click(screen.getByRole("option", { name: "bug" }));
 

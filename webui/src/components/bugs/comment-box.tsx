@@ -67,17 +67,17 @@ interface CommentBoxProps {
   bugPrefix: string;
   bugStatus: Status;
   /** Current repo slug, passed as `ref` in refetch query variables. */
-  ref_?: string | null;
+  repo?: string | null;
 }
 
 // Write/preview comment form at the bottom of BugDetailPage. Also contains the
 // Close / Reopen button. Hidden entirely in read-only mode (no logged-in user).
-export function CommentBox({ bugPrefix, bugStatus, ref_ }: CommentBoxProps) {
+export function CommentBox({ bugPrefix, bugStatus, repo }: CommentBoxProps) {
   const { user } = useAuth();
   const [message, setMessage] = useState("");
   const [preview, setPreview] = useState(false);
 
-  const refetchVars = { variables: { ref: ref_, prefix: bugPrefix } };
+  const refetchVars = { variables: { ref: repo, prefix: bugPrefix } };
   const refetch = { refetchQueries: [{ query: BugDetailDocument, ...refetchVars }] };
 
   const [addComment, { loading: addingComment }] = useMutation(BUG_ADD_COMMENT_MUTATION, refetch);
@@ -98,7 +98,7 @@ export function CommentBox({ bugPrefix, bugStatus, ref_ }: CommentBoxProps) {
 
   async function handleComment() {
     await addComment({
-      variables: { input: { prefix: bugPrefix, message: message.trim(), repoRef: ref_ } },
+      variables: { input: { prefix: bugPrefix, message: message.trim(), repoRef: repo } },
     });
     setMessage("");
     setPreview(false);
@@ -108,18 +108,18 @@ export function CommentBox({ bugPrefix, bugStatus, ref_ }: CommentBoxProps) {
     if (isOpen) {
       if (hasMessage) {
         await addAndClose({
-          variables: { input: { prefix: bugPrefix, message: message.trim(), repoRef: ref_ } },
+          variables: { input: { prefix: bugPrefix, message: message.trim(), repoRef: repo } },
         });
       } else {
-        await statusClose({ variables: { input: { prefix: bugPrefix, repoRef: ref_ } } });
+        await statusClose({ variables: { input: { prefix: bugPrefix, repoRef: repo } } });
       }
     } else {
       if (hasMessage) {
         await addAndReopen({
-          variables: { input: { prefix: bugPrefix, message: message.trim(), repoRef: ref_ } },
+          variables: { input: { prefix: bugPrefix, message: message.trim(), repoRef: repo } },
         });
       } else {
-        await statusOpen({ variables: { input: { prefix: bugPrefix, repoRef: ref_ } } });
+        await statusOpen({ variables: { input: { prefix: bugPrefix, repoRef: repo } } });
       }
     }
     setMessage("");

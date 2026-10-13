@@ -74,7 +74,7 @@ export const WithCommits: Story = {
   decorators: [withCommitsMock(ALL_COMMITS)],
   args: {
     repo: "_",
-    ref_: "main",
+    gitRef: "main",
   },
 };
 
@@ -82,6 +82,6 @@ export const EmptyRepo: Story = {
   decorators: [withCommitsMock([])],
   args: {
     repo: "_",
-    ref_: "main",
+    gitRef: "main",
   },
 };

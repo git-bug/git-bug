@@ -21,3 +21,17 @@ describe("Markdown — code block focusability", () => {
     expect(container.querySelector("pre")).toHaveAttribute("tabindex", "0");
   });
 });
+
+describe("Markdown — repo documents", () => {
+  it("keeps its elements across re-renders with an equal repoContext", async () => {
+    const content = "![logo](https://example.com/logo.png)";
+    const { container, rerender } = render(
+      <Markdown content={content} repoContext={{ repo: "r", ref: "main", basePath: "" }} />,
+    );
+    await waitFor(() => expect(container.querySelector("img")).toBeInTheDocument());
+    const img = container.querySelector("img");
+
+    rerender(<Markdown content={content} repoContext={{ repo: "r", ref: "main", basePath: "" }} />);
+    expect(container.querySelector("img")).toBe(img);
+  });
+});

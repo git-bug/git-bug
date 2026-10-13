@@ -20,7 +20,7 @@ export const OpenIssue: Story = {
   args: {
     bugPrefix: "abc123",
     bugStatus: Status.Open,
-    ref_: "_",
+    repo: "_",
   },
 };
 
@@ -28,6 +28,6 @@ export const ClosedIssue: Story = {
   args: {
     bugPrefix: "abc123",
     bugStatus: Status.Closed,
-    ref_: "_",
+    repo: "_",
   },
 };

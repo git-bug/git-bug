@@ -40,7 +40,7 @@ interface LabelEditorProps {
   bugPrefix: string;
   currentLabels: Array<{ name: string } & FragmentType<typeof LABEL_FIELDS_FRAGMENT>>;
   /** Current repo slug, passed as `ref` in refetch query variables. */
-  ref_?: string | null;
+  repo?: string | null;
   /** Pre-fetched valid labels for the repository. */
   validLabels: Array<
     { name: string; color: { R: number; G: number; B: number } } & FragmentType<
@@ -52,10 +52,10 @@ interface LabelEditorProps {
 // Gear-icon popover in the BugDetailPage sidebar for adding/removing labels.
 // Loads all valid labels from the repo and toggles them via bugChangeLabels.
 // Hidden in read-only mode.
-export function LabelEditor({ bugPrefix, currentLabels, ref_, validLabels }: LabelEditorProps) {
+export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: LabelEditorProps) {
   const { user } = useAuth();
   const [changeLabels] = useMutation(BUG_CHANGE_LABELS_MUTATION, {
-    refetchQueries: [{ query: BugDetailDocument, variables: { ref: ref_, prefix: bugPrefix } }],
+    refetchQueries: [{ query: BugDetailDocument, variables: { ref: repo, prefix: bugPrefix } }],
   });
 
   const currentNames = new Set(currentLabels.map((l) => l.name));
@@ -66,7 +66,7 @@ export function LabelEditor({ bugPrefix, currentLabels, ref_, validLabels }: Lab
       variables: {
         input: {
           prefix: bugPrefix,
-          repoRef: ref_,
+          repoRef: repo,
           added: isSet ? [] : [name],
           Removed: isSet ? [name] : [],
         },
