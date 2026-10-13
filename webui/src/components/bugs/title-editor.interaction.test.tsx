@@ -26,12 +26,12 @@ const REFETCH_MOCK = {
   maxUsageCount: 10,
 };
 
-function renderEditor(props: { title?: string; ref_?: string | null } = {}) {
-  const { title = "Original title", ref_ = "myrepo" } = props;
+function renderEditor(props: { title?: string; repo?: string | null } = {}) {
+  const { title = "Original title", repo = "myrepo" } = props;
   return render(
     <MockedProvider showWarnings={false}>
       <Suspense>
-        <TitleEditor bugPrefix="bug1" title={title} humanId="h1" ref_={ref_} />
+        <TitleEditor bugPrefix="bug1" title={title} humanId="h1" repo={repo} />
       </Suspense>
     </MockedProvider>,
   );
@@ -95,7 +95,7 @@ describe("TitleEditor — mutation variables", () => {
     render(
       <MockedProvider mocks={[mock, REFETCH_MOCK]} showWarnings={false}>
         <Suspense>
-          <TitleEditor bugPrefix={PREFIX} title="Old title" humanId="h1" ref_={REPO} />
+          <TitleEditor bugPrefix={PREFIX} title="Old title" humanId="h1" repo={REPO} />
         </Suspense>
       </MockedProvider>,
     );
@@ -121,7 +121,7 @@ describe("TitleEditor — mutation variables", () => {
     render(
       <MockedProvider mocks={[mock, REFETCH_MOCK]} showWarnings={false}>
         <Suspense>
-          <TitleEditor bugPrefix={PREFIX} title="Old title" humanId="h1" ref_={REPO} />
+          <TitleEditor bugPrefix={PREFIX} title="Old title" humanId="h1" repo={REPO} />
         </Suspense>
       </MockedProvider>,
     );
@@ -147,7 +147,7 @@ describe("TitleEditor — mutation variables", () => {
     render(
       <MockedProvider mocks={[mock, REFETCH_MOCK]} showWarnings={false}>
         <Suspense>
-          <TitleEditor bugPrefix={PREFIX} title="Old" humanId="h1" ref_={null} />
+          <TitleEditor bugPrefix={PREFIX} title="Old" humanId="h1" repo={null} />
         </Suspense>
       </MockedProvider>,
     );
@@ -173,7 +173,7 @@ describe("TitleEditor — mutation variables", () => {
     render(
       <MockedProvider mocks={[mock]} showWarnings={false}>
         <Suspense>
-          <TitleEditor bugPrefix={PREFIX} title="Same" humanId="h1" ref_={REPO} />
+          <TitleEditor bugPrefix={PREFIX} title="Same" humanId="h1" repo={REPO} />
         </Suspense>
       </MockedProvider>,
     );

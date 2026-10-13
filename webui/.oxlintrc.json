@@ -21,7 +21,9 @@
     // callback setter, not a `.current` read).  There is no way to write that
     // API differently, so this stays a warning rather than an error.
     "react/refs": "warn",
-    "react/react-in-jsx-scope": "off"
+    "react/react-in-jsx-scope": "off",
+    // Names imposed by GraphQL and TanStack Router.
+    "eslint/no-underscore-dangle": ["warn", { "allow": ["__typename", "_splat"] }]
   },
   "options": {
     "typeAware": true,
@@ -46,6 +48,13 @@
         "storybook/story-exports": "error",
         "storybook/use-storybook-expect": "error",
         "storybook/use-storybook-testing-library": "error"
+      }
+    },
+    {
+      // Test helpers are kept next to the tests that use them.
+      "files": ["**/*.test.ts", "**/*.test.tsx"],
+      "rules": {
+        "unicorn/consistent-function-scoping": "off"
       }
     }
   ]

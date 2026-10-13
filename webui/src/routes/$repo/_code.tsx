@@ -42,7 +42,7 @@ function CodeLayout() {
     select: (s) => {
       const ctx = s.matches.at(-1)?.context;
       if (ctx && typeof ctx === "object" && "viewMode" in ctx) {
-        return ctx.viewMode as CodeViewMode;
+        return ctx.viewMode;
       }
       return "tree";
     },

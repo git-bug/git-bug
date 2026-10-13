@@ -75,7 +75,7 @@ function makeQueryMock(
 }
 
 function renderList(
-  props: { repo?: string | null; ref_?: string; path?: string } = {},
+  props: { repo?: string | null; gitRef?: string; path?: string } = {},
   mocks: MockedResponse<any, any>[] = [],
 ) {
   return render(
@@ -83,7 +83,7 @@ function renderList(
     // type policy Apollo cannot resolve the entity across pages, and re-issues
     // the first query after every fetchMore.
     <MockedProvider mocks={mocks} showWarnings={false} cache={new InMemoryCache({ typePolicies })}>
-      <CommitList repo={props.repo ?? null} ref_={props.ref_ ?? "main"} path={props.path} />
+      <CommitList repo={props.repo ?? null} gitRef={props.gitRef ?? "main"} path={props.path} />
     </MockedProvider>,
   );
 }
@@ -136,7 +136,7 @@ describe("CommitList — commits", () => {
 
   it("renders valid commit link with null repo", async () => {
     const { mock } = makeQueryMock([makeCommit(1)], false, null);
-    renderList({ repo: null, ref_: "main" }, [mock]);
+    renderList({ repo: null, gitRef: "main" }, [mock]);
     await waitFor(() =>
       expect(screen.getByText("Commit message 1")).toHaveAttribute("href", "/_/commit/hash1"),
     );

@@ -20,5 +20,5 @@ function CommitsView() {
   const { ref: repoRef } = Route.useRouteContext();
   const { path } = Route.useSearch();
 
-  return <CommitList repo={repoRef} ref_={currentRef} path={path} />;
+  return <CommitList repo={repoRef} gitRef={currentRef} path={path} />;
 }

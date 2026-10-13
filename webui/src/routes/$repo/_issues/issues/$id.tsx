@@ -86,7 +86,7 @@ function RouteComponent() {
 
       {/* Title row — hover reveals edit button when logged in */}
       <div className="mb-3">
-        <TitleEditor bugPrefix={bug.humanId} title={bug.title} humanId={bug.humanId} ref_={ref} />
+        <TitleEditor bugPrefix={bug.humanId} title={bug.title} humanId={bug.humanId} repo={ref} />
       </div>
 
       <div className="text-muted-foreground mb-6 flex flex-wrap items-center gap-3 text-sm">
@@ -110,7 +110,7 @@ function RouteComponent() {
         {/* Timeline + comment box */}
         <div className="min-w-0 flex-1 space-y-4">
           <Timeline repo={repo} bugPrefix={bug.humanId} timeline={bug.timeline} />
-          <CommentBox bugPrefix={bug.humanId} bugStatus={bug.status} ref_={ref} />
+          <CommentBox bugPrefix={bug.humanId} bugStatus={bug.status} repo={ref} />
         </div>
 
         {/* Sidebar */}
@@ -118,7 +118,7 @@ function RouteComponent() {
           <LabelEditor
             bugPrefix={bug.humanId}
             currentLabels={bug.labels}
-            ref_={ref}
+            repo={ref}
             validLabels={validLabels}
           />
 

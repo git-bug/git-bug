@@ -6,7 +6,7 @@ import { toJsxRuntime } from "hast-util-to-jsx-runtime";
 import { Copy } from "lucide-react";
 import { useState, useEffect, useCallback, Fragment, type ReactNode } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
-import type { ShikiTransformer } from "shiki/core";
+import type { LanguageInput, ShikiTransformer } from "shiki/core";
 
 import { useFragment, type FragmentType } from "@/__generated__/fragment-masking";
 import { graphql } from "@/__generated__/gql";
@@ -29,7 +29,7 @@ export const FILE_VIEWER_BLOB_FRAGMENT = graphql(`
 
 interface LangEntry {
   id: string;
-  load: () => Promise<unknown>;
+  load: LanguageInput;
 }
 
 const LANG_MAP: Record<string, LangEntry> = {
@@ -198,9 +198,7 @@ export function FileViewer({ blob: blobProp }: FileViewerProps) {
       let lang = "text";
       if (entry) {
         try {
-          // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion) -- dynamic shiki language import
-          const langModule = (await entry.load()) as Parameters<typeof highlighter.loadLanguage>[0];
-          await highlighter.loadLanguage(langModule);
+          await highlighter.loadLanguage(entry.load);
           lang = entry.id;
         } catch {
           // Language not available — fall back to plain text
@@ -216,11 +214,9 @@ export function FileViewer({ blob: blobProp }: FileViewerProps) {
         transformers: [lineNumberTransformer()],
       });
 
-      // oxlint-disable-next-line typescript-eslint(no-unsafe-assignment) -- hast-util-to-jsx-runtime returns JSX.Element
       const node = toJsxRuntime(hast, { Fragment, jsx, jsxs });
       const lineCount = blob.text!.split("\n").length;
 
-      // oxlint-disable-next-line typescript-eslint(no-unsafe-assignment) -- node is ReactNode from toJsxRuntime
       setHighlighted({ node, lineCount });
     })();
 
