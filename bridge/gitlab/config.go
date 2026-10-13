@@ -1,13 +1,13 @@
 package gitlab
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
 	"gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/git-bug/git-bug/bridge/core"
@@ -44,7 +44,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 		}
 		baseUrl, err = input.PromptDefault("Gitlab server URL", "URL", defaultBaseURL, input.Required, input.IsURL)
 		if err != nil {
-			return nil, errors.Wrap(err, "base url prompt")
+			return nil, fmt.Errorf("base url prompt: %w", err)
 		}
 	}
 
@@ -61,7 +61,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 		}
 		projectURL, err = promptProjectURL(repo, baseUrl)
 		if err != nil {
-			return nil, errors.Wrap(err, "url prompt")
+			return nil, fmt.Errorf("url prompt: %w", err)
 		}
 	}
 
@@ -123,7 +123,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 	// validate project url and get its ID
 	id, err := validateProjectURL(baseUrl, projectURL, token)
 	if err != nil {
-		return nil, errors.Wrap(err, "project validation")
+		return nil, fmt.Errorf("project validation: %w", err)
 	}
 
 	conf := make(core.Configuration)
@@ -287,7 +287,7 @@ func validateProjectURL(baseUrl, url string, token *auth.Token) (int64, error) {
 
 	project, _, err := client.Projects.GetProject(projectPath, &gitlab.GetProjectOptions{})
 	if err != nil {
-		return 0, errors.Wrap(err, "wrong token scope ou non-existent project")
+		return 0, fmt.Errorf("wrong token scope ou non-existent project: %w", err)
 	}
 
 	return project.ID, nil

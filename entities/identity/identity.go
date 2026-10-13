@@ -3,11 +3,10 @@ package identity
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"slices"
-
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
@@ -95,7 +94,7 @@ func (i *Identity) UnmarshalJSON(data []byte) error {
 // Read load a local Identity from the identities data available in git
 func Read(repo repository.Repo, id entity.Id) (*Identity, error) {
 	if err := id.Validate(); err != nil {
-		return nil, errors.Wrap(err, "invalid id")
+		return nil, fmt.Errorf("invalid id: %w", err)
 	}
 
 	commit, err := repo.ResolveRef(Namespace, id.String())
@@ -111,7 +110,7 @@ func Read(repo repository.Repo, id entity.Id) (*Identity, error) {
 // ReadTracking load an Identity from the tracking refs of a remote
 func ReadTracking(repo repository.Repo, remote string, id entity.Id) (*Identity, error) {
 	if err := id.Validate(); err != nil {
-		return nil, errors.Wrap(err, "invalid id")
+		return nil, fmt.Errorf("invalid id: %w", err)
 	}
 
 	commit, err := repo.ResolveTrackingRef(remote, Namespace, id.String())
@@ -140,7 +139,7 @@ func read(repo repository.Repo, id entity.Id, lastCommit repository.Hash) (*Iden
 	for _, hash := range hashes {
 		entries, err := repo.ReadTree(hash)
 		if err != nil {
-			return nil, errors.Wrap(err, "can't list git tree entries")
+			return nil, fmt.Errorf("can't list git tree entries: %w", err)
 		}
 		if len(entries) != 1 {
 			return nil, fmt.Errorf("invalid identity data at hash %s", hash)
@@ -153,14 +152,14 @@ func read(repo repository.Repo, id entity.Id, lastCommit repository.Hash) (*Iden
 
 		data, err := repo.ReadData(entry.Hash)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to read git blob data")
+			return nil, fmt.Errorf("failed to read git blob data: %w", err)
 		}
 
 		var version version
 		err = json.NewDecoder(data).Decode(&version)
 		_ = data.Close()
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to decode Identity version json %s", hash)
+			return nil, fmt.Errorf("failed to decode Identity version json %s: %w", hash, err)
 		}
 
 		// tag the version with the commit hash
@@ -187,7 +186,7 @@ func ListLocalIds(repo repository.Repo) ([]entity.Id, error) {
 	for key := range refs {
 		id := entity.Id(key)
 		if err := id.Validate(); err != nil {
-			return nil, errors.Wrapf(err, "invalid id %q", key)
+			return nil, fmt.Errorf("invalid id %q: %w", key, err)
 		}
 		ids = append(ids, id)
 	}
@@ -319,7 +318,7 @@ func (i *Identity) Commit(repo repository.Repo) error {
 	}
 
 	if err := i.Validate(); err != nil {
-		return errors.Wrap(err, "can't commit an identity with invalid data")
+		return fmt.Errorf("can't commit an identity with invalid data: %w", err)
 	}
 
 	var oldCommit, lastCommit repository.Hash

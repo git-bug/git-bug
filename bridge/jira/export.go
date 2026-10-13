@@ -3,12 +3,11 @@ package jira
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
@@ -150,7 +149,7 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 		for _, id := range allBugsIds {
 			b, err := repo.Bugs().Resolve(id)
 			if err != nil {
-				out <- core.NewExportError(errors.Wrap(err, "can't load bug"), id)
+				out <- core.NewExportError(fmt.Errorf("can't load bug: %w", err), id)
 				return
 			}
 
@@ -174,7 +173,7 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 					// try to export the bug and it associated events
 					err := je.exportBug(ctx, b, out)
 					if err != nil {
-						out <- core.NewExportError(errors.Wrap(err, "can't export bug"), id)
+						out <- core.NewExportError(fmt.Errorf("can't export bug: %w", err), id)
 						return
 					}
 				} else {
@@ -264,7 +263,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 		result, err := client.CreateIssue(
 			je.project.ID, createOp.Title, createOp.Message, fields)
 		if err != nil {
-			err := errors.Wrap(err, "exporting jira issue")
+			err := fmt.Errorf("exporting jira issue: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return err
 		}
@@ -275,7 +274,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 		err = markOperationAsExported(
 			b, createOp.Id(), id, je.project.Key, time.Time{})
 		if err != nil {
-			err := errors.Wrap(err, "marking operation as exported")
+			err := fmt.Errorf("marking operation as exported: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return err
 		}
@@ -283,7 +282,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 		// commit operation to avoid creating multiple issues with multiple pushes
 		err = b.CommitAsNeeded()
 		if err != nil {
-			err := errors.Wrap(err, "bug commit")
+			err := fmt.Errorf("bug commit: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return err
 		}
@@ -324,7 +323,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 		case *bug.AddCommentOperation:
 			comment, err := client.AddComment(bugJiraID, opr.Message)
 			if err != nil {
-				err := errors.Wrap(err, "adding comment")
+				err := fmt.Errorf("adding comment: %w", err)
 				out <- core.NewExportError(err, b.Id())
 				return err
 			}
@@ -340,7 +339,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 				// encodes a modification to the long-description/summary.
 				exportTime, err = client.UpdateIssueBody(bugJiraID, opr.Message)
 				if err != nil {
-					err := errors.Wrap(err, "editing issue")
+					err := fmt.Errorf("editing issue: %w", err)
 					out <- core.NewExportError(err, b.Id())
 					return err
 				}
@@ -358,7 +357,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 				}
 				comment, err := client.UpdateComment(bugJiraID, commentID, opr.Message)
 				if err != nil {
-					err := errors.Wrap(err, "editing comment")
+					err := fmt.Errorf("editing comment: %w", err)
 					out <- core.NewExportError(err, b.Id())
 					return err
 				}
@@ -376,7 +375,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 			if hasStatus {
 				exportTime, err = UpdateIssueStatus(client, bugJiraID, jiraStatus)
 				if err != nil {
-					err := errors.Wrap(err, "editing status")
+					err := fmt.Errorf("editing status: %w", err)
 					out <- core.NewExportWarning(err, b.Id())
 					// Failure to update status isn't necessarily a big error. It's
 					// possible that we just don't have enough information to make that
@@ -393,7 +392,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 		case *bug.SetTitleOperation:
 			exportTime, err = client.UpdateIssueTitle(bugJiraID, opr.Title)
 			if err != nil {
-				err := errors.Wrap(err, "editing title")
+				err := fmt.Errorf("editing title: %w", err)
 				out <- core.NewExportError(err, b.Id())
 				return err
 			}
@@ -404,7 +403,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 			exportTime, err = client.UpdateLabels(
 				bugJiraID, opr.Added, opr.Removed)
 			if err != nil {
-				err := errors.Wrap(err, "updating labels")
+				err := fmt.Errorf("updating labels: %w", err)
 				out <- core.NewExportError(err, b.Id())
 				return err
 			}
@@ -419,7 +418,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 		err = markOperationAsExported(
 			b, op.Id(), id, je.project.Key, exportTime)
 		if err != nil {
-			err := errors.Wrap(err, "marking operation as exported")
+			err := fmt.Errorf("marking operation as exported: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return err
 		}
@@ -428,7 +427,7 @@ func (je *jiraExporter) exportBug(ctx context.Context, b *cache.BugCache, out ch
 		// times
 		err = b.CommitAsNeeded()
 		if err != nil {
-			err := errors.Wrap(err, "bug commit")
+			err := fmt.Errorf("bug commit: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return err
 		}

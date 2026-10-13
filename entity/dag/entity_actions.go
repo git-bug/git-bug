@@ -1,9 +1,9 @@
 package dag
 
 import (
+	"errors"
+	"fmt"
 	"slices"
-
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
@@ -20,7 +20,7 @@ func ListLocalIds(def Definition, repo repository.RepoData) ([]entity.Id, error)
 	for key := range refs {
 		id := entity.Id(key)
 		if err := id.Validate(); err != nil {
-			return nil, errors.Wrapf(err, "invalid id %q", key)
+			return nil, fmt.Errorf("invalid id %q: %w", key, err)
 		}
 		ids = append(ids, id)
 	}
@@ -51,7 +51,7 @@ func Pull[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 			return merge.Err
 		}
 		if merge.Status == entity.MergeStatusInvalid {
-			return errors.Errorf("merge failure: %s", merge.Reason)
+			return fmt.Errorf("merge failure: %s", merge.Reason)
 		}
 	}
 
@@ -101,7 +101,7 @@ func MergeAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) 
 // See MergeAll for more details.
 func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, remoteCommit repository.Hash, author identity.Interface) entity.MergeResult {
 	if err := id.Validate(); err != nil {
-		return entity.NewMergeInvalidStatus(id, errors.Wrap(err, "invalid id").Error())
+		return entity.NewMergeInvalidStatus(id, fmt.Errorf("invalid id: %w", err).Error())
 	}
 
 	localCommit, err := repo.ResolveRef(def.Namespace, id.String())
@@ -138,14 +138,12 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 
 	remoteEntity, err := read[EntityT](def, wrapper, repo, resolvers, id, remoteCommit)
 	if err != nil {
-		return entity.NewMergeInvalidStatus(id,
-			errors.Wrapf(err, "remote %s is not readable", def.Typename).Error())
+		return entity.NewMergeInvalidStatus(id, fmt.Errorf("remote %s is not readable: %w", def.Typename, err).Error())
 	}
 
 	// Check for error in remote data
 	if err := remoteEntity.Validate(); err != nil {
-		return entity.NewMergeInvalidStatus(id,
-			errors.Wrapf(err, "remote %s data is invalid", def.Typename).Error())
+		return entity.NewMergeInvalidStatus(id, fmt.Errorf("remote %s data is invalid: %w", def.Typename, err).Error())
 	}
 
 	// SCENARIO 3
@@ -193,8 +191,9 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 	// A merge commit needs an author. It's only required here, so that pulling
 	// without a user identity set (e.g. in a fresh clone) works in all other cases.
 	if author == nil {
-		return entity.NewMergeError(errors.Wrapf(identity.ErrNoIdentitySet,
-			"%s %s has diverged and requires a merge commit", def.Typename, id.Human()), id)
+		return entity.NewMergeError(fmt.Errorf(
+			"%s %s has diverged and requires a merge commit: %w", def.Typename, id.Human(), identity.ErrNoIdentitySet,
+		), id)
 	}
 
 	editTime, err := incrementClock(def, repo, editClockPattern)

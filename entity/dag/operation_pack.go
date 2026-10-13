@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
@@ -218,7 +217,7 @@ func readOperationPack(def Definition, repo repository.RepoData, resolvers entit
 		if strings.HasPrefix(entry.Name, versionEntryPrefix) {
 			v, err := strconv.ParseUint(strings.TrimPrefix(entry.Name, versionEntryPrefix), 10, 64)
 			if err != nil {
-				return nil, errors.Wrap(err, "can't read format version")
+				return nil, fmt.Errorf("can't read format version: %w", err)
 			}
 			if v > 1<<12 {
 				return nil, fmt.Errorf("format version too big")
@@ -245,12 +244,12 @@ func readOperationPack(def Definition, repo repository.RepoData, resolvers entit
 		case entry.Name == opsEntryName:
 			r, err := repo.ReadData(entry.Hash)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to read git blob data")
+				return nil, fmt.Errorf("failed to read git blob data: %w", err)
 			}
 			data, err := io.ReadAll(r)
 			_ = r.Close()
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to read git blob data")
+				return nil, fmt.Errorf("failed to read git blob data: %w", err)
 			}
 			ops, author, err = unmarshallPack(def, resolvers, data)
 			if err != nil {
@@ -261,14 +260,14 @@ func readOperationPack(def Definition, repo repository.RepoData, resolvers entit
 		case strings.HasPrefix(entry.Name, createClockEntryPrefix):
 			v, err := strconv.ParseUint(strings.TrimPrefix(entry.Name, createClockEntryPrefix), 10, 64)
 			if err != nil {
-				return nil, errors.Wrap(err, "can't read creation lamport time")
+				return nil, fmt.Errorf("can't read creation lamport time: %w", err)
 			}
 			createTime = lamport.Time(v)
 
 		case strings.HasPrefix(entry.Name, editClockEntryPrefix):
 			v, err := strconv.ParseUint(strings.TrimPrefix(entry.Name, editClockEntryPrefix), 10, 64)
 			if err != nil {
-				return nil, errors.Wrap(err, "can't read edit lamport time")
+				return nil, fmt.Errorf("can't read edit lamport time: %w", err)
 			}
 			editTime = lamport.Time(v)
 		}
@@ -314,14 +313,14 @@ func readOperationPackClock(repo repository.RepoData, commit repository.Commit) 
 		case strings.HasPrefix(entry.Name, createClockEntryPrefix):
 			v, err := strconv.ParseUint(strings.TrimPrefix(entry.Name, createClockEntryPrefix), 10, 64)
 			if err != nil {
-				return 0, 0, errors.Wrap(err, "can't read creation lamport time")
+				return 0, 0, fmt.Errorf("can't read creation lamport time: %w", err)
 			}
 			createTime = lamport.Time(v)
 
 		case strings.HasPrefix(entry.Name, editClockEntryPrefix):
 			v, err := strconv.ParseUint(strings.TrimPrefix(entry.Name, editClockEntryPrefix), 10, 64)
 			if err != nil {
-				return 0, 0, errors.Wrap(err, "can't read edit lamport time")
+				return 0, 0, fmt.Errorf("can't read edit lamport time: %w", err)
 			}
 			editTime = lamport.Time(v)
 		}

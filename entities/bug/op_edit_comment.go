@@ -3,8 +3,6 @@ package bug
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
-
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
@@ -91,7 +89,7 @@ func (op *EditCommentOperation) Validate() error {
 	}
 
 	if err := op.Target.Validate(); err != nil {
-		return errors.Wrap(err, "target hash is invalid")
+		return fmt.Errorf("target hash is invalid: %w", err)
 	}
 
 	if !text.Safe(op.Message) {

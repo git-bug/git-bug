@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // sha-256
@@ -52,7 +50,7 @@ func (i *Id) UnmarshalGQL(v interface{}) error {
 	*i = v.(Id)
 
 	if err := i.Validate(); err != nil {
-		return errors.Wrap(err, "invalid ID")
+		return fmt.Errorf("invalid ID: %w", err)
 	}
 
 	return nil

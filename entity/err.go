@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -20,7 +21,7 @@ func (e ErrNotFound) Error() string {
 }
 
 func IsErrNotFound(err error) bool {
-	_, ok := err.(*ErrNotFound)
+	_, ok := errors.AsType[*ErrNotFound](err)
 	return ok
 }
 
@@ -48,7 +49,7 @@ func (e ErrMultipleMatch) Error() string {
 }
 
 func IsErrMultipleMatch(err error) bool {
-	_, ok := err.(*ErrMultipleMatch)
+	_, ok := errors.AsType[*ErrMultipleMatch](err)
 	return ok
 }
 

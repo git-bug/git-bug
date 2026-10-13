@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,8 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
@@ -183,7 +182,7 @@ func (*Github) ValidateConfig(conf core.Configuration) error {
 func requestToken() (string, error) {
 	scope, err := promptUserForProjectVisibility()
 	if err != nil {
-		return "", errors.WithStack(err)
+		return "", err
 	}
 	resp, err := requestUserVerificationCode(scope)
 	if err != nil {
@@ -226,7 +225,7 @@ func requestUserVerificationCode(scope string) (*githRespT, error) {
 
 	resp, err := client.PostForm("https://github.com/login/device/code", params)
 	if err != nil {
-		return nil, errors.Wrap(err, "error requesting user verification code")
+		return nil, fmt.Errorf("error requesting user verification code: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
@@ -235,17 +234,17 @@ func requestUserVerificationCode(scope string) (*githRespT, error) {
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.Wrap(err, "error requesting user verification code")
+		return nil, fmt.Errorf("error requesting user verification code: %w", err)
 	}
 
 	vals, err := url.ParseQuery(string(data))
 	if err != nil {
-		return nil, errors.Wrap(err, "error decoding Github API response")
+		return nil, fmt.Errorf("error decoding Github API response: %w", err)
 	}
 
 	interval, err := strconv.ParseInt(vals.Get("interval"), 10, 64) // base 10, bitSize 64
 	if err != nil {
-		return nil, errors.Wrap(err, "Error parsing integer received from Github API")
+		return nil, fmt.Errorf("Error parsing integer received from Github API: %w", err)
 	}
 
 	return &githRespT{
@@ -277,7 +276,7 @@ func pollGithubForAuthorization(deviceCode string, intervalSec int64) (string, e
 	for {
 		resp, err := client.PostForm("https://github.com/login/oauth/access_token", params)
 		if err != nil {
-			return "", errors.Wrap(err, "error polling the Github API")
+			return "", fmt.Errorf("error polling the Github API: %w", err)
 		}
 		if resp.StatusCode != http.StatusOK {
 			_ = resp.Body.Close()
@@ -287,13 +286,13 @@ func pollGithubForAuthorization(deviceCode string, intervalSec int64) (string, e
 		data, err := io.ReadAll(resp.Body)
 		if err != nil {
 			_ = resp.Body.Close()
-			return "", errors.Wrap(err, "error polling the Github API")
+			return "", fmt.Errorf("error polling the Github API: %w", err)
 		}
 		_ = resp.Body.Close()
 
 		values, err := url.ParseQuery(string(data))
 		if err != nil {
-			return "", errors.Wrap(err, "error decoding Github API response")
+			return "", fmt.Errorf("error decoding Github API response: %w", err)
 		}
 
 		if token := values.Get("access_token"); token != "" {

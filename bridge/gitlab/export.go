@@ -2,12 +2,12 @@ package gitlab
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/pkg/errors"
 	"gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/git-bug/git-bug/bridge/core"
@@ -215,7 +215,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		// create bug
 		_, id, url, err := createGitlabIssue(ctx, client, ge.repositoryID, createOp.Title, createOp.Message)
 		if err != nil {
-			err := errors.Wrap(err, "exporting gitlab issue")
+			err := fmt.Errorf("exporting gitlab issue: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return
 		}
@@ -233,14 +233,14 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			},
 		)
 		if err != nil {
-			err := errors.Wrap(err, "marking operation as exported")
+			err := fmt.Errorf("marking operation as exported: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return
 		}
 
 		// commit operation to avoid creating multiple issues with multiple pushes
 		if err := b.CommitAsNeeded(); err != nil {
-			err := errors.Wrap(err, "bug commit")
+			err := fmt.Errorf("bug commit: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return
 		}
@@ -282,7 +282,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			// send operation to gitlab
 			id, err = addCommentGitlabIssue(ctx, client, ge.repositoryID, bugGitlabID, op.Message)
 			if err != nil {
-				err := errors.Wrap(err, "adding comment")
+				err := fmt.Errorf("adding comment: %w", err)
 				out <- core.NewExportError(err, b.Id())
 				return
 			}
@@ -301,7 +301,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 
 				// case bug creation operation: we need to edit the Gitlab issue
 				if err := updateGitlabIssueBody(ctx, client, ge.repositoryID, bugGitlabID, op.Message); err != nil {
-					err := errors.Wrap(err, "editing issue")
+					err := fmt.Errorf("editing issue: %w", err)
 					out <- core.NewExportError(err, b.Id())
 					return
 				}
@@ -325,7 +325,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				}
 
 				if err := editCommentGitlabIssue(ctx, client, ge.repositoryID, bugGitlabID, commentIDint, op.Message); err != nil {
-					err := errors.Wrap(err, "editing comment")
+					err := fmt.Errorf("editing comment: %w", err)
 					out <- core.NewExportError(err, b.Id())
 					return
 				}
@@ -336,7 +336,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 
 		case *bug.SetStatusOperation:
 			if err := updateGitlabIssueStatus(ctx, client, ge.repositoryID, bugGitlabID, op.Status); err != nil {
-				err := errors.Wrap(err, "editing status")
+				err := fmt.Errorf("editing status: %w", err)
 				out <- core.NewExportError(err, b.Id())
 				return
 			}
@@ -346,7 +346,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 
 		case *bug.SetTitleOperation:
 			if err := updateGitlabIssueTitle(ctx, client, ge.repositoryID, bugGitlabID, op.Title); err != nil {
-				err := errors.Wrap(err, "editing title")
+				err := fmt.Errorf("editing title: %w", err)
 				out <- core.NewExportError(err, b.Id())
 				return
 			}
@@ -372,7 +372,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			}
 
 			if err := updateGitlabIssueLabels(ctx, client, ge.repositoryID, bugGitlabID, labels); err != nil {
-				err := errors.Wrap(err, "updating labels")
+				err := fmt.Errorf("updating labels: %w", err)
 				out <- core.NewExportError(err, b.Id())
 				return
 			}
@@ -386,14 +386,14 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		idString = strconv.FormatInt(id, 10)
 		// mark operation as exported
 		if err := markOperationAsExported(b, op.Id(), idString, url); err != nil {
-			err := errors.Wrap(err, "marking operation as exported")
+			err := fmt.Errorf("marking operation as exported: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return
 		}
 
 		// commit at each operation export to avoid exporting same events multiple times
 		if err := b.CommitAsNeeded(); err != nil {
-			err := errors.Wrap(err, "bug commit")
+			err := fmt.Errorf("bug commit: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return
 		}

@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/lamport"
@@ -218,7 +216,7 @@ func (v *version) Validate() error {
 
 	for _, k := range v.keys {
 		if err := k.Validate(); err != nil {
-			return errors.Wrap(err, "invalid key")
+			return fmt.Errorf("invalid key: %w", err)
 		}
 	}
 
@@ -231,7 +229,7 @@ func (v *version) Write(repo repository.Repo) (repository.Hash, error) {
 	// make sure we don't write invalid data
 	err := v.Validate()
 	if err != nil {
-		return "", errors.Wrap(err, "validation error")
+		return "", fmt.Errorf("validation error: %w", err)
 	}
 
 	data, err := json.Marshal(v)

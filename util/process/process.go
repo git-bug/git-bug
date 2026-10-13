@@ -1,6 +1,7 @@
 package process
 
 import (
+	"errors"
 	"os"
 	"syscall"
 )
@@ -21,7 +22,7 @@ func IsRunning(pid int) bool {
 	if err.Error() == "os: process already finished" {
 		return false
 	}
-	if errno, ok := err.(syscall.Errno); ok {
+	if errno, ok := errors.AsType[syscall.Errno](err); ok {
 		switch errno {
 		case syscall.ESRCH:
 			return false

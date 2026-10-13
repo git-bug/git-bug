@@ -3,6 +3,7 @@ package identity
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -11,7 +12,6 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/repository"
 )
@@ -130,7 +130,7 @@ func (k *Key) UnmarshalJSON(data []byte) error {
 
 	p, err := packet.Read(block.Body)
 	if err != nil {
-		return errors.Wrap(err, "failed to read public key packet")
+		return fmt.Errorf("failed to read public key packet: %w", err)
 	}
 
 	public, ok := p.(*packet.PublicKey)
@@ -169,7 +169,7 @@ func (k *Key) loadPrivate(repo repository.RepoKeyring) error {
 
 	p, err := packet.Read(block.Body)
 	if err != nil {
-		return errors.Wrap(err, "failed to read private key packet")
+		return fmt.Errorf("failed to read private key packet: %w", err)
 	}
 
 	private, ok := p.(*packet.PrivateKey)

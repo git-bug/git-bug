@@ -4,11 +4,10 @@ package dag
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"sync"
-
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
@@ -65,7 +64,7 @@ func New(definition Definition) *Entity {
 // Read will read and decode a stored local Entity from a repository
 func Read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (EntityT, error) {
 	if err := id.Validate(); err != nil {
-		return *new(EntityT), errors.Wrap(err, "invalid id")
+		return *new(EntityT), fmt.Errorf("invalid id: %w", err)
 	}
 
 	commit, err := repo.ResolveRef(def.Namespace, id.String())
@@ -82,7 +81,7 @@ func Read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 // readTracking will read and decode an Entity from the tracking refs of a remote
 func readTracking[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, remote string, id entity.Id) (EntityT, error) {
 	if err := id.Validate(); err != nil {
-		return *new(EntityT), errors.Wrap(err, "invalid id")
+		return *new(EntityT), fmt.Errorf("invalid id: %w", err)
 	}
 
 	commit, err := repo.ResolveTrackingRef(remote, def.Namespace, id.String())
@@ -618,7 +617,7 @@ func (e *Entity) commitOperationsLocked(repo repository.Repo, ops []Operation) e
 	// pending operations are ignored, they are not part of this commit
 	err := validateOperations(e.ops, ops)
 	if err != nil {
-		return errors.Wrapf(err, "can't commit a %s with invalid data", e.Definition.Typename)
+		return fmt.Errorf("can't commit a %s with invalid data: %w", e.Definition.Typename, err)
 	}
 
 	// work on copies, the entity is only updated once the reference is

@@ -2,6 +2,7 @@ package identity
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -20,7 +21,7 @@ func UnmarshalJSON(raw json.RawMessage) (Interface, error) {
 	}
 
 	// abort if we have an error other than the wrong type
-	if _, ok := err.(*json.UnmarshalTypeError); err != nil && !ok {
+	if _, ok := errors.AsType[*json.UnmarshalTypeError](err); err != nil && !ok {
 		return nil, err
 	}
 

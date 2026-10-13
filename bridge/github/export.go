@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/shurcooL/githubv4"
 	"golang.org/x/sync/errgroup"
 
@@ -154,7 +154,7 @@ func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 		// query all labels
 		err = ge.cacheGithubLabels(ctx, ge.defaultClient)
 		if err != nil {
-			out <- core.NewExportError(errors.Wrap(err, "can't obtain Github labels"), "")
+			out <- core.NewExportError(fmt.Errorf("can't obtain Github labels: %w", err), "")
 			return
 		}
 
@@ -168,7 +168,7 @@ func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 		for _, id := range allBugsIds {
 			b, err := repo.Bugs().Resolve(id)
 			if err != nil {
-				out <- core.NewExportError(errors.Wrap(err, "can't load bug"), id)
+				out <- core.NewExportError(fmt.Errorf("can't load bug: %w", err), id)
 				return
 			}
 
@@ -264,7 +264,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		// create bug
 		id, url, err := ge.createGithubIssue(ctx, client, ge.repositoryID, createOp.Title, createOp.Message)
 		if err != nil {
-			err := errors.Wrap(err, "exporting github issue")
+			err := fmt.Errorf("exporting github issue: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return
 		}
@@ -273,14 +273,14 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 
 		// mark bug creation operation as exported
 		if err := markOperationAsExported(b, createOp.Id(), id, url); err != nil {
-			err := errors.Wrap(err, "marking operation as exported")
+			err := fmt.Errorf("marking operation as exported: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return
 		}
 
 		// commit operation to avoid creating multiple issues with multiple pushes
 		if err := b.CommitAsNeeded(); err != nil {
-			err := errors.Wrap(err, "bug commit")
+			err := fmt.Errorf("bug commit: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return
 		}
@@ -318,7 +318,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 			// send operation to github
 			id, url, err = ge.addCommentGithubIssue(ctx, client, bugGithubID, op.Message)
 			if err != nil {
-				err := errors.Wrap(err, "adding comment")
+				err := fmt.Errorf("adding comment: %w", err)
 				out <- core.NewExportError(err, b.Id())
 				return
 			}
@@ -334,7 +334,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 
 				// case bug creation operation: we need to edit the Github issue
 				if err := ge.updateGithubIssueBody(ctx, client, bugGithubID, op.Message); err != nil {
-					err := errors.Wrap(err, "editing issue")
+					err := fmt.Errorf("editing issue: %w", err)
 					out <- core.NewExportError(err, b.Id())
 					return
 				}
@@ -356,7 +356,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 
 				eid, eurl, err := ge.editCommentGithubIssue(ctx, client, commentID, op.Message)
 				if err != nil {
-					err := errors.Wrap(err, "editing comment")
+					err := fmt.Errorf("editing comment: %w", err)
 					out <- core.NewExportError(err, b.Id())
 					return
 				}
@@ -370,7 +370,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 
 		case *bug.SetStatusOperation:
 			if err := ge.updateGithubIssueStatus(ctx, client, bugGithubID, op.Status); err != nil {
-				err := errors.Wrap(err, "editing status")
+				err := fmt.Errorf("editing status: %w", err)
 				out <- core.NewExportError(err, b.Id())
 				return
 			}
@@ -382,7 +382,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 
 		case *bug.SetTitleOperation:
 			if err := ge.updateGithubIssueTitle(ctx, client, bugGithubID, op.Title); err != nil {
-				err := errors.Wrap(err, "editing title")
+				err := fmt.Errorf("editing title: %w", err)
 				out <- core.NewExportError(err, b.Id())
 				return
 			}
@@ -394,7 +394,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 
 		case *bug.LabelChangeOperation:
 			if err := ge.updateGithubIssueLabels(ctx, client, bugGithubID, op.Added, op.Removed); err != nil {
-				err := errors.Wrap(err, "updating labels")
+				err := fmt.Errorf("updating labels: %w", err)
 				out <- core.NewExportError(err, b.Id())
 				return
 			}
@@ -410,14 +410,14 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 
 		// mark operation as exported
 		if err := markOperationAsExported(b, op.Id(), id, url); err != nil {
-			err := errors.Wrap(err, "marking operation as exported")
+			err := fmt.Errorf("marking operation as exported: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return
 		}
 
 		// commit at each operation export to avoid exporting same events multiple times
 		if err := b.CommitAsNeeded(); err != nil {
-			err := errors.Wrap(err, "bug commit")
+			err := fmt.Errorf("bug commit: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return
 		}
@@ -684,7 +684,7 @@ func (ge *githubExporter) getLabelsIDs(ctx context.Context, gc *rateLimitHandler
 			// try to query label id
 			id, err = ge.getOrCreateGithubLabelID(ctx, gc, repositoryID, label)
 			if err != nil {
-				return nil, errors.Wrap(err, "get or create github label")
+				return nil, fmt.Errorf("get or create github label: %w", err)
 			}
 
 			// cache label id

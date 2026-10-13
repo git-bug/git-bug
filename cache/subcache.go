@@ -3,6 +3,7 @@ package cache
 import (
 	"bytes"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"maps"
 	"os"
@@ -13,7 +14,6 @@ import (
 	"time"
 
 	"github.com/go-git/go-billy/v5"
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"

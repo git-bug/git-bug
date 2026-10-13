@@ -3,8 +3,6 @@ package dag
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
-
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/util/text"
@@ -51,7 +49,7 @@ func (op *SetMetadataOperation[SnapT]) Validate() error {
 	}
 
 	if err := op.Target.Validate(); err != nil {
-		return errors.Wrap(err, "target invalid")
+		return fmt.Errorf("target invalid: %w", err)
 	}
 
 	for key, val := range op.NewMetadata {

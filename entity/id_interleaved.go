@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 const UnsetCombinedId = CombinedId("unset")
@@ -40,7 +38,7 @@ func (ci *CombinedId) UnmarshalGQL(v interface{}) error {
 	*ci = v.(CombinedId)
 
 	if err := ci.Validate(); err != nil {
-		return errors.Wrap(err, "invalid CombinedId")
+		return fmt.Errorf("invalid CombinedId: %w", err)
 	}
 
 	return nil

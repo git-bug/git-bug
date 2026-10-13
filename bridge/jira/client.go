@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,8 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/entities/common"
 )
@@ -1386,9 +1385,8 @@ func (client *Client) DoTransition(issueKeyOrID string, transitionID string) (ti
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusNoContent {
-		err := errors.Wrap(errTransitionNotAllowed, fmt.Sprintf(
-			"HTTP response %d, query was %s", response.StatusCode,
-			request.URL.String()))
+		err := fmt.Errorf("HTTP response %d, query was %s: %w",
+			response.StatusCode, request.URL.String(), errTransitionNotAllowed)
 		return responseTime, err
 	}
 
