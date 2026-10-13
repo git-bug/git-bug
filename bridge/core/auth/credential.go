@@ -4,7 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"strconv"
+	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -173,6 +174,18 @@ func List(repo repository.RepoKeyring, opts ...ListOption) ([]Credential, error)
 		}
 	}
 
+	// The keyring returns keys in an arbitrary (backend dependent) order.
+	// Callers commonly pick the first matching credential, so make that
+	// choice deterministic and sensible: the most recently created one first.
+	// This way, adding a fresh credential supersedes older (possibly revoked)
+	// ones instead of being shadowed by them.
+	slices.SortStableFunc(credentials, func(a, b Credential) int {
+		if c := b.CreateTime().Compare(a.CreateTime()); c != 0 {
+			return c
+		}
+		return strings.Compare(a.ID().String(), b.ID().String())
+	})
+
 	return credentials, nil
 }
 
@@ -198,7 +211,7 @@ func Store(repo repository.RepoKeyring, cred Credential) error {
 
 	confs[keyringKeyKind] = string(cred.Kind())
 	confs[keyringKeyTarget] = cred.Target()
-	confs[keyringKeyCreateTime] = strconv.Itoa(int(cred.CreateTime().Unix()))
+	confs[keyringKeyCreateTime] = cred.CreateTime().UTC().Format(time.RFC3339Nano)
 	confs[keyringKeySalt] = base64.StdEncoding.EncodeToString(cred.Salt())
 
 	for key, val := range cred.Metadata() {
@@ -237,4 +250,31 @@ func (b ById) Less(i, j int) bool {
 
 func (b ById) Swap(i, j int) {
 	b[i], b[j] = b[j], b[i]
+}
+
+// NormalizeBaseURL canonicalizes a base URL by lowercasing the scheme and host,
+// removing trailing slashes.
+func NormalizeBaseURL(rawURL string) string {
+	rawURL = strings.TrimSpace(rawURL)
+	if rawURL == "" {
+		return ""
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Host == "" {
+		return strings.TrimRight(rawURL, "/")
+	}
+	u.Scheme = strings.ToLower(u.Scheme)
+	u.Host = strings.ToLower(u.Host)
+	u.Path = strings.TrimRight(u.Path, "/")
+	u.RawPath = strings.TrimRight(u.RawPath, "/")
+	return u.String()
+}
+
+// ValidateBaseURL checks a supplied instance URL before storing credentials.
+func ValidateBaseURL(rawURL string) error {
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Hostname() == "" || (u.Scheme != "https" && u.Scheme != "http") || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+		return fmt.Errorf("base URL must be an absolute HTTP(S) URL without credentials, query, or fragment")
+	}
+	return nil
 }
