@@ -3,6 +3,7 @@ package repository
 import (
 	"bytes"
 	"crypto/sha1"
+	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -13,116 +14,56 @@ import (
 
 	"github.com/99designs/keyring"
 	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/git-bug/gitconfig"
 	"github.com/go-git/go-billy/v5/memfs"
 
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
-var _ ClockedRepo = &mockRepo{}
+var _ Repo = &mockRepo{}
 
 // mockRepo defines an instance of Repo that can be used for testing.
 type mockRepo struct {
-	*mockRepoConfig
-	*mockRepoKeyring
-	*mockRepoCommon
-	*mockRepoStorage
-	*mockRepoIndex
-	*mockRepoDataBrowse
-	*mockRepoClock
+	*ComposedRepo
 	*mockRepoTest
 }
-
-func (m *mockRepo) Close() error { return nil }
 
 func NewMockRepo() *mockRepo {
 	data := newMockRepoDataBrowse()
 	return &mockRepo{
-		mockRepoConfig:     NewMockRepoConfig(),
-		mockRepoKeyring:    NewMockRepoKeyring(),
-		mockRepoCommon:     NewMockRepoCommon(),
-		mockRepoStorage:    NewMockRepoStorage(),
-		mockRepoIndex:      newMockRepoIndex(),
-		mockRepoDataBrowse: data,
-		mockRepoClock:      NewMockRepoClock(),
-		mockRepoTest:       NewMockRepoTest(data),
+		ComposedRepo: &ComposedRepo{
+			RepoConfig:  NewRepoConfig(newMockConfig()),
+			RepoKeyring: NewMockRepoKeyring(),
+			RepoStorage: NewRepoStorage(billyLocalStorage{Filesystem: memfs.New()}),
+			RepoIndex:   newMockRepoIndex(),
+			RepoData:    data,
+			RepoBrowse:  data,
+			RepoClock:   NewMockRepoClock(),
+		},
+		mockRepoTest: NewMockRepoTest(data),
 	}
 }
 
-var _ RepoConfig = &mockRepoConfig{}
-
-type mockRepoConfig struct {
-	config *memConfig
-}
-
-func NewMockRepoConfig() *mockRepoConfig {
-	return &mockRepoConfig{
-		config: &memConfig{},
+// newMockConfig returns an in-memory configuration with a user, an editor and
+// a remote set.
+func newMockConfig() Config {
+	config := &memConfig{}
+	err := config.Update(func(f *gitconfig.File) error {
+		return errors.Join(
+			f.Set("user.name", "René Descartes"),
+			f.Set("user.email", "user@example.com"),
+			f.Set("core.editor", "vi"),
+			f.Set("remote.origin.url", "git://github.com/git-bug/git-bug"),
+		)
+	})
+	if err != nil {
+		panic(err)
 	}
+	return config
 }
 
-// Config give access to the git configuration
-func (r *mockRepoConfig) Config() Config {
-	return r.config
-}
-
-var _ RepoKeyring = &mockRepoKeyring{}
-
-type mockRepoKeyring struct {
-	keyring *keyring.ArrayKeyring
-}
-
-func NewMockRepoKeyring() *mockRepoKeyring {
-	return &mockRepoKeyring{
-		keyring: keyring.NewArrayKeyring(nil),
-	}
-}
-
-// Keyring give access to a user-wide storage for secrets
-func (r *mockRepoKeyring) Keyring() Keyring {
-	return r.keyring
-}
-
-var _ RepoCommon = &mockRepoCommon{}
-
-type mockRepoCommon struct{}
-
-func NewMockRepoCommon() *mockRepoCommon {
-	return &mockRepoCommon{}
-}
-
-func (r *mockRepoCommon) GetUserName() (string, error) {
-	return "René Descartes", nil
-}
-
-// GetUserEmail returns the email address that the user has used to configure git.
-func (r *mockRepoCommon) GetUserEmail() (string, error) {
-	return "user@example.com", nil
-}
-
-// GetCoreEditor returns the name of the editor that the user has used to configure git.
-func (r *mockRepoCommon) GetCoreEditor() (string, error) {
-	return "vi", nil
-}
-
-// GetRemotes returns the configured remotes repositories.
-func (r *mockRepoCommon) GetRemotes() (map[string]string, error) {
-	return map[string]string{
-		"origin": "git://github.com/git-bug/git-bug",
-	}, nil
-}
-
-var _ RepoStorage = &mockRepoStorage{}
-
-type mockRepoStorage struct {
-	localFs LocalStorage
-}
-
-func NewMockRepoStorage() *mockRepoStorage {
-	return &mockRepoStorage{localFs: billyLocalStorage{Filesystem: memfs.New()}}
-}
-
-func (m *mockRepoStorage) LocalStorage() LocalStorage {
-	return m.localFs
+func NewMockRepoKeyring() RepoKeyring {
+	return NewRepoKeyring(keyring.NewArrayKeyring(nil))
 }
 
 var _ RepoIndex = &mockRepoIndex{}
@@ -149,6 +90,9 @@ func (m *mockRepoIndex) GetIndex(name string) (Index, error) {
 	index := newIndex()
 	m.indexes[name] = index
 	return index, nil
+}
+func (m *mockRepoIndex) Close() error {
+	return nil
 }
 
 var _ Index = &mockIndex{}

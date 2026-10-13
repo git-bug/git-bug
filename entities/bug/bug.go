@@ -51,29 +51,29 @@ func wrapper(e *dag.Entity) *Bug {
 	return &Bug{Entity: e}
 }
 
-func simpleResolvers(repo repository.ClockedRepo) entity.Resolvers {
+func simpleResolvers(repo repository.Repo) entity.Resolvers {
 	return entity.Resolvers{
 		&identity.Identity{}: identity.NewSimpleResolver(repo),
 	}
 }
 
 // Read will read a bug from a repository
-func Read(repo repository.ClockedRepo, id entity.Id) (*Bug, error) {
+func Read(repo repository.Repo, id entity.Id) (*Bug, error) {
 	return ReadWithResolver(repo, simpleResolvers(repo), id)
 }
 
 // ReadWithResolver will read a bug from its Id, with custom resolvers
-func ReadWithResolver(repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (*Bug, error) {
+func ReadWithResolver(repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (*Bug, error) {
 	return dag.Read(def, wrapper, repo, resolvers, id)
 }
 
 // ReadAll read and parse all local bugs
-func ReadAll(repo repository.ClockedRepo) <-chan entity.StreamedEntity[*Bug] {
+func ReadAll(repo repository.Repo) <-chan entity.StreamedEntity[*Bug] {
 	return dag.ReadAll(def, wrapper, repo, simpleResolvers(repo))
 }
 
 // ReadAllWithResolver read and parse all local bugs
-func ReadAllWithResolver(repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[*Bug] {
+func ReadAllWithResolver(repo repository.Repo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[*Bug] {
 	return dag.ReadAll(def, wrapper, repo, resolvers)
 }
 
@@ -84,7 +84,7 @@ func ListLocalIds(repo repository.Repo) ([]entity.Id, error) {
 
 // EnsureClocks makes sure that the clocks ordering bugs are usable, and rebuilds
 // them from the bugs if not. See dag.EnsureClocks.
-func EnsureClocks(repo repository.ClockedRepo) error {
+func EnsureClocks(repo repository.Repo) error {
 	return dag.EnsureClocks(def, repo)
 }
 
@@ -119,7 +119,7 @@ func (bug *Bug) Append(op Operation) {
 }
 
 // CommitOperations writes the given operations, see dag.Entity.CommitOperations
-func (bug *Bug) CommitOperations(repo repository.ClockedRepo, ops []Operation) error {
+func (bug *Bug) CommitOperations(repo repository.Repo, ops []Operation) error {
 	converted := make([]dag.Operation, len(ops))
 	for i, op := range ops {
 		converted[i] = op

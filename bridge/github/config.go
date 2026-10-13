@@ -390,7 +390,7 @@ func promptToken() (*auth.Token, error) {
 	return token, nil
 }
 
-func promptURL(repo repository.RepoCommon) (string, string, error) {
+func promptURL(repo repository.RepoConfig) (string, string, error) {
 	validRemotes, err := getValidGithubRemoteURLs(repo)
 	if err != nil {
 		return "", "", err
@@ -430,7 +430,7 @@ func splitURL(url string) (owner string, project string, err error) {
 	return
 }
 
-func getValidGithubRemoteURLs(repo repository.RepoCommon) ([]string, error) {
+func getValidGithubRemoteURLs(repo repository.RepoConfig) ([]string, error) {
 	remotes, err := repo.GetRemotes()
 	if err != nil {
 		return nil, err

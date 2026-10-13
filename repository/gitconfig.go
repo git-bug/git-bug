@@ -21,6 +21,12 @@ type gitConfig struct {
 	env gitconfig.Env
 }
 
+// NewGitConfig returns the Config of the git configuration that env says where
+// to find.
+func NewGitConfig(env gitconfig.Env) Config {
+	return &gitConfig{env: env}
+}
+
 func (c *gitConfig) Read() (*gitconfig.Config, error) {
 	return c.env.Load()
 }

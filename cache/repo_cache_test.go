@@ -752,19 +752,27 @@ func checkBugPresence(t *testing.T, cache *RepoCache, bug *BugCache, presence bo
 }
 
 // openTestRepoCache opens a cache on repo, with no change source: the tests
-// sync explicitly, and check what a sync does. The caller closes the cache.
-func openTestRepoCache(t testing.TB, repo repository.ClockedRepo) *RepoCache {
+// sync explicitly, and check what a sync does. The caller closes the cache; if
+// the test fails before it does, the cache is closed with the test.
+func openTestRepoCache(t testing.TB, repo repository.Repo) *RepoCache {
 	t.Helper()
 
 	cache, err := NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		if t.Failed() {
+			// may have been closed already: the error is of no use
+			_ = cache.Close()
+		}
+	})
 
 	return cache
 }
 
 // createTestRepoCacheNoEvents opens a cache on repo like openTestRepoCache,
 // closed at the end of the test.
-func createTestRepoCacheNoEvents(t testing.TB, repo repository.ClockedRepo) *RepoCache {
+func createTestRepoCacheNoEvents(t testing.TB, repo repository.Repo) *RepoCache {
 	t.Helper()
 
 	cache := openTestRepoCache(t, repo)
@@ -780,13 +788,13 @@ func createTestRepoCacheNoEvents(t testing.TB, repo repository.ClockedRepo) *Rep
 // is written: an identity records every clock in each of its versions, and
 // couldn't otherwise be edited until some bug rebuilt them.
 func TestCacheRebuildsUnusableClocks(t *testing.T) {
-	damages := map[string]func(t *testing.T, repo repository.ClockedRepo, name string){
+	damages := map[string]func(t *testing.T, repo repository.Repo, name string){
 		// what clocks written before they carried a checksum look like
-		"legacy": func(t *testing.T, repo repository.ClockedRepo, name string) {
+		"legacy": func(t *testing.T, repo repository.Repo, name string) {
 			err := util.WriteFile(repo.LocalStorage(), filepath.Join("clocks", name), []byte("42"), 0644)
 			require.NoError(t, err)
 		},
-		"missing": func(t *testing.T, repo repository.ClockedRepo, name string) {
+		"missing": func(t *testing.T, repo repository.Repo, name string) {
 			err := repo.LocalStorage().Remove(filepath.Join("clocks", name))
 			require.NoError(t, err)
 		},
@@ -794,7 +802,7 @@ func TestCacheRebuildsUnusableClocks(t *testing.T) {
 
 	clocks := []string{bug.Namespace + "-create", bug.Namespace + "-edit"}
 
-	clockTimes := func(t *testing.T, repo repository.ClockedRepo) map[string]lamport.Time {
+	clockTimes := func(t *testing.T, repo repository.Repo) map[string]lamport.Time {
 		t.Helper()
 		times := make(map[string]lamport.Time)
 		for _, name := range clocks {

@@ -13,7 +13,7 @@ import (
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
-func makeIdentityTestRepo(t *testing.T) repository.ClockedRepo {
+func makeIdentityTestRepo(t *testing.T) repository.Repo {
 	repo := repository.NewMockRepo()
 
 	_, err := repo.GetOrCreateClock("foo", 42)

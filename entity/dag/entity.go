@@ -63,7 +63,7 @@ func New(definition Definition) *Entity {
 }
 
 // Read will read and decode a stored local Entity from a repository
-func Read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (EntityT, error) {
+func Read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (EntityT, error) {
 	if err := id.Validate(); err != nil {
 		return *new(EntityT), errors.Wrap(err, "invalid id")
 	}
@@ -80,7 +80,7 @@ func Read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 }
 
 // readTracking will read and decode an Entity from the tracking refs of a remote
-func readTracking[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, id entity.Id) (EntityT, error) {
+func readTracking[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, remote string, id entity.Id) (EntityT, error) {
 	if err := id.Validate(); err != nil {
 		return *new(EntityT), errors.Wrap(err, "invalid id")
 	}
@@ -98,7 +98,7 @@ func readTracking[EntityT entity.Interface](def Definition, wrapper func(e *Enti
 
 // read fetch from git and decode an Entity from its last commit, and make sure
 // that it is the Entity with the given id.
-func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash) (EntityT, error) {
+func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash) (EntityT, error) {
 	ops, createTime, editTime, err := readSince(def, repo, resolvers, id, lastCommit, "", 0)
 	if err != nil {
 		return *new(EntityT), err
@@ -117,7 +117,7 @@ func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 // and make sure that it is the Entity with the given id.
 // If since is not empty, only the commits after it are read, and sinceEditTime must be
 // its edit time. Those commits must all descend from it, otherwise an error is returned.
-func readSince(def Definition, repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash, since repository.Hash, sinceEditTime lamport.Time) ([]Operation, lamport.Time, lamport.Time, error) {
+func readSince(def Definition, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash, since repository.Hash, sinceEditTime lamport.Time) ([]Operation, lamport.Time, lamport.Time, error) {
 	// Perform a breadth-first search to discover the commits of the DAG, going back in time
 	// up to the chronological root, or to since. Along the way, count the children of each
 	// commit.
@@ -369,7 +369,7 @@ func readSince(def Definition, repo repository.ClockedRepo, resolvers entity.Res
 // Note: readClockNoCheck does not verify the integrity of the Entity and could return incorrect or incomplete
 // clocks if so. If data integrity check is a requirement, a flow similar to read without actually reading/decoding
 // operation blobs can be implemented instead.
-func readClockNoCheck(repo repository.ClockedRepo, lastCommit repository.Hash) (createTime, editTime lamport.Time, err error) {
+func readClockNoCheck(repo repository.Repo, lastCommit repository.Hash) (createTime, editTime lamport.Time, err error) {
 	commit, err := repo.ReadCommit(lastCommit)
 	if err != nil {
 		return 0, 0, err
@@ -406,7 +406,7 @@ func readClockNoCheck(repo repository.ClockedRepo, lastCommit repository.Hash) (
 }
 
 // ReadAll read and parse all local Entity
-func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.ClockedRepo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[EntityT] {
+func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[EntityT] {
 	out := make(chan entity.StreamedEntity[EntityT])
 
 	go func() {
@@ -443,7 +443,7 @@ func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) E
 
 // readAllClocksNoCheck goes over all entities matching Definition and return the highest creation and edit time
 // they hold, for the corresponding clocks to be rebuilt. Zero if there is no entity.
-func readAllClocksNoCheck(def Definition, repo repository.ClockedRepo) (createTime, editTime lamport.Time, err error) {
+func readAllClocksNoCheck(def Definition, repo repository.Repo) (createTime, editTime lamport.Time, err error) {
 	refs, err := repo.ListRefs(def.Namespace)
 	if err != nil {
 		return 0, 0, err
@@ -561,7 +561,7 @@ func (e *Entity) NeedCommit() bool {
 
 // CommitAsNeeded execute a Commit only if necessary. This function is useful to avoid getting an error if the Entity
 // is already in sync with the repository.
-func (e *Entity) CommitAsNeeded(repo repository.ClockedRepo) error {
+func (e *Entity) CommitAsNeeded(repo repository.Repo) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if len(e.staging) == 0 {
@@ -575,7 +575,7 @@ func (e *Entity) CommitAsNeeded(repo repository.ClockedRepo) error {
 // knows about, otherwise repository.ErrRefChanged is returned and Repair can be used
 // before trying again. On any error, the Entity is left unchanged, with its operations
 // still pending.
-func (e *Entity) Commit(repo repository.ClockedRepo) error {
+func (e *Entity) Commit(repo repository.Repo) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if len(e.staging) == 0 {
@@ -584,7 +584,7 @@ func (e *Entity) Commit(repo repository.ClockedRepo) error {
 	return e.commitStagingLocked(repo)
 }
 
-func (e *Entity) commitStagingLocked(repo repository.ClockedRepo) error {
+func (e *Entity) commitStagingLocked(repo repository.Repo) error {
 	err := e.commitOperationsLocked(repo, e.staging)
 	if err != nil {
 		return err
@@ -601,7 +601,7 @@ func (e *Entity) commitStagingLocked(repo repository.ClockedRepo) error {
 // before trying again. On any error, the Entity is left unchanged.
 // It can't be used while the first operation of the Entity is still pending, as
 // that operation must stay the first one.
-func (e *Entity) CommitOperations(repo repository.ClockedRepo, ops []Operation) error {
+func (e *Entity) CommitOperations(repo repository.Repo, ops []Operation) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if len(e.ops) == 0 && len(e.staging) > 0 {
@@ -610,7 +610,7 @@ func (e *Entity) CommitOperations(repo repository.ClockedRepo, ops []Operation) 
 	return e.commitOperationsLocked(repo, ops)
 }
 
-func (e *Entity) commitOperationsLocked(repo repository.ClockedRepo, ops []Operation) error {
+func (e *Entity) commitOperationsLocked(repo repository.Repo, ops []Operation) error {
 	if len(ops) == 0 {
 		return fmt.Errorf("can't commit an empty set of operations")
 	}
@@ -699,7 +699,7 @@ func (e *Entity) commitOperationsLocked(repo repository.ClockedRepo, ops []Opera
 // When the new commits all descend from the last commit the Entity knows about, only
 // those are read. Otherwise, the whole Entity is read again.
 // On any error, the Entity is left unchanged.
-func (e *Entity) Repair(repo repository.ClockedRepo, resolvers entity.Resolvers) error {
+func (e *Entity) Repair(repo repository.Repo, resolvers entity.Resolvers) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 

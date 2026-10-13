@@ -32,11 +32,11 @@ type Tracked[SnapT Snapshot, OpT Operation] interface {
 
 	// CommitOperations writes the given operations in Git, on top of the committed
 	// state, leaving the staging area untouched
-	CommitOperations(repo repository.ClockedRepo, ops []OpT) error
+	CommitOperations(repo repository.Repo, ops []OpT) error
 
 	// Repair reloads the committed state from the repository, typically after a
 	// commit failed with repository.ErrRefChanged, leaving the staging area untouched
-	Repair(repo repository.ClockedRepo, resolvers entity.Resolvers) error
+	Repair(repo repository.Repo, resolvers entity.Resolvers) error
 
 	// LastCommit returns the hash of the commit holding the last committed operations,
 	// that is what the Entity's reference points to as far as the Entity knows.

@@ -20,7 +20,7 @@ func Push(repo repository.Repo, remote string) (string, error) {
 
 // Pull will do a Fetch + MergeAll
 // This function will return an error if a merge fail
-func Pull(repo repository.ClockedRepo, remote string) error {
+func Pull(repo repository.Repo, remote string) error {
 	_, err := Fetch(repo, remote)
 	if err != nil {
 		return err
@@ -39,7 +39,7 @@ func Pull(repo repository.ClockedRepo, remote string) error {
 }
 
 // MergeAll will merge all the available remote identity
-func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeResult {
+func MergeAll(repo repository.Repo, remote string) <-chan entity.MergeResult {
 	out := make(chan entity.MergeResult)
 
 	go func() {
@@ -116,7 +116,7 @@ func MergeAll(repo repository.ClockedRepo, remote string) <-chan entity.MergeRes
 // It is left as a responsibility to the caller to make sure that this identities is not
 // linked from another entity, otherwise it would break it.
 // Remove is idempotent.
-func Remove(repo repository.ClockedRepo, id entity.Id) error {
+func Remove(repo repository.Repo, id entity.Id) error {
 	// list the remotes before deleting anything, to not stop halfway on failure
 	remotes, err := repo.GetRemotes()
 	if err != nil {
@@ -142,7 +142,7 @@ func Remove(repo repository.ClockedRepo, id entity.Id) error {
 // It is left as a responsibility to the caller to make sure that those identities are not
 // linked from another entity, otherwise it would break them.
 // RemoveAll is idempotent.
-func RemoveAll(repo repository.ClockedRepo) error {
+func RemoveAll(repo repository.Repo) error {
 	localIds, err := ListLocalIds(repo)
 	if err != nil {
 		return err

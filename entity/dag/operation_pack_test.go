@@ -41,11 +41,11 @@ func TestOperationPackReadWrite(t *testing.T) {
 }
 
 func TestOperationPackSignedReadWrite(t *testing.T) {
-	type makerFn func() (repository.ClockedRepo, identity.Interface, identity.Interface, entity.Resolvers, Definition)
+	type makerFn func() (repository.Repo, identity.Interface, identity.Interface, entity.Resolvers, Definition)
 
 	for _, maker := range []makerFn{
 		makeTestContext,
-		func() (repository.ClockedRepo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
+		func() (repository.Repo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
 			return makeTestContextGoGit(t)
 		},
 	} {

@@ -28,7 +28,6 @@ const formatVersion = 5
 // The maximum number of bugs loaded in memory. After that, eviction will be done.
 const defaultMaxLoadedBugs = 1000
 
-var _ repository.RepoCommon = &RepoCache{}
 var _ repository.RepoConfig = &RepoCache{}
 var _ repository.RepoKeyring = &RepoCache{}
 
@@ -66,7 +65,7 @@ type cacheMgmt interface {
 // affected, only git-bug related one.
 type RepoCache struct {
 	// the underlying repo
-	repo repository.ClockedRepo
+	repo repository.Repo
 
 	// resolvers for all known entities and excerpts
 	resolvers entity.Resolvers
@@ -99,7 +98,7 @@ type RepoCache struct {
 // source, it only knows of the changes made through it, and of those made
 // outside before it was loaded: a one-shot command needs nothing more, but a
 // long-running process does.
-func NewRepoCache(r repository.ClockedRepo, changes repository.ChangeSource) (*RepoCache, chan BuildEvent) {
+func NewRepoCache(r repository.Repo, changes repository.ChangeSource) (*RepoCache, chan BuildEvent) {
 	c := &RepoCache{
 		repo:    r,
 		changes: changes,
@@ -152,7 +151,7 @@ func NewRepoCache(r repository.ClockedRepo, changes repository.ChangeSource) (*R
 	return c, events
 }
 
-func NewRepoCacheNoEvents(r repository.ClockedRepo, changes repository.ChangeSource) (*RepoCache, error) {
+func NewRepoCacheNoEvents(r repository.Repo, changes repository.ChangeSource) (*RepoCache, error) {
 	cache, events := NewRepoCache(r, changes)
 	for event := range events {
 		if event.Err != nil {

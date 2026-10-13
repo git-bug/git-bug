@@ -16,7 +16,7 @@ import (
 // A clock that isn't usable is rebuilt from every entity when a time is needed,
 // not raised from the first entity read.
 func TestUnusableClockRebuiltOnIncrement(t *testing.T) {
-	damages := map[string]func(t *testing.T, repo repository.ClockedRepo, name string){
+	damages := map[string]func(t *testing.T, repo repository.Repo, name string){
 		"corrupted": corruptClock,
 		"missing":   removeClock,
 	}
@@ -97,21 +97,21 @@ func TestEnsureClocks(t *testing.T) {
 	requireClockTime(t, repo, editClock, editTime)
 }
 
-func corruptClock(t *testing.T, repo repository.ClockedRepo, name string) {
+func corruptClock(t *testing.T, repo repository.Repo, name string) {
 	t.Helper()
 
 	err := util.WriteFile(repo.LocalStorage(), filepath.Join("clocks", name), []byte("garbage"), 0644)
 	require.NoError(t, err)
 }
 
-func removeClock(t *testing.T, repo repository.ClockedRepo, name string) {
+func removeClock(t *testing.T, repo repository.Repo, name string) {
 	t.Helper()
 
 	err := repo.LocalStorage().Remove(filepath.Join("clocks", name))
 	require.NoError(t, err)
 }
 
-func requireClockUnusable(t *testing.T, repo repository.ClockedRepo, name string) {
+func requireClockUnusable(t *testing.T, repo repository.Repo, name string) {
 	t.Helper()
 
 	clock, err := repo.GetClock(name)
@@ -124,7 +124,7 @@ func requireClockUnusable(t *testing.T, repo repository.ClockedRepo, name string
 	require.True(t, unusableClock(err), "clock %s is usable: %v", name, err)
 }
 
-func requireClockTime(t *testing.T, repo repository.ClockedRepo, name string, expected lamport.Time) {
+func requireClockTime(t *testing.T, repo repository.Repo, name string, expected lamport.Time) {
 	t.Helper()
 
 	clock, err := repo.GetClock(name)

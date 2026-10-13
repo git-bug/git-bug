@@ -20,7 +20,7 @@ import (
 
 // commentsInGit returns the comments of a bug as stored in the repository, read
 // outside the cache.
-func commentsInGit(t *testing.T, repo repository.ClockedRepo, id entity.Id) []string {
+func commentsInGit(t *testing.T, repo repository.Repo, id entity.Id) []string {
 	t.Helper()
 	b, err := bug.Read(repo, id)
 	require.NoError(t, err)
@@ -36,7 +36,7 @@ func commentMessages(snap *bug.Snapshot) []string {
 }
 
 // changeOutside adds a comment to a bug without the cache knowing
-func changeOutside(t *testing.T, repo repository.ClockedRepo, author identity.Interface, id entity.Id, message string) {
+func changeOutside(t *testing.T, repo repository.Repo, author identity.Interface, id entity.Id, message string) {
 	t.Helper()
 	b, err := bug.Read(repo, id)
 	require.NoError(t, err)

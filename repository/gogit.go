@@ -1,12 +1,10 @@
 package repository
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -14,8 +12,6 @@ import (
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/git-bug/gitconfig"
-	"github.com/go-git/go-billy/v5/osfs"
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -24,13 +20,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"golang.org/x/sync/singleflight"
-	"golang.org/x/sys/execabs"
-
-	"github.com/git-bug/git-bug/util/lamport"
 )
-
-const clockPath = "clocks"
-const indexPath = "indexes"
 
 // lastCommitDepthLimit is the maximum number of commits walked by
 // LastCommitForEntries. Entries not found within this horizon are omitted from
@@ -43,8 +33,10 @@ const lastCommitDepthLimit = 1000
 // MB of memory at most.
 const lastCommitCacheSize = 256
 
-var _ ClockedRepo = &GoGitRepo{}
+var _ RepoData = &GoGitRepo{}
+var _ RepoBrowse = &GoGitRepo{}
 
+// GoGitRepo is the git data of a Repo, in a git directory on disk, with go-git.
 type GoGitRepo struct {
 	// Unfortunately, some parts of go-git are not thread-safe so we have to cover them with a big fat mutex here.
 	// See https://github.com/go-git/go-git/issues/48
@@ -53,15 +45,6 @@ type GoGitRepo struct {
 	rMutex sync.Mutex
 	r      *gogit.Repository
 	path   string
-
-	// configEnv says where the git configuration comes from, as git finds it.
-	configEnv gitconfig.Env
-
-	clocksMutex sync.Mutex
-	clocks      map[string]lamport.Clock
-
-	indexesMutex sync.Mutex
-	indexes      map[string]Index
 
 	// lastCommitCache caches LastCommitForEntries results keyed by
 	// "<treeHash>\x00<path>". Git trees are content-addressed and
@@ -72,91 +55,48 @@ type GoGitRepo struct {
 	// lastCommitSF deduplicates concurrent walks for the same cache key so
 	// that a cold cache under parallel requests triggers only one history walk.
 	lastCommitSF singleflight.Group
-
-	keyring      Keyring
-	localStorage LocalStorage
 }
 
-// Option configures a GoGitRepo when it is opened or created.
-type Option func(*goGitOptions)
-
-type goGitOptions struct {
-	configEnv *gitconfig.Env
-	keyring   Keyring
-}
-
-// WithConfigEnv sets where the git configuration comes from, instead of
-// finding it from the process as git does, for embedders and tests that must
-// not read the configuration of the user or the system. Its GitDir is
-// ignored: the repository's own is used.
-func WithConfigEnv(env gitconfig.Env) Option {
-	return func(o *goGitOptions) { o.configEnv = &env }
-}
-
-// WithKeyring sets the keyring holding the secrets, instead of the user's.
-func WithKeyring(k Keyring) Option {
-	return func(o *goGitOptions) { o.keyring = k }
-}
-
-// OpenGoGitRepo opens an already existing repo at the given path and
-// with the specified LocalStorage namespace.  Given a repository path
-// of "~/myrepo" and a namespace of "git-bug", local storage for the
-// GoGitRepo will be configured at "~/myrepo/.git/git-bug".
-func OpenGoGitRepo(path, namespace string, opts ...Option) (*GoGitRepo, error) {
-	path, err := detectGitPath(path, 0)
+// OpenGoGitRepo opens the repository of the git directory gitDir, see
+// FindGitDir. It fails with ErrNotARepo if gitDir isn't one.
+func OpenGoGitRepo(gitDir string) (*GoGitRepo, error) {
+	gitDir, err := filepath.Abs(gitDir)
 	if err != nil {
 		return nil, err
 	}
+	ok, err := isGitDir(gitDir)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", ErrNotARepo, gitDir)
+	}
 
-	return newGoGitRepo(path, path, namespace, opts)
+	return newGoGitRepo(gitDir)
 }
 
-// InitGoGitRepo creates a new empty git repo at the given path and
-// with the specified LocalStorage namespace.  Given a repository path
-// of "~/myrepo" and a namespace of "git-bug", local storage for the
-// GoGitRepo will be configured at "~/myrepo/.git/git-bug".
-func InitGoGitRepo(path, namespace string, opts ...Option) (*GoGitRepo, error) {
+// InitGoGitRepo creates a new empty git repo at the given path.
+func InitGoGitRepo(path string) (*GoGitRepo, error) {
 	_, err := gogit.PlainInit(path, false)
 	if err != nil {
 		return nil, err
 	}
 
-	return newGoGitRepo(path, filepath.Join(path, ".git"), namespace, opts)
+	return newGoGitRepo(filepath.Join(path, ".git"))
 }
 
-// InitBareGoGitRepo creates a new --bare empty git repo at the given
-// path and with the specified LocalStorage namespace.  Given a repository
-// path of "~/myrepo" and a namespace of "git-bug", local storage for the
-// GoGitRepo will be configured at "~/myrepo/.git/git-bug".
-func InitBareGoGitRepo(path, namespace string, opts ...Option) (*GoGitRepo, error) {
+// InitBareGoGitRepo creates a new --bare empty git repo at the given path.
+func InitBareGoGitRepo(path string) (*GoGitRepo, error) {
 	_, err := gogit.PlainInit(path, true)
 	if err != nil {
 		return nil, err
 	}
 
-	return newGoGitRepo(path, path, namespace, opts)
+	return newGoGitRepo(path)
 }
 
-// newGoGitRepo returns the GoGitRepo of the git directory gitDir, found at
-// dir: a working tree or a git directory.
-func newGoGitRepo(dir, gitDir, namespace string, opts []Option) (*GoGitRepo, error) {
-	var o goGitOptions
-	for _, opt := range opts {
-		opt(&o)
-	}
-
-	var configEnv gitconfig.Env
-	if o.configEnv != nil {
-		configEnv = *o.configEnv
-		configEnv.GitDir = gitDir
-	} else {
-		var err error
-		configEnv, err = gitconfig.Discover(dir)
-		if err != nil {
-			return nil, err
-		}
-	}
-
+// newGoGitRepo returns the GoGitRepo of the git directory gitDir.
+func newGoGitRepo(gitDir string) (*GoGitRepo, error) {
 	// TODO: the possible resource leak is an existing issue in go-git v5
 	// it's fixed in v6
 	r, err := gogit.Open(newReindexingStorage(gitDir), nil)
@@ -164,232 +104,11 @@ func newGoGitRepo(dir, gitDir, namespace string, opts []Option) (*GoGitRepo, err
 		return nil, err
 	}
 
-	k := o.keyring
-	if k == nil {
-		k, err = defaultKeyring()
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return &GoGitRepo{
 		r:               r,
 		path:            gitDir,
-		configEnv:       configEnv,
-		clocks:          make(map[string]lamport.Clock),
-		indexes:         make(map[string]Index),
 		lastCommitCache: must(lru.New[string, map[string]CommitMeta](lastCommitCacheSize)),
-		keyring:         k,
-		localStorage:    billyLocalStorage{Filesystem: osfs.New(filepath.Join(gitDir, namespace))},
 	}, nil
-}
-
-func detectGitPath(path string, depth int) (string, error) {
-	if depth >= 10 {
-		return "", fmt.Errorf("gitdir loop detected")
-	}
-
-	// normalize the path
-	path, err := filepath.Abs(path)
-	if err != nil {
-		return "", err
-	}
-
-	for {
-		fi, err := os.Stat(filepath.Join(path, ".git"))
-		if err == nil {
-			if !fi.IsDir() {
-				// See if our .git item is a dotfile that holds a submodule reference
-				dotfile, err := os.Open(filepath.Join(path, fi.Name()))
-				if err != nil {
-					// Can't open error
-					return "", fmt.Errorf(".git exists but is not a directory or a readable file: %w", err)
-				}
-				// We aren't going to defer the dotfile.Close, because we might keep looping, so we have to be sure to
-				// clean up before returning an error
-				reader := bufio.NewReader(io.LimitReader(dotfile, 2048))
-				line, _, err := reader.ReadLine()
-				_ = dotfile.Close()
-				if err != nil {
-					return "", fmt.Errorf(".git exists but is not a directory and cannot be read: %w", err)
-				}
-				dotContent := string(line)
-				if strings.HasPrefix(dotContent, "gitdir:") {
-					// This is a submodule parent path link. Strip the prefix, clean the string of whitespace just to
-					// be safe, and return
-					dotContent = strings.TrimSpace(strings.TrimPrefix(dotContent, "gitdir: "))
-					p, err := detectGitPath(dotContent, depth+1)
-					if err != nil {
-						return "", fmt.Errorf(".git gitdir error: %w", err)
-					}
-					return p, nil
-				}
-				return "", fmt.Errorf(".git exist but is not a directory or module/workspace file")
-			}
-			return filepath.Join(path, ".git"), nil
-		}
-		if !os.IsNotExist(err) {
-			// unknown error
-			return "", err
-		}
-
-		// detect bare repo
-		ok, err := isGitDir(path)
-		if err != nil {
-			return "", err
-		}
-		if ok {
-			return path, nil
-		}
-
-		if parent := filepath.Dir(path); parent == path {
-			return "", fmt.Errorf(".git not found")
-		} else {
-			path = parent
-		}
-	}
-}
-
-func isGitDir(path string) (bool, error) {
-	markers := []string{"HEAD", "objects", "refs"}
-
-	for _, marker := range markers {
-		_, err := os.Stat(filepath.Join(path, marker))
-		if err == nil {
-			continue
-		}
-		if !os.IsNotExist(err) {
-			// unknown error
-			return false, err
-		} else {
-			return false, nil
-		}
-	}
-
-	return true, nil
-}
-
-func (repo *GoGitRepo) Close() error {
-	var firstErr error
-	for name, index := range repo.indexes {
-		err := index.Close()
-		if err != nil && firstErr == nil {
-			firstErr = err
-		}
-		delete(repo.indexes, name)
-	}
-	return firstErr
-}
-
-// Config give access to the git configuration
-func (repo *GoGitRepo) Config() Config {
-	return &gitConfig{env: repo.configEnv}
-}
-
-// Keyring give access to a user-wide storage for secrets
-func (repo *GoGitRepo) Keyring() Keyring {
-	return repo.keyring
-}
-
-// GetUserName returns the name the user has used to configure git, "" if unset
-func (repo *GoGitRepo) GetUserName() (string, error) {
-	cfg, err := repo.Config().Read()
-	if err != nil {
-		return "", err
-	}
-	return cfg.Value("user.name", ""), nil
-}
-
-// GetUserEmail returns the email address that the user has used to configure git, "" if unset
-func (repo *GoGitRepo) GetUserEmail() (string, error) {
-	cfg, err := repo.Config().Read()
-	if err != nil {
-		return "", err
-	}
-	return cfg.Value("user.email", ""), nil
-}
-
-// GetCoreEditor returns the name of the editor that the user has used to configure git.
-func (repo *GoGitRepo) GetCoreEditor() (string, error) {
-	// See https://git-scm.com/docs/git-var
-	// The order of preference is the $GIT_EDITOR environment variable, then core.editor configuration, then $VISUAL, then $EDITOR, and then the default chosen at compile time, which is usually vi.
-
-	if val, ok := os.LookupEnv("GIT_EDITOR"); ok {
-		return val, nil
-	}
-
-	cfg, err := repo.Config().Read()
-	if err != nil {
-		return "", err
-	}
-	if val := cfg.Value("core.editor", ""); val != "" {
-		return val, nil
-	}
-
-	if val, ok := os.LookupEnv("VISUAL"); ok {
-		return val, nil
-	}
-
-	if val, ok := os.LookupEnv("EDITOR"); ok {
-		return val, nil
-	}
-
-	priorities := []string{
-		"editor",
-		"nano",
-		"vim",
-		"vi",
-		"emacs",
-	}
-
-	for _, cmd := range priorities {
-		if _, err = execabs.LookPath(cmd); err == nil {
-			return cmd, nil
-		}
-
-	}
-
-	return "ed", nil
-}
-
-// GetRemotes returns the configured remotes repositories.
-func (repo *GoGitRepo) GetRemotes() (map[string]string, error) {
-	cfg, err := repo.r.Config()
-	if err != nil {
-		return nil, err
-	}
-
-	result := make(map[string]string, len(cfg.Remotes))
-	for name, remote := range cfg.Remotes {
-		if len(remote.URLs) > 0 {
-			result[name] = remote.URLs[0]
-		}
-	}
-
-	return result, nil
-}
-
-// LocalStorage returns a billy.Filesystem giving access to
-// $RepoPath/.git/$Namespace.
-func (repo *GoGitRepo) LocalStorage() LocalStorage {
-	return repo.localStorage
-}
-
-func (repo *GoGitRepo) GetIndex(name string) (Index, error) {
-	repo.indexesMutex.Lock()
-	defer repo.indexesMutex.Unlock()
-
-	if index, ok := repo.indexes[name]; ok {
-		return index, nil
-	}
-
-	path := filepath.Join(repo.localStorage.Root(), indexPath, name)
-
-	index, err := openBleveIndex(path)
-	if err == nil {
-		repo.indexes[name] = index
-	}
-	return index, err
 }
 
 // FetchRefs retrieves the refs of the given namespaces (and the data they
@@ -416,7 +135,7 @@ func (repo *GoGitRepo) FetchRefs(remote string, namespaces ...string) (string, e
 		RefSpecs:   refSpecs,
 		Progress:   buf,
 	})
-	if err == gogit.NoErrAlreadyUpToDate {
+	if errors.Is(err, gogit.NoErrAlreadyUpToDate) {
 		return "already up-to-date", nil
 	}
 	if err != nil {
@@ -427,6 +146,8 @@ func (repo *GoGitRepo) FetchRefs(remote string, namespaces ...string) (string, e
 }
 
 // resolveRemote returns the URI for a given remote
+// TODO: read the remotes with gitconfig rather than the go-git config, as
+// RepoConfig.GetRemotes does.
 func (repo *GoGitRepo) resolveRemote(remote string, fetch bool) (string, error) {
 	cfg, err := repo.r.ConfigScoped(config.SystemScope)
 	if err != nil {
@@ -806,101 +527,6 @@ func (repo *GoGitRepo) ReadCommit(hash Hash) (Commit, error) {
 	}
 
 	return result, nil
-}
-
-func (repo *GoGitRepo) AllClocks() (map[string]lamport.Clock, error) {
-	repo.clocksMutex.Lock()
-	defer repo.clocksMutex.Unlock()
-
-	result := make(map[string]lamport.Clock)
-
-	files, err := os.ReadDir(filepath.Join(repo.localStorage.Root(), clockPath))
-	if os.IsNotExist(err) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	for _, file := range files {
-		name := file.Name()
-		if c, ok := repo.clocks[name]; ok {
-			result[name] = c
-		} else {
-			c, err := lamport.LoadPersistedClock(repo.LocalStorage(), filepath.Join(clockPath, name))
-			if errors.Is(err, lamport.ErrClockNotExist) {
-				// an empty file: another process is creating it, or died
-				// doing so. Not a clock yet.
-				continue
-			}
-			if err != nil {
-				return nil, err
-			}
-			repo.clocks[name] = c
-			result[name] = c
-		}
-	}
-
-	return result, nil
-}
-
-// GetClock return a Lamport clock stored in the Repo, or ErrClockNotExist if
-// there is none.
-func (repo *GoGitRepo) GetClock(name string) (lamport.Clock, error) {
-	repo.clocksMutex.Lock()
-	defer repo.clocksMutex.Unlock()
-
-	if c, ok := repo.clocks[name]; ok {
-		return c, nil
-	}
-
-	c, err := lamport.LoadPersistedClock(repo.LocalStorage(), filepath.Join(clockPath, name))
-	if err != nil {
-		return nil, err
-	}
-
-	repo.clocks[name] = c
-	return c, nil
-}
-
-// GetOrCreateClock return a Lamport clock stored in the Repo, creating it at the
-// initial time if there is none, or if the existing one is corrupted. See
-// lamport.GetOrCreatePersistedClock for what the initial time must hold.
-func (repo *GoGitRepo) GetOrCreateClock(name string, initial lamport.Time) (lamport.Clock, error) {
-	repo.clocksMutex.Lock()
-	defer repo.clocksMutex.Unlock()
-
-	// goes to the file even with a clock cached: it's the file that may be
-	// missing or corrupted
-	c, err := lamport.GetOrCreatePersistedClock(repo.LocalStorage(), filepath.Join(clockPath, name), initial)
-	if err != nil {
-		return nil, err
-	}
-
-	if cached, ok := repo.clocks[name]; ok {
-		return cached, nil
-	}
-
-	repo.clocks[name] = c
-	return c, nil
-}
-
-// Increment is equivalent to c = GetClock(name) + c.Increment()
-func (repo *GoGitRepo) Increment(name string) (lamport.Time, error) {
-	c, err := repo.GetClock(name)
-	if err != nil {
-		return lamport.Time(0), err
-	}
-	return c.Increment()
-}
-
-// Witness is equivalent to c = GetClock(name) + c.Witness(time)
-func (repo *GoGitRepo) Witness(name string, time lamport.Time) error {
-	c, err := repo.GetClock(name)
-	if err != nil {
-		return err
-	}
-	return c.Witness(time)
 }
 
 // commitToMeta converts a go-git Commit to a CommitMeta.

@@ -1,30 +1,19 @@
 package repository
 
 import (
-	"errors"
-	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
-	"github.com/99designs/keyring"
-	"github.com/git-bug/gitconfig"
-	"github.com/go-git/go-billy/v5/util"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/git-bug/git-bug/util/lamport"
 )
 
-const namespace = "git-bug"
-
 // newTestGoGitRepo creates a GoGitRepo in a directory removed with the test.
-// It doesn't touch the configuration or the keyring of the user or the system,
-// and has a git user set.
 func newTestGoGitRepo(t testing.TB, bare bool) *GoGitRepo {
 	t.Helper()
 
@@ -32,45 +21,9 @@ func newTestGoGitRepo(t testing.TB, bare bool) *GoGitRepo {
 	if bare {
 		create = InitBareGoGitRepo
 	}
-	repo, err := create(t.TempDir(), namespace,
-		WithConfigEnv(gitconfig.Env{
-			GlobalConfig: []string{filepath.Join(t.TempDir(), ".gitconfig")},
-		}),
-		WithKeyring(keyring.NewArrayKeyring(nil)),
-	)
+	repo, err := create(t.TempDir())
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		if err := repo.Close(); err != nil {
-			t.Error(err)
-		}
-	})
-
-	err = repo.Config().Update(func(f *gitconfig.File) error {
-		return errors.Join(
-			f.Set("user.name", "testuser"),
-			f.Set("user.email", "testuser@example.com"),
-		)
-	})
-	require.NoError(t, err)
-
 	return repo
-}
-
-// goGitRepoDir returns the directory of repo: its working tree, or its git
-// directory if it is bare.
-func goGitRepoDir(t *testing.T, repo *GoGitRepo) string {
-	t.Helper()
-
-	dir := repo.path
-	if strings.HasSuffix(dir, ".git") {
-		dir, _ = filepath.Split(dir)
-	}
-
-	if dir[len(dir)-1] == filepath.Separator {
-		dir = dir[:len(dir)-1]
-	}
-
-	return dir
 }
 
 // requireGitBinary skips the test when the git binary is not available.
@@ -115,51 +68,119 @@ func runGit(t *testing.T, dir string, args ...string) string {
 	return strings.TrimSpace(string(out))
 }
 
-func TestNewGoGitRepo(t *testing.T) {
-	// Plain
-	plainRepo := newTestGoGitRepo(t, false)
-	plainRoot := goGitRepoDir(t, plainRepo)
-	require.NoError(t, plainRepo.Close())
-	plainGitDir := filepath.Join(plainRoot, ".git")
+func TestFindGitDir(t *testing.T) {
+	plainGitDir := newTestGoGitRepo(t, false).path
+	plainRoot := filepath.Dir(plainGitDir)
+	bareGitDir := newTestGoGitRepo(t, true).path
 
-	// Bare
-	bareRepo := newTestGoGitRepo(t, true)
-	bareRoot := goGitRepoDir(t, bareRepo)
-	require.NoError(t, bareRepo.Close())
-	bareGitDir := bareRoot
-
-	tests := []struct {
-		inPath  string
-		outPath string
-		err     bool
-	}{
-		// errors
-		{"/", "", true},
-		// parent dir of a repo
-		{filepath.Dir(plainRoot), "", true},
-
-		// Plain repo
-		{plainRoot, plainGitDir, false},
-		{plainGitDir, plainGitDir, false},
-		{path.Join(plainGitDir, "objects"), plainGitDir, false},
-
-		// Bare repo
-		{bareRoot, bareGitDir, false},
-		{bareGitDir, bareGitDir, false},
-		{path.Join(bareGitDir, "objects"), bareGitDir, false},
+	writeGitFile := func(t *testing.T, dir string, gitDir string) {
+		t.Helper()
+		require.NoError(t, os.WriteFile(filepath.Join(dir, ".git"), []byte("gitdir: "+gitDir+"\n"), 0600))
 	}
 
-	for i, tc := range tests {
-		r, err := OpenGoGitRepo(tc.inPath, namespace)
+	t.Run("found from inside", func(t *testing.T) {
+		sub := filepath.Join(plainRoot, "a", "b")
+		require.NoError(t, os.MkdirAll(sub, 0755))
 
-		if tc.err {
-			require.Error(t, err, i)
-		} else {
-			require.NoError(t, err, i)
-			assert.Equal(t, filepath.ToSlash(tc.outPath), filepath.ToSlash(r.path), i)
-			require.NoError(t, r.Close())
+		for _, tc := range []struct {
+			in       string
+			expected string
+		}{
+			{plainRoot, plainGitDir},
+			{sub, plainGitDir},
+			{plainGitDir, plainGitDir},
+			{filepath.Join(plainGitDir, "objects"), plainGitDir},
+			{bareGitDir, bareGitDir},
+			{filepath.Join(bareGitDir, "objects"), bareGitDir},
+		} {
+			gitDir, err := FindGitDir(tc.in)
+			require.NoError(t, err, tc.in)
+			require.Equal(t, tc.expected, gitDir, tc.in)
 		}
-	}
+	})
+
+	t.Run("none", func(t *testing.T) {
+		_, err := FindGitDir(t.TempDir())
+		require.ErrorIs(t, err, ErrNotARepo)
+	})
+
+	t.Run("a .git file, absolute or relative", func(t *testing.T) {
+		dir := t.TempDir()
+		writeGitFile(t, dir, plainGitDir)
+		gitDir, err := FindGitDir(dir)
+		require.NoError(t, err)
+		require.Equal(t, plainGitDir, gitDir)
+
+		rel, err := filepath.Rel(dir, plainGitDir)
+		require.NoError(t, err)
+		writeGitFile(t, dir, rel)
+		gitDir, err = FindGitDir(dir)
+		require.NoError(t, err)
+		require.Equal(t, plainGitDir, gitDir)
+	})
+
+	t.Run("a .git file of a linked worktree gives the main git directory", func(t *testing.T) {
+		// git worktree add makes .git/worktrees/<name>, with its own HEAD and a
+		// commondir file naming the main git directory, which holds the objects
+		// and refs
+		wtGitDir := filepath.Join(plainGitDir, "worktrees", "wt")
+		require.NoError(t, os.MkdirAll(wtGitDir, 0755))
+		require.NoError(t, os.WriteFile(filepath.Join(wtGitDir, "HEAD"), []byte("ref: refs/heads/wt\n"), 0644))
+		require.NoError(t, os.WriteFile(filepath.Join(wtGitDir, "commondir"), []byte("../..\n"), 0644))
+
+		dir := t.TempDir()
+		writeGitFile(t, dir, wtGitDir)
+		gitDir, err := FindGitDir(dir)
+		require.NoError(t, err)
+		require.Equal(t, plainGitDir, gitDir)
+	})
+
+	t.Run("a broken .git file stops the search", func(t *testing.T) {
+		// inside a repository, which isn't found instead
+		malformed := filepath.Join(plainRoot, "malformed")
+		require.NoError(t, os.Mkdir(malformed, 0755))
+		require.NoError(t, os.WriteFile(filepath.Join(malformed, ".git"), []byte("garbage"), 0600))
+		_, err := FindGitDir(malformed)
+		require.Error(t, err)
+		require.NotErrorIs(t, err, ErrNotARepo)
+
+		dangling := filepath.Join(plainRoot, "dangling")
+		require.NoError(t, os.Mkdir(dangling, 0755))
+		writeGitFile(t, dangling, t.TempDir())
+		_, err = FindGitDir(dangling)
+		require.Error(t, err)
+		require.NotErrorIs(t, err, ErrNotARepo)
+	})
+
+	t.Run("a directory that can't be read stops the search", func(t *testing.T) {
+		if runtime.GOOS == "windows" || os.Geteuid() == 0 {
+			t.Skip("needs unix permissions, enforced")
+		}
+		// inside a repository, which isn't found instead
+		locked := filepath.Join(plainRoot, "locked")
+		require.NoError(t, os.Mkdir(locked, 0000))
+		t.Cleanup(func() { _ = os.Chmod(locked, 0755) })
+
+		_, err := FindGitDir(locked)
+		require.ErrorIs(t, err, fs.ErrPermission)
+	})
+
+	t.Run("a .git directory that isn't a git directory is skipped", func(t *testing.T) {
+		dir := filepath.Join(plainRoot, "fake")
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, ".git"), 0755))
+		gitDir, err := FindGitDir(dir)
+		require.NoError(t, err)
+		require.Equal(t, plainGitDir, gitDir)
+	})
+
+	t.Run("OpenGoGitRepo doesn't search", func(t *testing.T) {
+		_, err := OpenGoGitRepo(plainRoot)
+		require.ErrorIs(t, err, ErrNotARepo)
+
+		repo, err := OpenGoGitRepo(plainGitDir)
+		require.NoError(t, err)
+		require.Equal(t, plainGitDir, repo.path)
+	})
 }
 
 func TestGoGitRepo_Head(t *testing.T) {
@@ -181,260 +202,4 @@ func TestGoGitRepo_Head(t *testing.T) {
 		Type:      GitRefTypeBranch,
 		Hash:      string(commit),
 	}, meta)
-}
-
-func TestGoGitRepo_Indexes(t *testing.T) {
-	const commit1 = Hash("1111111111111111111111111111111111111111")
-
-	t.Run("created on disk", func(t *testing.T) {
-		repo := newTestGoGitRepo(t, false)
-		plainRoot := goGitRepoDir(t, repo)
-
-		// Can create indices
-		indexA, err := repo.GetIndex("a")
-		require.NoError(t, err)
-		require.NotZero(t, indexA)
-		require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "index_meta.json"))
-		require.FileExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "a", "store", "root.bolt"))
-
-		indexB, err := repo.GetIndex("b")
-		require.NoError(t, err)
-		require.NotZero(t, indexB)
-		require.DirExists(t, filepath.Join(plainRoot, ".git", namespace, "indexes", "b"))
-
-		// Can get an existing index
-		indexA, err = repo.GetIndex("a")
-		require.NoError(t, err)
-		require.NotZero(t, indexA)
-	})
-
-	t.Run("documents and their record survive a reopen", func(t *testing.T) {
-		repo := newTestGoGitRepo(t, false)
-
-		idx, err := repo.GetIndex("a")
-		require.NoError(t, err)
-		b := idx.NewBatch()
-		require.NoError(t, b.Set("id1", []string{"marker"}, commit1))
-		require.NoError(t, b.Apply())
-
-		require.NoError(t, repo.Close())
-
-		idx, err = repo.GetIndex("a")
-		require.NoError(t, err)
-		builtFrom, err := idx.BuiltFrom()
-		require.NoError(t, err)
-		require.Equal(t, map[string]Hash{"id1": commit1}, builtFrom)
-		res, err := idx.Search([]string{"marker"})
-		require.NoError(t, err)
-		require.Equal(t, []string{"id1"}, res)
-	})
-
-	t.Run("search", func(t *testing.T) {
-		repo := newTestGoGitRepo(t, false)
-
-		idx, err := repo.GetIndex("a")
-		require.NoError(t, err)
-		b := idx.NewBatch()
-		require.NoError(t, b.Set("id1", []string{"the server crashes on login"}, commit1))
-		require.NoError(t, b.Set("id2", []string{"login works, the server crashes later"}, commit1))
-		require.NoError(t, b.Set("id3", []string{"-x +y title:z (abc"}, commit1))
-		require.NoError(t, b.Set("id4", []string{"see file.go, and foo-bar"}, commit1))
-		require.NoError(t, b.Set("id5", []string{"数据库连接失败"}, commit1))
-		require.NoError(t, b.Set("id6", []string{"库存数据"}, commit1))
-		require.NoError(t, b.Apply())
-
-		requireSearch := func(t *testing.T, terms []string, expected ...string) {
-			t.Helper()
-			res, err := idx.Search(terms)
-			require.NoError(t, err)
-			require.ElementsMatch(t, expected, res)
-		}
-
-		// words are stemmed
-		requireSearch(t, []string{"crash"}, "id1", "id2")
-		// a term of several words is a phrase
-		requireSearch(t, []string{"crashes on login"}, "id1")
-		requireSearch(t, []string{"login crashes"})
-		// so is a single word that splits into several
-		requireSearch(t, []string{"foo-bar"}, "id4")
-		requireSearch(t, []string{"bar-foo"})
-		requireSearch(t, []string{"file.go"}, "id4")
-		requireSearch(t, []string{"数据库"}, "id5")
-		requireSearch(t, []string{"数据"}, "id5", "id6")
-		// the caller's terms are left untouched
-		terms := []string{"crashes on login"}
-		requireSearch(t, terms, "id1")
-		require.Equal(t, []string{"crashes on login"}, terms)
-		// a stop word alone matches nothing, and doesn't prevent other matches
-		requireSearch(t, []string{"the"})
-		requireSearch(t, []string{"the", "later"}, "id2")
-		// the query syntax of bleve is not interpreted
-		requireSearch(t, []string{"-x"}, "id3")
-		requireSearch(t, []string{"+y"}, "id3")
-		requireSearch(t, []string{"title:z"}, "id3")
-		requireSearch(t, []string{"(abc"}, "id3")
-		requireSearch(t, []string{`"server`}, "id1", "id2")
-	})
-
-	t.Run("a document without text is recorded, not indexed", func(t *testing.T) {
-		repo := newTestGoGitRepo(t, false)
-
-		idx, err := repo.GetIndex("a")
-		require.NoError(t, err)
-		b := idx.NewBatch()
-		require.NoError(t, b.Set("id1", []string{"marker"}, commit1))
-		require.NoError(t, b.Set("id2", nil, commit1))
-		require.NoError(t, b.Set("id3", []string{"", "  "}, commit1))
-		require.NoError(t, b.Apply())
-
-		builtFrom, err := idx.BuiltFrom()
-		require.NoError(t, err)
-		require.Equal(t, map[string]Hash{"id1": commit1, "id2": commit1, "id3": commit1}, builtFrom)
-		count, err := idx.(*bleveIndex).index.DocCount()
-		require.NoError(t, err)
-		require.Equal(t, uint64(1), count)
-
-		// a document losing its text is dropped
-		b = idx.NewBatch()
-		require.NoError(t, b.Set("id1", nil, commit1))
-		require.NoError(t, b.Apply())
-		count, err = idx.(*bleveIndex).index.DocCount()
-		require.NoError(t, err)
-		require.Equal(t, uint64(0), count)
-		res, err := idx.Search([]string{"marker"})
-		require.NoError(t, err)
-		require.Empty(t, res)
-	})
-
-	t.Run("an index with another layout is replaced by an empty one", func(t *testing.T) {
-		repo := newTestGoGitRepo(t, false)
-
-		idx, err := repo.GetIndex("a")
-		require.NoError(t, err)
-		b := idx.NewBatch()
-		require.NoError(t, b.Set("id1", []string{"marker"}, commit1))
-		require.NoError(t, b.Apply())
-		require.NoError(t, idx.(*bleveIndex).index.SetInternal(layoutVersionKey, []byte("0")))
-
-		require.NoError(t, repo.Close())
-
-		idx, err = repo.GetIndex("a")
-		require.NoError(t, err)
-		builtFrom, err := idx.BuiltFrom()
-		require.NoError(t, err)
-		require.Empty(t, builtFrom)
-		res, err := idx.Search([]string{"marker"})
-		require.NoError(t, err)
-		require.Empty(t, res)
-
-		// and the new one keeps its layout across a reopen
-		b = idx.NewBatch()
-		require.NoError(t, b.Set("id1", []string{"marker"}, commit1))
-		require.NoError(t, b.Apply())
-		require.NoError(t, repo.Close())
-		idx, err = repo.GetIndex("a")
-		require.NoError(t, err)
-		res, err = idx.Search([]string{"marker"})
-		require.NoError(t, err)
-		require.Equal(t, []string{"id1"}, res)
-	})
-
-	t.Run("a malformed record is rejected", func(t *testing.T) {
-		repo := newTestGoGitRepo(t, false)
-
-		idx, err := repo.GetIndex("a")
-		require.NoError(t, err)
-		require.NoError(t, idx.(*bleveIndex).index.SetInternal(builtFromKey, []byte("not a record")))
-
-		_, err = idx.BuiltFrom()
-		require.Error(t, err)
-		require.Error(t, idx.NewBatch().Apply())
-	})
-
-	t.Run("a batch that fails leaves neither documents nor record", func(t *testing.T) {
-		repo := newTestGoGitRepo(t, false)
-
-		idx, err := repo.GetIndex("a")
-		require.NoError(t, err)
-		b := idx.NewBatch()
-		require.NoError(t, b.Set("id1", []string{"marker"}, commit1))
-
-		// the index is closed underneath the batch
-		require.NoError(t, repo.Close())
-		require.Error(t, b.Apply())
-
-		idx, err = repo.GetIndex("a")
-		require.NoError(t, err)
-		builtFrom, err := idx.BuiltFrom()
-		require.NoError(t, err)
-		require.Empty(t, builtFrom)
-		res, err := idx.Search([]string{"marker"})
-		require.NoError(t, err)
-		require.Empty(t, res)
-	})
-}
-
-func TestGoGit_DetectsSubmodules(t *testing.T) {
-	repo := newTestGoGitRepo(t, false)
-	expected := filepath.Join(goGitRepoDir(t, repo), "/.git")
-
-	d := t.TempDir()
-	err := os.WriteFile(filepath.Join(d, ".git"), []byte(fmt.Sprintf("gitdir: %s", expected)), 0600)
-	require.NoError(t, err)
-
-	result, err := detectGitPath(d, 0)
-	assert.Empty(t, err)
-	assert.Equal(t, expected, result)
-}
-
-// An empty clock file is one being created, or whose creation was interrupted:
-// not a clock yet, and not a reason to fail listing the others.
-func TestGoGitRepo_AllClocksSkipsEmpty(t *testing.T) {
-	repo := newTestGoGitRepo(t, false)
-
-	foo, err := repo.GetOrCreateClock("foo", 1)
-	require.NoError(t, err)
-
-	f, err := repo.LocalStorage().Create(filepath.Join(clockPath, "empty"))
-	require.NoError(t, err)
-	require.NoError(t, f.Close())
-
-	allClocks, err := repo.AllClocks()
-	require.NoError(t, err)
-	require.Equal(t, map[string]lamport.Clock{"foo": foo}, allClocks)
-}
-
-// A corrupted clock is listed and handed out, but can't be used until it's
-// created again, at a value the caller vouches for.
-func TestGoGitRepo_CorruptedClock(t *testing.T) {
-	repo := newTestGoGitRepo(t, false)
-
-	clockFile := filepath.Join(clockPath, "foo")
-	require.NoError(t, util.WriteFile(repo.LocalStorage(), clockFile, []byte("garbage"), 0644))
-
-	// listed, for the caller to decide what to do with it
-	allClocks, err := repo.AllClocks()
-	require.NoError(t, err)
-	require.Contains(t, allClocks, "foo")
-	_, err = allClocks["foo"].Time()
-	require.ErrorIs(t, err, lamport.ErrClockCorrupt)
-
-	_, err = repo.Increment("foo")
-	require.ErrorIs(t, err, lamport.ErrClockCorrupt)
-	require.ErrorIs(t, repo.Witness("foo", 10), lamport.ErrClockCorrupt)
-
-	clock, err := repo.GetOrCreateClock("foo", 10)
-	require.NoError(t, err)
-	time, err := clock.Time()
-	require.NoError(t, err)
-	require.Equal(t, lamport.Time(10), time)
-
-	// the clock listed earlier is the same one
-	time, err = allClocks["foo"].Time()
-	require.NoError(t, err)
-	require.Equal(t, lamport.Time(10), time)
-
-	time, err = repo.Increment("foo")
-	require.NoError(t, err)
-	require.Equal(t, lamport.Time(11), time)
 }

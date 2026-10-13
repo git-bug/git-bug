@@ -104,19 +104,19 @@ func wrapper(e *Entity) *Foo {
   Identities + repo + definition
 */
 
-func makeTestContext() (repository.ClockedRepo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
+func makeTestContext() (repository.Repo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
 	repo := repository.NewMockRepo()
 	id1, id2, resolvers, def := makeTestContextInternal(repo)
 	return repo, id1, id2, resolvers, def
 }
 
-func makeTestContextGoGit(t *testing.T) (repository.ClockedRepo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
+func makeTestContextGoGit(t *testing.T) (repository.Repo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
 	repo := repotest.NewGoGitRepo(t, false)
 	id1, id2, resolvers, def := makeTestContextInternal(repo)
 	return repo, id1, id2, resolvers, def
 }
 
-func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.ClockedRepo, repository.ClockedRepo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
+func makeTestContextRemote(t *testing.T) (repository.Repo, repository.Repo, repository.Repo, identity.Interface, identity.Interface, entity.Resolvers, Definition) {
 	repoA := repotest.NewGoGitRepo(t, false)
 	repoB := repotest.NewGoGitRepo(t, false)
 	remote := repotest.NewGoGitRepo(t, true)
@@ -137,7 +137,7 @@ func makeTestContextRemote(t *testing.T) (repository.ClockedRepo, repository.Clo
 	return repoA, repoB, remote, id1, id2, resolver, def
 }
 
-func makeTestContextInternal(repo repository.ClockedRepo) (identity.Interface, identity.Interface, entity.Resolvers, Definition) {
+func makeTestContextInternal(repo repository.Repo) (identity.Interface, identity.Interface, entity.Resolvers, Definition) {
 	id1, err := identity.NewIdentity(repo, "name1", "email1")
 	if err != nil {
 		panic(err)

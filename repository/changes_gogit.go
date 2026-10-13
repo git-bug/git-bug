@@ -27,36 +27,36 @@ const watchWindow = 50 * time.Millisecond
 // filesystem, see pollSource.
 const pollGranularity = 2 * time.Second
 
-// NewWatchSource returns a source reporting the changes of the refs of repo as
-// they happen, with the filesystem's notifications. A loose ref names its key,
-// a rewrite of packed-refs names nothing.
+// NewWatchSource returns a source reporting the changes of the refs in the git
+// directory gitDir as they happen, with the filesystem's notifications. A loose
+// ref names its key, a rewrite of packed-refs names nothing.
 //
 // It sees nothing that another host writes on a network filesystem, and isn't
 // suitable for platforms where watching a directory takes a file descriptor
 // per entry (macOS, BSDs), see NewAutoSource.
-func NewWatchSource(repo *GoGitRepo) ChangeSource {
-	return watchSource{gitDir: repo.path}
+func NewWatchSource(gitDir string) ChangeSource {
+	return watchSource{gitDir: gitDir}
 }
 
-// NewPollSource returns a source checking, every period, whether the refs of
-// repo changed, from the stat of the directory of each namespace and of
+// NewPollSource returns a source checking, every period, whether the refs in
+// gitDir changed, from the stat of the directory of each namespace and of
 // packed-refs. It works on every platform and filesystem, but only sees refs
 // that are renamed into place, as git and GoGitRepo write them: a ref
 // rewritten in place, as released go-git does, leaves its directory's mtime
 // unchanged.
-func NewPollSource(repo *GoGitRepo, period time.Duration) ChangeSource {
-	return pollSource{gitDir: repo.path, period: period}
+func NewPollSource(gitDir string, period time.Duration) ChangeSource {
+	return pollSource{gitDir: gitDir, period: period}
 }
 
-// NewAutoSource returns a source watching the refs of repo where watching
+// NewAutoSource returns a source watching the refs in gitDir where watching
 // works, see NewWatchSource, and polling them every pollPeriod otherwise, see
 // NewPollSource. A watch failing, when subscribing or later on, falls back to
 // polling for the life of the subscription.
-func NewAutoSource(repo *GoGitRepo, pollPeriod time.Duration) ChangeSource {
+func NewAutoSource(gitDir string, pollPeriod time.Duration) ChangeSource {
 	return autoSource{
-		watch:    watchSource{gitDir: repo.path},
-		poll:     pollSource{gitDir: repo.path, period: pollPeriod},
-		canWatch: canWatch(repo.path),
+		watch:    watchSource{gitDir: gitDir},
+		poll:     pollSource{gitDir: gitDir, period: pollPeriod},
+		canWatch: canWatch(gitDir),
 	}
 }
 

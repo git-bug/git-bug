@@ -171,7 +171,7 @@ func TestWatchSource(t *testing.T) {
 
 	subscribe := func(t *testing.T, repo *GoGitRepo) <-chan Change {
 		t.Helper()
-		ch, err := NewWatchSource(repo).Subscribe(t.Context(), []string{"bugs", "identities"})
+		ch, err := NewWatchSource(repo.path).Subscribe(t.Context(), []string{"bugs", "identities"})
 		require.NoError(t, err)
 		return ch
 	}
@@ -266,7 +266,7 @@ func TestWatchSource(t *testing.T) {
 	t.Run("closes when ctx is done", func(t *testing.T) {
 		repo, _ := newWatchedRepo(t)
 		ctx, cancel := context.WithCancel(t.Context())
-		ch, err := NewWatchSource(repo).Subscribe(ctx, []string{"bugs"})
+		ch, err := NewWatchSource(repo.path).Subscribe(ctx, []string{"bugs"})
 		require.NoError(t, err)
 		cancel()
 		for range ch {
@@ -298,7 +298,7 @@ func TestPollSource(t *testing.T) {
 	}
 	subscribe := func(t *testing.T, repo *GoGitRepo) <-chan Change {
 		t.Helper()
-		ch, err := NewPollSource(repo, period).Subscribe(t.Context(), []string{"bugs", "identities"})
+		ch, err := NewPollSource(repo.path, period).Subscribe(t.Context(), []string{"bugs", "identities"})
 		require.NoError(t, err)
 		return ch
 	}

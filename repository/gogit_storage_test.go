@@ -29,9 +29,8 @@ func setupPrimedRepo(t *testing.T) (*GoGitRepo, string) {
 	t.Helper()
 
 	dir := t.TempDir()
-	repo, err := InitGoGitRepo(dir, namespace)
+	repo, err := InitGoGitRepo(dir)
 	require.NoError(t, err)
-	t.Cleanup(func() { _ = repo.Close() })
 
 	h, err := repo.StoreData([]byte("already packed"))
 	require.NoError(t, err)
@@ -220,7 +219,7 @@ func TestGoGitStorage(t *testing.T) {
 			repo, _ := setupPrimedRepo(t)
 			src := setupSource(t)
 			runGit(t, src, "update-ref", "refs/bugs/b1", "main")
-			require.NoError(t, repo.Config().Update(func(f *gitconfig.File) error {
+			require.NoError(t, NewGitConfig(gitconfig.Env{GitDir: repo.path}).Update(func(f *gitconfig.File) error {
 				return errors.Join(
 					f.Set("remote.src.url", src),
 					f.Set("remote.src.fetch", "+refs/heads/*:refs/remotes/src/*"),

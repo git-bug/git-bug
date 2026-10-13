@@ -20,17 +20,17 @@ const namespace = "git-bug"
 
 var _ Repo = &GoGitRepo{}
 
-// GoGitRepo is a GoGitRepo created for a test.
+// GoGitRepo is a Repo on a GoGitRepo, created for a test.
 type GoGitRepo struct {
-	*repository.GoGitRepo
+	*repository.ComposedRepo
 
 	// GitDir is the git directory of the repository, to use it as a remote.
 	GitDir string
 }
 
-// NewGoGitRepo creates a GoGitRepo in a directory removed with the test. It
-// doesn't touch the configuration or the keyring of the user or the system,
-// and has a git user set.
+// NewGoGitRepo creates a Repo on a GoGitRepo in a directory removed with the
+// test. It doesn't touch the configuration or the keyring of the user or the
+// system, and has a git user set.
 func NewGoGitRepo(t testing.TB, bare bool) *GoGitRepo {
 	t.Helper()
 
@@ -39,20 +39,14 @@ func NewGoGitRepo(t testing.TB, bare bool) *GoGitRepo {
 	if bare {
 		create, gitDir = repository.InitBareGoGitRepo, dir
 	}
-	repo, err := create(dir, namespace,
-		repository.WithConfigEnv(gitconfig.Env{
-			GlobalConfig: []string{filepath.Join(t.TempDir(), ".gitconfig")},
-		}),
-		repository.WithKeyring(keyring.NewArrayKeyring(nil)),
-	)
+	git, err := create(dir)
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		if err := repo.Close(); err != nil {
-			t.Error(err)
-		}
-	})
 
-	err = repo.Config().Update(func(f *gitconfig.File) error {
+	config := repository.NewGitConfig(gitconfig.Env{
+		GitDir:       gitDir,
+		GlobalConfig: []string{filepath.Join(t.TempDir(), ".gitconfig")},
+	})
+	err = config.Update(func(f *gitconfig.File) error {
 		return errors.Join(
 			f.Set("user.name", "testuser"),
 			f.Set("user.email", "testuser@example.com"),
@@ -60,7 +54,24 @@ func NewGoGitRepo(t testing.TB, bare bool) *GoGitRepo {
 	})
 	require.NoError(t, err)
 
-	return &GoGitRepo{GoGitRepo: repo, GitDir: gitDir}
+	storage := repository.NewLocalStorage(filepath.Join(gitDir, namespace))
+
+	repo := &repository.ComposedRepo{
+		RepoConfig:  repository.NewRepoConfig(config),
+		RepoKeyring: repository.NewRepoKeyring(keyring.NewArrayKeyring(nil)),
+		RepoStorage: repository.NewRepoStorage(storage),
+		RepoIndex:   repository.NewBleveIndexes(filepath.Join(storage.Root(), "indexes")),
+		RepoData:    git,
+		RepoBrowse:  git,
+		RepoClock:   repository.NewPersistedClocks(storage),
+	}
+	t.Cleanup(func() {
+		if err := repo.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	return &GoGitRepo{ComposedRepo: repo, GitDir: gitDir}
 }
 
 // SetBranch points the branch name to commit, creating it if needed.

@@ -17,10 +17,16 @@ func main() {
 		panic(err)
 	}
 
-	repo, err := repository.OpenGoGitRepo(dir, gitBugNamespace)
+	gitDir, err := repository.FindGitDir(dir)
 	if err != nil {
 		panic(err)
 	}
+
+	repo, err := repository.OpenDefault(gitDir, gitBugNamespace)
+	if err != nil {
+		panic(err)
+	}
+	defer repo.Close()
 
 	rb.CommitRandomBugs(repo, rb.DefaultOptions())
 }
