@@ -18,21 +18,33 @@ import (
 // LoadRepo is a pre-run function that load the repository for use in a command
 func LoadRepo(env *Env) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("unable to get the current working directory: %q", err)
-		}
-
-		env.Repo, err = repository.OpenGoGitRepo(cwd, gitBugNamespace)
-		if errors.Is(err, repository.ErrNotARepo) {
-			return fmt.Errorf("%s must be run from within a git Repo", RootCommandName)
-		}
-		if err != nil {
-			return err
-		}
-
-		return nil
+		_, err := loadRepo(env)
+		return err
 	}
+}
+
+// loadRepo loads the repository of the current directory in env.Repo, and
+// returns its git directory.
+func loadRepo(env *Env) (string, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("unable to get the current working directory: %q", err)
+	}
+
+	gitDir, err := repository.FindGitDir(cwd)
+	if errors.Is(err, repository.ErrNotARepo) {
+		return "", fmt.Errorf("%s must be run from within a git Repo", RootCommandName)
+	}
+	if err != nil {
+		return "", err
+	}
+
+	env.Repo, err = repository.OpenDefault(gitDir, gitBugNamespace)
+	if err != nil {
+		return "", err
+	}
+
+	return gitDir, nil
 }
 
 // LoadOption configures LoadBackend.
@@ -73,14 +85,14 @@ func LoadBackend(env *Env, opts ...LoadOption) func(*cobra.Command, []string) er
 	}
 
 	return func(cmd *cobra.Command, args []string) error {
-		err := LoadRepo(env)(cmd, args)
+		gitDir, err := loadRepo(env)
 		if err != nil {
 			return err
 		}
 
 		var source repository.ChangeSource
 		if o.followChanges {
-			source, err = changeSource(env)
+			source, err = changeSource(env, gitDir)
 			if err != nil {
 				return err
 			}
@@ -165,13 +177,14 @@ const changesPollPeriod = 5 * time.Second
 const changesBackstopPeriod = time.Minute
 
 // changeSource returns the source a long-running command follows the changes
-// made outside with, as configured in git-bug.changes.notifier:
+// made outside with, to the repository of the git directory gitDir, as
+// configured in git-bug.changes.notifier:
 //   - auto (the default), watch or poll: that notifier, backed by a periodic
 //     comparison of every ref, the one source that can't miss a change,
 //   - periodic: that periodic comparison alone,
 //   - none: no source at all, nil, for a repository only written through this
 //     process.
-func changeSource(env *Env) (repository.ChangeSource, error) {
+func changeSource(env *Env, gitDir string) (repository.ChangeSource, error) {
 	cfg, err := env.Repo.Config().Read()
 	if err != nil {
 		return nil, err
@@ -190,19 +203,13 @@ func changeSource(env *Env) (repository.ChangeSource, error) {
 		return nil, fmt.Errorf("invalid %s %q: expected auto, watch, poll, periodic or none", changesNotifierConfigKey, notifier)
 	}
 
-	// the notifiers need the git directory
-	repo, ok := env.Repo.(*repository.GoGitRepo)
-	if !ok {
-		return backstop, nil
-	}
-
 	switch notifier {
 	case "auto":
-		return repository.Merge(repository.NewAutoSource(repo, changesPollPeriod), backstop), nil
+		return repository.Merge(repository.NewAutoSource(gitDir, changesPollPeriod), backstop), nil
 	case "watch":
-		return repository.Merge(repository.NewWatchSource(repo), backstop), nil
+		return repository.Merge(repository.NewWatchSource(gitDir), backstop), nil
 	default: // poll
-		return repository.Merge(repository.NewPollSource(repo, changesPollPeriod), backstop), nil
+		return repository.Merge(repository.NewPollSource(gitDir, changesPollPeriod), backstop), nil
 	}
 }
 

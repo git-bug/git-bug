@@ -227,7 +227,7 @@ func promptToken(baseUrl string) (*auth.Token, error) {
 	return token, nil
 }
 
-func promptProjectURL(repo repository.RepoCommon, baseUrl string) (string, error) {
+func promptProjectURL(repo repository.RepoConfig, baseUrl string) (string, error) {
 	validRemotes, err := getValidGitlabRemoteURLs(repo, baseUrl)
 	if err != nil {
 		return "", err
@@ -255,7 +255,7 @@ func getProjectPath(baseUrl, projectUrl string) (string, error) {
 	return objectUrl.Path[1:], nil
 }
 
-func getValidGitlabRemoteURLs(repo repository.RepoCommon, baseUrl string) ([]string, error) {
+func getValidGitlabRemoteURLs(repo repository.RepoConfig, baseUrl string) ([]string, error) {
 	remotes, err := repo.GetRemotes()
 	if err != nil {
 		return nil, err

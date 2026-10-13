@@ -54,7 +54,7 @@ func (s *sharedEntity[SnapT, OpT]) state() (SnapT, repository.Hash) {
 // landed on the base a view compiled against, that view's snapshot is the new
 // committed state and could be taken as is; otherwise, the previous snapshot could
 // be cloned and the new operations applied to it. Same for Repair's incremental path.
-func (s *sharedEntity[SnapT, OpT]) CommitOperations(repo repository.ClockedRepo, ops []OpT) error {
+func (s *sharedEntity[SnapT, OpT]) CommitOperations(repo repository.Repo, ops []OpT) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	err := s.Tracked.CommitOperations(repo, ops)
@@ -66,7 +66,7 @@ func (s *sharedEntity[SnapT, OpT]) CommitOperations(repo repository.ClockedRepo,
 
 // Repair reloads the committed state from the repository, see dag.Tracked. The
 // memoized snapshot is rebuilt on the next read.
-func (s *sharedEntity[SnapT, OpT]) Repair(repo repository.ClockedRepo, resolvers entity.Resolvers) error {
+func (s *sharedEntity[SnapT, OpT]) Repair(repo repository.Repo, resolvers entity.Resolvers) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.snap = nil

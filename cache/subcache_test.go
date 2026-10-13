@@ -29,7 +29,7 @@ import (
 
 // requireDerivedBuiltFromRefs checks that the cache and the index recorded, for
 // every entity, the commit its reference points to, and nothing else.
-func requireDerivedBuiltFromRefs(t *testing.T, repo repository.ClockedRepo, c *RepoCache) {
+func requireDerivedBuiltFromRefs(t *testing.T, repo repository.Repo, c *RepoCache) {
 	t.Helper()
 
 	check := func(namespace string, builtFrom map[entity.Id]repository.Hash, excerpts int) {
@@ -80,7 +80,7 @@ func lenComments(t *testing.T, c *RepoCache, id entity.Id) int {
 }
 
 // newTestCacheWithUser opens a cache on repo, with a user identity set.
-func newTestCacheWithUser(t testing.TB, repo repository.ClockedRepo) (*RepoCache, *IdentityCache) {
+func newTestCacheWithUser(t testing.TB, repo repository.Repo) (*RepoCache, *IdentityCache) {
 	t.Helper()
 	c := createTestRepoCacheNoEvents(t, repo)
 	rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
@@ -91,12 +91,12 @@ func newTestCacheWithUser(t testing.TB, repo repository.ClockedRepo) (*RepoCache
 
 // countingRepo counts the index batches applied through it.
 type countingRepo struct {
-	repository.ClockedRepo
+	repository.Repo
 	batches int
 }
 
 func (r *countingRepo) GetIndex(name string) (repository.Index, error) {
-	index, err := r.ClockedRepo.GetIndex(name)
+	index, err := r.Repo.GetIndex(name)
 	if err != nil {
 		return nil, err
 	}
@@ -125,12 +125,12 @@ func (b countingBatch) Apply() error {
 // unreadableRecordRepo has the index record fail to read, until the index is
 // cleared.
 type unreadableRecordRepo struct {
-	repository.ClockedRepo
+	repository.Repo
 	unreadable bool
 }
 
 func (r *unreadableRecordRepo) GetIndex(name string) (repository.Index, error) {
-	index, err := r.ClockedRepo.GetIndex(name)
+	index, err := r.Repo.GetIndex(name)
 	if err != nil {
 		return nil, err
 	}
@@ -327,16 +327,16 @@ func TestSubCacheDerived(t *testing.T) {
 	counted := func(sc *RepoCacheBug) (reads *int, refreshes *int, batches *int) {
 		reads, refreshes = new(int), new(int)
 		read := sc.actions.ReadWithResolver
-		sc.actions.ReadWithResolver = func(repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (*sharedBug, error) {
+		sc.actions.ReadWithResolver = func(repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (*sharedBug, error) {
 			*reads++
 			return read(repo, resolvers, id)
 		}
 		refresh := sc.actions.Refresh
-		sc.actions.Refresh = func(repo repository.ClockedRepo, resolvers entity.Resolvers, shared *sharedBug) (*sharedBug, error) {
+		sc.actions.Refresh = func(repo repository.Repo, resolvers entity.Resolvers, shared *sharedBug) (*sharedBug, error) {
 			*refreshes++
 			return refresh(repo, resolvers, shared)
 		}
-		repo := &countingRepo{ClockedRepo: sc.repo}
+		repo := &countingRepo{Repo: sc.repo}
 		sc.repo = repo
 		return reads, refreshes, &repo.batches
 	}
@@ -627,7 +627,7 @@ func TestSubCacheDerived(t *testing.T) {
 		b2, _, err := c.Bugs().New("title", "markersecond")
 		require.NoError(t, err)
 
-		broken := &unreadableRecordRepo{ClockedRepo: c.bugs.repo, unreadable: true}
+		broken := &unreadableRecordRepo{Repo: c.bugs.repo, unreadable: true}
 		c.bugs.repo = broken
 
 		require.NoError(t, c.bugs.sync(b1.Id()))
@@ -947,12 +947,12 @@ func TestSubCacheWriteNeverTorn(t *testing.T) {
 
 // listHookRepo calls onList, if set, each time the bug refs are listed.
 type listHookRepo struct {
-	repository.ClockedRepo
+	repository.Repo
 	onList func() error
 }
 
 func (r *listHookRepo) ListRefs(namespace string) (map[string]repository.Hash, error) {
-	refs, err := r.ClockedRepo.ListRefs(namespace)
+	refs, err := r.Repo.ListRefs(namespace)
 	if err == nil && namespace == bug.Namespace && r.onList != nil {
 		err = r.onList()
 	}
@@ -1000,7 +1000,7 @@ func (failingSource) Subscribe(context.Context, []string) (<-chan repository.Cha
 
 func TestSubCacheWorker(t *testing.T) {
 	// open opens a cache on repo following source, with a user identity set
-	open := func(t *testing.T, repo repository.ClockedRepo, source repository.ChangeSource) (*RepoCache, *IdentityCache) {
+	open := func(t *testing.T, repo repository.Repo, source repository.ChangeSource) (*RepoCache, *IdentityCache) {
 		t.Helper()
 		c, err := NewRepoCacheNoEvents(repo, source)
 		require.NoError(t, err)
@@ -1015,16 +1015,16 @@ func TestSubCacheWorker(t *testing.T) {
 	// listing of the bug refs. Run in a synctest bubble, time is fake, and
 	// synctest.Wait returns once every goroutine of the bubble, the workers
 	// included, is idle.
-	setup := func(t *testing.T) (repository.ClockedRepo, *RepoCache, *IdentityCache, *listHookRepo, *chanSource) {
+	setup := func(t *testing.T) (repository.Repo, *RepoCache, *IdentityCache, *listHookRepo, *chanSource) {
 		t.Helper()
 		repo := repository.NewMockRepo()
-		hook := &listHookRepo{ClockedRepo: repo}
+		hook := &listHookRepo{Repo: repo}
 		source := newChanSource()
 		c, rene := open(t, hook, source)
 		synctest.Wait()
 		return repo, c, rene, hook, source
 	}
-	createOutside := func(t *testing.T, repo repository.ClockedRepo, author identity.Interface) entity.Id {
+	createOutside := func(t *testing.T, repo repository.Repo, author identity.Interface) entity.Id {
 		t.Helper()
 		b, _, err := bug.Create(author, time.Now().Unix(), "title", "message", nil, nil)
 		require.NoError(t, err)
@@ -1274,21 +1274,15 @@ func TestSubCacheWorker(t *testing.T) {
 	// with a real repository and its own sources, outside of a bubble as bleve
 	// and the sources run goroutines of their own: a bug modified outside of
 	// the cache shows up with nothing reading
-	for name, source := range map[string]func(*repository.GoGitRepo) repository.ChangeSource{
+	for name, source := range map[string]func(gitDir string) repository.ChangeSource{
 		"watch": repository.NewWatchSource,
-		"poll": func(repo *repository.GoGitRepo) repository.ChangeSource {
-			return repository.NewPollSource(repo, 50*time.Millisecond)
+		"poll": func(gitDir string) repository.ChangeSource {
+			return repository.NewPollSource(gitDir, 50*time.Millisecond)
 		},
 	} {
 		t.Run("a bug modified outside with GoGitRepo, "+name, func(t *testing.T) {
 			repo := repotest.NewGoGitRepo(t, false)
-			// the test repo wraps its GoGitRepo: the source gets its own,
-			// opened on the same repository, found from its local storage
-			// (.git/git-bug)
-			watched, err := repository.OpenGoGitRepo(filepath.Dir(repo.LocalStorage().Root()), "git-bug")
-			require.NoError(t, err)
-			t.Cleanup(func() { require.NoError(t, watched.Close()) })
-			c, rene := open(t, repo, source(watched))
+			c, rene := open(t, repo, source(repo.GitDir))
 			b, _, err := c.Bugs().New("title", "message")
 			require.NoError(t, err)
 

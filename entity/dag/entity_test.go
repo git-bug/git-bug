@@ -153,7 +153,7 @@ func TestLastCommit(t *testing.T) {
 
 // failingCommitRepo fails the failAt-th call to StoreCommit
 type failingCommitRepo struct {
-	repository.ClockedRepo
+	repository.Repo
 	failAt int
 	calls  int
 }
@@ -163,7 +163,7 @@ func (r *failingCommitRepo) StoreCommit(treeHash repository.Hash, parents ...rep
 	if r.calls == r.failAt {
 		return "", errors.New("store commit failed")
 	}
-	return r.ClockedRepo.StoreCommit(treeHash, parents...)
+	return r.Repo.StoreCommit(treeHash, parents...)
 }
 
 func TestCommitFailureMidway(t *testing.T) {
@@ -183,7 +183,7 @@ func TestCommitFailureMidway(t *testing.T) {
 	expected.Append(op1)
 	expected.Append(op2)
 
-	failing := &failingCommitRepo{ClockedRepo: repo, failAt: 2}
+	failing := &failingCommitRepo{Repo: repo, failAt: 2}
 	require.Error(t, entity.Commit(failing))
 	require.Equal(t, 2, failing.calls)
 
@@ -257,13 +257,13 @@ func TestReadMergeWithAncestorParent(t *testing.T) {
 
 // countingRepo counts the calls to ReadCommit
 type countingRepo struct {
-	repository.ClockedRepo
+	repository.Repo
 	reads int
 }
 
 func (r *countingRepo) ReadCommit(hash repository.Hash) (repository.Commit, error) {
 	r.reads++
-	return r.ClockedRepo.ReadCommit(hash)
+	return r.Repo.ReadCommit(hash)
 }
 
 func TestCommitOperations(t *testing.T) {
@@ -287,7 +287,7 @@ func TestCommitOperations(t *testing.T) {
 // or write-through operations can be committed on top of it.
 func TestRepair(t *testing.T) {
 	// setup returns a stale copy of an entity, and the up-to-date one
-	setup := func(t *testing.T) (repository.ClockedRepo, entity.Resolvers, Definition, *Foo, *Foo, identity.Interface, identity.Interface) {
+	setup := func(t *testing.T) (repository.Repo, entity.Resolvers, Definition, *Foo, *Foo, identity.Interface, identity.Interface) {
 		repo, id1, id2, resolver, def := makeTestContext()
 
 		e := wrapper(New(def))
@@ -317,7 +317,7 @@ func TestRepair(t *testing.T) {
 	t.Run("nothing moved", func(t *testing.T) {
 		repo, resolver, _, _, moved, _, _ := setup(t)
 
-		counting := &countingRepo{ClockedRepo: repo}
+		counting := &countingRepo{Repo: repo}
 		requireUnchanged(t, moved, func() {
 			require.NoError(t, moved.Repair(counting, resolver))
 		})
@@ -383,7 +383,7 @@ func TestRepair(t *testing.T) {
 		moved.Append(newOp2(id2, "c"))
 		require.NoError(t, moved.Commit(repo))
 
-		counting := &countingRepo{ClockedRepo: repo}
+		counting := &countingRepo{Repo: repo}
 		require.NoError(t, stale.Repair(counting, resolver))
 		require.Equal(t, 4, counting.reads)
 
@@ -414,7 +414,7 @@ func TestRepair(t *testing.T) {
 		require.NoError(t, repo.UpdateRef(def.Namespace, moved.Id().String(), moved.LastCommit(), merge))
 
 		// the merge, and both branches
-		counting := &countingRepo{ClockedRepo: repo}
+		counting := &countingRepo{Repo: repo}
 		require.NoError(t, stale.Repair(counting, resolver))
 		require.Equal(t, 3, counting.reads)
 
@@ -576,7 +576,7 @@ func assertEqualEntities(t *testing.T, a, b *Entity) {
 // given number of commits.
 func BenchmarkRead(b *testing.B) {
 	type history struct {
-		repo      repository.ClockedRepo
+		repo      repository.Repo
 		resolvers entity.Resolvers
 		def       Definition
 		head      repository.Hash

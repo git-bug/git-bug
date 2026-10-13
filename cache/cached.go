@@ -38,7 +38,7 @@ type cloneable[SnapT any] interface {
 // not a transaction: two operations created concurrently on the same view each
 // see the state before the other, as they would on two views.
 type CachedEntityBase[SnapT cloneable[SnapT], OpT dag.OperationWithApply[SnapT]] struct {
-	repo            repository.ClockedRepo
+	repo            repository.Repo
 	resolvers       func() entity.Resolvers
 	onCommit        func() error // called after each commit
 	getUserIdentity getUserIdentityFunc

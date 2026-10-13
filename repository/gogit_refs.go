@@ -127,7 +127,7 @@ func (repo *GoGitRepo) RemoveRef(namespace string, key string) error {
 func (repo *GoGitRepo) lockRef(path string, content []byte) (string, error) {
 	lockPath := path + refLockSuffix
 
-	tmpPath, err := writeTempFile(repo.localStorage.Root(), content)
+	tmpPath, err := writeTempFile(repo.path, content)
 	if err != nil {
 		return "", err
 	}
@@ -178,8 +178,6 @@ func (repo *GoGitRepo) lockRef(path string, content []byte) (string, error) {
 // The file becomes the ref, so it is created with the permissions of a ref
 // created directly (0666 less the umask), not the 0600 of os.CreateTemp.
 func writeTempFile(dir string, content []byte) (string, error) {
-	// the directory is only missing before the first write to the local storage
-	madeDir := false
 	// a random 64-bit name practically never collides: running out of
 	// attempts means the filesystem rejects every name, not bad luck
 	const attempts = 100
@@ -187,13 +185,6 @@ func writeTempFile(dir string, content []byte) (string, error) {
 	for range attempts {
 		path := filepath.Join(dir, fmt.Sprintf("ref-%016x.tmp", rand.Uint64()))
 		err = createFileExclusive(path, content)
-		if errors.Is(err, fs.ErrNotExist) && !madeDir {
-			madeDir = true
-			if err := os.MkdirAll(dir, 0777); err != nil {
-				return "", err
-			}
-			continue
-		}
 		if errors.Is(err, fs.ErrExist) {
 			continue
 		}

@@ -58,7 +58,7 @@ func NewIdentityFull(repo repository.RepoClock, name string, email string, login
 
 // NewFromGitUser will query the repository for user detail and
 // build the corresponding Identity
-func NewFromGitUser(repo repository.ClockedRepo) (*Identity, error) {
+func NewFromGitUser(repo repository.Repo) (*Identity, error) {
 	name, err := repo.GetUserName()
 	if err != nil {
 		return nil, err
@@ -195,21 +195,21 @@ func ListLocalIds(repo repository.Repo) ([]entity.Id, error) {
 }
 
 // ReadAll read and parse all local Identity
-func ReadAll(repo repository.ClockedRepo) <-chan entity.StreamedEntity[*Identity] {
+func ReadAll(repo repository.Repo) <-chan entity.StreamedEntity[*Identity] {
 	return readAll(repo, func() (map[string]repository.Hash, error) {
 		return repo.ListRefs(Namespace)
 	})
 }
 
 // ReadAllTracking read and parse all Identity in the tracking refs of a remote
-func ReadAllTracking(repo repository.ClockedRepo, remote string) <-chan entity.StreamedEntity[*Identity] {
+func ReadAllTracking(repo repository.Repo, remote string) <-chan entity.StreamedEntity[*Identity] {
 	return readAll(repo, func() (map[string]repository.Hash, error) {
 		return repo.ListTrackingRefs(remote, Namespace)
 	})
 }
 
 // readAll read and parse all the identities listed by listRefs
-func readAll(repo repository.ClockedRepo, listRefs func() (map[string]repository.Hash, error)) <-chan entity.StreamedEntity[*Identity] {
+func readAll(repo repository.Repo, listRefs func() (map[string]repository.Hash, error)) <-chan entity.StreamedEntity[*Identity] {
 	out := make(chan entity.StreamedEntity[*Identity])
 
 	go func() {
@@ -313,7 +313,7 @@ func (i *Identity) Mutate(repo repository.RepoClock, f func(orig *Mutator)) erro
 // The Git reference is only moved if it still points to the last committed version,
 // otherwise repository.ErrRefChanged is returned. On any error, the new versions
 // are left pending.
-func (i *Identity) Commit(repo repository.ClockedRepo) error {
+func (i *Identity) Commit(repo repository.Repo) error {
 	if !i.NeedCommit() {
 		return fmt.Errorf("can't commit an identity with no pending version")
 	}
@@ -374,7 +374,7 @@ func (i *Identity) Commit(repo repository.ClockedRepo) error {
 	return nil
 }
 
-func (i *Identity) CommitAsNeeded(repo repository.ClockedRepo) error {
+func (i *Identity) CommitAsNeeded(repo repository.Repo) error {
 	if !i.NeedCommit() {
 		return nil
 	}

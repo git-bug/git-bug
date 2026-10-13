@@ -10,7 +10,7 @@ type RepoCacheIdentity struct {
 	*SubCache[*identity.Identity, *IdentityExcerpt, *IdentityCache]
 }
 
-func NewRepoCacheIdentity(repo repository.ClockedRepo,
+func NewRepoCacheIdentity(repo repository.Repo,
 	resolvers func() entity.Resolvers,
 	getUserIdentity getUserIdentityFunc) *RepoCacheIdentity {
 
@@ -37,19 +37,19 @@ func NewRepoCacheIdentity(repo repository.ClockedRepo,
 	//   resolved before keeps the previous copy until it is resolved again.
 
 	actions := Actions[*identity.Identity]{
-		ReadWithResolver: func(repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (*identity.Identity, error) {
+		ReadWithResolver: func(repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (*identity.Identity, error) {
 			return identity.Read(repo, id)
 		},
-		Refresh: func(repo repository.ClockedRepo, resolvers entity.Resolvers, i *identity.Identity) (*identity.Identity, error) {
+		Refresh: func(repo repository.Repo, resolvers entity.Resolvers, i *identity.Identity) (*identity.Identity, error) {
 			return identity.Read(repo, i.Id())
 		},
 		Remove:    identity.Remove,
 		RemoveAll: identity.RemoveAll,
-		MergeAll: func(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult {
+		MergeAll: func(repo repository.Repo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult {
 			return identity.MergeAll(repo, remote)
 		},
 		// identities carry no clock of their own, they record the others'
-		EnsureClocks: func(repo repository.ClockedRepo) error { return nil },
+		EnsureClocks: func(repo repository.Repo) error { return nil },
 	}
 
 	sc := NewSubCache[*identity.Identity, *IdentityExcerpt, *IdentityCache](

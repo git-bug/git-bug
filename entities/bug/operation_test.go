@@ -144,7 +144,7 @@ func TestMetadata(t *testing.T) {
 func TestID(t *testing.T) {
 	repo := repotest.NewGoGitRepo(t, false)
 
-	repos := []repository.ClockedRepo{
+	repos := []repository.Repo{
 		repository.NewMockRepo(),
 		repo,
 	}

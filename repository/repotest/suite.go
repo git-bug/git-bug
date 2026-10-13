@@ -20,10 +20,10 @@ import (
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
-// Repo is a repository under test: a ClockedRepo whose branches and tags can be
+// Repo is a repository under test: a Repo whose branches and tags can be
 // set, to build the fixtures of RepoBrowseTest.
 type Repo interface {
-	repository.ClockedRepo
+	repository.Repo
 
 	// SetBranch points the branch name to commit, creating it if needed.
 	SetBranch(name string, commit repository.Hash) error

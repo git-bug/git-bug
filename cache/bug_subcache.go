@@ -24,7 +24,7 @@ type RepoCacheBug struct {
 	*SubCache[*sharedBug, *BugExcerpt, *BugCache]
 }
 
-func NewRepoCacheBug(repo repository.ClockedRepo,
+func NewRepoCacheBug(repo repository.Repo,
 	resolvers func() entity.Resolvers,
 	getUserIdentity getUserIdentityFunc) *RepoCacheBug {
 
@@ -43,14 +43,14 @@ func NewRepoCacheBug(repo repository.ClockedRepo,
 	}
 
 	actions := Actions[*sharedBug]{
-		ReadWithResolver: func(repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (*sharedBug, error) {
+		ReadWithResolver: func(repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (*sharedBug, error) {
 			b, err := bug.ReadWithResolver(repo, resolvers, id)
 			if err != nil {
 				return nil, err
 			}
 			return newSharedBug(b), nil
 		},
-		Refresh: func(repo repository.ClockedRepo, resolvers entity.Resolvers, shared *sharedBug) (*sharedBug, error) {
+		Refresh: func(repo repository.Repo, resolvers entity.Resolvers, shared *sharedBug) (*sharedBug, error) {
 			return shared, shared.Repair(repo, resolvers)
 		},
 		Remove:       bug.Remove,

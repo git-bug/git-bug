@@ -156,6 +156,7 @@ func TestGithubPushPull(t *testing.T) {
 
 	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
+	defer backend.Close()
 
 	// set author identity
 	login := "identity-test"
@@ -167,8 +168,6 @@ func TestGithubPushPull(t *testing.T) {
 
 	err = backend.SetUserIdentity(author)
 	require.NoError(t, err)
-
-	defer backend.Close()
 
 	// Setup token + cleanup
 	token := auth.NewToken(target, envToken)

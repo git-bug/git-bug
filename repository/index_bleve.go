@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"unicode/utf8"
@@ -15,6 +16,54 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 )
 
+var _ RepoIndex = &bleveIndexes{}
+
+// bleveIndexes are the bleve indexes in a directory, one per name.
+type bleveIndexes struct {
+	root string
+
+	mu      sync.Mutex
+	indexes map[string]Index
+}
+
+// NewBleveIndexes returns the bleve indexes in the directory at root.
+func NewBleveIndexes(root string) RepoIndex {
+	return &bleveIndexes{
+		root:    root,
+		indexes: make(map[string]Index),
+	}
+}
+
+func (b *bleveIndexes) GetIndex(name string) (Index, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if index, ok := b.indexes[name]; ok {
+		return index, nil
+	}
+
+	index, err := openBleveIndex(filepath.Join(b.root, name))
+	if err == nil {
+		b.indexes[name] = index
+	}
+	return index, err
+}
+
+func (b *bleveIndexes) Close() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	var firstErr error
+	for name, index := range b.indexes {
+		err := index.Close()
+		if err != nil && firstErr == nil {
+			firstErr = err
+		}
+		delete(b.indexes, name)
+	}
+	return firstErr
+}
+
 var _ Index = &bleveIndex{}
 
 type bleveIndex struct {
@@ -22,6 +71,9 @@ type bleveIndex struct {
 
 	mu    sync.RWMutex
 	index bleve.Index
+	// closed is set once index is closed, by Close or by a Clear that failed
+	// to make a new one: it can't be closed again.
+	closed bool
 }
 
 func openBleveIndex(path string) (*bleveIndex, error) {
@@ -268,22 +320,34 @@ func (b *bleveIndex) Clear() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	err := b.index.Close()
+	if !b.closed {
+		b.closed = true
+		err := b.index.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+	err := os.RemoveAll(b.path)
 	if err != nil {
 		return err
 	}
 
-	err = os.RemoveAll(b.path)
+	err = b.makeIndex()
 	if err != nil {
 		return err
 	}
-
-	return b.makeIndex()
+	b.closed = false
+	return nil
 }
 
 func (b *bleveIndex) Close() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
+	if b.closed {
+		return nil
+	}
+	b.closed = true
 	return b.index.Close()
 }

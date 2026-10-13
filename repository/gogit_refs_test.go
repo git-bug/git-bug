@@ -75,7 +75,7 @@ func requireNoLooseRef(t *testing.T, repo *GoGitRepo, namespace string, key stri
 // requireNoTempFiles checks that no update left its temporary file behind.
 func requireNoTempFiles(t *testing.T, repo *GoGitRepo) {
 	t.Helper()
-	tmp, err := filepath.Glob(filepath.Join(repo.localStorage.Root(), "ref-*.tmp"))
+	tmp, err := filepath.Glob(filepath.Join(repo.path, "ref-*.tmp"))
 	require.NoError(t, err)
 	require.Empty(t, tmp)
 }

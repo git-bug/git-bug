@@ -155,6 +155,7 @@ func TestGitlabPushPull(t *testing.T) {
 
 	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
+	defer backend.Close()
 
 	// set author identity
 	login := "test-identity"
@@ -166,8 +167,6 @@ func TestGitlabPushPull(t *testing.T) {
 
 	err = backend.SetUserIdentity(author)
 	require.NoError(t, err)
-
-	defer backend.Close()
 
 	token := auth.NewToken(target, envToken)
 	token.SetMetadata(auth.MetaKeyLogin, login)

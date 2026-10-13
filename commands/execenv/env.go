@@ -21,7 +21,7 @@ const gitBugNamespace = "git-bug"
 // Env is the environment of a command
 type Env struct {
 	Ctx     context.Context
-	Repo    repository.ClockedRepo
+	Repo    repository.Repo
 	Backend *cache.RepoCache
 	In      In
 	Out     Out

@@ -23,7 +23,8 @@ type Keyring interface {
 	Keys() ([]string, error)
 }
 
-func defaultKeyring() (Keyring, error) {
+// DefaultKeyring opens the keyring of the user, in their config directory.
+func DefaultKeyring() (Keyring, error) {
 	ucd, err := os.UserConfigDir()
 	if err != nil {
 		return nil, err
@@ -47,4 +48,20 @@ func defaultKeyring() (Keyring, error) {
 			return "git-bug", nil
 		},
 	})
+}
+
+var _ RepoKeyring = &repoKeyring{}
+
+type repoKeyring struct {
+	keyring Keyring
+}
+
+// NewRepoKeyring returns the RepoKeyring of keyring.
+func NewRepoKeyring(keyring Keyring) RepoKeyring {
+	return &repoKeyring{keyring: keyring}
+}
+
+// Keyring give access to a user-wide storage for secrets
+func (r *repoKeyring) Keyring() Keyring {
+	return r.keyring
 }

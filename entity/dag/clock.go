@@ -26,7 +26,7 @@ import (
 // for callers that need all the clocks right before anything is written: a
 // fresh clone has none, and an identity records every clock in each of its
 // versions.
-func EnsureClocks(def Definition, repo repository.ClockedRepo) error {
+func EnsureClocks(def Definition, repo repository.Repo) error {
 	for _, pattern := range []string{creationClockPattern, editClockPattern} {
 		usable, err := clockUsable(repo, fmt.Sprintf(pattern, def.Namespace))
 		if err != nil {
@@ -40,7 +40,7 @@ func EnsureClocks(def Definition, repo repository.ClockedRepo) error {
 }
 
 // clockUsable tells whether a clock exists and can issue times.
-func clockUsable(repo repository.ClockedRepo, name string) (bool, error) {
+func clockUsable(repo repository.Repo, name string) (bool, error) {
 	clock, err := repo.GetClock(name)
 	if errors.Is(err, lamport.ErrClockNotExist) {
 		return false, nil
@@ -69,7 +69,7 @@ func unusableClock(err error) bool {
 // witnessClock witnesses a time read from an entity. A clock that isn't usable
 // is left alone: raising it from this one entity would only make it look
 // complete, that's for rebuildClocks to do, from all of them.
-func witnessClock(repo repository.ClockedRepo, name string, time lamport.Time) error {
+func witnessClock(repo repository.Repo, name string, time lamport.Time) error {
 	err := repo.Witness(name, time)
 	if unusableClock(err) {
 		return nil
@@ -79,7 +79,7 @@ func witnessClock(repo repository.ClockedRepo, name string, time lamport.Time) e
 
 // incrementClock returns the next time of a clock, rebuilding it first if it
 // isn't usable.
-func incrementClock(def Definition, repo repository.ClockedRepo, pattern string) (lamport.Time, error) {
+func incrementClock(def Definition, repo repository.Repo, pattern string) (lamport.Time, error) {
 	name := fmt.Sprintf(pattern, def.Namespace)
 
 	time, err := repo.Increment(name)
@@ -98,7 +98,7 @@ func incrementClock(def Definition, repo repository.ClockedRepo, pattern string)
 // rebuildClocks creates the clocks of a definition again, from every entity of
 // its namespace. The entities are only scanned, not checked: see
 // readClockNoCheck.
-func rebuildClocks(def Definition, repo repository.ClockedRepo) error {
+func rebuildClocks(def Definition, repo repository.Repo) error {
 	createTime, editTime, err := readAllClocksNoCheck(def, repo)
 	if err != nil {
 		return err
@@ -116,7 +116,7 @@ func rebuildClocks(def Definition, repo repository.ClockedRepo) error {
 // raises the existing one to it. Another process can be rebuilding the same
 // clock: whichever creates it, the other's witness brings it to the highest of
 // the two.
-func rebuildClock(repo repository.ClockedRepo, name string, time lamport.Time) error {
+func rebuildClock(repo repository.Repo, name string, time lamport.Time) error {
 	// with no entity to witness, a clock starts from the beginning
 	time = max(time, 1)
 

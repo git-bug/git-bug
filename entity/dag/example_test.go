@@ -288,11 +288,11 @@ func (pc ProjectConfig) Compile() *Snapshot {
 }
 
 // Read is a helper to load a ProjectConfig from a Repository
-func Read(repo repository.ClockedRepo, id entity.Id) (*ProjectConfig, error) {
+func Read(repo repository.Repo, id entity.Id) (*ProjectConfig, error) {
 	return dag.Read(def, wrapper, repo, simpleResolvers(repo), id)
 }
 
-func simpleResolvers(repo repository.ClockedRepo) entity.Resolvers {
+func simpleResolvers(repo repository.Repo) entity.Resolvers {
 	// resolvers can look a bit complex or out of place here, but it's an important concept
 	// to allow caching and flexibility when constructing the final app.
 	return entity.Resolvers{
@@ -308,9 +308,9 @@ func Example_entity() {
 	// Let's start by defining two git repository and connecting them as remote
 	repoRenePath, _ := os.MkdirTemp("", "")
 	repoIsaacPath, _ := os.MkdirTemp("", "")
-	repoRene, _ := repository.InitGoGitRepo(repoRenePath, gitBugNamespace)
+	repoRene, _ := repository.InitDefault(repoRenePath, gitBugNamespace)
 	defer repoRene.Close()
-	repoIsaac, _ := repository.InitGoGitRepo(repoIsaacPath, gitBugNamespace)
+	repoIsaac, _ := repository.InitDefault(repoIsaacPath, gitBugNamespace)
 	defer repoIsaac.Close()
 	addRemote := func(repo repository.RepoConfig, name, url string) {
 		_ = repo.Config().Update(func(f *gitconfig.File) error {

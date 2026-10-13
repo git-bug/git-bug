@@ -44,11 +44,15 @@ that bugs are properly deduplicated in memory.
 The package `repository` implement the interaction with the git repository on
 disk.
 
-A series of interfaces (`RepoCommon`, `Repo` and `ClockedRepo`) define
-convenient for our usage access and manipulation methods for the data stored in
-git.
+The `Repo` interface is made of independent parts: the git data (`RepoData`,
+`RepoBrowse`), the configuration (`RepoConfig`), a keyring for secrets
+(`RepoKeyring`), a local storage (`RepoStorage`), Lamport clocks (`RepoClock`)
+and full-text search indexes (`RepoIndex`).
 
-Those interfaces are implemented by `GitRepo` as well as a mock for testing.
+`ComposedRepo` assembles a `Repo` from those parts. `OpenDefault` composes the
+ones git-bug uses: `GoGitRepo` for the git data, the git configuration, the
+user's keyring, and the storage, clocks and bleve indexes in `.git/git-bug`.
+Tests compose their own, see `repotest` and the mock repository.
 
 ## identity
 

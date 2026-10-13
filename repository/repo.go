@@ -23,44 +23,33 @@ var (
 	ErrRefChanged = errors.New("ref changed")
 )
 
-// Repo represents a source code repository.
+// Repo represents a source code repository. See ComposedRepo to assemble one
+// from its parts.
 type Repo interface {
 	RepoConfig
 	RepoKeyring
-	RepoCommon
 	RepoStorage
 	RepoIndex
 	RepoData
 	RepoBrowse
+	RepoClock
 
+	// Close closes every part of the repository that holds resources. The
+	// repository can't be used anymore afterward.
 	Close() error
 }
 
 type RepoCommonStorage interface {
-	RepoCommon
+	RepoConfig
 	RepoStorage
 }
 
-// ClockedRepo is a Repo that also has Lamport clocks
-type ClockedRepo interface {
-	Repo
-	RepoClock
-}
-
-// RepoConfig access the configuration of a repository
+// RepoConfig access the configuration of a repository, and the values of it
+// that git-bug uses.
 type RepoConfig interface {
 	// Config give access to the git configuration
 	Config() Config
-}
 
-// RepoKeyring give access to a user-wide storage for secrets
-type RepoKeyring interface {
-	// Keyring give access to a user-wide storage for secrets
-	Keyring() Keyring
-}
-
-// RepoCommon represent the common function we want all repos to implement
-type RepoCommon interface {
 	// GetUserName returns the name the user has used to configure git
 	GetUserName() (string, error)
 
@@ -72,6 +61,12 @@ type RepoCommon interface {
 
 	// GetRemotes returns the configured remotes repositories.
 	GetRemotes() (map[string]string, error)
+}
+
+// RepoKeyring give access to a user-wide storage for secrets
+type RepoKeyring interface {
+	// Keyring give access to a user-wide storage for secrets
+	Keyring() Keyring
 }
 
 type LocalStorage interface {
@@ -88,6 +83,9 @@ type RepoStorage interface {
 // RepoIndex gives access to full-text search indexes
 type RepoIndex interface {
 	GetIndex(name string) (Index, error)
+
+	// Close closes every index opened by GetIndex.
+	Close() error
 }
 
 // Index is a full-text search index. Each document records the commit it was

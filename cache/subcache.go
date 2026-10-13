@@ -40,14 +40,14 @@ type getUserIdentityFunc func() (*IdentityCache, error)
 // functions from this package, but right now identities are not using that framework.
 type Actions[SharedT Shared] struct {
 	// ReadWithResolver reads an entity from the repository
-	ReadWithResolver func(repo repository.ClockedRepo, resolvers entity.Resolvers, id entity.Id) (SharedT, error)
+	ReadWithResolver func(repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (SharedT, error)
 	// Refresh brings a loaded entity up to date with its reference, either in place
 	// or by returning a replacement, which the cache then holds instead
-	Refresh      func(repo repository.ClockedRepo, resolvers entity.Resolvers, shared SharedT) (SharedT, error)
-	Remove       func(repo repository.ClockedRepo, id entity.Id) error
-	RemoveAll    func(repo repository.ClockedRepo) error
-	MergeAll     func(repo repository.ClockedRepo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult
-	EnsureClocks func(repo repository.ClockedRepo) error
+	Refresh      func(repo repository.Repo, resolvers entity.Resolvers, shared SharedT) (SharedT, error)
+	Remove       func(repo repository.Repo, id entity.Id) error
+	RemoveAll    func(repo repository.Repo) error
+	MergeAll     func(repo repository.Repo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult
+	EnsureClocks func(repo repository.Repo) error
 }
 
 var _ cacheMgmt = &SubCache[Shared, Excerpt, entity.Resolved]{}
@@ -56,7 +56,7 @@ var _ cacheMgmt = &SubCache[Shared, Excerpt, entity.Resolved]{}
 // loaded copy of each entity in use, see Shared. Callers get views of that copy,
 // see Resolve.
 type SubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved] struct {
-	repo      repository.ClockedRepo
+	repo      repository.Repo
 	resolvers func() entity.Resolvers
 
 	getUserIdentity getUserIdentityFunc
@@ -112,7 +112,7 @@ type SubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved] struct {
 }
 
 func NewSubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved](
-	repo repository.ClockedRepo,
+	repo repository.Repo,
 	resolvers func() entity.Resolvers, getUserIdentity getUserIdentityFunc,
 	makeView func(shared SharedT, onCommit func() error) ViewT,
 	makeExcerpt func(SharedT) ExcerptT,

@@ -14,14 +14,14 @@ var _ identity.Interface = &IdentityCache{}
 // it mutates and commits is its own, and it doesn't follow later changes to the
 // loaded identity.
 type IdentityCache struct {
-	repo     repository.ClockedRepo
+	repo     repository.Repo
 	onCommit func() error // called after each commit
 
 	mu sync.Mutex
 	*identity.Identity
 }
 
-func NewIdentityCache(i *identity.Identity, repo repository.ClockedRepo, onCommit func() error) *IdentityCache {
+func NewIdentityCache(i *identity.Identity, repo repository.Repo, onCommit func() error) *IdentityCache {
 	return &IdentityCache{
 		repo:     repo,
 		onCommit: onCommit,
