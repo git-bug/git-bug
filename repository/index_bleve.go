@@ -67,7 +67,7 @@ var layoutVersionKey = []byte("git-bug:layout")
 var layoutVersion = []byte("1")
 
 func (b *bleveIndex) makeIndex() error {
-	err := os.MkdirAll(b.path, os.ModePerm)
+	err := os.MkdirAll(b.path, 0755)
 	if err != nil {
 		return err
 	}
