@@ -20,10 +20,11 @@ import (
 	"github.com/git-bug/git-bug/api/auth"
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 func TestGitFileHandlers(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	mrc := cache.NewMultiRepoCache()
 	t.Cleanup(func() { require.NoError(t, mrc.Close()) })

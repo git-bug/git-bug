@@ -16,7 +16,7 @@ import (
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity/dag"
-	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 func TestGitlabImport(t *testing.T) {
@@ -30,7 +30,7 @@ func TestGitlabImport(t *testing.T) {
 		t.Skip("Env var GITLAB_PROJECT_ID missing")
 	}
 
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)

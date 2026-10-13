@@ -8,6 +8,7 @@ import (
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
@@ -368,12 +369,12 @@ func TestJSON(t *testing.T) {
 }
 
 func TestIdentityRemove(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
-	remoteA := repository.CreateGoGitTestRepo(t, true)
-	remoteB := repository.CreateGoGitTestRepo(t, true)
+	repo := repotest.NewGoGitRepo(t, false)
+	remoteA := repotest.NewGoGitRepo(t, true)
+	remoteB := repotest.NewGoGitRepo(t, true)
 
-	repository.AddRemote(t, repo, "remoteA", remoteA.GetLocalRemote())
-	repository.AddRemote(t, repo, "remoteB", remoteB.GetLocalRemote())
+	repotest.AddRemote(t, repo, "remoteA", remoteA.GitDir)
+	repotest.AddRemote(t, repo, "remoteB", remoteB.GitDir)
 
 	// generate an identity for testing
 	rene, err := NewIdentity(repo, "René Descartes", "rene@descartes.fr")

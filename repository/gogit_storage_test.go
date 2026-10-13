@@ -1,12 +1,14 @@
 package repository
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
 	"testing"
 
+	"github.com/git-bug/gitconfig"
 	"github.com/go-git/go-billy/v5/osfs"
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -218,7 +220,12 @@ func TestGoGitStorage(t *testing.T) {
 			repo, _ := setupPrimedRepo(t)
 			src := setupSource(t)
 			runGit(t, src, "update-ref", "refs/bugs/b1", "main")
-			AddRemote(t, repo, "src", src)
+			require.NoError(t, repo.Config().Update(func(f *gitconfig.File) error {
+				return errors.Join(
+					f.Set("remote.src.url", src),
+					f.Set("remote.src.fetch", "+refs/heads/*:refs/remotes/src/*"),
+				)
+			}))
 			return repo, Hash(runGit(t, src, "rev-parse", "main"))
 		}
 

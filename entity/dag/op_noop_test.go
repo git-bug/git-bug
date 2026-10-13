@@ -3,17 +3,28 @@ package dag
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
-	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/stretchr/testify/require"
+
 	"github.com/git-bug/git-bug/entity"
 )
 
 func TestNoopSerialize(t *testing.T) {
-	SerializeRoundTripTest(t, func(raw json.RawMessage, resolver entity.Resolvers) (Operation, error) {
+	repo, rene, _, resolvers, def := makeTestContext()
+	def.OperationUnmarshaler = func(raw json.RawMessage, resolver entity.Resolvers) (Operation, error) {
 		var op NoOpOperation[*snapshotMock]
 		err := json.Unmarshal(raw, &op)
 		return &op, err
-	}, func(author identity.Interface, unixTime int64) (*NoOpOperation[*snapshotMock], entity.Resolvers) {
-		return NewNoOpOp[*snapshotMock](1, author, unixTime), nil
-	})
+	}
+
+	before := NewNoOpOp[*snapshotMock](1, rene, time.Now().Unix())
+
+	e := New(def)
+	e.Append(before)
+	require.NoError(t, e.Commit(repo))
+
+	after, err := Read(def, wrapper, repo, resolvers, e.Id())
+	require.NoError(t, err)
+	require.Equal(t, []Operation{before}, after.Operations())
 }

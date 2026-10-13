@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/cache"
-	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 func TestSelect(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)

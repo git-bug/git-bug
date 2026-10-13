@@ -285,24 +285,3 @@ type RepoBrowse interface {
 	// for an empty (unborn) repository.
 	Head() (RefMeta, error)
 }
-
-// TestedRepo is an extended ClockedRepo with functions for testing only
-type TestedRepo interface {
-	ClockedRepo
-	repoTest
-}
-
-// repoTest give access to test-only functions
-type repoTest interface {
-	// GetLocalRemote return the URL to use to add this repo as a local remote
-	GetLocalRemote() string
-
-	// EraseFromDisk delete this repository entirely from the disk
-	EraseFromDisk() error
-
-	// SetBranch points the branch name to commit, creating it if needed.
-	SetBranch(name string, commit Hash) error
-
-	// SetTag points the lightweight tag name to commit, creating it if needed.
-	SetTag(name string, commit Hash) error
-}

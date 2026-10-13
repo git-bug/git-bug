@@ -16,6 +16,7 @@ import (
 	"github.com/git-bug/git-bug/misc/random_bugs"
 	"github.com/git-bug/git-bug/query"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
@@ -44,7 +45,7 @@ func (o *observer) EntityEvent(event EntityEventType, _ string, typename string,
 }
 
 func TestCache(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	indexCount := func(t testing.TB, name string) uint64 {
 		t.Helper()
@@ -241,7 +242,7 @@ func TestCache(t *testing.T) {
 }
 
 func TestCachePushPull(t *testing.T) {
-	repoA, repoB, _ := repository.SetupGoGitReposAndRemote(t)
+	repoA, repoB, _ := repotest.SetupGoGitReposAndRemote(t)
 
 	cacheA := createTestRepoCacheNoEvents(t, repoA)
 	cacheB := createTestRepoCacheNoEvents(t, repoB)
@@ -360,7 +361,7 @@ func (o *searchObserver) watch(term string) {
 // the full-text index by the time observers are notified, the same way as
 // entities created or changed locally.
 func TestCacheMerge(t *testing.T) {
-	repoA, repoB, _ := repository.SetupGoGitReposAndRemote(t)
+	repoA, repoB, _ := repotest.SetupGoGitReposAndRemote(t)
 
 	cacheA := createTestRepoCacheNoEvents(t, repoA)
 	cacheB := createTestRepoCacheNoEvents(t, repoB)
@@ -475,7 +476,7 @@ func TestCacheMerge(t *testing.T) {
 // impossible to adopt an identity that only exists on the remote.
 // See https://github.com/git-bug/git-bug/issues/1003
 func TestCachePullWithoutIdentity(t *testing.T) {
-	repoA, repoB, _ := repository.SetupGoGitReposAndRemote(t)
+	repoA, repoB, _ := repotest.SetupGoGitReposAndRemote(t)
 
 	cacheA := createTestRepoCacheNoEvents(t, repoA)
 	cacheB := createTestRepoCacheNoEvents(t, repoB)
@@ -543,12 +544,12 @@ func TestCachePullWithoutIdentity(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
-	remoteA := repository.CreateGoGitTestRepo(t, true)
-	remoteB := repository.CreateGoGitTestRepo(t, true)
+	repo := repotest.NewGoGitRepo(t, false)
+	remoteA := repotest.NewGoGitRepo(t, true)
+	remoteB := repotest.NewGoGitRepo(t, true)
 
-	repository.AddRemote(t, repo, "remoteA", remoteA.GetLocalRemote())
-	repository.AddRemote(t, repo, "remoteB", remoteB.GetLocalRemote())
+	repotest.AddRemote(t, repo, "remoteA", remoteA.GitDir)
+	repotest.AddRemote(t, repo, "remoteB", remoteB.GitDir)
 
 	repoCache := createTestRepoCacheNoEvents(t, repo)
 
@@ -603,7 +604,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestCacheEviction(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 	repoCache := createTestRepoCacheNoEvents(t, repo)
 	repoCache.setCacheSize(2)
 
@@ -665,7 +666,7 @@ func TestBuildConcurrentResolve(t *testing.T) {
 	// Bugs and identities subcaches are built concurrently, and reading bugs
 	// resolves their authors through the identities subcache.
 
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 	random_bugs.FillRepoWithSeed(repo, 20, 42)
 
 	repoCache := createTestRepoCacheNoEvents(t, repo)
@@ -690,7 +691,7 @@ func TestLongDescription(t *testing.T) {
 
 	text := strings.Repeat("x", 65536)
 
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	backend := createTestRepoCacheNoEvents(t, repo)
 
@@ -707,7 +708,7 @@ func TestResolveOperationWithMetadataFromSetMetadata(t *testing.T) {
 	// metadata must be found on a freshly loaded entity, before anything
 	// compiled its snapshot.
 
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	backend := openTestRepoCache(t, repo)
 
@@ -807,7 +808,7 @@ func TestCacheRebuildsUnusableClocks(t *testing.T) {
 
 	for name, damage := range damages {
 		t.Run(name, func(t *testing.T) {
-			repo := repository.CreateGoGitTestRepo(t, false)
+			repo := repotest.NewGoGitRepo(t, false)
 
 			cache := openTestRepoCache(t, repo)
 

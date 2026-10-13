@@ -111,14 +111,23 @@ func TestSetMetadata(t *testing.T) {
 }
 
 func TestSetMetadataSerialize(t *testing.T) {
-	SerializeRoundTripTest(t, func(raw json.RawMessage, resolver entity.Resolvers) (Operation, error) {
+	repo, rene, _, resolvers, def := makeTestContext()
+	def.OperationUnmarshaler = func(raw json.RawMessage, resolver entity.Resolvers) (Operation, error) {
 		var op SetMetadataOperation[*snapshotMock]
 		err := json.Unmarshal(raw, &op)
 		return &op, err
-	}, func(author identity.Interface, unixTime int64) (*SetMetadataOperation[*snapshotMock], entity.Resolvers) {
-		return NewSetMetadataOp[*snapshotMock](1, author, unixTime, "message", map[string]string{
-			"key1": "value1",
-			"key2": "value2",
-		}), nil
+	}
+
+	before := NewSetMetadataOp[*snapshotMock](1, rene, time.Now().Unix(), entity.DeriveId([]byte("target")), map[string]string{
+		"key1": "value1",
+		"key2": "value2",
 	})
+
+	e := New(def)
+	e.Append(before)
+	require.NoError(t, e.Commit(repo))
+
+	after, err := Read(def, wrapper, repo, resolvers, e.Id())
+	require.NoError(t, err)
+	require.Equal(t, []Operation{before}, after.Operations())
 }

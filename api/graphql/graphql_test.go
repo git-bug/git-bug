@@ -12,10 +12,11 @@ import (
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/misc/random_bugs"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 func TestQueries(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	random_bugs.FillRepoWithSeed(repo, 10, 42)
 
@@ -229,7 +230,7 @@ func TestQueries(t *testing.T) {
 //	       └────────  refs/heads/feature
 //	c1 ←── refs/tags/v1.0
 func TestGitBrowseQueries(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 	require.NoError(t, repo.Config().Update(func(f *gitconfig.File) error {
 		return f.Set("init.defaultBranch", "main")
 	}))
@@ -587,7 +588,7 @@ func TestGitBrowseQueries(t *testing.T) {
 }
 
 func TestBugEventsSubscription(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	mrc := cache.NewMultiRepoCache()
 	t.Cleanup(func() { require.NoError(t, mrc.Close()) })
