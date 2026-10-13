@@ -7,6 +7,7 @@ import (
 	"github.com/git-bug/git-bug/bridge/gitlab"
 	"github.com/git-bug/git-bug/bridge/jira"
 	"github.com/git-bug/git-bug/bridge/launchpad"
+	"github.com/git-bug/git-bug/bridge/todosrht"
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/repository"
 )
@@ -15,6 +16,7 @@ func init() {
 	core.Register(&github.Github{})
 	core.Register(&gitlab.Gitlab{})
 	core.Register(&launchpad.Launchpad{})
+	core.Register(&todosrht.TodoSourceHut{})
 	core.Register(&jira.Jira{})
 }
 
