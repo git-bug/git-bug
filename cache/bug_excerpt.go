@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"encoding/gob"
 	"slices"
 	"time"
 
@@ -9,11 +8,6 @@ import (
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/util/lamport"
 )
-
-// Package initialisation used to register the type for (de)serialization
-func init() {
-	gob.Register(BugExcerpt{})
-}
 
 var _ Excerpt = &BugExcerpt{}
 

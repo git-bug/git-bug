@@ -1,18 +1,12 @@
 package cache
 
 import (
-	"encoding/gob"
 	"fmt"
 	"github.com/git-bug/git-bug/entities/identity"
 	"strings"
 
 	"github.com/git-bug/git-bug/entity"
 )
-
-// Package initialisation used to register the type for (de)serialization
-func init() {
-	gob.Register(IdentityExcerpt{})
-}
 
 var _ Excerpt = &IdentityExcerpt{}
 

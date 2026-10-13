@@ -49,7 +49,7 @@ func TestCache(t *testing.T) {
 
 	indexCount := func(t testing.TB, name string) uint64 {
 		t.Helper()
-		idx, err := repo.GetIndex(name)
+		idx, err := repo.GetIndex(name, formatVersion)
 		require.NoError(t, err)
 		builtFrom, err := idx.BuiltFrom()
 		require.NoError(t, err)
@@ -462,7 +462,7 @@ func TestCacheMerge(t *testing.T) {
 	// mismatch and rebuild the cache
 	indexCount := func(t *testing.T, name string) uint64 {
 		t.Helper()
-		idx, err := repoB.GetIndex(name)
+		idx, err := repoB.GetIndex(name, formatVersion)
 		require.NoError(t, err)
 		builtFrom, err := idx.BuiltFrom()
 		require.NoError(t, err)

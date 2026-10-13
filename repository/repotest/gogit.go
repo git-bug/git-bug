@@ -60,7 +60,7 @@ func NewGoGitRepo(t testing.TB, bare bool) *GoGitRepo {
 		RepoConfig:  repository.NewRepoConfig(config),
 		RepoKeyring: repository.NewRepoKeyring(keyring.NewArrayKeyring(nil)),
 		RepoStorage: repository.NewRepoStorage(storage),
-		RepoIndex:   repository.NewBleveIndexes(filepath.Join(storage.Root(), "indexes")),
+		RepoIndex:   repository.NewSqliteIndex(filepath.Join(storage.Root(), "index.db")),
 		RepoData:    git,
 		RepoBrowse:  git,
 		RepoClock:   repository.NewPersistedClocks(storage),

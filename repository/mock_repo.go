@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"maps"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -35,7 +33,7 @@ func NewMockRepo() *mockRepo {
 			RepoConfig:  NewRepoConfig(newMockConfig()),
 			RepoKeyring: NewMockRepoKeyring(),
 			RepoStorage: NewRepoStorage(billyLocalStorage{Filesystem: memfs.New()}),
-			RepoIndex:   newMockRepoIndex(),
+			RepoIndex:   NewSqliteIndex(":memory:"),
 			RepoData:    data,
 			RepoBrowse:  data,
 			RepoClock:   NewMockRepoClock(),
@@ -64,125 +62,6 @@ func newMockConfig() Config {
 
 func NewMockRepoKeyring() RepoKeyring {
 	return NewRepoKeyring(keyring.NewArrayKeyring(nil))
-}
-
-var _ RepoIndex = &mockRepoIndex{}
-
-type mockRepoIndex struct {
-	indexesMutex sync.Mutex
-	indexes      map[string]Index
-}
-
-func newMockRepoIndex() *mockRepoIndex {
-	return &mockRepoIndex{
-		indexes: make(map[string]Index),
-	}
-}
-
-func (m *mockRepoIndex) GetIndex(name string) (Index, error) {
-	m.indexesMutex.Lock()
-	defer m.indexesMutex.Unlock()
-
-	if index, ok := m.indexes[name]; ok {
-		return index, nil
-	}
-
-	index := newIndex()
-	m.indexes[name] = index
-	return index, nil
-}
-func (m *mockRepoIndex) Close() error {
-	return nil
-}
-
-var _ Index = &mockIndex{}
-
-type mockIndex struct {
-	mu        sync.RWMutex
-	docs      map[string][]string
-	builtFrom map[string]Hash
-}
-
-func newIndex() *mockIndex {
-	return &mockIndex{
-		docs:      make(map[string][]string),
-		builtFrom: make(map[string]Hash),
-	}
-}
-
-func (m *mockIndex) NewBatch() IndexBatch {
-	return &mockIndexBatch{index: m}
-}
-
-func (m *mockIndex) BuiltFrom() (map[string]Hash, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return maps.Clone(m.builtFrom), nil
-}
-
-func (m *mockIndex) Search(terms []string) (ids []string, err error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-loop:
-	for id, texts := range m.docs {
-		for _, text := range texts {
-			for _, s := range strings.Fields(text) {
-				for _, term := range terms {
-					if s == term {
-						ids = append(ids, id)
-						continue loop
-					}
-				}
-			}
-		}
-	}
-	return ids, nil
-}
-
-func (m *mockIndex) Clear() error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	clear(m.docs)
-	clear(m.builtFrom)
-	return nil
-}
-
-func (m *mockIndex) Close() error {
-	return nil
-}
-
-type mockIndexBatch struct {
-	index *mockIndex
-	// the changes in order, applied together
-	changes []func()
-}
-
-func (mb *mockIndexBatch) Set(id string, texts []string, commit Hash) error {
-	if !commit.IsValid() {
-		return fmt.Errorf("invalid commit %q for document %s", commit, id)
-	}
-	texts = slices.Clone(texts)
-	mb.changes = append(mb.changes, func() {
-		mb.index.docs[id] = texts
-		mb.index.builtFrom[id] = commit
-	})
-	return nil
-}
-
-func (mb *mockIndexBatch) Remove(id string) {
-	mb.changes = append(mb.changes, func() {
-		delete(mb.index.docs, id)
-		delete(mb.index.builtFrom, id)
-	})
-}
-
-func (mb *mockIndexBatch) Apply() error {
-	mb.index.mu.Lock()
-	defer mb.index.mu.Unlock()
-	for _, change := range mb.changes {
-		change()
-	}
-	return nil
 }
 
 var _ RepoData = &mockRepoDataBrowse{}
