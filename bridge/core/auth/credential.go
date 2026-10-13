@@ -3,12 +3,11 @@ package auth
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"

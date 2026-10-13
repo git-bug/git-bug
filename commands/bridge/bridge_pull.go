@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/araddon/dateparse"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/git-bug/git-bug/bridge"
@@ -100,7 +99,7 @@ func runBridgePull(env *execenv.Env, opts bridgePullOptions, args []string) erro
 	case opts.importSince != "":
 		since, err2 := parseSince(opts.importSince)
 		if err2 != nil {
-			return errors.Wrap(err2, "import time parsing")
+			return fmt.Errorf("import time parsing: %w", err2)
 		}
 		events, err = b.ImportAllSince(ctx, since)
 	default:

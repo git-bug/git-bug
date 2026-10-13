@@ -1,12 +1,11 @@
 package _select
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entity"
@@ -25,7 +24,7 @@ func (e ErrNoValidId) Error() string {
 }
 
 func IsErrNoValidId(err error) bool {
-	_, ok := err.(*ErrNoValidId)
+	_, ok := errors.AsType[*ErrNoValidId](err)
 	return ok
 }
 
@@ -143,7 +142,7 @@ func selected[CacheT entity.Resolved](repo *cache.RepoCache, resolver Resolver[C
 	if err := id.Validate(); err != nil {
 		err = repo.LocalStorage().Remove(filename)
 		if err != nil {
-			return nil, errors.Wrap(err, "error while removing invalid select file")
+			return nil, fmt.Errorf("error while removing invalid select file: %w", err)
 		}
 
 		return nil, fmt.Errorf("select file in invalid, removing it")

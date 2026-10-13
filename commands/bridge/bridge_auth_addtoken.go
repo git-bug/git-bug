@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/git-bug/git-bug/bridge"
@@ -119,7 +118,7 @@ func runBridgeAuthAddToken(env *execenv.Env, opts bridgeAuthAddTokenOptions, arg
 	token.SetMetadata(auth.MetaKeyLogin, opts.login)
 
 	if err := token.Validate(); err != nil {
-		return errors.Wrap(err, "invalid token")
+		return fmt.Errorf("invalid token: %w", err)
 	}
 
 	err = auth.Store(env.Repo, token)

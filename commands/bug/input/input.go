@@ -2,10 +2,9 @@ package buginput
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/commands/input"
 	"github.com/git-bug/git-bug/repository"

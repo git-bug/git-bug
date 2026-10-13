@@ -1,8 +1,7 @@
 package bug
 
 import (
-	"github.com/pkg/errors"
-
+	"fmt"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
@@ -44,7 +43,7 @@ func (op *SetStatusOperation) Validate() error {
 	}
 
 	if err := op.Status.Validate(); err != nil {
-		return errors.Wrap(err, "status")
+		return fmt.Errorf("status: %w", err)
 	}
 
 	return nil

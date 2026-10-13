@@ -6,8 +6,6 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/pkg/errors"
-
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
@@ -80,13 +78,13 @@ func (op *LabelChangeOperation) Validate() error {
 
 	for _, l := range op.Added {
 		if err := l.Validate(); err != nil {
-			return errors.Wrap(err, "added label")
+			return fmt.Errorf("added label: %w", err)
 		}
 	}
 
 	for _, l := range op.Removed {
 		if err := l.Validate(); err != nil {
-			return errors.Wrap(err, "removed label")
+			return fmt.Errorf("removed label: %w", err)
 		}
 	}
 

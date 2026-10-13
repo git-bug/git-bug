@@ -1,8 +1,8 @@
 package identity
 
 import (
-	"github.com/pkg/errors"
-
+	"errors"
+	"fmt"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 )
@@ -31,7 +31,7 @@ func Pull(repo repository.Repo, remote string) error {
 			return merge.Err
 		}
 		if merge.Status == entity.MergeStatusInvalid {
-			return errors.Errorf("merge failure: %s", merge.Reason)
+			return fmt.Errorf("merge failure: %s", merge.Reason)
 		}
 	}
 
@@ -57,13 +57,13 @@ func MergeAll(repo repository.Repo, remote string) <-chan entity.MergeResult {
 			remoteIdentity, err := read(repo, id, remoteCommit)
 
 			if err != nil {
-				out <- entity.NewMergeInvalidStatus(id, errors.Wrap(err, "remote identity is not readable").Error())
+				out <- entity.NewMergeInvalidStatus(id, fmt.Errorf("remote identity is not readable: %w", err).Error())
 				continue
 			}
 
 			// Check for error in remote data
 			if err := remoteIdentity.Validate(); err != nil {
-				out <- entity.NewMergeInvalidStatus(id, errors.Wrap(err, "remote identity is invalid").Error())
+				out <- entity.NewMergeInvalidStatus(id, fmt.Errorf("remote identity is invalid: %w", err).Error())
 				continue
 			}
 
@@ -90,14 +90,14 @@ func MergeAll(repo repository.Repo, remote string) <-chan entity.MergeResult {
 			localIdentity, err := read(repo, id, localCommit)
 
 			if err != nil {
-				out <- entity.NewMergeError(errors.Wrap(err, "local identity is not readable"), id)
+				out <- entity.NewMergeError(fmt.Errorf("local identity is not readable: %w", err), id)
 				return
 			}
 
 			updated, err := localIdentity.Merge(repo, remoteIdentity)
 
 			if err != nil {
-				out <- entity.NewMergeInvalidStatus(id, errors.Wrap(err, "merge failed").Error())
+				out <- entity.NewMergeInvalidStatus(id, fmt.Errorf("merge failed: %w", err).Error())
 				return
 			}
 

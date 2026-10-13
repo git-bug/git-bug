@@ -189,7 +189,7 @@ func (ji *jiraImporter) ensurePerson(repo *cache.RepoCache, user User) (*cache.I
 	if err == nil {
 		return i, nil
 	}
-	if _, ok := err.(entity.ErrMultipleMatch); ok {
+	if entity.IsErrMultipleMatch(err) {
 		return nil, err
 	}
 

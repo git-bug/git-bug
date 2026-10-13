@@ -8,8 +8,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
@@ -186,7 +184,7 @@ func (base *OpBase) Validate(op Operation, opType OperationType) error {
 	}
 
 	if err := op.Author().Validate(); err != nil {
-		return errors.Wrap(err, "author")
+		return fmt.Errorf("author: %w", err)
 	}
 
 	if op, ok := op.(OperationWithFiles); ok {

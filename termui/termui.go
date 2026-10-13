@@ -3,10 +3,10 @@ package termui
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/awesome-gocui/gocui"
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/cache"
 	buginput "github.com/git-bug/git-bug/commands/bug/input"
@@ -72,11 +72,12 @@ func Run(ctx context.Context, cache *cache.RepoCache) error {
 	err := <-ui.gError
 
 	type errorStack interface {
+		error
 		ErrorStack() string
 	}
 
 	if err != nil && err != gocui.ErrQuit {
-		if e, ok := err.(errorStack); ok {
+		if e, ok := errors.AsType[errorStack](err); ok {
 			fmt.Println(e.ErrorStack())
 		}
 		return err
