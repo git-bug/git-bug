@@ -2,6 +2,7 @@
 package bridge
 
 import (
+	"github.com/git-bug/git-bug/bridge/ado"
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/github"
 	"github.com/git-bug/git-bug/bridge/gitlab"
@@ -12,6 +13,7 @@ import (
 )
 
 func init() {
+	core.Register(&ado.AzureDevOps{})
 	core.Register(&github.Github{})
 	core.Register(&gitlab.Gitlab{})
 	core.Register(&launchpad.Launchpad{})
