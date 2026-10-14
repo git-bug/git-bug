@@ -210,6 +210,20 @@ dependencies:
 - `git`
 - `go`
 - `make`
+- `pnpm` (with Node.js) — required to build the bundled web UI, which
+  `make build` and `make install` compile into the binary
+
+> [!NOTE]
+> If you don't need the web UI, or don't want to install the Node.js
+> toolchain, you can skip `pnpm` and build a binary without it:
+>
+> ```
+> go generate
+> go build .
+> ```
+>
+> Everything works except the `webui` command, which tells you the binary
+> was built without the web UI.
 
 Ensure that the `go` binary directory (`$GOPATH/bin`) is in your `PATH`. It is
 recommended to set this within your shell configuration file(s), such as
