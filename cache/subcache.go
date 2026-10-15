@@ -579,13 +579,13 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncAll(progress func(BuildEvent))
 // succession.
 //
 // TODO: shrink it, or drop it, once a sync that finds nothing to do is cheap.
-// With 10k bugs it takes ~130ms and allocates ~19MB: ~90ms in ListRefs, which
-// opens and reads every loose ref file, and ~25ms reading the commit of every
-// document of the index. Levers, by expected gain:
+// With 10k bugs it takes ~60ms and allocates ~19MB: ~30ms in ListRefs, which
+// reads every loose ref file, on a worker per CPU, and ~25ms reading the
+// commit of every document of the index. Levers, by expected gain:
 //   - go-git keeping the refs it lists, and reading them again only when the
 //     stat of their directory or of packed-refs changed: no read at all when
 //     nothing changed;
-//   - packing the refs: listing 10k packed refs takes ~3ms instead of ~100ms,
+//   - packing the refs: listing 10k packed refs takes ~3ms instead of ~30ms,
 //     until new writes make them loose again;
 //   - keeping the record of the index in memory rather than reading it on each
 //     sync.

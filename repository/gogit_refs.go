@@ -39,10 +39,12 @@ import (
 	"math/rand/v2"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5/plumbing"
+	"golang.org/x/sync/errgroup"
 )
 
 const refLockSuffix = ".lock"
@@ -256,9 +258,8 @@ func (repo *GoGitRepo) listRefs(prefix string) (map[string]Hash, error) {
 		return nil, fmt.Errorf("invalid ref prefix %q: %w", prefix, err)
 	}
 
-	loose := make(map[string]Hash)
-
 	root := filepath.Join(repo.path, filepath.FromSlash(prefix))
+	var paths []string
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
@@ -270,33 +271,52 @@ func (repo *GoGitRepo) listRefs(prefix string) (map[string]Hash, error) {
 		if d.IsDir() || strings.HasSuffix(d.Name(), refLockSuffix) {
 			return nil
 		}
-
-		content, err := os.ReadFile(path)
-		if errors.Is(err, fs.ErrNotExist) {
-			// removed while walking
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		value := strings.TrimSpace(string(content))
-		if !plumbing.IsHash(value) {
-			// an empty file being written by a writer not using a lock file or
-			// left behind by go-git (#2399), a symbolic ref, or garbage: none
-			// is an entity, and like git, one broken ref doesn't fail the
-			// listing of the others
-			return nil
-		}
-
-		rel, err := filepath.Rel(root, path)
-		if err != nil {
-			return err
-		}
-		loose[filepath.ToSlash(rel)] = Hash(value)
+		paths = append(paths, path)
 		return nil
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	// reading a ref file is mostly the CPU time of its syscalls, so the files
+	// are read by a worker per CPU, each taking every workers-th one
+	values := make([]string, len(paths))
+	workers := min(runtime.GOMAXPROCS(0), len(paths), 8)
+	var g errgroup.Group
+	for w := range workers {
+		g.Go(func() error {
+			for i := w; i < len(paths); i += workers {
+				content, err := os.ReadFile(paths[i])
+				if errors.Is(err, fs.ErrNotExist) {
+					// removed while walking
+					continue
+				}
+				if err != nil {
+					return err
+				}
+				values[i] = strings.TrimSpace(string(content))
+			}
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	loose := make(map[string]Hash, len(paths))
+	for i, value := range values {
+		if !plumbing.IsHash(value) {
+			// removed while walking, an empty file being written by a writer
+			// not using a lock file or left behind by go-git (#2399), a
+			// symbolic ref, or garbage: none is an entity, and like git, one
+			// broken ref doesn't fail the listing of the others
+			continue
+		}
+		rel, err := filepath.Rel(root, paths[i])
+		if err != nil {
+			return nil, err
+		}
+		loose[filepath.ToSlash(rel)] = Hash(value)
 	}
 
 	refs, err := repo.listPackedRefs(prefix)
