@@ -579,9 +579,9 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncAll(progress func(BuildEvent))
 // succession.
 //
 // TODO: shrink it, or drop it, once a sync that finds nothing to do is cheap.
-// With 10k bugs it takes ~110ms and allocates ~20MB, 93% of the CPU and 80% of
-// the allocations in ListRefs, which opens and reads every loose ref file; the
-// rest mostly reads the record of the index. Levers, by expected gain:
+// With 10k bugs it takes ~130ms and allocates ~19MB: ~90ms in ListRefs, which
+// opens and reads every loose ref file, and ~25ms reading the commit of every
+// document of the index. Levers, by expected gain:
 //   - go-git keeping the refs it lists, and reading them again only when the
 //     stat of their directory or of packed-refs changed: no read at all when
 //     nothing changed;
@@ -739,18 +739,21 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncIdsLocked(ids []entity.Id) (ma
 	if err != nil {
 		return nil, err
 	}
-	indexBuiltFrom, err := index.BuiltFrom()
-	if err != nil {
-		return nil, err
-	}
-
 	refs := make(map[string]repository.Hash, len(ids))
+	indexBuiltFrom := make(map[string]repository.Hash, len(ids))
 	candidates := make(map[entity.Id]struct{}, len(ids))
 	for _, id := range ids {
 		ref, err := sc.repo.ResolveRef(sc.namespace, id.String())
 		switch {
 		case err == nil:
 			refs[id.String()] = ref
+		case !errors.Is(err, repository.ErrNotFound):
+			return nil, err
+		}
+		commit, err := index.BuiltFrom(id.String())
+		switch {
+		case err == nil:
+			indexBuiltFrom[id.String()] = commit
 		case !errors.Is(err, repository.ErrNotFound):
 			return nil, err
 		}
@@ -773,7 +776,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncAllLocked(progress func(BuildE
 	if err != nil {
 		return nil, err
 	}
-	indexBuiltFrom, err := index.BuiltFrom()
+	indexBuiltFrom, err := index.AllBuiltFrom()
 	if err != nil {
 		return nil, err
 	}

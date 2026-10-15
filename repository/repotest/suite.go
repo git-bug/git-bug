@@ -384,9 +384,17 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 
 	requireBuiltFrom := func(t *testing.T, idx repository.Index, expected map[string]repository.Hash) {
 		t.Helper()
-		builtFrom, err := idx.BuiltFrom()
+		builtFrom, err := idx.AllBuiltFrom()
 		require.NoError(t, err)
 		require.Equal(t, expected, builtFrom)
+
+		for id, commit := range expected {
+			got, err := idx.BuiltFrom(id)
+			require.NoError(t, err)
+			require.Equal(t, commit, got)
+		}
+		_, err = idx.BuiltFrom("unknown")
+		require.ErrorIs(t, err, repository.ErrNotFound)
 	}
 
 	requireSearch := func(t *testing.T, idx repository.Index, term string, expected ...string) {

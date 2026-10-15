@@ -213,7 +213,7 @@ func (i *sqliteIndex) NewBatch() IndexBatch {
 	return &sqliteBatch{index: i, changes: make(map[string]*sqliteDoc)}
 }
 
-func (i *sqliteIndex) BuiltFrom() (_ map[string]Hash, err error) {
+func (i *sqliteIndex) AllBuiltFrom() (_ map[string]Hash, err error) {
 	defer func() { err = brokenSqliteError(i.path, err) }()
 	rows, err := i.db.Query(`
 		SELECT id, built_from
@@ -236,6 +236,21 @@ func (i *sqliteIndex) BuiltFrom() (_ map[string]Hash, err error) {
 		builtFrom[id] = commit
 	}
 	return builtFrom, rows.Err()
+}
+
+func (i *sqliteIndex) BuiltFrom(id string) (_ Hash, err error) {
+	defer func() { err = brokenSqliteError(i.path, err) }()
+	var commit Hash
+	err = i.db.QueryRow(`
+		SELECT built_from
+		FROM docs
+		WHERE space = (SELECT num FROM namespaces WHERE ns = ? AND version = ?)
+		  AND id = ?`,
+		i.ns, i.version, id).Scan(&commit)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", ErrNotFound
+	}
+	return commit, err
 }
 
 func (i *sqliteIndex) Excerpt(id string) (_ Hash, _ []byte, err error) {
