@@ -50,6 +50,10 @@ func NewGoGitRepo(t testing.TB, bare bool) *GoGitRepo {
 		return errors.Join(
 			f.Set("user.name", "testuser"),
 			f.Set("user.email", "testuser@example.com"),
+			// a push to this repository runs git's receive-pack, which would
+			// start a maintenance in the background, still writing to the
+			// repository when the test removes it
+			f.Set("receive.autogc", "false"),
 		)
 	})
 	require.NoError(t, err)
