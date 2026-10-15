@@ -168,6 +168,11 @@ func newWatchedRepo(t *testing.T) (*GoGitRepo, []Hash) {
 
 func TestWatchSource(t *testing.T) {
 	requireGitBinary(t)
+	// where watching isn't used, kqueue can report a ref lock removed while
+	// being watched as an error, which the source reports as an unnamed change
+	if !canWatch(t.TempDir()) {
+		t.Skip("NewAutoSource doesn't watch on this platform")
+	}
 
 	subscribe := func(t *testing.T, repo *GoGitRepo) <-chan Change {
 		t.Helper()

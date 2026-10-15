@@ -42,7 +42,7 @@ func requireDerivedBuiltFromRefs(t *testing.T, repo repository.Repo, c *RepoCach
 
 		index, err := repo.GetIndex(namespace, formatVersion)
 		require.NoError(t, err)
-		indexBuiltFrom, err := index.BuiltFrom()
+		indexBuiltFrom, err := index.AllBuiltFrom()
 		require.NoError(t, err)
 		require.Equal(t, refs, indexBuiltFrom)
 	}
@@ -66,7 +66,7 @@ func clearBugIndex(t *testing.T, repo repository.Repo) {
 	t.Helper()
 	index, err := repo.GetIndex(bug.Namespace, formatVersion)
 	require.NoError(t, err)
-	builtFrom, err := index.BuiltFrom()
+	builtFrom, err := index.AllBuiltFrom()
 	require.NoError(t, err)
 	batch := index.NewBatch()
 	for id := range builtFrom {
@@ -1228,4 +1228,39 @@ func (o *recordingObserver) events() []recordedEvent {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	return slices.Clone(o.seen)
+}
+
+// BenchmarkSync measures a sync that finds nothing to do, of one entity and of
+// every entity, and a commit, which syncs its entity, on a repository of 200
+// random bugs.
+func BenchmarkSync(b *testing.B) {
+	repo := repotest.NewGoGitRepo(b, false)
+	random_bugs.FillRepoWithSeed(repo, 200, 42)
+	c, _ := newTestCacheWithUser(b, repo)
+
+	ids := c.bugs.AllIds()
+	require.NotEmpty(b, ids)
+	id := ids[0]
+
+	b.Run("sync one, nothing to do", func(b *testing.B) {
+		for b.Loop() {
+			require.NoError(b, c.bugs.sync(id))
+		}
+	})
+
+	b.Run("sync all, nothing to do", func(b *testing.B) {
+		for b.Loop() {
+			require.NoError(b, c.bugs.syncAll(nil))
+		}
+	})
+
+	b.Run("commit", func(b *testing.B) {
+		view, err := c.bugs.Resolve(id)
+		require.NoError(b, err)
+		for b.Loop() {
+			_, _, err := view.AddComment("a comment")
+			require.NoError(b, err)
+			require.NoError(b, view.Commit())
+		}
+	})
 }

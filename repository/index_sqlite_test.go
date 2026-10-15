@@ -84,7 +84,7 @@ func TestSqliteIndex(t *testing.T) {
 
 		idx, err = repoIndex.GetIndex("a", 1)
 		require.NoError(t, err)
-		builtFrom, err := idx.BuiltFrom()
+		builtFrom, err := idx.AllBuiltFrom()
 		require.NoError(t, err)
 		require.Equal(t, map[string]Hash{"id1": testCommit}, builtFrom)
 		commit, got, err := idx.Excerpt("id1")
@@ -155,7 +155,7 @@ func TestSqliteIndex(t *testing.T) {
 		}
 
 		// nothing of the batches landed
-		builtFrom, err := idx.BuiltFrom()
+		builtFrom, err := idx.AllBuiltFrom()
 		require.NoError(t, err)
 		require.Empty(t, builtFrom)
 		res, err := idx.Search([]string{"marker"})
@@ -176,7 +176,7 @@ func TestSqliteIndex(t *testing.T) {
 
 		idx, err = repoIndex.GetIndex("a", 1)
 		require.NoError(t, err)
-		builtFrom, err := idx.BuiltFrom()
+		builtFrom, err := idx.AllBuiltFrom()
 		require.NoError(t, err)
 		require.Empty(t, builtFrom)
 	})
@@ -229,7 +229,7 @@ func TestSqliteIndex(t *testing.T) {
 			res, err := idx.Search([]string{"marker"})
 			require.NoError(t, err)
 			require.Len(t, res, 2*docs)
-			builtFrom, err := idx.BuiltFrom()
+			builtFrom, err := idx.AllBuiltFrom()
 			require.NoError(t, err)
 			require.Len(t, builtFrom, 2*docs)
 		}

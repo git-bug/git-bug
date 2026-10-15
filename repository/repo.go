@@ -99,8 +99,11 @@ type Index interface {
 	// NewBatch starts a batch of changes, applied as a whole by its Apply.
 	NewBatch() IndexBatch
 
-	// BuiltFrom returns, for each document, the commit it was built from.
-	BuiltFrom() (map[string]Hash, error)
+	// AllBuiltFrom returns, for each document, the commit it was built from.
+	AllBuiltFrom() (map[string]Hash, error)
+
+	// BuiltFrom returns the commit a document was built from, or ErrNotFound.
+	BuiltFrom(id string) (Hash, error)
 
 	// Excerpt returns the excerpt of a document, see IndexBatch.Set, and the
 	// commit it was built from, or ErrNotFound.

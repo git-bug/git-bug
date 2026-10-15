@@ -184,7 +184,9 @@ func (s watchSource) Subscribe(ctx context.Context, namespaces []string) (<-chan
 				}
 
 			case err, ok := <-w.Errors:
-				if !ok || !errors.Is(err, fsnotify.ErrEventOverflow) {
+				// kqueue watches each file of a directory, and reports a file
+				// removed before it could watch it again as an error
+				if !ok || !errors.Is(err, fsnotify.ErrEventOverflow) && !errors.Is(err, fs.ErrNotExist) {
 					return
 				}
 				// events were dropped: anything may have changed

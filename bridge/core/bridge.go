@@ -379,7 +379,12 @@ func (b *Bridge) ImportAllSince(ctx context.Context, since time.Time) (<-chan Im
 			if event.Event == ImportEventError {
 				noError = false
 			}
-			out <- event
+			select {
+			case out <- event:
+			case <-ctx.Done():
+				// the caller may have stopped reading: drop the event, and
+				// keep draining for the importer to finish
+			}
 		}
 
 		// store the last import time ONLY if no error happened and the import
@@ -443,7 +448,12 @@ func (b *Bridge) ExportAll(ctx context.Context, since time.Time) (<-chan ExportR
 		defer unlock()
 
 		for event := range events {
-			out <- event
+			select {
+			case out <- event:
+			case <-ctx.Done():
+				// the caller may have stopped reading: drop the event, and
+				// keep draining for the importer to finish
+			}
 		}
 	}()
 
