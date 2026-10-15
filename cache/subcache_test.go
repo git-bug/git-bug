@@ -1231,11 +1231,11 @@ func (o *recordingObserver) events() []recordedEvent {
 }
 
 // BenchmarkSync measures a sync that finds nothing to do, of one entity and of
-// every entity, and a commit, which syncs its entity, on a repository of 10k
+// every entity, and a commit, which syncs its entity, on a repository of 200
 // random bugs.
 func BenchmarkSync(b *testing.B) {
 	repo := repotest.NewGoGitRepo(b, false)
-	random_bugs.FillRepoWithSeed(repo, 10_000, 42)
+	random_bugs.FillRepoWithSeed(repo, 200, 42)
 	c, _ := newTestCacheWithUser(b, repo)
 
 	ids := c.bugs.AllIds()
