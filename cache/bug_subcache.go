@@ -142,7 +142,7 @@ func (c *RepoCacheBug) Query(q *query.Query) ([]entity.Id, error) {
 	if q.Search != nil {
 		foundBySearch = map[entity.Id]*BugExcerpt{}
 
-		index, err := c.repo.GetIndex("bugs")
+		index, err := c.repo.GetIndex(c.namespace, c.version)
 		if err != nil {
 			return nil, err
 		}

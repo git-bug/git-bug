@@ -23,7 +23,9 @@ import (
 // 3: no more legacy identity
 // 4: entities make their IDs from data, not git commit
 // 5: record the commit each excerpt was built from
-const formatVersion = 5
+// 6: excerpts in JSON, in a SQLite DB
+// TODO: if entities evolve independently, consider make that versioning per entity
+const formatVersion = 6
 
 // The maximum number of bugs loaded in memory. After that, eviction will be done.
 const defaultMaxLoadedBugs = 1000
@@ -57,8 +59,8 @@ type cacheMgmt interface {
 //     allowing for fast querying the whole set of bugs without having to load
 //     them individually.
 //  3. The cache keeps a single copy of each loaded entity when possible. A copy
-//     that got evicted keeps working, and if it goes stale, its commits are
-//     rejected by the repository rather than overwriting newer data.
+//     that got evicted or went stale keeps working: its commits never overwrite
+//     newer data, as the copy is reloaded and the operations written again on top.
 //
 // The cache also protects the on-disk data by locking the git repository for its
 // own usage, by writing a lock file. Of course, normal git operations are not
@@ -129,6 +131,13 @@ func NewRepoCache(r repository.Repo, changes repository.ChangeSource) (*RepoCach
 			return
 		}
 
+		// The files of earlier versions, replaced by the index: the excerpts, and
+		// the bleve indexes. Nothing is lost, the load fills the index from the
+		// repository.
+		// TODO: remove a few releases after this one, once the users upgraded.
+		_ = c.repo.LocalStorage().RemoveAll("cache")
+		_ = c.repo.LocalStorage().RemoveAll("indexes")
+
 		// Reading entities doesn't create their clocks, and an identity version
 		// records every clock: make sure they all exist before anything is written.
 		for _, subcache := range c.subcaches {
@@ -184,7 +193,8 @@ func (c *RepoCache) setCacheSize(size int) {
 	}
 }
 
-// load reads the cache files, and brings them up to date with the repository.
+// load reads the excerpts of the index, and brings them up to date with the
+// repository.
 // It returns whether it succeeded.
 func (c *RepoCache) load(events chan BuildEvent) bool {
 	// announced once, before the first subcache starts building

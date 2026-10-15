@@ -51,7 +51,7 @@ and full-text search indexes (`RepoIndex`).
 
 `ComposedRepo` assembles a `Repo` from those parts. `OpenDefault` composes the
 ones git-bug uses: `GoGitRepo` for the git data, the git configuration, the
-user's keyring, and the storage, clocks and bleve indexes in `.git/git-bug`.
+user's keyring, and the storage, clocks and SQLite index in `.git/git-bug`.
 Tests compose their own, see `repotest` and the mock repository.
 
 ## identity

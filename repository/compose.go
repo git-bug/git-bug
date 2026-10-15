@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/git-bug/gitconfig"
@@ -59,7 +60,7 @@ func newDefault(git *GoGitRepo, namespace string) (Repo, error) {
 		RepoConfig:  NewRepoConfig(NewGitConfig(env)),
 		RepoKeyring: NewRepoKeyring(keyring),
 		RepoStorage: NewRepoStorage(storage),
-		RepoIndex:   NewBleveIndexes(filepath.Join(storage.Root(), "indexes")),
+		RepoIndex:   NewSqliteIndex(filepath.Join(storage.Root(), fmt.Sprintf("index-v%d.db", sqliteLayout))),
 		RepoData:    git,
 		RepoBrowse:  git,
 		RepoClock:   NewPersistedClocks(storage),

@@ -80,16 +80,21 @@ type RepoStorage interface {
 	LocalStorage() LocalStorage
 }
 
-// RepoIndex gives access to full-text search indexes
+// RepoIndex gives access to the indexes of the entities, one per namespace.
+// They can be shared by several processes.
 type RepoIndex interface {
-	GetIndex(name string) (Index, error)
+	// GetIndex returns the index of a namespace, whose documents have the format
+	// of the given version. Each version of a namespace has its own documents,
+	// for processes of different versions to never read those of each other.
+	GetIndex(namespace string, version uint) (Index, error)
 
-	// Close closes every index opened by GetIndex.
+	// Close releases the indexes opened by GetIndex.
 	Close() error
 }
 
-// Index is a full-text search index. Each document records the commit it was
-// built from, so that the index can tell what it is up to date with.
+// Index stores the excerpts of entities, and searches their texts. Each
+// document records the commit it was built from, so that the index can tell
+// what it is up to date with.
 type Index interface {
 	// NewBatch starts a batch of changes, applied as a whole by its Apply.
 	NewBatch() IndexBatch
@@ -97,24 +102,33 @@ type Index interface {
 	// BuiltFrom returns, for each document, the commit it was built from.
 	BuiltFrom() (map[string]Hash, error)
 
-	// Search returns the list of IDs matching the given terms.
-	Search(terms []string) (ids []string, err error)
+	// Excerpt returns the excerpt of a document, see IndexBatch.Set, and the
+	// commit it was built from, or ErrNotFound.
+	Excerpt(id string) (Hash, []byte, error)
 
-	// Clear empty the index.
-	Clear() error
+	// Excerpts returns the excerpt of every document, and the commit each was
+	// built from.
+	Excerpts() (map[string]Hash, map[string][]byte, error)
 
-	// Close closes the index and make sure everything is safely written. After this call
-	// the index can't be used anymore.
-	Close() error
+	// Search returns the ids of the documents having any of the phrases in one
+	// of their texts. A phrase is a sequence of words, matched in that order
+	// regardless of case and inflection: "crash on login" matches "Crashes on
+	// login". A single word is a phrase of one word.
+	Search(phrases []string) ([]string, error)
 }
 
 // IndexBatch is a set of changes to an Index. Nothing is visible until Apply,
-// which applies every change, documents and the commits they were built from,
-// or none of them.
+// which applies every change or none of them.
 type IndexBatch interface {
-	// Set indexes the document of an ID, built from the given commit, replacing
-	// any previous version.
-	Set(id string, texts []string, commit Hash) error
+	// Set stores the document of an entity, built from the given commit,
+	// replacing any previous version:
+	//   - excerpt is the excerpt of the entity, a JSON object, returned by
+	//     Index.Excerpt with the same content, not necessarily the same bytes.
+	//     Anything else fails Apply;
+	//   - texts are what the document is found by in Search, such as a title
+	//     and comments. They are searched separately: a phrase never spans two
+	//     of them.
+	Set(id string, commit Hash, excerpt []byte, texts []string) error
 
 	// Remove deletes the document of an ID, if any.
 	Remove(id string)
