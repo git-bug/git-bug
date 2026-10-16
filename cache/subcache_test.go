@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"path/filepath"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -13,6 +14,8 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/99designs/keyring"
+	"github.com/git-bug/gitconfig"
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/entities/bug"
@@ -1205,6 +1208,89 @@ func TestSubCacheWorker(t *testing.T) {
 			requireDerivedBuiltFromRefs(t, repo, c)
 		})
 	}
+
+	// two caches on one repository, each on its own handle as two processes
+	// would be: the edits of both survive and reach both, and closing one leaves
+	// the other working
+	t.Run("two caches on one repository with GoGitRepo", func(t *testing.T) {
+		// reopen opens a handle on the repository of repo, sharing nothing in
+		// memory with it
+		reopen := func(t *testing.T, repo *repotest.GoGitRepo) repository.Repo {
+			t.Helper()
+			git, err := repository.OpenGoGitRepo(repo.GitDir)
+			require.NoError(t, err)
+			config := repository.NewGitConfig(gitconfig.Env{
+				GitDir:       repo.GitDir,
+				GlobalConfig: []string{filepath.Join(t.TempDir(), ".gitconfig")},
+			})
+			storage := repository.NewLocalStorage(filepath.Join(repo.GitDir, "git-bug"))
+			handle := &repository.ComposedRepo{
+				RepoConfig:  repository.NewRepoConfig(config),
+				RepoKeyring: repository.NewRepoKeyring(keyring.NewArrayKeyring(nil)),
+				RepoStorage: repository.NewRepoStorage(storage),
+				RepoIndex:   repository.NewSqliteIndex(filepath.Join(storage.Root(), "index.db")),
+				RepoData:    git,
+				RepoBrowse:  git,
+				RepoClock:   repository.NewPersistedClocks(storage),
+			}
+			t.Cleanup(func() {
+				if err := handle.Close(); err != nil {
+					t.Error(err)
+				}
+			})
+			return handle
+		}
+		poll := func(gitDir string) repository.ChangeSource {
+			return repository.NewPollSource(gitDir, 50*time.Millisecond)
+		}
+		hasComments := func(t *testing.T, c *RepoCache, id entity.Id, count int) {
+			t.Helper()
+			require.Eventually(t, func() bool {
+				return lenComments(t, c, id) == count
+			}, 5*time.Second, 20*time.Millisecond)
+		}
+
+		repo := repotest.NewGoGitRepo(t, false)
+		first, _ := open(t, repo, poll(repo.GitDir))
+		inFirst, _, err := first.Bugs().New("title", "message")
+		require.NoError(t, err)
+		id := inFirst.Id()
+
+		otherRepo := reopen(t, repo)
+		second, err := NewRepoCacheNoEvents(otherRepo, poll(repo.GitDir))
+		require.NoError(t, err)
+		// the user identity is in the configuration both handles read
+		_, err = second.GetUserIdentity()
+		require.NoError(t, err)
+
+		// each cache edits from its own loaded copy, the one of first possibly
+		// not knowing yet of the edit of second
+		inSecond, err := second.Bugs().Resolve(id)
+		require.NoError(t, err)
+		_, _, err = inSecond.AddComment("markersecond")
+		require.NoError(t, err)
+		require.NoError(t, inSecond.Commit())
+		_, _, err = inFirst.AddComment("markerfirst")
+		require.NoError(t, err)
+		require.NoError(t, inFirst.Commit())
+
+		for _, c := range []*RepoCache{first, second} {
+			hasComments(t, c, id, 3)
+			require.Equal(t, []entity.Id{id}, searchBugs(t, c, "markerfirst"))
+			require.Equal(t, []entity.Id{id}, searchBugs(t, c, "markersecond"))
+		}
+		requireDerivedBuiltFromRefs(t, repo, first)
+		requireDerivedBuiltFromRefs(t, otherRepo, second)
+
+		require.NoError(t, second.Close())
+
+		_, _, err = inFirst.AddComment("markerafter")
+		require.NoError(t, err)
+		require.NoError(t, inFirst.Commit())
+		hasComments(t, first, id, 4)
+		require.Equal(t, []entity.Id{id}, searchBugs(t, first, "markerafter"))
+		requireDerivedBuiltFromRefs(t, repo, first)
+	})
 }
 
 // recordingObserver records the events it is notified of.

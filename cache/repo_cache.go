@@ -3,9 +3,6 @@ package cache
 import (
 	"context"
 	"fmt"
-	"io"
-	"os"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -15,7 +12,6 @@ import (
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/multierr"
-	"github.com/git-bug/git-bug/util/process"
 )
 
 // 1: original format
@@ -61,10 +57,6 @@ type cacheMgmt interface {
 //  3. The cache keeps a single copy of each loaded entity when possible. A copy
 //     that got evicted or went stale keeps working: its commits never overwrite
 //     newer data, as the copy is reloaded and the operations written again on top.
-//
-// The cache also protects the on-disk data by locking the git repository for its
-// own usage, by writing a lock file. Of course, normal git operations are not
-// affected, only git-bug related one.
 type RepoCache struct {
 	// the underlying repo
 	repo repository.Repo
@@ -125,12 +117,6 @@ func NewRepoCache(r repository.Repo, changes repository.ChangeSource) (*RepoCach
 	go func() {
 		defer close(events)
 
-		err := c.lock(events)
-		if err != nil {
-			events <- BuildEvent{Err: err}
-			return
-		}
-
 		// The files of earlier versions, replaced by the index: the excerpts, and
 		// the bleve indexes. Nothing is lost, the load fills the index from the
 		// repository.
@@ -141,7 +127,7 @@ func NewRepoCache(r repository.Repo, changes repository.ChangeSource) (*RepoCach
 		// Reading entities doesn't create their clocks, and an identity version
 		// records every clock: make sure they all exist before anything is written.
 		for _, subcache := range c.subcaches {
-			err = subcache.EnsureClocks()
+			err := subcache.EnsureClocks()
 			if err != nil {
 				events <- BuildEvent{Err: err}
 				return
@@ -279,27 +265,6 @@ func (c *RepoCache) followChanges(events chan BuildEvent) {
 	}
 }
 
-func (c *RepoCache) lock(events chan BuildEvent) error {
-	err := repoIsAvailable(c.repo, events)
-	if err != nil {
-		return err
-	}
-
-	f, err := c.repo.LocalStorage().Create(lockfile)
-	if err != nil {
-		return err
-	}
-
-	pid := fmt.Sprintf("%d", os.Getpid())
-	_, err = f.Write([]byte(pid))
-	if err != nil {
-		_ = f.Close()
-		return err
-	}
-
-	return f.Close()
-}
-
 // stopFollowingChanges ends the subscription to the change source, and waits
 // for the changes it reported to be passed on. It won't start again.
 func (c *RepoCache) stopFollowingChanges() {
@@ -324,12 +289,7 @@ func (c *RepoCache) Close() error {
 		return err
 	}
 
-	err = c.repo.Close()
-	if err != nil {
-		return err
-	}
-
-	return c.repo.LocalStorage().Remove(lockfile)
+	return c.repo.Close()
 }
 
 func (c *RepoCache) registerObserver(repoName string, typename string, observer Observer) error {
@@ -358,64 +318,4 @@ func (c *RepoCache) unregisterAllObservers(observer Observer) {
 	for _, subcache := range c.subcaches {
 		subcache.UnregisterObserver(observer)
 	}
-}
-
-// repoIsAvailable check is the given repository is locked by a Cache.
-// Note: this is a smart function that will clean the lock file if the
-// corresponding process is not there anymore.
-// If no error is returned, the repo is free to edit.
-func repoIsAvailable(repo repository.RepoStorage, events chan BuildEvent) error {
-	// Todo: this leave way for a racey access to the repo between the test
-	// if the file exist and the actual write. It's probably not a problem in
-	// practice because using a repository will be done from user interaction
-	// or in a context where a single instance of git-bug is already guaranteed
-	// (say, a server with the web UI running). But still, that might be nice to
-	// have a mutex or something to guard that.
-
-	// Todo: this will fail if somehow the filesystem is shared with another
-	// computer. Should add a configuration that prevent the cleaning of the
-	// lock file
-
-	f, err := repo.LocalStorage().Open(lockfile)
-	if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-
-	if err == nil {
-		// lock file already exist
-		buf, err := io.ReadAll(io.LimitReader(f, 10))
-		if err != nil {
-			_ = f.Close()
-			return err
-		}
-
-		err = f.Close()
-		if err != nil {
-			return err
-		}
-
-		if len(buf) >= 10 {
-			return fmt.Errorf("the lock file should be < 10 bytes")
-		}
-
-		pid, err := strconv.Atoi(string(buf))
-		if err != nil {
-			return err
-		}
-
-		if process.IsRunning(pid) {
-			return fmt.Errorf("the repository you want to access is already locked by the process pid %d", pid)
-		}
-
-		// The lock file is just laying there after a crash, clean it
-
-		events <- BuildEvent{Event: BuildEventRemoveLock}
-
-		err = repo.LocalStorage().Remove(lockfile)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

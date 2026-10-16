@@ -14,8 +14,6 @@ const (
 	_ BuildEventType = iota
 	// BuildEventCacheIsBuilt signal that the cache is being built (aka, not skipped)
 	BuildEventCacheIsBuilt
-	// BuildEventRemoveLock signal that an old repo lock has been cleaned
-	BuildEventRemoveLock
 	// BuildEventStarted signal the beginning of a cache build for an entity
 	BuildEventStarted
 	// BuildEventProgress signal progress in the cache building for an entity
