@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792155413628,
+  "lastUpdate": 1792168731741,
   "repoUrl": "https://github.com/git-bug/git-bug",
   "entries": {
     "Benchmark": [
@@ -27892,6 +27892,318 @@ window.BENCHMARK_DATA = {
             "value": 722910,
             "unit": "allocs/op",
             "extra": "3 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cc9039fa961485e1cb49d865e224fd54a2f4a654",
+          "message": "Merge pull request #1692 from git-bug/remove-repo-lock\n\ncache: remove the massive repo wide lock",
+          "timestamp": "2026-10-16T16:32:20Z",
+          "tree_id": "8e8212ff9915b8786b93c9a5b36b1bd9667b1523",
+          "url": "https://github.com/git-bug/git-bug/commit/cc9039fa961485e1cb49d865e224fd54a2f4a654"
+        },
+        "date": 1792168730405,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkSync/sync_one,_nothing_to_do (github.com/git-bug/git-bug/cache)",
+            "value": 30470,
+            "unit": "ns/op\t    6288 B/op\t      88 allocs/op",
+            "extra": "40068 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSync/sync_one,_nothing_to_do (github.com/git-bug/git-bug/cache) - ns/op",
+            "value": 30470,
+            "unit": "ns/op",
+            "extra": "40068 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSync/sync_one,_nothing_to_do (github.com/git-bug/git-bug/cache) - B/op",
+            "value": 6288,
+            "unit": "B/op",
+            "extra": "40068 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSync/sync_one,_nothing_to_do (github.com/git-bug/git-bug/cache) - allocs/op",
+            "value": 88,
+            "unit": "allocs/op",
+            "extra": "40068 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSync/sync_all,_nothing_to_do (github.com/git-bug/git-bug/cache)",
+            "value": 974531,
+            "unit": "ns/op\t  371862 B/op\t    3296 allocs/op",
+            "extra": "1143 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSync/sync_all,_nothing_to_do (github.com/git-bug/git-bug/cache) - ns/op",
+            "value": 974531,
+            "unit": "ns/op",
+            "extra": "1143 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSync/sync_all,_nothing_to_do (github.com/git-bug/git-bug/cache) - B/op",
+            "value": 371862,
+            "unit": "B/op",
+            "extra": "1143 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSync/sync_all,_nothing_to_do (github.com/git-bug/git-bug/cache) - allocs/op",
+            "value": 3296,
+            "unit": "allocs/op",
+            "extra": "1143 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSync/commit (github.com/git-bug/git-bug/cache)",
+            "value": 2117204,
+            "unit": "ns/op\t  534491 B/op\t    5939 allocs/op",
+            "extra": "640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSync/commit (github.com/git-bug/git-bug/cache) - ns/op",
+            "value": 2117204,
+            "unit": "ns/op",
+            "extra": "640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSync/commit (github.com/git-bug/git-bug/cache) - B/op",
+            "value": 534491,
+            "unit": "B/op",
+            "extra": "640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSync/commit (github.com/git-bug/git-bug/cache) - allocs/op",
+            "value": 5939,
+            "unit": "allocs/op",
+            "extra": "640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/linear/100 (github.com/git-bug/git-bug/entity/dag)",
+            "value": 577818,
+            "unit": "ns/op\t  240004 B/op\t    3443 allocs/op",
+            "extra": "2002 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/linear/100 (github.com/git-bug/git-bug/entity/dag) - ns/op",
+            "value": 577818,
+            "unit": "ns/op",
+            "extra": "2002 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/linear/100 (github.com/git-bug/git-bug/entity/dag) - B/op",
+            "value": 240004,
+            "unit": "B/op",
+            "extra": "2002 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/linear/100 (github.com/git-bug/git-bug/entity/dag) - allocs/op",
+            "value": 3443,
+            "unit": "allocs/op",
+            "extra": "2002 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/linear/1000 (github.com/git-bug/git-bug/entity/dag)",
+            "value": 6686043,
+            "unit": "ns/op\t 2750140 B/op\t   34133 allocs/op",
+            "extra": "182 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/linear/1000 (github.com/git-bug/git-bug/entity/dag) - ns/op",
+            "value": 6686043,
+            "unit": "ns/op",
+            "extra": "182 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/linear/1000 (github.com/git-bug/git-bug/entity/dag) - B/op",
+            "value": 2750140,
+            "unit": "B/op",
+            "extra": "182 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/linear/1000 (github.com/git-bug/git-bug/entity/dag) - allocs/op",
+            "value": 34133,
+            "unit": "allocs/op",
+            "extra": "182 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/merges/100 (github.com/git-bug/git-bug/entity/dag)",
+            "value": 524294,
+            "unit": "ns/op\t  232690 B/op\t    3203 allocs/op",
+            "extra": "2131 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/merges/100 (github.com/git-bug/git-bug/entity/dag) - ns/op",
+            "value": 524294,
+            "unit": "ns/op",
+            "extra": "2131 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/merges/100 (github.com/git-bug/git-bug/entity/dag) - B/op",
+            "value": 232690,
+            "unit": "B/op",
+            "extra": "2131 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/merges/100 (github.com/git-bug/git-bug/entity/dag) - allocs/op",
+            "value": 3203,
+            "unit": "allocs/op",
+            "extra": "2131 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/merges/1000 (github.com/git-bug/git-bug/entity/dag)",
+            "value": 5998302,
+            "unit": "ns/op\t 2626860 B/op\t   31725 allocs/op",
+            "extra": "199 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/merges/1000 (github.com/git-bug/git-bug/entity/dag) - ns/op",
+            "value": 5998302,
+            "unit": "ns/op",
+            "extra": "199 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/merges/1000 (github.com/git-bug/git-bug/entity/dag) - B/op",
+            "value": 2626860,
+            "unit": "B/op",
+            "extra": "199 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/merges/1000 (github.com/git-bug/git-bug/entity/dag) - allocs/op",
+            "value": 31725,
+            "unit": "allocs/op",
+            "extra": "199 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/lagging_branch/100 (github.com/git-bug/git-bug/entity/dag)",
+            "value": 633059,
+            "unit": "ns/op\t  315038 B/op\t    3342 allocs/op",
+            "extra": "1922 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/lagging_branch/100 (github.com/git-bug/git-bug/entity/dag) - ns/op",
+            "value": 633059,
+            "unit": "ns/op",
+            "extra": "1922 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/lagging_branch/100 (github.com/git-bug/git-bug/entity/dag) - B/op",
+            "value": 315038,
+            "unit": "B/op",
+            "extra": "1922 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/lagging_branch/100 (github.com/git-bug/git-bug/entity/dag) - allocs/op",
+            "value": 3342,
+            "unit": "allocs/op",
+            "extra": "1922 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/lagging_branch/1000 (github.com/git-bug/git-bug/entity/dag)",
+            "value": 18605772,
+            "unit": "ns/op\t11390299 B/op\t   34577 allocs/op",
+            "extra": "61 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/lagging_branch/1000 (github.com/git-bug/git-bug/entity/dag) - ns/op",
+            "value": 18605772,
+            "unit": "ns/op",
+            "extra": "61 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/lagging_branch/1000 (github.com/git-bug/git-bug/entity/dag) - B/op",
+            "value": 11390299,
+            "unit": "B/op",
+            "extra": "61 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRead/lagging_branch/1000 (github.com/git-bug/git-bug/entity/dag) - allocs/op",
+            "value": 34577,
+            "unit": "allocs/op",
+            "extra": "61 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 (github.com/git-bug/git-bug/tests)",
+            "value": 7118940,
+            "unit": "ns/op\t 1978492 B/op\t   26975 allocs/op",
+            "extra": "229 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 (github.com/git-bug/git-bug/tests) - ns/op",
+            "value": 7118940,
+            "unit": "ns/op",
+            "extra": "229 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 (github.com/git-bug/git-bug/tests) - B/op",
+            "value": 1978492,
+            "unit": "B/op",
+            "extra": "229 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs5 (github.com/git-bug/git-bug/tests) - allocs/op",
+            "value": 26975,
+            "unit": "allocs/op",
+            "extra": "229 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 (github.com/git-bug/git-bug/tests)",
+            "value": 28014495,
+            "unit": "ns/op\t 8011366 B/op\t  109558 allocs/op",
+            "extra": "39 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 (github.com/git-bug/git-bug/tests) - ns/op",
+            "value": 28014495,
+            "unit": "ns/op",
+            "extra": "39 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 (github.com/git-bug/git-bug/tests) - B/op",
+            "value": 8011366,
+            "unit": "B/op",
+            "extra": "39 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs25 (github.com/git-bug/git-bug/tests) - allocs/op",
+            "value": 109558,
+            "unit": "allocs/op",
+            "extra": "39 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 (github.com/git-bug/git-bug/tests)",
+            "value": 195724472,
+            "unit": "ns/op\t52967897 B/op\t  690199 allocs/op",
+            "extra": "6 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 (github.com/git-bug/git-bug/tests) - ns/op",
+            "value": 195724472,
+            "unit": "ns/op",
+            "extra": "6 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 (github.com/git-bug/git-bug/tests) - B/op",
+            "value": 52967897,
+            "unit": "B/op",
+            "extra": "6 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReadBugs150 (github.com/git-bug/git-bug/tests) - allocs/op",
+            "value": 690199,
+            "unit": "allocs/op",
+            "extra": "6 times\n4 procs"
           }
         ]
       }
