@@ -8,6 +8,7 @@ to use them.
 
 - [Overview](#overview)
 - [Filtering](#filtering)
+  - [Filtering by ID](#filtering-by-id)
   - [Filtering by status](#filtering-by-status)
   - [Filtering by author](#filtering-by-author)
   - [Filtering by participant](#filtering-by-participant)
@@ -45,6 +46,22 @@ status:open sort:edit
   `9ed1af428...` and `9ed1ae24a...`
 
 ## Filtering<a name="filtering"></a>
+
+### Filtering by ID<a name="filtering-by-id"></a>
+
+Use `id:ID` to find a bug by its full ID or a prefix, such as the short ID shown
+in the terminal UI. ID matching is case insensitive. If a prefix matches more
+than one bug, all matching bugs are returned. Repeating `id:` matches any of the
+specified IDs; other filters still apply.
+
+```
+id:265e26f
+id:265e26f status:open
+id:265e26f id:9ed1af4
+```
+
+This qualifier works in the terminal UI's search, the web UI's search, and
+command-line queries such as `git bug id:265e26f`.
 
 ### Filtering by status<a name="filtering-by-status"></a>
 
