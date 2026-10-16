@@ -29,6 +29,18 @@ install: build-webui
 	go generate
 	go install -tags webui -ldflags "$(LDFLAGS)" .
 
+# produce a build without the web UI: no Node.js toolchain needed, at the cost
+# of `git-bug webui` refusing to start (see //webui:assets_stub.go)
+.PHONY: build/no-webui
+build/no-webui:
+	go generate
+	go build -ldflags "$(LDFLAGS)" .
+
+.PHONY: install/no-webui
+install/no-webui:
+	go generate
+	go install -ldflags "$(LDFLAGS)" .
+
 .PHONY: secure
 secure:
 	go tool govulncheck ./...

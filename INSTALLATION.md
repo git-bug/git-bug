@@ -26,6 +26,7 @@ and verify your installation.
 - [MacOS](#macos)
 - [Windows](#windows)
 - [Build from source](#build-from-source)
+  - [Build without the web UI](#build-without-the-web-ui)
 - [Verify your installation](#verify-your-installation)
 
 <!-- mdformat-toc end -->
@@ -210,6 +211,8 @@ dependencies:
 - `git`
 - `go`
 - `make`
+- [`pnpm`][pnpm] (the `build` and `install` targets build the web UI, see
+  [Build without the web UI](#build-without-the-web-ui) to skip it)
 
 Ensure that the `go` binary directory (`$GOPATH/bin`) is in your `PATH`. It is
 recommended to set this within your shell configuration file(s), such as
@@ -325,6 +328,23 @@ This will build <code>git-bug</code> and place it in your Go binary directory.
 
 </details>
 
+### Build without the web UI<a name="build-without-the-web-ui"></a>
+
+The `build` and `install` targets above build the web UI first, which requires
+`pnpm`. If you do not want to install a Node.js toolchain, use the
+`build/no-webui` and `install/no-webui` targets instead. They compile the binary
+from a fresh clone without the `webui` build tag, so `git`, `go` and `make` are
+enough:
+
+```
+make install/no-webui
+```
+
+Everything except `git-bug webui` works in such a binary. That command reports
+that the binary was built without the web UI, since the frontend assets were
+never compiled into it. Use the `build` or `install` targets, or download an
+official release, if you need the web UI.
+
 ## Verify your installation<a name="verify-your-installation"></a>
 
 To verify that `git-bug` was installed correctly, you can run the following
@@ -377,6 +397,7 @@ ______________________________________________________________________
 [p/arch-repo]: https://archlinux.org/packages/extra/x86_64/git-bug/
 [p/aur]: https://aur.archlinux.org/packages/git-bug-bin
 [p/nix]: https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/applications/version-management/git-bug/default.nix
+[pnpm]: https://pnpm.io/installation
 [pkg/linux_amd64.apk]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_amd64.apk
 [pkg/linux_amd64.arch]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_amd64.pkg.tar.zst
 [pkg/linux_amd64.deb]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_amd64.deb
