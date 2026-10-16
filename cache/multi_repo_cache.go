@@ -4,8 +4,6 @@ import (
 	"fmt"
 )
 
-const lockfile = "lock"
-
 // MultiRepoCache is the root cache, holding multiple RepoCache by name. The
 // empty name is that of an unnamed repository, as in a single-repo setup.
 type MultiRepoCache struct {
