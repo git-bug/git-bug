@@ -136,14 +136,13 @@ type TimelineNode = TimelineData["nodes"][number];
 
 interface TimelineProps {
   repo: string | null;
-  bugPrefix: string;
   timeline: FragmentType<typeof TIMELINE_ITEMS_FRAGMENT>;
 }
 
 // Ordered sequence of events on a bug: comments (create and add-comment) and
 // inline events (label changes, status changes, title edits). Comment items
 // support inline editing for the logged-in user.
-export function Timeline({ repo, bugPrefix, timeline }: TimelineProps) {
+export function Timeline({ repo, timeline }: TimelineProps) {
   const data = useFragment(TIMELINE_ITEMS_FRAGMENT, timeline);
 
   return (
@@ -151,11 +150,9 @@ export function Timeline({ repo, bugPrefix, timeline }: TimelineProps) {
       {data.nodes.map((item) => {
         switch (item.__typename) {
           case "BugCreateTimelineItem":
-            return (
-              <CreateCommentItem key={item.id} item={item} bugPrefix={bugPrefix} repo={repo} />
-            );
+            return <CreateCommentItem key={item.id} item={item} repo={repo} />;
           case "BugAddCommentTimelineItem":
-            return <AddCommentItem key={item.id} item={item} bugPrefix={bugPrefix} repo={repo} />;
+            return <AddCommentItem key={item.id} item={item} repo={repo} />;
           case "BugLabelChangeTimelineItem":
             return <LabelChangeItem key={item.id} item={item} repo={repo} />;
           case "BugSetStatusTimelineItem":
@@ -178,47 +175,23 @@ type CommentData =
   | ResultOf<typeof BUG_CREATE_COMMENT_FRAGMENT>
   | ResultOf<typeof BUG_ADD_COMMENT_FRAGMENT>;
 
-function CreateCommentItem({
-  item,
-  bugPrefix,
-  repo,
-}: {
-  item: CreateNode;
-  bugPrefix: string;
-  repo: string | null;
-}) {
+function CreateCommentItem({ item, repo }: { item: CreateNode; repo: string | null }) {
   const data = useFragment(BUG_CREATE_COMMENT_FRAGMENT, item);
-  return <CommentBody data={data} bugPrefix={bugPrefix} repo={repo} />;
+  return <CommentBody data={data} repo={repo} />;
 }
 
-function AddCommentItem({
-  item,
-  bugPrefix,
-  repo,
-}: {
-  item: AddCommentNode;
-  bugPrefix: string;
-  repo: string | null;
-}) {
+function AddCommentItem({ item, repo }: { item: AddCommentNode; repo: string | null }) {
   const data = useFragment(BUG_ADD_COMMENT_FRAGMENT, item);
-  return <CommentBody data={data} bugPrefix={bugPrefix} repo={repo} />;
+  return <CommentBody data={data} repo={repo} />;
 }
 
-function CommentBody({
-  data: item,
-  bugPrefix,
-  repo,
-}: {
-  data: CommentData;
-  bugPrefix: string;
-  repo: string | null;
-}) {
+function CommentBody({ data: item, repo }: { data: CommentData; repo: string | null }) {
   const { user } = useAuth();
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(item.message ?? "");
 
   const [editComment, { loading }] = useMutation(BUG_EDIT_COMMENT_MUTATION, {
-    refetchQueries: [{ query: BugDetailDocument, variables: { ref: repo, prefix: bugPrefix } }],
+    refetchQueries: [BugDetailDocument],
   });
 
   function handleSave() {

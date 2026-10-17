@@ -12,22 +12,21 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/git-bug/git-bug/api/graphql/models"
 	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entity"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
 // region    ************************** generated!.gotpl **************************
 
 type SubscriptionResolver interface {
-	AllEvents(ctx context.Context, repoRef *string, typename *string) (<-chan *models.EntityEvent, error)
-	IdentityEvents(ctx context.Context, repoRef *string) (<-chan *models.IdentityEvent, error)
-	BugEvents(ctx context.Context, repoRef *string) (<-chan *models.BugEvent, error)
+	EntitiesChanged(ctx context.Context, repoRef *string, typeArg models.EntityType, ids []entity.Id) (<-chan []*models.EntityChange, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Subscription_allEvents_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Subscription_entitiesChanged_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "repoRef",
@@ -38,42 +37,22 @@ func (ec *executionContext) field_Subscription_allEvents_args(ctx context.Contex
 		return nil, err
 	}
 	args["repoRef"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "typename",
-		func(ctx context.Context, v any) (*string, error) {
-			return ec.unmarshalOString2ᚖstring(ctx, v)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "type",
+		func(ctx context.Context, v any) (models.EntityType, error) {
+			return ec.unmarshalNEntityType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEntityType(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["typename"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Subscription_bugEvents_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "repoRef",
-		func(ctx context.Context, v any) (*string, error) {
-			return ec.unmarshalOString2ᚖstring(ctx, v)
+	args["type"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "ids",
+		func(ctx context.Context, v any) ([]entity.Id, error) {
+			return ec.unmarshalOID2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐIdᚄ(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["repoRef"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Subscription_identityEvents_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "repoRef",
-		func(ctx context.Context, v any) (*string, error) {
-			return ec.unmarshalOString2ᚖstring(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["repoRef"] = arg0
+	args["ids"] = arg2
 	return args, nil
 }
 
@@ -81,16 +60,16 @@ func (ec *executionContext) field_Subscription_identityEvents_args(ctx context.C
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _BugEvent_type(ctx context.Context, field graphql.CollectedField, obj *models.BugEvent) (ret graphql.Marshaler) {
+func (ec *executionContext) _EntityChange_event(ctx context.Context, field graphql.CollectedField, obj *models.EntityChange) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
 		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_BugEvent_type(ctx, field)
+			return ec.fieldContext_EntityChange_event(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.Type, nil
+			return obj.Event, nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v cache.EntityEventType) graphql.Marshaler {
@@ -100,180 +79,61 @@ func (ec *executionContext) _BugEvent_type(ctx context.Context, field graphql.Co
 		true,
 	)
 }
-func (ec *executionContext) fieldContext_BugEvent_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugEvent", field, false, false, errors.New("field of type EntityEventType does not have child fields"))
+func (ec *executionContext) fieldContext_EntityChange_event(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EntityChange", field, false, false, errors.New("field of type EntityEventType does not have child fields"))
 }
 
-func (ec *executionContext) _BugEvent_bug(ctx context.Context, field graphql.CollectedField, obj *models.BugEvent) (ret graphql.Marshaler) {
+func (ec *executionContext) _EntityChange_id(ctx context.Context, field graphql.CollectedField, obj *models.EntityChange) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
 		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_BugEvent_bug(ctx, field)
+			return ec.fieldContext_EntityChange_id(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.Bug, nil
+			return obj.ID, nil
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v models.BugWrapper) graphql.Marshaler {
-			return ec.marshalNBug2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugWrapper(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v entity.Id) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚐId(ctx, selections, v)
 		},
 		true,
 		true,
 	)
 }
-func (ec *executionContext) fieldContext_BugEvent_bug(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "BugEvent",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.childFields_Bug(ctx, field)
-		},
-	}
-	return fc, nil
+func (ec *executionContext) fieldContext_EntityChange_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EntityChange", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _EntityEvent_type(ctx context.Context, field graphql.CollectedField, obj *models.EntityEvent) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_EntityEvent_type(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.Type, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v cache.EntityEventType) graphql.Marshaler {
-			return ec.marshalNEntityEventType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋcacheᚐEntityEventType(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_EntityEvent_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("EntityEvent", field, false, false, errors.New("field of type EntityEventType does not have child fields"))
-}
-
-func (ec *executionContext) _EntityEvent_entity(ctx context.Context, field graphql.CollectedField, obj *models.EntityEvent) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_EntityEvent_entity(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.Entity, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v models.Entity) graphql.Marshaler {
-			return ec.marshalOEntity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEntity(ctx, selections, v)
-		},
-		true,
-		false,
-	)
-}
-func (ec *executionContext) fieldContext_EntityEvent_entity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "EntityEvent",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("FieldContext.Child cannot be called on type INTERFACE")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _IdentityEvent_type(ctx context.Context, field graphql.CollectedField, obj *models.IdentityEvent) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_IdentityEvent_type(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.Type, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v cache.EntityEventType) graphql.Marshaler {
-			return ec.marshalNEntityEventType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋcacheᚐEntityEventType(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_IdentityEvent_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("IdentityEvent", field, false, false, errors.New("field of type EntityEventType does not have child fields"))
-}
-
-func (ec *executionContext) _IdentityEvent_identity(ctx context.Context, field graphql.CollectedField, obj *models.IdentityEvent) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_IdentityEvent_identity(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.Identity, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v models.IdentityWrapper) graphql.Marshaler {
-			return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_IdentityEvent_identity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "IdentityEvent",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.childFields_Identity(ctx, field)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Subscription_allEvents(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+func (ec *executionContext) _Subscription_entitiesChanged(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
 	return graphql.ResolveFieldStream(
 		ctx,
 		ec.OperationContext,
 		field,
 		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_Subscription_allEvents(ctx, field)
+			return ec.fieldContext_Subscription_entitiesChanged(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Subscription().AllEvents(ctx, fc.Args["repoRef"].(*string), fc.Args["typename"].(*string))
+			return ec.Resolvers.Subscription().EntitiesChanged(ctx, fc.Args["repoRef"].(*string), fc.Args["type"].(models.EntityType), fc.Args["ids"].([]entity.Id))
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v *models.EntityEvent) graphql.Marshaler {
-			return ec.marshalNEntityEvent2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEntityEvent(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v []*models.EntityChange) graphql.Marshaler {
+			return ec.marshalNEntityChange2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEntityChangeᚄ(ctx, selections, v)
 		},
 		true,
 		true,
 	)
 }
-func (ec *executionContext) fieldContext_Subscription_allEvents(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_entitiesChanged(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.childFields_EntityEvent(ctx, field)
+			return ec.childFields_EntityChange(ctx, field)
 		},
 	}
 	defer func() {
@@ -283,95 +143,7 @@ func (ec *executionContext) fieldContext_Subscription_allEvents(ctx context.Cont
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Subscription_allEvents_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Subscription_identityEvents(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
-	return graphql.ResolveFieldStream(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_Subscription_identityEvents(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Subscription().IdentityEvents(ctx, fc.Args["repoRef"].(*string))
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v *models.IdentityEvent) graphql.Marshaler {
-			return ec.marshalNIdentityEvent2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityEvent(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_Subscription_identityEvents(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Subscription",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.childFields_IdentityEvent(ctx, field)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Subscription_identityEvents_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Subscription_bugEvents(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
-	return graphql.ResolveFieldStream(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_Subscription_bugEvents(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Subscription().BugEvents(ctx, fc.Args["repoRef"].(*string))
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v *models.BugEvent) graphql.Marshaler {
-			return ec.marshalNBugEvent2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugEvent(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_Subscription_bugEvents(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Subscription",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.childFields_BugEvent(ctx, field)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Subscription_bugEvents_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Subscription_entitiesChanged_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -390,53 +162,10 @@ func (ec *executionContext) fieldContext_Subscription_bugEvents(ctx context.Cont
 
 // region    **************************** object.gotpl ****************************
 
-var bugEventImplementors = []string{"BugEvent"}
+var entityChangeImplementors = []string{"EntityChange"}
 
-func (ec *executionContext) _BugEvent(ctx context.Context, sel ast.SelectionSet, obj *models.BugEvent) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, bugEventImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("BugEvent")
-		case "type":
-			out.Values[i] = ec._BugEvent_type(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "bug":
-			out.Values[i] = ec._BugEvent_bug(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
-
-	return out
-}
-
-var entityEventImplementors = []string{"EntityEvent"}
-
-func (ec *executionContext) _EntityEvent(ctx context.Context, sel ast.SelectionSet, obj *models.EntityEvent) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, entityEventImplementors)
+func (ec *executionContext) _EntityChange(ctx context.Context, sel ast.SelectionSet, obj *models.EntityChange) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, entityChangeImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferredFieldSet := graphql.NewFieldSet(nil)
@@ -444,57 +173,14 @@ func (ec *executionContext) _EntityEvent(ctx context.Context, sel ast.SelectionS
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("EntityEvent")
-		case "type":
-			out.Values[i] = ec._EntityEvent_type(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("EntityChange")
+		case "event":
+			out.Values[i] = ec._EntityChange_event(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "entity":
-			out.Values[i] = ec._EntityEvent_entity(ctx, field, obj)
-			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
-
-	return out
-}
-
-var identityEventImplementors = []string{"IdentityEvent"}
-
-func (ec *executionContext) _IdentityEvent(ctx context.Context, sel ast.SelectionSet, obj *models.IdentityEvent) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, identityEventImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("IdentityEvent")
-		case "type":
-			out.Values[i] = ec._IdentityEvent_type(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "identity":
-			out.Values[i] = ec._IdentityEvent_identity(ctx, field, obj)
+		case "id":
+			out.Values[i] = ec._EntityChange_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -532,12 +218,8 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 	}
 
 	switch fields[0].Name {
-	case "allEvents":
-		return ec._Subscription_allEvents(ctx, fields[0])
-	case "identityEvents":
-		return ec._Subscription_identityEvents(ctx, fields[0])
-	case "bugEvents":
-		return ec._Subscription_bugEvents(ctx, fields[0])
+	case "entitiesChanged":
+		return ec._Subscription_entitiesChanged(ctx, fields[0])
 	default:
 		panic("unknown field " + strconv.Quote(fields[0].Name))
 	}
@@ -547,24 +229,30 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNBugEvent2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugEvent(ctx context.Context, sel ast.SelectionSet, v *models.BugEvent) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+func (ec *executionContext) marshalNEntityChange2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEntityChangeᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.EntityChange) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEntityChange2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEntityChange(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
 		}
-		return graphql.Null
 	}
-	return ec._BugEvent(ctx, sel, v)
+
+	return ret
 }
 
-func (ec *executionContext) marshalNEntityEvent2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEntityEvent(ctx context.Context, sel ast.SelectionSet, v *models.EntityEvent) graphql.Marshaler {
+func (ec *executionContext) marshalNEntityChange2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEntityChange(ctx context.Context, sel ast.SelectionSet, v *models.EntityChange) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._EntityEvent(ctx, sel, v)
+	return ec._EntityChange(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNEntityEventType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋcacheᚐEntityEventType(ctx context.Context, v any) (cache.EntityEventType, error) {
@@ -577,14 +265,14 @@ func (ec *executionContext) marshalNEntityEventType2githubᚗcomᚋgitᚑbugᚋg
 	return v
 }
 
-func (ec *executionContext) marshalNIdentityEvent2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityEvent(ctx context.Context, sel ast.SelectionSet, v *models.IdentityEvent) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._IdentityEvent(ctx, sel, v)
+func (ec *executionContext) unmarshalNEntityType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEntityType(ctx context.Context, v any) (models.EntityType, error) {
+	var res models.EntityType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEntityType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEntityType(ctx context.Context, sel ast.SelectionSet, v models.EntityType) graphql.Marshaler {
+	return v
 }
 
 // endregion ***************************** type.gotpl *****************************

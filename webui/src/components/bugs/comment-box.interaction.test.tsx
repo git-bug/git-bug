@@ -11,7 +11,6 @@ import {
   BugAddCommentAndReopenDocument,
   BugStatusCloseDocument,
   BugStatusOpenDocument,
-  BugDetailDocument,
 } from "@/__generated__/graphql";
 import { useAuth } from "@/lib/auth";
 
@@ -33,14 +32,6 @@ vi.mock("@/lib/auth", () => ({
     },
   })),
 }));
-
-// Mock BugDetailDocument refetch — return minimal valid data so the
-// refetch triggered after each mutation doesn't produce console warnings.
-const REFETCH_MOCK = {
-  request: { query: BugDetailDocument, variables: vi.fn().mockReturnValue(true) },
-  result: { data: { repository: null } },
-  maxUsageCount: 10,
-};
 
 function renderCommentBox(props: { bugPrefix?: string; bugStatus?: Status; repo?: string | null }) {
   const { bugPrefix = "bug1", bugStatus = Status.Open, repo = "myrepo" } = props;
@@ -115,7 +106,7 @@ describe("CommentBox — mutation variables", () => {
     });
 
     render(
-      <MockedProvider mocks={[mock, REFETCH_MOCK]} showWarnings={false}>
+      <MockedProvider mocks={[mock]} showWarnings={false}>
         <Suspense>
           <CommentBox bugPrefix={PREFIX} bugStatus={Status.Open} repo={REPO} />
         </Suspense>
@@ -138,7 +129,7 @@ describe("CommentBox — mutation variables", () => {
     });
 
     render(
-      <MockedProvider mocks={[mock, REFETCH_MOCK]} showWarnings={false}>
+      <MockedProvider mocks={[mock]} showWarnings={false}>
         <Suspense>
           <CommentBox bugPrefix={PREFIX} bugStatus={Status.Open} repo={null} />
         </Suspense>
@@ -161,7 +152,7 @@ describe("CommentBox — mutation variables", () => {
     });
 
     render(
-      <MockedProvider mocks={[mock, REFETCH_MOCK]} showWarnings={false}>
+      <MockedProvider mocks={[mock]} showWarnings={false}>
         <Suspense>
           <CommentBox bugPrefix={PREFIX} bugStatus={Status.Open} repo={REPO} />
         </Suspense>
@@ -184,7 +175,7 @@ describe("CommentBox — mutation variables", () => {
     });
 
     render(
-      <MockedProvider mocks={[mock, REFETCH_MOCK]} showWarnings={false}>
+      <MockedProvider mocks={[mock]} showWarnings={false}>
         <Suspense>
           <CommentBox bugPrefix={PREFIX} bugStatus={Status.Open} repo={REPO} />
         </Suspense>
@@ -208,7 +199,7 @@ describe("CommentBox — mutation variables", () => {
     });
 
     render(
-      <MockedProvider mocks={[mock, REFETCH_MOCK]} showWarnings={false}>
+      <MockedProvider mocks={[mock]} showWarnings={false}>
         <Suspense>
           <CommentBox bugPrefix={PREFIX} bugStatus={Status.Open} repo={REPO} />
         </Suspense>
@@ -231,7 +222,7 @@ describe("CommentBox — mutation variables", () => {
     });
 
     render(
-      <MockedProvider mocks={[mock, REFETCH_MOCK]} showWarnings={false}>
+      <MockedProvider mocks={[mock]} showWarnings={false}>
         <Suspense>
           <CommentBox bugPrefix={PREFIX} bugStatus={Status.Closed} repo={REPO} />
         </Suspense>
@@ -255,7 +246,7 @@ describe("CommentBox — mutation variables", () => {
     });
 
     render(
-      <MockedProvider mocks={[mock, REFETCH_MOCK]} showWarnings={false}>
+      <MockedProvider mocks={[mock]} showWarnings={false}>
         <Suspense>
           <CommentBox bugPrefix={PREFIX} bugStatus={Status.Closed} repo={REPO} />
         </Suspense>
@@ -284,7 +275,7 @@ describe("CommentBox — state transitions", () => {
     };
 
     render(
-      <MockedProvider mocks={[mock, REFETCH_MOCK]} showWarnings={false}>
+      <MockedProvider mocks={[mock]} showWarnings={false}>
         <Suspense>
           <CommentBox bugPrefix="bug1" bugStatus={Status.Open} repo="myrepo" />
         </Suspense>

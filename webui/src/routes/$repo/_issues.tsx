@@ -1,6 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 
+import { EntityType } from "@/__generated__/enums";
 import { graphql } from "@/__generated__/gql";
+import { useEntitiesChanged, useRefetch } from "@/lib/live-updates";
 
 const ALL_IDENTITIES_QUERY = graphql(`
   query AllIdentities($ref: String) {
@@ -44,6 +46,7 @@ const VALID_LABELS_QUERY = graphql(`
 // Preloads labels and identities shared by the issue list, detail,
 // new issue form, and user profile pages.
 export const Route = createFileRoute("/$repo/_issues")({
+  component: IssuesLayout,
   beforeLoad: ({ context: { preloadQuery, ref } }) => {
     const labelsRef = preloadQuery(VALID_LABELS_QUERY, {
       variables: { ref },
@@ -54,3 +57,13 @@ export const Route = createFileRoute("/$repo/_issues")({
     return { labelsRef, identitiesRef };
   },
 });
+
+// Keeps the shared identities and labels current: they back the author names,
+// avatars and label pickers of every issue page, through the Apollo cache.  The
+// valid labels are those used by the bugs, so they change with them.
+function IssuesLayout() {
+  const { ref } = Route.useRouteContext();
+  useEntitiesChanged(ref, EntityType.Identity, null, useRefetch(ALL_IDENTITIES_QUERY));
+  useEntitiesChanged(ref, EntityType.Bug, null, useRefetch(VALID_LABELS_QUERY));
+  return <Outlet />;
+}

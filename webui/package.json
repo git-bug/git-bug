@@ -31,6 +31,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "graphql": "^17.0.2",
+    "graphql-ws": "6.3.0",
     "hast-util-to-jsx-runtime": "^2.3.6",
     "lucide-react": "^1.47.0",
     "react": "^19.3.0",

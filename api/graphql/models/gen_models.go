@@ -3,9 +3,15 @@
 package models
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+	"strconv"
+
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
+	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/git-bug/git-bug/repository"
 )
@@ -189,11 +195,6 @@ type BugEditCommentPayload struct {
 	Operation *bug.EditCommentOperation `json:"operation"`
 }
 
-type BugEvent struct {
-	Type cache.EntityEventType `json:"type"`
-	Bug  BugWrapper            `json:"bug"`
-}
-
 type BugSetTitleInput struct {
 	// A unique identifier for the client performing the mutation.
 	ClientMutationID *string `json:"clientMutationId,omitempty"`
@@ -264,9 +265,9 @@ type BugTimelineItemEdge struct {
 	Node   bug.TimelineItem `json:"node"`
 }
 
-type EntityEvent struct {
-	Type   cache.EntityEventType `json:"type"`
-	Entity Entity                `json:"entity,omitempty"`
+type EntityChange struct {
+	Event cache.EntityEventType `json:"event"`
+	ID    entity.Id             `json:"id"`
 }
 
 // The content of a git blob (file).
@@ -328,11 +329,6 @@ type IdentityEdge struct {
 	Node   IdentityWrapper `json:"node"`
 }
 
-type IdentityEvent struct {
-	Type     cache.EntityEventType `json:"type"`
-	Identity IdentityWrapper       `json:"identity"`
-}
-
 type LabelConnection struct {
 	Edges      []*LabelEdge   `json:"edges"`
 	Nodes      []common.Label `json:"nodes"`
@@ -389,5 +385,63 @@ type RepositoryEdge struct {
 	Node   *Repository `json:"node"`
 }
 
+// Subscriptions tell what changed, not the new state: a client refetches what it
+// displays with the usual queries. Changes are merged while the client hasn't
+// received them, so a client only learns the latest change of each entity.
 type Subscription struct {
+}
+
+type EntityType string
+
+const (
+	EntityTypeBug      EntityType = "BUG"
+	EntityTypeIdentity EntityType = "IDENTITY"
+)
+
+var AllEntityType = []EntityType{
+	EntityTypeBug,
+	EntityTypeIdentity,
+}
+
+func (e EntityType) IsValid() bool {
+	switch e {
+	case EntityTypeBug, EntityTypeIdentity:
+		return true
+	}
+	return false
+}
+
+func (e EntityType) String() string {
+	return string(e)
+}
+
+func (e *EntityType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = EntityType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid EntityType", str)
+	}
+	return nil
+}
+
+func (e EntityType) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *EntityType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e EntityType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }

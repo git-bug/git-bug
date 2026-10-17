@@ -623,13 +623,6 @@ func (ec *executionContext) marshalNTime2ᚖtimeᚐTime(ctx context.Context, sel
 	return res
 }
 
-func (ec *executionContext) marshalOEntity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEntity(ctx context.Context, sel ast.SelectionSet, v models.Entity) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Entity(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalOHash2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx context.Context, v any) ([]repository.Hash, error) {
 	if v == nil {
 		return nil, nil

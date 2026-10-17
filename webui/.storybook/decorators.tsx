@@ -60,8 +60,8 @@ const mockApolloClient = new ApolloClient({
         if (operation.operationName === "UserIdentity") {
           data.repository = {
             __typename: "Repository",
-            // Required by the cache key policy; null is the default repo.
-            name: null,
+            // Required by the cache key policy; empty is the default repo.
+            name: "",
             userIdentity: {
               __typename: "Identity",
               id: "mock-user",

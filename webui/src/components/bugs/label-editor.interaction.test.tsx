@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { describe, it, expect, vi } from "vitest";
 
 import type { FragmentType } from "@/__generated__/fragment-masking";
-import { BugChangeLabelsDocument, BugDetailDocument } from "@/__generated__/graphql";
+import { BugChangeLabelsDocument } from "@/__generated__/graphql";
 import type { LABEL_FIELDS_FRAGMENT } from "@/components/shared/label-badge";
 import { useAuth } from "@/lib/auth";
 
@@ -22,12 +22,6 @@ vi.mock("@/lib/auth", () => ({
     user: { id: "user-1", humanId: "u1", displayName: "Test User", avatarUrl: null },
   })),
 }));
-
-const REFETCH_MOCK = {
-  request: { query: BugDetailDocument, variables: vi.fn().mockReturnValue(true) },
-  result: { data: { repository: null } },
-  maxUsageCount: 10,
-};
 
 // useFragment is a passthrough so plain objects work as fragment types.
 type LabelData = { name: string; color: { R: number; G: number; B: number } } & FragmentType<
@@ -120,7 +114,7 @@ describe("LabelEditor — mutation variables", () => {
       result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] } } } },
     };
 
-    renderEditor({ currentLabels: [], mocks: [mock, REFETCH_MOCK] });
+    renderEditor({ currentLabels: [], mocks: [mock] });
     openPopover();
     fireEvent.click(screen.getByRole("option", { name: "bug" }));
 
@@ -137,7 +131,7 @@ describe("LabelEditor — mutation variables", () => {
       result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] } } } },
     };
 
-    renderEditor({ currentLabels: [LABEL_BUG], mocks: [mock, REFETCH_MOCK] });
+    renderEditor({ currentLabels: [LABEL_BUG], mocks: [mock] });
     openPopover();
     fireEvent.click(screen.getByRole("option", { name: "bug" }));
 
@@ -154,7 +148,7 @@ describe("LabelEditor — mutation variables", () => {
       result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] } } } },
     };
 
-    renderEditor({ currentLabels: [], repo: null, mocks: [mock, REFETCH_MOCK] });
+    renderEditor({ currentLabels: [], repo: null, mocks: [mock] });
     openPopover();
     fireEvent.click(screen.getByRole("option", { name: "bug" }));
 

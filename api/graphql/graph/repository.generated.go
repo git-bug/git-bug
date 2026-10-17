@@ -19,7 +19,6 @@ import (
 // region    ************************** generated!.gotpl **************************
 
 type RepositoryResolver interface {
-	Name(ctx context.Context, obj *models.Repository) (*string, error)
 	AllBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, query *string) (*models.BugConnection, error)
 	Bug(ctx context.Context, obj *models.Repository, prefix string) (models.BugWrapper, error)
 	AllIdentities(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.IdentityConnection, error)
@@ -390,18 +389,18 @@ func (ec *executionContext) _Repository_name(ctx context.Context, field graphql.
 			return ec.fieldContext_Repository_name(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.Repository().Name(ctx, obj)
+			return obj.Name, nil
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
-			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
 		},
 		true,
-		false,
+		true,
 	)
 }
 func (ec *executionContext) fieldContext_Repository_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Repository", field, true, true, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Repository", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _Repository_allBugs(ctx context.Context, field graphql.CollectedField, obj *models.Repository) (ret graphql.Marshaler) {
@@ -1151,43 +1150,10 @@ func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSe
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Repository")
 		case "name":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Repository_name(ctx, field, obj)
-				if res == graphql.RequiredNull {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Repository_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
-				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "allBugs":
 			field := field
 

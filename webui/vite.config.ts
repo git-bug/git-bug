@@ -33,7 +33,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/graphql": { target: API_URL, changeOrigin: true },
+      "/graphql": { target: API_URL, changeOrigin: true, ws: true },
       "/gitfile": { target: API_URL, changeOrigin: true },
       "/upload": { target: API_URL, changeOrigin: true },
     },

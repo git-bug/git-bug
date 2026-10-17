@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { describe, it, expect, vi } from "vitest";
 
 import { makeFragmentData } from "@/__generated__/fragment-masking";
-import { BugDetailDocument, BugEditCommentDocument } from "@/__generated__/graphql";
+import { BugEditCommentDocument } from "@/__generated__/graphql";
 import type { TimelineItemsFragment } from "@/__generated__/graphql";
 import { useAuth } from "@/lib/auth";
 
@@ -82,12 +82,6 @@ function makeTimeline(nodes: TimelineItemsFragment["nodes"]) {
   return makeFragmentData(data, TIMELINE_ITEMS_FRAGMENT);
 }
 
-const REFETCH_MOCK = {
-  request: { query: BugDetailDocument, variables: vi.fn().mockReturnValue(true) },
-  result: { data: { repository: null } },
-  maxUsageCount: 10,
-};
-
 function renderTimeline(
   nodes: TimelineItemsFragment["nodes"],
   mocks: MockedResponse<any, any>[] = [],
@@ -96,7 +90,7 @@ function renderTimeline(
   return render(
     <MockedProvider mocks={mocks} showWarnings={false}>
       <Suspense>
-        <Timeline repo={repo} bugPrefix="bug1" timeline={makeTimeline(nodes)} />
+        <Timeline repo={repo} timeline={makeTimeline(nodes)} />
       </Suspense>
     </MockedProvider>,
   );
@@ -180,7 +174,7 @@ describe("Timeline — edit flow", () => {
       result: { data: { bugEditComment: { bug: { id: "1" } } } },
     };
 
-    renderTimeline([makeAddComment({ message: "Original" })], [mock, REFETCH_MOCK]);
+    renderTimeline([makeAddComment({ message: "Original" })], [mock]);
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "Updated" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
@@ -200,10 +194,7 @@ describe("Timeline — mutation variables", () => {
       result: { data: { bugEditComment: { bug: { id: "1" } } } },
     };
 
-    renderTimeline(
-      [makeAddComment({ id: COMMENT_ID, message: "Old message" })],
-      [mock, REFETCH_MOCK],
-    );
+    renderTimeline([makeAddComment({ id: COMMENT_ID, message: "Old message" })], [mock]);
 
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "  New message  " } });
@@ -223,7 +214,7 @@ describe("Timeline — mutation variables", () => {
       result: { data: { bugEditComment: { bug: { id: "1" } } } },
     };
 
-    renderTimeline([makeAddComment({ id: COMMENT_ID, message: "Old" })], [mock, REFETCH_MOCK]);
+    renderTimeline([makeAddComment({ id: COMMENT_ID, message: "Old" })], [mock]);
 
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "New" } });
@@ -243,11 +234,7 @@ describe("Timeline — mutation variables", () => {
       result: { data: { bugEditComment: { bug: { id: "1" } } } },
     };
 
-    renderTimeline(
-      [makeAddComment({ id: COMMENT_ID, message: "Old" })],
-      [mock, REFETCH_MOCK],
-      null,
-    );
+    renderTimeline([makeAddComment({ id: COMMENT_ID, message: "Old" })], [mock], null);
 
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "New" } });
