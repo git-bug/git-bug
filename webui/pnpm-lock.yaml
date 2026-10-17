@@ -47,6 +47,9 @@ importers:
       graphql:
         specifier: ^17.0.2
         version: 17.0.2
+      graphql-ws:
+        specifier: 6.3.0
+        version: 6.3.0(graphql@17.0.2)(ws@8.22.0)
       hast-util-to-jsx-runtime:
         specifier: ^2.3.6
         version: 2.3.6

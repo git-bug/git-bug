@@ -1,10 +1,16 @@
+"""
+Subscriptions tell what changed, not the new state: a client refetches what it
+displays with the usual queries. Changes are merged while the client hasn't
+received them, so a client only learns the latest change of each entity.
+"""
 type Subscription {
-  """Subscribe to events on all entities. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
-  allEvents(repoRef: String, typename: String): EntityEvent!
-  """Subscribe to identity entity events. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
-  identityEvents(repoRef: String): IdentityEvent!
-  """Subscribe to bug entity events. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
-  bugEvents(repoRef: String): BugEvent!
+  """Changes of the entities of a type: all of them, or only those given by ids. Sent in batches, at most once per second. For a specific repo you can provide a repo reference. Without it, you get the unique default repo."""
+  entitiesChanged(repoRef: String, type: EntityType!, ids: [ID!]): [EntityChange!]!
+}
+
+enum EntityType {
+  BUG
+  IDENTITY
 }
 
 enum EntityEventType {
@@ -13,17 +19,7 @@ enum EntityEventType {
   REMOVED
 }
 
-type EntityEvent {
-  type: EntityEventType!
-  entity: Entity
-}
-
-type IdentityEvent {
-  type: EntityEventType!
-  identity: Identity!
-}
-
-type BugEvent {
-  type: EntityEventType!
-  bug: Bug!
+type EntityChange {
+  event: EntityEventType!
+  id: ID!
 }

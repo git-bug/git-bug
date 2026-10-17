@@ -2,6 +2,7 @@ import { useReadQuery } from "@apollo/client/react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 
+import { EntityType } from "@/__generated__/enums";
 import { graphql } from "@/__generated__/gql";
 import { CommentBox } from "@/components/bugs/comment-box";
 
@@ -11,6 +12,7 @@ const BUG_DETAIL_QUERY = graphql(`
       name
       bug(prefix: $prefix) {
         ...BugSummary
+        id
         humanId
         title
         status
@@ -50,12 +52,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BackLink } from "@/components/ui/back-link";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEntitiesChanged, useRefetch } from "@/lib/live-updates";
 
 export const Route = createFileRoute("/$repo/_issues/issues/$id")({
   component: RouteComponent,
   pendingComponent: BugDetailSkeleton,
   loader: async ({ context: { preloadQuery, ref }, params: { id } }) => {
     const bugDetailRef = preloadQuery(BUG_DETAIL_QUERY, {
+      fetchPolicy: "network-only",
       variables: { ref, prefix: id },
     });
     return { bugDetailRef: await preloadQuery.toPromise(bugDetailRef) };
@@ -74,6 +78,8 @@ function RouteComponent() {
   const validLabels = labelsData?.repository?.validLabels.nodes ?? [];
 
   const bug = data?.repository?.bug;
+  useEntitiesChanged(ref, EntityType.Bug, bug ? [bug.id] : [], useRefetch(BUG_DETAIL_QUERY));
+
   if (!bug) {
     return <EmptyState className="py-16">Issue not found.</EmptyState>;
   }
@@ -109,7 +115,7 @@ function RouteComponent() {
       <div className="flex gap-8">
         {/* Timeline + comment box */}
         <div className="min-w-0 flex-1 space-y-4">
-          <Timeline repo={repo} bugPrefix={bug.humanId} timeline={bug.timeline} />
+          <Timeline repo={repo} timeline={bug.timeline} />
           <CommentBox bugPrefix={bug.humanId} bugStatus={bug.status} repo={ref} />
         </div>
 

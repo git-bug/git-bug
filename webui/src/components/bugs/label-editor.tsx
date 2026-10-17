@@ -39,7 +39,7 @@ const BUG_CHANGE_LABELS_MUTATION = graphql(`
 interface LabelEditorProps {
   bugPrefix: string;
   currentLabels: Array<{ name: string } & FragmentType<typeof LABEL_FIELDS_FRAGMENT>>;
-  /** Current repo slug, passed as `ref` in refetch query variables. */
+  /** Current repo slug, passed as `repoRef` to the mutations. */
   repo?: string | null;
   /** Pre-fetched valid labels for the repository. */
   validLabels: Array<
@@ -55,7 +55,7 @@ interface LabelEditorProps {
 export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: LabelEditorProps) {
   const { user } = useAuth();
   const [changeLabels] = useMutation(BUG_CHANGE_LABELS_MUTATION, {
-    refetchQueries: [{ query: BugDetailDocument, variables: { ref: repo, prefix: bugPrefix } }],
+    refetchQueries: [BugDetailDocument],
   });
 
   const currentNames = new Set(currentLabels.map((l) => l.name));

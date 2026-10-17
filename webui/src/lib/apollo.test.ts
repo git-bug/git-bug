@@ -180,7 +180,7 @@ describe("apollo cache — every Repository selection asks for name", () => {
       data: {
         repository: {
           __typename: "Repository",
-          name: null,
+          name: "",
           userIdentity: {
             __typename: "Identity",
             id: "id1",
@@ -199,7 +199,7 @@ describe("apollo cache — every Repository selection asks for name", () => {
       query: USER_IDENTITY_QUERY,
     });
     expect(read?.repository.userIdentity.displayName).toBe("Alice");
-    expect(Object.keys(cache.extract())).toContain('Repository:{"name":null}');
+    expect(Object.keys(cache.extract())).toContain('Repository:{"name":""}');
   });
 });
 describe("apollo cache — Repository", () => {

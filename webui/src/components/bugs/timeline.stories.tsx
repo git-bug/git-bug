@@ -93,7 +93,6 @@ export const FullTimeline: Story = {
   decorators: [withCachedFragments([TIMELINE_ITEMS_FRAGMENT, "TimelineItems", baseTimelineData])],
   args: {
     repo: "_",
-    bugPrefix: "abc123",
     timeline: baseTimeline,
   },
 };
@@ -111,7 +110,6 @@ export const CreateOnly: Story = {
   ],
   args: {
     repo: "_",
-    bugPrefix: "abc123",
     timeline: createOnlyTimeline,
   },
 };
@@ -139,7 +137,6 @@ export const EmptyMessage: Story = {
   ],
   args: {
     repo: "_",
-    bugPrefix: "abc123",
     timeline: emptyMessageTimeline,
   },
 };
@@ -173,7 +170,6 @@ export const StatusReopen: Story = {
   ],
   args: {
     repo: "_",
-    bugPrefix: "abc123",
     timeline: statusReopenTimeline,
   },
 };

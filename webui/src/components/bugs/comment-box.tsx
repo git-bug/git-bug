@@ -66,7 +66,7 @@ const BUG_STATUS_CLOSE_MUTATION = graphql(`
 interface CommentBoxProps {
   bugPrefix: string;
   bugStatus: Status;
-  /** Current repo slug, passed as `ref` in refetch query variables. */
+  /** Current repo slug, passed as `repoRef` to the mutations. */
   repo?: string | null;
 }
 
@@ -77,8 +77,9 @@ export function CommentBox({ bugPrefix, bugStatus, repo }: CommentBoxProps) {
   const [message, setMessage] = useState("");
   const [preview, setPreview] = useState(false);
 
-  const refetchVars = { variables: { ref: repo, prefix: bugPrefix } };
-  const refetch = { refetchQueries: [{ query: BugDetailDocument, ...refetchVars }] };
+  // The live updates refetch the bug too, but not without the websocket: the
+  // user's own changes must show regardless.
+  const refetch = { refetchQueries: [BugDetailDocument] };
 
   const [addComment, { loading: addingComment }] = useMutation(BUG_ADD_COMMENT_MUTATION, refetch);
   const [addAndClose, { loading: addingAndClosing }] = useMutation(

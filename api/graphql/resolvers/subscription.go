@@ -2,8 +2,9 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
+	"time"
 
+	"github.com/git-bug/git-bug/api/graphql/broker"
 	"github.com/git-bug/git-bug/api/graphql/graph"
 	"github.com/git-bug/git-bug/api/graphql/models"
 	"github.com/git-bug/git-bug/cache"
@@ -14,135 +15,76 @@ import (
 
 var _ graph.SubscriptionResolver = &subscriptionResolver{}
 
+// entitiesChangedInterval is the least time between two batches of
+// entitiesChanged, so that a burst of changes, like a pull, makes few refetches.
+const entitiesChangedInterval = time.Second
+
+// cacheTypenames are the cache typenames of the entity types.
+var cacheTypenames = map[models.EntityType]string{
+	models.EntityTypeBug:      bug.Typename,
+	models.EntityTypeIdentity: identity.Typename,
+}
+
 type subscriptionResolver struct {
-	cache *cache.MultiRepoCache
+	cache  *cache.MultiRepoCache
+	broker *broker.Broker
 }
 
-func (s subscriptionResolver) AllEvents(ctx context.Context, repoRef *string, typename *string) (<-chan *models.EntityEvent, error) {
-	out := make(chan *models.EntityEvent)
-	sub := &subscription[models.EntityEvent]{
-		cache: s.cache,
-		out:   out,
-		makeEvent: func(repo *cache.RepoCache, excerpt cache.Excerpt, eventType cache.EntityEventType) *models.EntityEvent {
-			switch excerpt := excerpt.(type) {
-			case *cache.BugExcerpt:
-				return &models.EntityEvent{Type: eventType, Entity: models.NewLazyBug(repo, excerpt)}
-			case *cache.IdentityExcerpt:
-				return &models.EntityEvent{Type: eventType, Entity: models.NewLazyIdentity(repo, excerpt)}
-			default:
-				panic(fmt.Sprintf("unknown excerpt type: %T", excerpt))
+func (s subscriptionResolver) EntitiesChanged(ctx context.Context, repoRef *string, typeArg models.EntityType, ids []entity.Id) (<-chan []*models.EntityChange, error) {
+	repoName, err := s.resolveRepo(repoRef)
+	if err != nil {
+		return nil, err
+	}
+
+	typename := cacheTypenames[typeArg]
+	topics := []broker.Topic{broker.TypeTopic(repoName, typename)}
+	if ids != nil {
+		topics = make([]broker.Topic, len(ids))
+		for i, id := range ids {
+			topics[i] = broker.EntityTopic(repoName, typename, id)
+		}
+	}
+	sub := s.broker.Subscribe(topics...)
+
+	out := make(chan []*models.EntityChange)
+	go func() {
+		defer close(out)
+		defer sub.Close()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-sub.Ready():
 			}
-		},
-	}
-
-	var repoRefStr string
-	if repoRef != nil {
-		repoRefStr = *repoRef
-	}
-
-	var typenameStr string
-	if typename != nil {
-		typenameStr = *typename
-	}
-
-	err := s.cache.RegisterObserver(sub, repoRefStr, typenameStr)
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		<-ctx.Done()
-		s.cache.UnregisterObserver(sub)
+			taken := sub.Take()
+			if len(taken) == 0 {
+				continue
+			}
+			changes := make([]*models.EntityChange, 0, len(taken))
+			for id, event := range taken {
+				changes = append(changes, &models.EntityChange{Event: event, ID: id})
+			}
+			select {
+			case <-ctx.Done():
+				return
+			case out <- changes:
+			}
+			// the changes arriving meanwhile wait in the mailbox for the next batch
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(entitiesChangedInterval):
+			}
+		}
 	}()
-
 	return out, nil
 }
 
-func (s subscriptionResolver) BugEvents(ctx context.Context, repoRef *string) (<-chan *models.BugEvent, error) {
-	out := make(chan *models.BugEvent)
-	sub := &subscription[models.BugEvent]{
-		cache: s.cache,
-		out:   out,
-		makeEvent: func(repo *cache.RepoCache, excerpt cache.Excerpt, event cache.EntityEventType) *models.BugEvent {
-			return &models.BugEvent{Type: event, Bug: models.NewLazyBug(repo, excerpt.(*cache.BugExcerpt))}
-		},
+func (s subscriptionResolver) resolveRepo(repoRef *string) (string, error) {
+	if repoRef == nil {
+		name, _, err := s.cache.DefaultRepo()
+		return name, err
 	}
-
-	var repoRefStr string
-	if repoRef != nil {
-		repoRefStr = *repoRef
-	}
-
-	err := s.cache.RegisterObserver(sub, repoRefStr, bug.Typename)
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		<-ctx.Done()
-		s.cache.UnregisterObserver(sub)
-	}()
-
-	return out, nil
-}
-
-func (s subscriptionResolver) IdentityEvents(ctx context.Context, repoRef *string) (<-chan *models.IdentityEvent, error) {
-	out := make(chan *models.IdentityEvent)
-	sub := &subscription[models.IdentityEvent]{
-		cache: s.cache,
-		out:   out,
-		makeEvent: func(repo *cache.RepoCache, excerpt cache.Excerpt, event cache.EntityEventType) *models.IdentityEvent {
-			return &models.IdentityEvent{Type: event, Identity: models.NewLazyIdentity(repo, excerpt.(*cache.IdentityExcerpt))}
-		},
-	}
-
-	var repoRefStr string
-	if repoRef != nil {
-		repoRefStr = *repoRef
-	}
-
-	err := s.cache.RegisterObserver(sub, repoRefStr, identity.Typename)
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		<-ctx.Done()
-		s.cache.UnregisterObserver(sub)
-	}()
-
-	return out, nil
-}
-
-var _ cache.Observer = &subscription[any]{}
-
-type subscription[eventT any] struct {
-	cache     *cache.MultiRepoCache
-	out       chan *eventT
-	filter    func(cache.Excerpt) bool
-	makeEvent func(repo *cache.RepoCache, excerpt cache.Excerpt, event cache.EntityEventType) *eventT
-}
-
-func (s subscription[eventT]) EntityEvent(event cache.EntityEventType, repoName string, typename string, id entity.Id) {
-	repo, err := s.cache.ResolveRepo(repoName)
-	if err != nil {
-		// something terrible happened
-		return
-	}
-	var excerpt cache.Excerpt
-	switch typename {
-	case bug.Typename:
-		excerpt, err = repo.Bugs().ResolveExcerpt(id)
-	case identity.Typename:
-		excerpt, err = repo.Identities().ResolveExcerpt(id)
-	default:
-		panic(fmt.Sprintf("unknown typename: %s", typename))
-	}
-	if err != nil {
-		return
-	}
-	if s.filter != nil && !s.filter(excerpt) {
-		return
-	}
-	s.out <- s.makeEvent(repo, excerpt, event)
+	_, err := s.cache.ResolveRepo(*repoRef)
+	return *repoRef, err
 }

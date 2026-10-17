@@ -1,7 +1,10 @@
 package graphql
 
 import (
+	"fmt"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/99designs/gqlgen/client"
 	"github.com/git-bug/gitconfig"
@@ -587,7 +590,7 @@ func TestGitBrowseQueries(t *testing.T) {
 	})
 }
 
-func TestBugEventsSubscription(t *testing.T) {
+func TestSubscriptions(t *testing.T) {
 	repo := repotest.NewGoGitRepo(t, false)
 
 	mrc := cache.NewMultiRepoCache()
@@ -596,26 +599,117 @@ func TestBugEventsSubscription(t *testing.T) {
 	require.NoError(t, err)
 	mrc.Add("", rc)
 
-	h := NewHandler(mrc, nil, false)
-	c := client.New(h)
-
-	sub := c.Websocket(`subscription { bugEvents { type bug { id } } }`)
-	t.Cleanup(func() { _ = sub.Close() })
-
 	rene, err := rc.Identities().New("René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 	require.NoError(t, rc.SetUserIdentity(rene))
 
-	b, _, err := rc.Bugs().New("test subscription", "body")
-	require.NoError(t, err)
+	h := NewHandler(mrc, nil, false)
+	c := client.New(h)
 
-	var resp struct {
-		BugEvents struct {
-			Type string
-			Bug  struct{ Id string }
+	// A subscription starts asynchronously, so a change made right after
+	// subscribing may come before it: keepDoing repeats the change until the
+	// subscription gets one.  The changes run in a goroutine, so they report
+	// errors with assert: require can't stop the test from there.
+	keepDoing := func(t *testing.T, change func()) (stop func()) {
+		done := make(chan struct{})
+		stopped := make(chan struct{})
+		go func() {
+			defer close(stopped)
+			for {
+				change()
+				select {
+				case <-done:
+					return
+				case <-time.After(50 * time.Millisecond):
+				}
+			}
+		}()
+		return func() {
+			close(done)
+			<-stopped
 		}
 	}
-	require.NoError(t, sub.Next(&resp))
-	assert.Equal(t, "CREATED", resp.BugEvents.Type)
-	assert.Equal(t, b.Id().String(), resp.BugEvents.Bug.Id)
+
+	b, _, err := rc.Bugs().New("subscribed", "body")
+	require.NoError(t, err)
+	other, _, err := rc.Bugs().New("not subscribed", "body")
+	require.NoError(t, err)
+
+	type entityChange struct {
+		Event string
+		Id    string
+	}
+
+	t.Run("given entities", func(t *testing.T) {
+		sub := c.Websocket(fmt.Sprintf(`subscription { entitiesChanged(type: BUG, ids: ["%s"]) { event id } }`, b.Id()))
+		t.Cleanup(func() { _ = sub.Close() })
+
+		stop := keepDoing(t, func() {
+			_, err := other.SetTitle("other title")
+			assert.NoError(t, err)
+			assert.NoError(t, other.Commit())
+			_, err = b.SetTitle("new title")
+			assert.NoError(t, err)
+			assert.NoError(t, b.Commit())
+		})
+		var resp struct{ EntitiesChanged []entityChange }
+		err := sub.Next(&resp)
+		stop()
+		require.NoError(t, err)
+		require.Equal(t, []entityChange{{Event: "UPDATED", Id: b.Id().String()}}, resp.EntitiesChanged)
+	})
+
+	t.Run("all entities of a type", func(t *testing.T) {
+		sub := c.Websocket(`subscription { entitiesChanged(type: BUG) { event id } }`)
+		t.Cleanup(func() { _ = sub.Close() })
+
+		created := make(map[string]bool)
+		var mu sync.Mutex
+		stop := keepDoing(t, func() {
+			b, _, err := rc.Bugs().New("new bug", "body")
+			assert.NoError(t, err)
+			mu.Lock()
+			created[b.Id().String()] = true
+			mu.Unlock()
+		})
+		var resp struct{ EntitiesChanged []entityChange }
+		err := sub.Next(&resp)
+		stop()
+		require.NoError(t, err)
+		require.NotEmpty(t, resp.EntitiesChanged)
+		for _, change := range resp.EntitiesChanged {
+			require.Equal(t, "CREATED", change.Event)
+			require.True(t, created[change.Id])
+		}
+	})
+
+	t.Run("a client leaving doesn't hold the changes", func(t *testing.T) {
+		sub := c.Websocket(fmt.Sprintf(`subscription { entitiesChanged(type: BUG, ids: ["%s"]) { id } }`, b.Id()))
+
+		stop := keepDoing(t, func() {
+			_, err := b.SetTitle("title")
+			assert.NoError(t, err)
+			assert.NoError(t, b.Commit())
+		})
+		var resp struct{ EntitiesChanged []entityChange }
+		err := sub.Next(&resp)
+		stop()
+		require.NoError(t, err)
+		require.NoError(t, sub.Close())
+
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			for i := 0; i < 20; i++ {
+				_, err := b.SetTitle(fmt.Sprintf("title %d", i))
+				assert.NoError(t, err)
+				assert.NoError(t, b.Commit())
+			}
+		}()
+		select {
+		case <-done:
+		case <-time.After(10 * time.Second):
+			t.Fatal("changes blocked by a subscription whose client left")
+		}
+	})
 }

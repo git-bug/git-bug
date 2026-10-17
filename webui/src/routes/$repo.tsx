@@ -21,7 +21,7 @@ export type RefsQueryData = ResultOf<typeof REFS_QUERY>;
 
 export const Route = createFileRoute("/$repo")({
   beforeLoad: ({ params: { repo }, context: { preloadQuery } }) => {
-    // Normalize the repo slug: "_" means the default (null) repo
+    // Normalize the repo slug: "_" means the default repo, selected by a null ref
     const ref = repo === "_" ? null : repo;
 
     // Preload refs once for the entire repo — shared by code browser,
