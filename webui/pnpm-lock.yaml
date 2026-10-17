@@ -86,9 +86,6 @@ importers:
       rxjs:
         specifier: ^7.8.2
         version: 7.8.2
-      shadcn:
-        specifier: ^4.21.0
-        version: 4.21.0(typescript@7.0.2)
       shiki:
         specifier: ^4.4.3
         version: 4.4.3
@@ -192,6 +189,9 @@ importers:
       playwright:
         specifier: ^1.63.0
         version: 1.63.0
+      shadcn:
+        specifier: ^4.21.0
+        version: 4.21.0(typescript@7.0.2)
       storybook:
         specifier: ^10.6.0
         version: 10.6.0(@types/react@19.3.0)(prettier@3.9.9)(react@19.3.0)
