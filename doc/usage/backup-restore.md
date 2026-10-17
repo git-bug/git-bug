@@ -2,8 +2,14 @@
 
 `git-bug` data lives entirely in git refs (`refs/bugs/*` and `refs/identities/*`),
 so a plain `git bundle` of those refs is a complete, verifiable, restorable
-backup. This is the recommended way to back up a store, or to roll back a store
+backup of a store. This is the recommended way to back up, or to roll back a store
 that was mutated by a bridge round trip or an experiment.
+
+This backs up issues and identities, not secrets: the private keys used to sign
+operations, and the credentials used by bridges, live in the keyring, outside the
+repository, under `git-bug/keyring` in the configuration directory of the user.
+Copy that directory too if the machine itself may be lost, or a restored store
+holds issues that can no longer be signed as their authors.
 
 `git bug --format json` is **not** a restore path: it is a lossy read-model
 snapshot, with no way to reconstruct the underlying operation DAG from it.
@@ -31,12 +37,6 @@ Drop bugs created after the backup (not present in the bundle, so unaffected by
 git update-ref -d refs/bugs/<full-hash>
 ```
 
-## Cache invalidation
-
-Deleting a bug ref has **no visible effect** on its own: `git bug` keeps listing
-the deleted bug from `.git/git-bug/cache/bugs` until that file is removed. After
-restoring, clear the cache so the deletion is observed:
-
-```sh
-rm .git/git-bug/cache/bugs
-```
+Every command reconciles its index against the references before answering, so a
+deleted or restored reference is observed by the next `git bug` call: no manual
+cache invalidation is needed.
