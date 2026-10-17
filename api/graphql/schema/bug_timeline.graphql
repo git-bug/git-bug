@@ -6,8 +6,10 @@ interface BugTimelineItem
 }
 
 """CommentHistoryStep hold one version of a message in the history"""
-type BugCommentHistoryStep
+type BugCommentHistoryStep implements Authored
 @goModel(model: "github.com/git-bug/git-bug/entities/bug.CommentHistoryStep") {
+    """The author of this version, not necessarily the author of the comment"""
+    author: Identity!
     message: String!
     date: Time!
 }

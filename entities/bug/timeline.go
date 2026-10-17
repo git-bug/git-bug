@@ -25,6 +25,9 @@ type CommentHistoryStep struct {
 	UnixTime timestamp.Timestamp
 }
 
+// IsAuthored is a sign-post method for gqlgen, to mark compliance to an interface.
+func (CommentHistoryStep) IsAuthored() {}
+
 // CommentTimelineItem is a TimelineItem that holds a Comment and its edition history
 type CommentTimelineItem struct {
 	combinedId entity.CombinedId
@@ -47,6 +50,7 @@ func NewCommentTimelineItem(comment Comment) CommentTimelineItem {
 		LastEdit:   comment.unixTime,
 		History: []CommentHistoryStep{
 			{
+				Author:   comment.Author,
 				Message:  comment.Message,
 				UnixTime: comment.unixTime,
 			},

@@ -29,6 +29,8 @@ type BugAddCommentTimelineItemResolver interface {
 	LastEdit(ctx context.Context, obj *bug.AddCommentTimelineItem) (*time.Time, error)
 }
 type BugCommentHistoryStepResolver interface {
+	Author(ctx context.Context, obj *bug.CommentHistoryStep) (models.IdentityWrapper, error)
+
 	Date(ctx context.Context, obj *bug.CommentHistoryStep) (*time.Time, error)
 }
 type BugCreateTimelineItemResolver interface {
@@ -278,6 +280,38 @@ func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_history(_ con
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return ec.childFields_BugCommentHistoryStep(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BugCommentHistoryStep_author(ctx context.Context, field graphql.CollectedField, obj *bug.CommentHistoryStep) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_BugCommentHistoryStep_author(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.BugCommentHistoryStep().Author(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v models.IdentityWrapper) graphql.Marshaler {
+			return ec.marshalNIdentity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐIdentityWrapper(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_BugCommentHistoryStep_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BugCommentHistoryStep",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Identity(ctx, field)
 		},
 	}
 	return fc, nil
@@ -1328,7 +1362,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem(ctx context.Context, sel 
 	return out
 }
 
-var bugCommentHistoryStepImplementors = []string{"BugCommentHistoryStep"}
+var bugCommentHistoryStepImplementors = []string{"BugCommentHistoryStep", "Authored"}
 
 func (ec *executionContext) _BugCommentHistoryStep(ctx context.Context, sel ast.SelectionSet, obj *bug.CommentHistoryStep) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugCommentHistoryStepImplementors)
@@ -1340,6 +1374,44 @@ func (ec *executionContext) _BugCommentHistoryStep(ctx context.Context, sel ast.
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("BugCommentHistoryStep")
+		case "author":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BugCommentHistoryStep_author(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "message":
 			out.Values[i] = ec._BugCommentHistoryStep_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

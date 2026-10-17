@@ -31,6 +31,11 @@ const bob = {
   avatarUrl: "https://github.com/shadcn.png",
 };
 
+const step = (author: typeof jane | typeof bob) => ({
+  __typename: "BugCommentHistoryStep" as const,
+  author,
+});
+
 const baseTimelineData = {
   __typename: "BugTimelineItemConnection" as const,
   nodes: [
@@ -42,11 +47,12 @@ const baseTimelineData = {
       createdAt: new Date(Date.now() - 86400 * 1000).toISOString(),
       lastEdit: new Date(Date.now() - 86400 * 1000).toISOString(),
       edited: false,
+      history: [step(jane)],
     },
     {
       __typename: "BugLabelChangeTimelineItem" as const,
       id: "label-1",
-      author: { humanId: "bob1", displayName: "Bob Smith" },
+      author: bob,
       date: new Date(Date.now() - 43200 * 1000).toISOString(),
       added: [{ __typename: "Label" as const, name: "bug", color: { R: 252, G: 41, B: 41 } }],
       removed: [],
@@ -59,11 +65,12 @@ const baseTimelineData = {
       createdAt: new Date(Date.now() - 21600 * 1000).toISOString(),
       lastEdit: new Date(Date.now() - 21600 * 1000).toISOString(),
       edited: false,
+      history: [step(bob)],
     },
     {
       __typename: "BugSetTitleTimelineItem" as const,
       id: "title-1",
-      author: { humanId: "jane1", displayName: "Jane Doe" },
+      author: jane,
       date: new Date(Date.now() - 7200 * 1000).toISOString(),
       title: "Login page crash on empty email input",
       was: "Login page crash",
@@ -76,11 +83,12 @@ const baseTimelineData = {
       createdAt: new Date(Date.now() - 3600 * 1000).toISOString(),
       lastEdit: new Date(Date.now() - 1800 * 1000).toISOString(),
       edited: true,
+      history: [step(jane), step(jane)],
     },
     {
       __typename: "BugSetStatusTimelineItem" as const,
       id: "status-1",
-      author: { humanId: "jane1", displayName: "Jane Doe" },
+      author: jane,
       date: new Date(Date.now() - 3600 * 1000).toISOString(),
       status: Status.Closed,
     },
@@ -93,7 +101,6 @@ export const FullTimeline: Story = {
   decorators: [withCachedFragments([TIMELINE_ITEMS_FRAGMENT, "TimelineItems", baseTimelineData])],
   args: {
     repo: "_",
-    bugPrefix: "abc123",
     timeline: baseTimeline,
   },
 };
@@ -111,7 +118,6 @@ export const CreateOnly: Story = {
   ],
   args: {
     repo: "_",
-    bugPrefix: "abc123",
     timeline: createOnlyTimeline,
   },
 };
@@ -127,6 +133,7 @@ const emptyMessageTimelineData = {
       createdAt: new Date().toISOString(),
       lastEdit: new Date().toISOString(),
       edited: false,
+      history: [step(jane)],
     },
   ],
 };
@@ -139,7 +146,6 @@ export const EmptyMessage: Story = {
   ],
   args: {
     repo: "_",
-    bugPrefix: "abc123",
     timeline: emptyMessageTimeline,
   },
 };
@@ -151,14 +157,14 @@ const statusReopenTimelineData = {
     {
       __typename: "BugSetStatusTimelineItem" as const,
       id: "status-close",
-      author: { humanId: "bob1", displayName: "Bob Smith" },
+      author: bob,
       date: new Date(Date.now() - 7200 * 1000).toISOString(),
       status: Status.Closed,
     },
     {
       __typename: "BugSetStatusTimelineItem" as const,
       id: "status-reopen",
-      author: { humanId: "jane1", displayName: "Jane Doe" },
+      author: jane,
       date: new Date(Date.now() - 3600 * 1000).toISOString(),
       status: Status.Open,
     },
@@ -173,7 +179,6 @@ export const StatusReopen: Story = {
   ],
   args: {
     repo: "_",
-    bugPrefix: "abc123",
     timeline: statusReopenTimeline,
   },
 };

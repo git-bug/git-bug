@@ -27,12 +27,13 @@ export const Route = createFileRoute("/")({
   },
 });
 
-function repoSlug(name: string | null | undefined): string {
-  return name ?? "_";
+// The default repository has an empty name, and "_" as URL slug.
+function repoSlug(name: string): string {
+  return name || "_";
 }
 
-function repoLabel(name: string | null | undefined): string {
-  return name ?? "default";
+function repoLabel(name: string): string {
+  return name || "default";
 }
 
 function RouteComponent() {
@@ -42,10 +43,11 @@ function RouteComponent() {
 
   // Auto-redirect when there is exactly one repo — no need to pick.
   useEffect(() => {
-    if (data?.repositories.nodes.length === 1) {
+    const nodes = data?.repositories.nodes ?? [];
+    if (nodes.length === 1 && nodes[0]) {
       void navigate({
         to: "/$repo",
-        params: { repo: repoSlug(data.repositories.nodes[0]?.name) },
+        params: { repo: repoSlug(nodes[0].name) },
         replace: true,
       });
     }

@@ -269,6 +269,13 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 			return graphql.Null
 		}
 		return ec._Bug(ctx, sel, obj)
+	case bug.CommentHistoryStep:
+		return ec._BugCommentHistoryStep(ctx, sel, &obj)
+	case *bug.CommentHistoryStep:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BugCommentHistoryStep(ctx, sel, obj)
 	case bug.Comment:
 		return ec._BugComment(ctx, sel, &obj)
 	case *bug.Comment:
@@ -621,13 +628,6 @@ func (ec *executionContext) marshalNTime2ᚖtimeᚐTime(ctx context.Context, sel
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalOEntity2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEntity(ctx context.Context, sel ast.SelectionSet, v models.Entity) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Entity(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOHash2ᚕgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐHashᚄ(ctx context.Context, v any) ([]repository.Hash, error) {

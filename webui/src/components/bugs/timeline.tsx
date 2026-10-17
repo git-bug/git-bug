@@ -3,7 +3,7 @@ import type { ResultOf } from "@graphql-typed-document-node/core";
 import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { Tag, GitPullRequestClosed, Pencil, CircleDot } from "lucide-react";
-import { useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 
 import { Status } from "@/__generated__/enums";
 import { useFragment, type FragmentType } from "@/__generated__/fragment-masking";
@@ -14,6 +14,7 @@ import * as CommentCard from "@/components/shared/comment-card";
 import { LabelBadge } from "@/components/shared/label-badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { toastManager } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth";
 
 // ── Sub-fragments ────────────────────────────────────────────────────────────
@@ -96,16 +97,35 @@ export const TIMELINE_ITEMS_FRAGMENT = graphql(`
     nodes {
       __typename
       id
+      ... on Authored {
+        author {
+          id
+          displayName
+        }
+      }
       ... on BugCreateTimelineItem {
+        history {
+          author {
+            id
+            displayName
+          }
+        }
         ...BugCreateCommentFields
       }
       ... on BugAddCommentTimelineItem {
+        history {
+          author {
+            id
+            displayName
+          }
+        }
         ...BugAddCommentFields
       }
       ... on BugLabelChangeTimelineItem {
         ...LabelChangeFields
       }
       ... on BugSetStatusTimelineItem {
+        status
         ...StatusChangeFields
       }
       ... on BugSetTitleTimelineItem {
@@ -136,38 +156,168 @@ type TimelineNode = TimelineData["nodes"][number];
 
 interface TimelineProps {
   repo: string | null;
-  bugPrefix: string;
   timeline: FragmentType<typeof TIMELINE_ITEMS_FRAGMENT>;
 }
 
 // Ordered sequence of events on a bug: comments (create and add-comment) and
 // inline events (label changes, status changes, title edits). Comment items
-// support inline editing for the logged-in user.
-export function Timeline({ repo, bugPrefix, timeline }: TimelineProps) {
+// support inline editing for the logged-in user.  The changes others make
+// while it is shown are announced by a toast and highlighted; mount it with
+// the bug id as key, so that another bug doesn't count as changes.
+export function Timeline({ repo, timeline }: TimelineProps) {
   const data = useFragment(TIMELINE_ITEMS_FRAGMENT, timeline);
+  const highlights = useTimelineChanges(data.nodes);
 
   return (
     <div className="space-y-4">
-      {data.nodes.map((item) => {
-        switch (item.__typename) {
-          case "BugCreateTimelineItem":
-            return (
-              <CreateCommentItem key={item.id} item={item} bugPrefix={bugPrefix} repo={repo} />
-            );
-          case "BugAddCommentTimelineItem":
-            return <AddCommentItem key={item.id} item={item} bugPrefix={bugPrefix} repo={repo} />;
-          case "BugLabelChangeTimelineItem":
-            return <LabelChangeItem key={item.id} item={item} repo={repo} />;
-          case "BugSetStatusTimelineItem":
-            return <StatusChangeItem key={item.id} item={item} repo={repo} />;
-          case "BugSetTitleTimelineItem":
-            return <TitleChangeItem key={item.id} item={item} repo={repo} />;
-          default:
-            return null;
-        }
-      })}
+      {data.nodes.map((item) => (
+        <div key={item.id} id={timelineItemId(item.id)} className="relative">
+          <TimelineItem item={item} repo={repo} />
+          {highlights.has(item.id) && (
+            // keyed by the times played, so that replaying restarts the animation
+            <div
+              key={highlights.get(item.id)}
+              className="animate-highlight pointer-events-none absolute -inset-1 rounded-md"
+            />
+          )}
+        </div>
+      ))}
     </div>
   );
+}
+
+function TimelineItem({ item, repo }: { item: TimelineNode; repo: string | null }) {
+  switch (item.__typename) {
+    case "BugCreateTimelineItem":
+      return <CreateCommentItem item={item} repo={repo} />;
+    case "BugAddCommentTimelineItem":
+      return <AddCommentItem item={item} repo={repo} />;
+    case "BugLabelChangeTimelineItem":
+      return <LabelChangeItem item={item} repo={repo} />;
+    case "BugSetStatusTimelineItem":
+      return <StatusChangeItem item={item} repo={repo} />;
+    case "BugSetTitleTimelineItem":
+      return <TitleChangeItem item={item} repo={repo} />;
+    default:
+      return null;
+  }
+}
+
+// ── Changes ──────────────────────────────────────────────────────────────────
+
+const CHANGES_TOAST_ID = "timeline-changes";
+
+function timelineItemId(id: string) {
+  return `timeline-${id}`;
+}
+
+// Identifies a state of an item: a comment changes with each version in its
+// history, the other items never change.
+function changeKey(item: TimelineNode) {
+  switch (item.__typename) {
+    case "BugCreateTimelineItem":
+    case "BugAddCommentTimelineItem":
+      return `${item.id}#${item.history.length}`;
+    default:
+      return item.id;
+  }
+}
+
+// Who made the latest state of an item: for a comment, the author of its
+// latest version, who may not have written the comment.
+function changeAuthor(item: TimelineNode) {
+  switch (item.__typename) {
+    case "BugCreateTimelineItem":
+    case "BugAddCommentTimelineItem":
+      return item.history.at(-1)?.author ?? item.author;
+    default:
+      return item.author;
+  }
+}
+
+function describeChange(item: TimelineNode, edited: boolean) {
+  const name = changeAuthor(item).displayName;
+  switch (item.__typename) {
+    case "BugCreateTimelineItem":
+    case "BugAddCommentTimelineItem":
+      return edited ? `${name} edited a comment` : `${name} commented`;
+    case "BugLabelChangeTimelineItem":
+      return `${name} changed the labels`;
+    case "BugSetStatusTimelineItem":
+      return `${name} ${item.status === Status.Open ? "reopened" : "closed"} this issue`;
+    case "BugSetTitleTimelineItem":
+      return `${name} changed the title`;
+    default:
+      return `${name} changed this issue`;
+  }
+}
+
+// Finds the items others added or edited since the previous render, announces
+// them with a toast, and returns the changed items to highlight, as the times
+// their highlight played by item id.  The highlight plays on each change, and
+// again when the toast's action brings the items into view.  The user's own
+// changes go unannounced.
+function useTimelineChanges(nodes: TimelineNode[]) {
+  const { user } = useAuth();
+  const keys = nodes.map(changeKey);
+  const signature = keys.join(" ");
+
+  // compared by signature: the nodes may be new objects for the same content
+  const [shown, setShown] = useState({
+    signature,
+    keys: new Set(keys),
+    ids: new Set(nodes.map((n) => n.id)),
+  });
+  const [highlights, setHighlights] = useState<ReadonlyMap<string, number>>(new Map());
+  const play = useCallback((ids: string[]) => {
+    setHighlights((prev) => {
+      const next = new Map(prev);
+      for (const id of ids) next.set(id, (prev.get(id) ?? 0) + 1);
+      return next;
+    });
+  }, []);
+  const [announced, setAnnounced] = useState<{ ids: string[]; messages: string[] } | null>(null);
+  if (signature !== shown.signature) {
+    const changed = nodes.filter(
+      (n) => !shown.keys.has(changeKey(n)) && changeAuthor(n).id !== user?.id,
+    );
+    setShown({ signature, keys: new Set(keys), ids: new Set(nodes.map((n) => n.id)) });
+    if (changed.length > 0) {
+      play(changed.map((n) => n.id));
+      setAnnounced({
+        ids: changed.map((n) => n.id),
+        messages: changed.map((n) => describeChange(n, shown.ids.has(n.id))),
+      });
+    }
+  }
+
+  useEffect(() => {
+    if (announced) {
+      const { ids, messages } = announced;
+      toastManager.add({
+        id: CHANGES_TOAST_ID,
+        title: messages.length === 1 ? messages[0] : `${messages.length} changes on this issue`,
+        description: messages.length > 1 ? messages.join(", ") : undefined,
+        actionProps: {
+          children: "Show",
+          onClick: () => {
+            document
+              .getElementById(timelineItemId(ids[0]!))
+              ?.scrollIntoView({ behavior: "smooth", block: "center" });
+            play(ids);
+          },
+        },
+      });
+    }
+  }, [announced, play]);
+  useEffect(
+    () => () => {
+      toastManager.close(CHANGES_TOAST_ID);
+    },
+    [],
+  );
+
+  return highlights;
 }
 
 // ── Comment items ────────────────────────────────────────────────────────────
@@ -178,47 +328,23 @@ type CommentData =
   | ResultOf<typeof BUG_CREATE_COMMENT_FRAGMENT>
   | ResultOf<typeof BUG_ADD_COMMENT_FRAGMENT>;
 
-function CreateCommentItem({
-  item,
-  bugPrefix,
-  repo,
-}: {
-  item: CreateNode;
-  bugPrefix: string;
-  repo: string | null;
-}) {
+function CreateCommentItem({ item, repo }: { item: CreateNode; repo: string | null }) {
   const data = useFragment(BUG_CREATE_COMMENT_FRAGMENT, item);
-  return <CommentBody data={data} bugPrefix={bugPrefix} repo={repo} />;
+  return <CommentBody data={data} repo={repo} />;
 }
 
-function AddCommentItem({
-  item,
-  bugPrefix,
-  repo,
-}: {
-  item: AddCommentNode;
-  bugPrefix: string;
-  repo: string | null;
-}) {
+function AddCommentItem({ item, repo }: { item: AddCommentNode; repo: string | null }) {
   const data = useFragment(BUG_ADD_COMMENT_FRAGMENT, item);
-  return <CommentBody data={data} bugPrefix={bugPrefix} repo={repo} />;
+  return <CommentBody data={data} repo={repo} />;
 }
 
-function CommentBody({
-  data: item,
-  bugPrefix,
-  repo,
-}: {
-  data: CommentData;
-  bugPrefix: string;
-  repo: string | null;
-}) {
+function CommentBody({ data: item, repo }: { data: CommentData; repo: string | null }) {
   const { user } = useAuth();
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(item.message ?? "");
 
   const [editComment, { loading }] = useMutation(BUG_EDIT_COMMENT_MUTATION, {
-    refetchQueries: [{ query: BugDetailDocument, variables: { ref: repo, prefix: bugPrefix } }],
+    refetchQueries: [BugDetailDocument],
   });
 
   function handleSave() {
@@ -257,7 +383,11 @@ function CommentBody({
           {item.edited && !editing && <span className="text-muted-foreground text-xs">edited</span>}
           {canEdit && !editing && (
             <button
-              onClick={() => setEditing(true)}
+              onClick={() => {
+                // the message may have changed since the last edit (e.g. after a refetch)
+                setEditValue(item.message ?? "");
+                setEditing(true);
+              }}
               className="text-muted-foreground hover:bg-muted hover:text-foreground ml-auto rounded-sm px-1.5 py-0.5 text-xs"
             >
               Edit
@@ -306,6 +436,7 @@ function CommentBody({
 // ── Inline events ────────────────────────────────────────────────────────────
 
 type LabelChangeNode = Extract<TimelineNode, { __typename: "BugLabelChangeTimelineItem" }>;
+type LabelChangeData = ResultOf<typeof LABEL_CHANGE_FRAGMENT>;
 type StatusChangeNode = Extract<TimelineNode, { __typename: "BugSetStatusTimelineItem" }>;
 type TitleChangeNode = Extract<TimelineNode, { __typename: "BugSetTitleTimelineItem" }>;
 
@@ -333,23 +464,35 @@ function LabelChangeItem({ item, repo }: { item: LabelChangeNode; repo: string |
         </Link>{" "}
         {data.added.length > 0 && (
           <>
-            added{" "}
-            {data.added.map((l, i) => (
-              <LabelBadge key={i} label={l} />
-            ))}{" "}
+            added <LabelList labels={data.added} />{" "}
           </>
         )}
+        {data.added.length > 0 && data.removed.length > 0 && "and "}
         {data.removed.length > 0 && (
           <>
-            removed{" "}
-            {data.removed.map((l, i) => (
-              <LabelBadge key={i} label={l} />
-            ))}{" "}
+            removed <LabelList labels={data.removed} />{" "}
           </>
         )}
         {formatDistanceToNow(new Date(data.date), { addSuffix: true })}
       </span>
     </EventRow>
+  );
+}
+
+// The labels as a phrase: "the [a] label", "the [a] and [b] labels", "the [a],
+// [b] and [c] labels".
+function LabelList({ labels }: { labels: LabelChangeData["added"] }) {
+  return (
+    <>
+      the{" "}
+      {labels.map((l, i) => (
+        <Fragment key={i}>
+          {i > 0 && (i === labels.length - 1 ? " and " : ", ")}
+          <LabelBadge label={l} />
+        </Fragment>
+      ))}{" "}
+      {labels.length === 1 ? "label" : "labels"}
+    </>
   );
 }
 

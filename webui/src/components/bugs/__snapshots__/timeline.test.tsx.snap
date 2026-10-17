@@ -6,67 +6,72 @@ exports[`Timeline/CreateOnly matches snapshot 1`] = `
     class="space-y-4"
   >
     <div
-      class="flex gap-3"
+      class="relative"
+      id="timeline-create-1"
     >
-      <span
-        class="group/avatar relative flex rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten mt-1 size-8 shrink-0"
-        data-size="default"
-        data-slot="avatar"
+      <div
+        class="flex gap-3"
       >
         <span
-          class="flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground group-data-[size=sm]/avatar:text-xs text-xs"
-          data-slot="avatar-fallback"
+          class="group/avatar relative flex rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten mt-1 size-8 shrink-0"
+          data-size="default"
+          data-slot="avatar"
         >
-          JA
-        </span>
-      </span>
-      <div
-        class="border-border min-w-0 flex-1 rounded-md border"
-      >
-        <div
-          class="border-border bg-muted/40 flex items-center gap-2 border-b px-4 py-2 text-sm"
-        >
-          <a
-            class="text-foreground font-medium hover:underline"
-            href="/_/user/jane1?status=open&after="
-          >
-            Jane Doe
-          </a>
           <span
-            class="text-muted-foreground"
+            class="flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground group-data-[size=sm]/avatar:text-xs text-xs"
+            data-slot="avatar-fallback"
           >
-            1 day ago
+            JA
           </span>
-        </div>
+        </span>
         <div
-          class="px-4 py-3"
+          class="border-border min-w-0 flex-1 rounded-md border"
         >
           <div
-            class="prose max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
+            class="border-border bg-muted/40 flex items-center gap-2 border-b px-4 py-2 text-sm"
           >
-            <p>
-              This is the 
-              <strong>
-                initial bug report
-              </strong>
-               with some markdown.
-            </p>
-            
-
-            <ul>
+            <a
+              class="text-foreground font-medium hover:underline"
+              href="/_/user/jane1?status=open&after="
+            >
+              Jane Doe
+            </a>
+            <span
+              class="text-muted-foreground"
+            >
+              1 day ago
+            </span>
+          </div>
+          <div
+            class="px-4 py-3"
+          >
+            <div
+              class="prose max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
+            >
+              <p>
+                This is the 
+                <strong>
+                  initial bug report
+                </strong>
+                 with some markdown.
+              </p>
               
 
-              <li>
-                Item 1
-              </li>
-              
+              <ul>
+                
 
-              <li>
-                Item 2
-              </li>
-              
+                <li>
+                  Item 1
+                </li>
+                
 
-            </ul>
+                <li>
+                  Item 2
+                </li>
+                
+
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -81,46 +86,51 @@ exports[`Timeline/EmptyMessage matches snapshot 1`] = `
     class="space-y-4"
   >
     <div
-      class="flex gap-3"
+      class="relative"
+      id="timeline-create-empty"
     >
-      <span
-        class="group/avatar relative flex rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten mt-1 size-8 shrink-0"
-        data-size="default"
-        data-slot="avatar"
+      <div
+        class="flex gap-3"
       >
         <span
-          class="flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground group-data-[size=sm]/avatar:text-xs text-xs"
-          data-slot="avatar-fallback"
+          class="group/avatar relative flex rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten mt-1 size-8 shrink-0"
+          data-size="default"
+          data-slot="avatar"
         >
-          JA
-        </span>
-      </span>
-      <div
-        class="border-border min-w-0 flex-1 rounded-md border"
-      >
-        <div
-          class="border-border bg-muted/40 flex items-center gap-2 border-b px-4 py-2 text-sm"
-        >
-          <a
-            class="text-foreground font-medium hover:underline"
-            href="/_/user/jane1?status=open&after="
-          >
-            Jane Doe
-          </a>
           <span
-            class="text-muted-foreground"
+            class="flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground group-data-[size=sm]/avatar:text-xs text-xs"
+            data-slot="avatar-fallback"
           >
-            less than a minute ago
+            JA
           </span>
-        </div>
+        </span>
         <div
-          class="px-4 py-3"
+          class="border-border min-w-0 flex-1 rounded-md border"
         >
-          <p
-            class="text-muted-foreground text-sm italic"
+          <div
+            class="border-border bg-muted/40 flex items-center gap-2 border-b px-4 py-2 text-sm"
           >
-            No description provided.
-          </p>
+            <a
+              class="text-foreground font-medium hover:underline"
+              href="/_/user/jane1?status=open&after="
+            >
+              Jane Doe
+            </a>
+            <span
+              class="text-muted-foreground"
+            >
+              less than a minute ago
+            </span>
+          </div>
+          <div
+            class="px-4 py-3"
+          >
+            <p
+              class="text-muted-foreground text-sm italic"
+            >
+              No description provided.
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -134,326 +144,359 @@ exports[`Timeline/FullTimeline matches snapshot 1`] = `
     class="space-y-4"
   >
     <div
-      class="flex gap-3"
+      class="relative"
+      id="timeline-create-1"
     >
-      <span
-        class="group/avatar relative flex rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten mt-1 size-8 shrink-0"
-        data-size="default"
-        data-slot="avatar"
+      <div
+        class="flex gap-3"
       >
         <span
-          class="flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground group-data-[size=sm]/avatar:text-xs text-xs"
-          data-slot="avatar-fallback"
+          class="group/avatar relative flex rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten mt-1 size-8 shrink-0"
+          data-size="default"
+          data-slot="avatar"
         >
-          JA
-        </span>
-      </span>
-      <div
-        class="border-border min-w-0 flex-1 rounded-md border"
-      >
-        <div
-          class="border-border bg-muted/40 flex items-center gap-2 border-b px-4 py-2 text-sm"
-        >
-          <a
-            class="text-foreground font-medium hover:underline"
-            href="/_/user/jane1?status=open&after="
-          >
-            Jane Doe
-          </a>
           <span
-            class="text-muted-foreground"
+            class="flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground group-data-[size=sm]/avatar:text-xs text-xs"
+            data-slot="avatar-fallback"
           >
-            1 day ago
+            JA
           </span>
-        </div>
+        </span>
         <div
-          class="px-4 py-3"
+          class="border-border min-w-0 flex-1 rounded-md border"
         >
           <div
-            class="prose max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
+            class="border-border bg-muted/40 flex items-center gap-2 border-b px-4 py-2 text-sm"
           >
-            <p>
-              This is the 
-              <strong>
-                initial bug report
-              </strong>
-               with some markdown.
-            </p>
-            
-
-            <ul>
+            <a
+              class="text-foreground font-medium hover:underline"
+              href="/_/user/jane1?status=open&after="
+            >
+              Jane Doe
+            </a>
+            <span
+              class="text-muted-foreground"
+            >
+              1 day ago
+            </span>
+          </div>
+          <div
+            class="px-4 py-3"
+          >
+            <div
+              class="prose max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
+            >
+              <p>
+                This is the 
+                <strong>
+                  initial bug report
+                </strong>
+                 with some markdown.
+              </p>
               
 
-              <li>
-                Item 1
-              </li>
-              
+              <ul>
+                
 
-              <li>
-                Item 2
-              </li>
-              
+                <li>
+                  Item 1
+                </li>
+                
 
-            </ul>
+                <li>
+                  Item 2
+                </li>
+                
+
+              </ul>
+            </div>
           </div>
         </div>
       </div>
     </div>
     <div
-      class="text-muted-foreground flex items-center gap-3 pl-2 text-sm"
+      class="relative"
+      id="timeline-label-1"
     >
-      <span
-        class="flex size-8 shrink-0 items-center justify-center"
-      >
-        <svg
-          aria-hidden="true"
-          class="lucide lucide-tag size-4"
-          fill="none"
-          height="24"
-          stroke="currentColor"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          viewBox="0 0 24 24"
-          width="24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"
-          />
-          <circle
-            cx="7.5"
-            cy="7.5"
-            fill="currentColor"
-            r=".5"
-          />
-        </svg>
-      </span>
-      <span>
-        <a
-          class="text-foreground font-medium hover:underline"
-          href="/_/user/bob1?status=open&after="
-        >
-          Bob Smith
-        </a>
-         
-        added
-         
-        <span
-          class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium "
-          style="background-color: rgb(252, 41, 41); color: rgba(255, 255, 255, 0.9);"
-        >
-          bug
-        </span>
-         
-        about 12 hours ago
-      </span>
-    </div>
-    <div
-      class="flex gap-3"
-    >
-      <span
-        class="group/avatar relative flex rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten mt-1 size-8 shrink-0"
-        data-size="default"
-        data-slot="avatar"
-      >
-        <span
-          class="flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground group-data-[size=sm]/avatar:text-xs text-xs"
-          data-slot="avatar-fallback"
-        >
-          BO
-        </span>
-      </span>
       <div
-        class="border-border min-w-0 flex-1 rounded-md border"
+        class="text-muted-foreground flex items-center gap-3 pl-2 text-sm"
       >
-        <div
-          class="border-border bg-muted/40 flex items-center gap-2 border-b px-4 py-2 text-sm"
+        <span
+          class="flex size-8 shrink-0 items-center justify-center"
         >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-tag size-4"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"
+            />
+            <circle
+              cx="7.5"
+              cy="7.5"
+              fill="currentColor"
+              r=".5"
+            />
+          </svg>
+        </span>
+        <span>
           <a
             class="text-foreground font-medium hover:underline"
             href="/_/user/bob1?status=open&after="
           >
             Bob Smith
           </a>
+           
+          added 
+          the
+           
           <span
-            class="text-muted-foreground"
+            class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium "
+            style="background-color: rgb(252, 41, 41); color: rgba(255, 255, 255, 0.9);"
           >
-            about 6 hours ago
+            bug
           </span>
-        </div>
+           
+          label
+           
+          about 12 hours ago
+        </span>
+      </div>
+    </div>
+    <div
+      class="relative"
+      id="timeline-comment-1"
+    >
+      <div
+        class="flex gap-3"
+      >
+        <span
+          class="group/avatar relative flex rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten mt-1 size-8 shrink-0"
+          data-size="default"
+          data-slot="avatar"
+        >
+          <span
+            class="flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground group-data-[size=sm]/avatar:text-xs text-xs"
+            data-slot="avatar-fallback"
+          >
+            BO
+          </span>
+        </span>
         <div
-          class="px-4 py-3"
+          class="border-border min-w-0 flex-1 rounded-md border"
         >
           <div
-            class="prose max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
+            class="border-border bg-muted/40 flex items-center gap-2 border-b px-4 py-2 text-sm"
           >
-            <p>
-              I can reproduce this. The issue is in the login handler.
-            </p>
+            <a
+              class="text-foreground font-medium hover:underline"
+              href="/_/user/bob1?status=open&after="
+            >
+              Bob Smith
+            </a>
+            <span
+              class="text-muted-foreground"
+            >
+              about 6 hours ago
+            </span>
+          </div>
+          <div
+            class="px-4 py-3"
+          >
+            <div
+              class="prose max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
+            >
+              <p>
+                I can reproduce this. The issue is in the login handler.
+              </p>
+            </div>
           </div>
         </div>
       </div>
     </div>
     <div
-      class="text-muted-foreground flex items-center gap-3 pl-2 text-sm"
+      class="relative"
+      id="timeline-title-1"
     >
-      <span
-        class="flex size-8 shrink-0 items-center justify-center"
-      >
-        <svg
-          aria-hidden="true"
-          class="lucide lucide-pencil size-4"
-          fill="none"
-          height="24"
-          stroke="currentColor"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          viewBox="0 0 24 24"
-          width="24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"
-          />
-          <path
-            d="m15 5 4 4"
-          />
-        </svg>
-      </span>
-      <span>
-        <a
-          class="text-foreground font-medium hover:underline"
-          href="/_/user/jane1?status=open&after="
-        >
-          Jane Doe
-        </a>
-         
-        changed the title from 
-        <span
-          class="line-through"
-        >
-          Login page crash
-        </span>
-         to
-         
-        <span
-          class="text-foreground font-medium"
-        >
-          Login page crash on empty email input
-        </span>
-         
-        about 2 hours ago
-      </span>
-    </div>
-    <div
-      class="flex gap-3"
-    >
-      <span
-        class="group/avatar relative flex rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten mt-1 size-8 shrink-0"
-        data-size="default"
-        data-slot="avatar"
-      >
-        <span
-          class="flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground group-data-[size=sm]/avatar:text-xs text-xs"
-          data-slot="avatar-fallback"
-        >
-          JA
-        </span>
-      </span>
       <div
-        class="border-border min-w-0 flex-1 rounded-md border"
+        class="text-muted-foreground flex items-center gap-3 pl-2 text-sm"
       >
-        <div
-          class="border-border bg-muted/40 flex items-center gap-2 border-b px-4 py-2 text-sm"
+        <span
+          class="flex size-8 shrink-0 items-center justify-center"
         >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-pencil size-4"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"
+            />
+            <path
+              d="m15 5 4 4"
+            />
+          </svg>
+        </span>
+        <span>
           <a
             class="text-foreground font-medium hover:underline"
             href="/_/user/jane1?status=open&after="
           >
             Jane Doe
           </a>
+           
+          changed the title from 
           <span
-            class="text-muted-foreground"
+            class="line-through"
           >
-            about 1 hour ago
+            Login page crash
           </span>
+           to
+           
           <span
-            class="text-muted-foreground text-xs"
+            class="text-foreground font-medium"
           >
-            edited
+            Login page crash on empty email input
           </span>
-        </div>
+           
+          about 2 hours ago
+        </span>
+      </div>
+    </div>
+    <div
+      class="relative"
+      id="timeline-comment-2"
+    >
+      <div
+        class="flex gap-3"
+      >
+        <span
+          class="group/avatar relative flex rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten mt-1 size-8 shrink-0"
+          data-size="default"
+          data-slot="avatar"
+        >
+          <span
+            class="flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground group-data-[size=sm]/avatar:text-xs text-xs"
+            data-slot="avatar-fallback"
+          >
+            JA
+          </span>
+        </span>
         <div
-          class="px-4 py-3"
+          class="border-border min-w-0 flex-1 rounded-md border"
         >
           <div
-            class="prose max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
+            class="border-border bg-muted/40 flex items-center gap-2 border-b px-4 py-2 text-sm"
           >
-            <p>
-              Fixed in commit abc123. The email validator was not handling empty strings.
-            </p>
+            <a
+              class="text-foreground font-medium hover:underline"
+              href="/_/user/jane1?status=open&after="
+            >
+              Jane Doe
+            </a>
+            <span
+              class="text-muted-foreground"
+            >
+              about 1 hour ago
+            </span>
+            <span
+              class="text-muted-foreground text-xs"
+            >
+              edited
+            </span>
+          </div>
+          <div
+            class="px-4 py-3"
+          >
+            <div
+              class="prose max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
+            >
+              <p>
+                Fixed in commit abc123. The email validator was not handling empty strings.
+              </p>
+            </div>
           </div>
         </div>
       </div>
     </div>
     <div
-      class="text-muted-foreground flex items-center gap-3 pl-2 text-sm"
+      class="relative"
+      id="timeline-status-1"
     >
-      <span
-        class="flex size-8 shrink-0 items-center justify-center"
+      <div
+        class="text-muted-foreground flex items-center gap-3 pl-2 text-sm"
       >
-        <svg
-          aria-hidden="true"
-          class="lucide lucide-git-pull-request-closed size-4 text-purple-600 dark:text-purple-400"
-          fill="none"
-          height="24"
-          stroke="currentColor"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          viewBox="0 0 24 24"
-          width="24"
-          xmlns="http://www.w3.org/2000/svg"
+        <span
+          class="flex size-8 shrink-0 items-center justify-center"
         >
-          <path
-            d="m15.5 3.5 5 5"
-          />
-          <path
-            d="m15.5 8.5 5-5"
-          />
-          <path
-            d="M18 11.62V15"
-          />
-          <path
-            d="M6 9v12"
-          />
-          <circle
-            cx="18"
-            cy="18"
-            r="3"
-          />
-          <circle
-            cx="6"
-            cy="6"
-            r="3"
-          />
-        </svg>
-      </span>
-      <span>
-        <a
-          class="text-foreground font-medium hover:underline"
-          href="/_/user/jane1?status=open&after="
-        >
-          Jane Doe
-        </a>
-         
-        closed
-         this
-         
-        about 1 hour ago
-      </span>
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-git-pull-request-closed size-4 text-purple-600 dark:text-purple-400"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m15.5 3.5 5 5"
+            />
+            <path
+              d="m15.5 8.5 5-5"
+            />
+            <path
+              d="M18 11.62V15"
+            />
+            <path
+              d="M6 9v12"
+            />
+            <circle
+              cx="18"
+              cy="18"
+              r="3"
+            />
+            <circle
+              cx="6"
+              cy="6"
+              r="3"
+            />
+          </svg>
+        </span>
+        <span>
+          <a
+            class="text-foreground font-medium hover:underline"
+            href="/_/user/jane1?status=open&after="
+          >
+            Jane Doe
+          </a>
+           
+          closed
+           this
+           
+          about 1 hour ago
+        </span>
+      </div>
     </div>
   </div>
 </div>
@@ -465,172 +508,187 @@ exports[`Timeline/StatusReopen matches snapshot 1`] = `
     class="space-y-4"
   >
     <div
-      class="flex gap-3"
+      class="relative"
+      id="timeline-create-1"
     >
-      <span
-        class="group/avatar relative flex rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten mt-1 size-8 shrink-0"
-        data-size="default"
-        data-slot="avatar"
+      <div
+        class="flex gap-3"
       >
         <span
-          class="flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground group-data-[size=sm]/avatar:text-xs text-xs"
-          data-slot="avatar-fallback"
+          class="group/avatar relative flex rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten mt-1 size-8 shrink-0"
+          data-size="default"
+          data-slot="avatar"
         >
-          JA
+          <span
+            class="flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground group-data-[size=sm]/avatar:text-xs text-xs"
+            data-slot="avatar-fallback"
+          >
+            JA
+          </span>
         </span>
-      </span>
-      <div
-        class="border-border min-w-0 flex-1 rounded-md border"
-      >
         <div
-          class="border-border bg-muted/40 flex items-center gap-2 border-b px-4 py-2 text-sm"
+          class="border-border min-w-0 flex-1 rounded-md border"
         >
+          <div
+            class="border-border bg-muted/40 flex items-center gap-2 border-b px-4 py-2 text-sm"
+          >
+            <a
+              class="text-foreground font-medium hover:underline"
+              href="/_/user/jane1?status=open&after="
+            >
+              Jane Doe
+            </a>
+            <span
+              class="text-muted-foreground"
+            >
+              1 day ago
+            </span>
+          </div>
+          <div
+            class="px-4 py-3"
+          >
+            <div
+              class="prose max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
+            >
+              <p>
+                This is the 
+                <strong>
+                  initial bug report
+                </strong>
+                 with some markdown.
+              </p>
+              
+
+              <ul>
+                
+
+                <li>
+                  Item 1
+                </li>
+                
+
+                <li>
+                  Item 2
+                </li>
+                
+
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="relative"
+      id="timeline-status-close"
+    >
+      <div
+        class="text-muted-foreground flex items-center gap-3 pl-2 text-sm"
+      >
+        <span
+          class="flex size-8 shrink-0 items-center justify-center"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-git-pull-request-closed size-4 text-purple-600 dark:text-purple-400"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m15.5 3.5 5 5"
+            />
+            <path
+              d="m15.5 8.5 5-5"
+            />
+            <path
+              d="M18 11.62V15"
+            />
+            <path
+              d="M6 9v12"
+            />
+            <circle
+              cx="18"
+              cy="18"
+              r="3"
+            />
+            <circle
+              cx="6"
+              cy="6"
+              r="3"
+            />
+          </svg>
+        </span>
+        <span>
+          <a
+            class="text-foreground font-medium hover:underline"
+            href="/_/user/bob1?status=open&after="
+          >
+            Bob Smith
+          </a>
+           
+          closed
+           this
+           
+          about 2 hours ago
+        </span>
+      </div>
+    </div>
+    <div
+      class="relative"
+      id="timeline-status-reopen"
+    >
+      <div
+        class="text-muted-foreground flex items-center gap-3 pl-2 text-sm"
+      >
+        <span
+          class="flex size-8 shrink-0 items-center justify-center"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-circle-dot size-4 text-green-600 dark:text-green-400"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="1"
+            />
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+            />
+          </svg>
+        </span>
+        <span>
           <a
             class="text-foreground font-medium hover:underline"
             href="/_/user/jane1?status=open&after="
           >
             Jane Doe
           </a>
-          <span
-            class="text-muted-foreground"
-          >
-            1 day ago
-          </span>
-        </div>
-        <div
-          class="px-4 py-3"
-        >
-          <div
-            class="prose max-w-none prose-pre:rounded-md prose-pre:border prose-pre:border-border prose-pre:bg-muted prose-pre:text-foreground prose-pre:text-sm prose-pre:overflow-x-auto prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-pre:prose-code:bg-transparent prose-pre:prose-code:p-0 prose-img:inline prose-img:my-0"
-          >
-            <p>
-              This is the 
-              <strong>
-                initial bug report
-              </strong>
-               with some markdown.
-            </p>
-            
-
-            <ul>
-              
-
-              <li>
-                Item 1
-              </li>
-              
-
-              <li>
-                Item 2
-              </li>
-              
-
-            </ul>
-          </div>
-        </div>
+           
+          reopened
+           this
+           
+          about 1 hour ago
+        </span>
       </div>
-    </div>
-    <div
-      class="text-muted-foreground flex items-center gap-3 pl-2 text-sm"
-    >
-      <span
-        class="flex size-8 shrink-0 items-center justify-center"
-      >
-        <svg
-          aria-hidden="true"
-          class="lucide lucide-git-pull-request-closed size-4 text-purple-600 dark:text-purple-400"
-          fill="none"
-          height="24"
-          stroke="currentColor"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          viewBox="0 0 24 24"
-          width="24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="m15.5 3.5 5 5"
-          />
-          <path
-            d="m15.5 8.5 5-5"
-          />
-          <path
-            d="M18 11.62V15"
-          />
-          <path
-            d="M6 9v12"
-          />
-          <circle
-            cx="18"
-            cy="18"
-            r="3"
-          />
-          <circle
-            cx="6"
-            cy="6"
-            r="3"
-          />
-        </svg>
-      </span>
-      <span>
-        <a
-          class="text-foreground font-medium hover:underline"
-          href="/_/user/bob1?status=open&after="
-        >
-          Bob Smith
-        </a>
-         
-        closed
-         this
-         
-        about 2 hours ago
-      </span>
-    </div>
-    <div
-      class="text-muted-foreground flex items-center gap-3 pl-2 text-sm"
-    >
-      <span
-        class="flex size-8 shrink-0 items-center justify-center"
-      >
-        <svg
-          aria-hidden="true"
-          class="lucide lucide-circle-dot size-4 text-green-600 dark:text-green-400"
-          fill="none"
-          height="24"
-          stroke="currentColor"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          viewBox="0 0 24 24"
-          width="24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <circle
-            cx="12"
-            cy="12"
-            r="1"
-          />
-          <circle
-            cx="12"
-            cy="12"
-            r="10"
-          />
-        </svg>
-      </span>
-      <span>
-        <a
-          class="text-foreground font-medium hover:underline"
-          href="/_/user/jane1?status=open&after="
-        >
-          Jane Doe
-        </a>
-         
-        reopened
-         this
-         
-        about 1 hour ago
-      </span>
     </div>
   </div>
 </div>

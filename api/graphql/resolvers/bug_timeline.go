@@ -13,6 +13,10 @@ var _ graph.BugCommentHistoryStepResolver = bugCommentHistoryStepResolver{}
 
 type bugCommentHistoryStepResolver struct{}
 
+func (bugCommentHistoryStepResolver) Author(_ context.Context, obj *bug.CommentHistoryStep) (models.IdentityWrapper, error) {
+	return models.NewLoadedIdentity(obj.Author), nil
+}
+
 func (bugCommentHistoryStepResolver) Date(_ context.Context, obj *bug.CommentHistoryStep) (*time.Time, error) {
 	t := obj.UnixTime.Time()
 	return &t, nil

@@ -12,7 +12,7 @@ import {
 } from "@tanstack/react-router";
 import { Suspense } from "react";
 
-import { typePolicies } from "../src/lib/apollo";
+import { possibleTypes, typePolicies } from "../src/lib/apollo";
 
 // Catch-all route so any <Link to="..."> resolves without errors.
 const rootRoute = createRootRoute();
@@ -60,8 +60,8 @@ const mockApolloClient = new ApolloClient({
         if (operation.operationName === "UserIdentity") {
           data.repository = {
             __typename: "Repository",
-            // Required by the cache key policy; null is the default repo.
-            name: null,
+            // Required by the cache key policy; empty is the default repo.
+            name: "",
             userIdentity: {
               __typename: "Identity",
               id: "mock-user",
@@ -79,6 +79,7 @@ const mockApolloClient = new ApolloClient({
       }),
   ),
   cache: new InMemoryCache({
+    possibleTypes,
     typePolicies: {
       // The app's real policies, so mocks that break them fail here too.
       ...typePolicies,

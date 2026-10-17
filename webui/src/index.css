@@ -197,6 +197,7 @@
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-highlight: highlight 3s ease-out forwards;
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -232,6 +233,16 @@
   }
   to {
     height: 0;
+  }
+}
+
+/* draws the eye to a timeline item that just changed, then fades out */
+@keyframes highlight {
+  from {
+    background-color: color-mix(in oklch, var(--primary) 18%, transparent);
+  }
+  to {
+    background-color: transparent;
   }
 }
 

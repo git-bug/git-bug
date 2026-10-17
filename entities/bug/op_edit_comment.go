@@ -50,6 +50,7 @@ func (op *EditCommentOperation) Apply(snapshot *Snapshot) {
 	comment := Comment{
 		combinedId: combinedId,
 		targetId:   op.Target,
+		Author:     op.Author(),
 		Message:    op.Message,
 		Files:      op.Files,
 		unixTime:   timestamp.Timestamp(op.UnixTime),

@@ -1,6 +1,6 @@
 type Repository {
-    """The name of the repository. Null for the default (unnamed) repository in a single-repo setup."""
-    name: String
+    """The name of the repository. Empty for the default (unnamed) repository in a single-repo setup."""
+    name: String!
 
     """All the bugs"""
     allBugs(

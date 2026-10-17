@@ -68,7 +68,7 @@ src/
 
 Components are organized in three layers:
 
-- **`ui/`** — Generic primitives managed by shadcn CLI (`npx shadcn add`) or hand-written. No domain knowledge. Examples: button, input, avatar, badge, listbox (presentational compound components for dropdown menus), popover, separator, skeleton, textarea. Interactive dropdowns use `@floating-ui/react` hooks wired per-consumer with `Listbox.*` presentational primitives.
+- **`ui/`** — Generic primitives managed by shadcn CLI (`npx shadcn add`) or hand-written. No domain knowledge. Examples: button, input, avatar, badge, listbox (presentational compound components for dropdown menus), popover, separator, skeleton, textarea, toast (on Base UI's Toast; shadcn only offers one through sonner). Interactive dropdowns use `@floating-ui/react` hooks wired per-consumer with `Listbox.*` presentational primitives.
 
 - **`shared/`** — App-level reusable components. These know about the domain (bug status, labels, identities) but contain no data fetching. They use **composition APIs** (compound components) and are typed against **colocated GraphQL fragments**. Examples: issue-row, label-badge, status-badge, status-tabs, comment-card, pagination, query-input, write-preview, empty-state, section-heading, issue-filters.
 
