@@ -14,6 +14,7 @@ The documentation listed below aims to help provide insight into the usage of
   [configuration reference](./usage/configuration.md)
 - Learn how to [sync third party issues](./usage/third-party.md) for offline
   reading and editing
+- Back up and restore a store with [git bundles](./usage/backup-restore.md)
 
 ## For developers
 
