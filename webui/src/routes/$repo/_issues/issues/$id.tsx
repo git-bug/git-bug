@@ -119,7 +119,7 @@ function RouteComponent() {
         {/* Timeline + comment box */}
         <div className="min-w-0 flex-1 space-y-4">
           <Timeline key={bug.id} repo={repo} timeline={bug.timeline} />
-          <CommentBox bugPrefix={bug.humanId} bugStatus={bug.status} repo={ref} />
+          <CommentBox key={bug.id} bugPrefix={bug.humanId} bugStatus={bug.status} repo={ref} />
         </div>
 
         {/* Sidebar */}

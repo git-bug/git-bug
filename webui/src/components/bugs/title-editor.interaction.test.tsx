@@ -181,3 +181,30 @@ describe("TitleEditor — mutation variables", () => {
     expect(matchVars).not.toHaveBeenCalled();
   });
 });
+
+describe("TitleEditor — failures", () => {
+  it("stays in edit mode with the title and shows the error when saving fails", async () => {
+    const mock = {
+      request: { query: BugSetTitleDocument, variables: () => true },
+      error: new Error("network down"),
+    };
+    render(
+      <MockedProvider mocks={[mock]} showWarnings={false}>
+        <Suspense>
+          <TitleEditor bugPrefix="bug1" title="Old title" humanId="h1" repo="myrepo" />
+        </Suspense>
+      </MockedProvider>,
+    );
+
+    fireEvent.click(screen.getByTitle("Edit title"));
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "New title" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Failed to save the title: network down")).toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toHaveValue("New title");
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(screen.getByTitle("Edit title"));
+    expect(screen.queryByText(/Failed to save the title/)).toBeNull();
+  });
+});

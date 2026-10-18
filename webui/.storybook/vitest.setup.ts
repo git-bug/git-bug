@@ -8,6 +8,9 @@ import * as previewAnnotations from "./preview";
 // RTL does not auto-cleanup without globals:true — register it explicitly.
 afterEach(cleanup);
 
+// Drafts and other browser storage must not leak from one test into the next.
+afterEach(() => localStorage.clear());
+
 // Apply Storybook decorators/parameters from preview.ts to portable stories
 // used by the snapshot test project.
 const annotations = setProjectAnnotations([previewAnnotations]);

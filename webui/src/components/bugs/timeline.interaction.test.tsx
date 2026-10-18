@@ -357,3 +357,20 @@ describe("Timeline — changes by others", () => {
     expect(highlighted(container)).toHaveLength(0);
   });
 });
+
+describe("Timeline — failed comment edit", () => {
+  it("stays in edit mode with the text and shows the error", async () => {
+    const mock = {
+      request: { query: BugEditCommentDocument, variables: () => true },
+      error: new Error("network down"),
+    };
+    renderTimeline([makeAddComment({ message: "Old" })], [mock]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "New" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Failed to save the comment: network down")).toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toHaveValue("New");
+  });
+});
