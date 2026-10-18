@@ -13,6 +13,14 @@ const config: CodegenConfig = {
         enumsAsConst: true,
       },
     },
+    // The concrete types of each interface and union, so that the cache can
+    // match fragments on them (`... on Authored`).
+    "./src/__generated__/possible-types.ts": {
+      plugins: ["fragment-matcher"],
+      config: {
+        useExplicitTyping: true,
+      },
+    },
     "./src/__generated__/": {
       preset: "client",
       presetConfig: {

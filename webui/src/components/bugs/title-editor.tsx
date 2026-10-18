@@ -23,7 +23,7 @@ interface TitleEditorProps {
   bugPrefix: string;
   title: string;
   humanId: string;
-  /** Current repo slug, passed as `ref` in refetch query variables. */
+  /** Current repo slug, passed as `repoRef` to the mutations. */
   repo?: string | null;
 }
 
@@ -36,7 +36,7 @@ export function TitleEditor({ bugPrefix, title, humanId, repo }: TitleEditorProp
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [setTitle, { loading }] = useMutation(BUG_SET_TITLE_MUTATION, {
-    refetchQueries: [{ query: BugDetailDocument, variables: { ref: repo, prefix: bugPrefix } }],
+    refetchQueries: [BugDetailDocument],
   });
 
   useEffect(() => {

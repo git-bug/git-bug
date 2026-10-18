@@ -39,7 +39,7 @@ const BUG_CHANGE_LABELS_MUTATION = graphql(`
 interface LabelEditorProps {
   bugPrefix: string;
   currentLabels: Array<{ name: string } & FragmentType<typeof LABEL_FIELDS_FRAGMENT>>;
-  /** Current repo slug, passed as `ref` in refetch query variables. */
+  /** Current repo slug, passed as `repoRef` to the mutations. */
   repo?: string | null;
   /** Pre-fetched valid labels for the repository. */
   validLabels: Array<
@@ -50,27 +50,34 @@ interface LabelEditorProps {
 }
 
 // Gear-icon popover in the BugDetailPage sidebar for adding/removing labels.
-// Loads all valid labels from the repo and toggles them via bugChangeLabels.
-// Hidden in read-only mode.
+// Loads all valid labels from the repo; the labels toggled while it is open
+// are applied together by a single bugChangeLabels when it closes.  Hidden in
+// read-only mode.
 export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: LabelEditorProps) {
   const { user } = useAuth();
   const [changeLabels] = useMutation(BUG_CHANGE_LABELS_MUTATION, {
-    refetchQueries: [{ query: BugDetailDocument, variables: { ref: repo, prefix: bugPrefix } }],
+    refetchQueries: [BugDetailDocument],
   });
 
   const currentNames = new Set(currentLabels.map((l) => l.name));
 
-  async function toggleLabel(name: string) {
-    const isSet = currentNames.has(name);
-    await changeLabels({
-      variables: {
-        input: {
-          prefix: bugPrefix,
-          repoRef: repo,
-          added: isSet ? [] : [name],
-          Removed: isSet ? [name] : [],
-        },
-      },
+  // whether each label toggled is wanted, so that applying them leaves the
+  // labels others changed meanwhile as they are
+  const [toggled, setToggled] = useState<ReadonlyMap<string, boolean>>(new Map());
+  const isSelected = (name: string) => toggled.get(name) ?? currentNames.has(name);
+
+  function toggleLabel(name: string) {
+    setToggled((prev) => new Map(prev).set(name, !(prev.get(name) ?? currentNames.has(name))));
+  }
+
+  function applyLabels() {
+    const wanted = [...toggled];
+    const added = wanted.filter(([name, on]) => on && !currentNames.has(name)).map(([n]) => n);
+    const removed = wanted.filter(([name, on]) => !on && currentNames.has(name)).map(([n]) => n);
+    setToggled(new Map());
+    if (added.length === 0 && removed.length === 0) return;
+    void changeLabels({
+      variables: { input: { prefix: bugPrefix, repoRef: repo, added, Removed: removed } },
     });
   }
 
@@ -81,7 +88,10 @@ export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: Lab
 
   const { refs, floatingStyles, context } = useFloating({
     open,
-    onOpenChange: setOpen,
+    onOpenChange: (next) => {
+      setOpen(next);
+      if (!next) applyLabels();
+    },
     placement: "bottom-end",
     middleware: [offset(4), flip()],
   });
@@ -132,7 +142,7 @@ export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: Lab
               </div>
               <Listbox.ScrollArea>
                 {validLabels.map((label, i) => {
-                  const active = currentNames.has(label.name);
+                  const active = isSelected(label.name);
                   return (
                     <Listbox.Item
                       key={label.name}
@@ -143,9 +153,7 @@ export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: Lab
                       selected={active}
                       tabIndex={activeIndex === i ? 0 : -1}
                       {...getItemProps({
-                        onClick: () => {
-                          void toggleLabel(label.name);
-                        },
+                        onClick: () => toggleLabel(label.name),
                       })}
                     >
                       <span

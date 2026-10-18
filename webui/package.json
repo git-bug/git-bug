@@ -31,6 +31,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "graphql": "^17.0.2",
+    "graphql-ws": "6.3.0",
     "hast-util-to-jsx-runtime": "^2.3.6",
     "lucide-react": "^1.47.0",
     "react": "^19.3.0",
@@ -53,6 +54,7 @@
   "devDependencies": {
     "@graphql-codegen/cli": "^7.4.3",
     "@graphql-codegen/client-preset": "^6.2.0",
+    "@graphql-codegen/fragment-matcher": "^7.1.0",
     "@graphql-typed-document-node/core": "^3.2.0",
     "@storybook/addon-a11y": "^10.6.0",
     "@storybook/addon-vitest": "^10.6.0",

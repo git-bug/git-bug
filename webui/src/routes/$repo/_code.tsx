@@ -29,7 +29,7 @@ function CodeLayout() {
   const { ref: repoRef, refsRef } = Route.useRouteContext();
   const { data: refsData } = useReadQuery(refsRef);
   const refs = refsData?.repository?.refs;
-  const repoName = refsData?.repository?.name ?? repoRef ?? "default-repo";
+  const repoName = refsData?.repository?.name || repoRef || "default-repo";
 
   // Read child route params (ref and splat path)
   const allParams = useParams({ strict: false });

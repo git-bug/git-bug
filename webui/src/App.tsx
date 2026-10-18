@@ -7,6 +7,9 @@ import { routeTree } from "./routeTree.gen";
 const router = createRouter({
   routeTree,
   defaultPreload: "intent",
+  // Apollo owns the data: run the loaders on every navigation, so a preload
+  // never stands in for the fetch on arrival
+  defaultPreloadStaleTime: 0,
   scrollRestoration: true,
   context: { preloadQuery },
 });

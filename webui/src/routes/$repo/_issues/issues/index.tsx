@@ -5,6 +5,7 @@ import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import * as v from "valibot";
 
+import { EntityType } from "@/__generated__/enums";
 import { graphql } from "@/__generated__/gql";
 import { IssueFilters } from "@/components/shared/issue-filters";
 
@@ -55,6 +56,7 @@ const BUG_LIST_QUERY = graphql(`
     }
   }
 `);
+import { ChangesBanner } from "@/components/shared/changes-banner";
 import { EmptyState } from "@/components/shared/empty-state";
 import * as IssueRow from "@/components/shared/issue-row";
 import { LabelBadgeLink } from "@/components/shared/label-badge";
@@ -64,6 +66,7 @@ import type { CompletionProvider } from "@/components/shared/query-input";
 import * as StatusTabs from "@/components/shared/status-tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePendingChanges } from "@/lib/live-updates";
 import type { SortValue, StatusFilter } from "@/lib/query-utils";
 import { buildBaseQuery, buildQueryString, parseQueryString } from "@/lib/query-utils";
 
@@ -83,6 +86,7 @@ export const Route = createFileRoute("/$repo/_issues/issues/")({
     const parsed = parseQueryString(q);
     const baseQuery = buildBaseQuery(parsed.labels, parsed.author, parsed.freeText);
     const bugListRef = preloadQuery(BUG_LIST_QUERY, {
+      fetchPolicy: "network-only",
       variables: {
         ref,
         openQuery: `status:open ${baseQuery}`.trim(),
@@ -124,8 +128,9 @@ function RouteComponent() {
   }
 
   const { bugListRef } = Route.useLoaderData();
-  const { labelsRef, identitiesRef } = Route.useRouteContext();
+  const { ref, labelsRef, identitiesRef } = Route.useRouteContext();
   const { data } = useReadQuery(bugListRef);
+  const changes = usePendingChanges(ref, EntityType.Bug, BUG_LIST_QUERY, bugListRef);
   const { data: labelsData } = useReadQuery(labelsRef);
   const { data: identitiesData } = useReadQuery(identitiesRef);
 
@@ -295,6 +300,8 @@ function RouteComponent() {
             />
           </div>
         </div>
+
+        <ChangesBanner count={changes.count} onRefresh={changes.refresh} />
 
         {/* Bug rows */}
         {bugs?.nodes.length === 0 && <EmptyState>No {statusFilter ?? ""} issues found.</EmptyState>}

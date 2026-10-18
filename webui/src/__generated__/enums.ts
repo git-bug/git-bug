@@ -5,6 +5,12 @@ export const EntityEventType = {
 } as const;
 
 export type EntityEventType = typeof EntityEventType[keyof typeof EntityEventType];
+export const EntityType = {
+  Bug: 'BUG',
+  Identity: 'IDENTITY'
+} as const;
+
+export type EntityType = typeof EntityType[keyof typeof EntityType];
 /** How a file was affected by a commit. */
 export const GitChangeStatus = {
   /** File was created in this commit. */

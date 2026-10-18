@@ -2,11 +2,12 @@ import type { MockedResponse } from "@apollo/client/testing";
 import { MockedProvider } from "@apollo/client/testing/react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Suspense } from "react";
-import { describe, it, expect, vi } from "vitest";
+import { beforeEach, describe, it, expect, onTestFinished, vi } from "vitest";
 
 import { makeFragmentData } from "@/__generated__/fragment-masking";
-import { BugDetailDocument, BugEditCommentDocument } from "@/__generated__/graphql";
+import { BugEditCommentDocument } from "@/__generated__/graphql";
 import type { TimelineItemsFragment } from "@/__generated__/graphql";
+import { toastManager, Toasts } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth";
 
 import { Timeline, TIMELINE_ITEMS_FRAGMENT } from "./timeline";
@@ -37,6 +38,14 @@ vi.mock("@/lib/auth", () => ({
   })),
 }));
 
+// ── Toasts ────────────────────────────────────────────────────────────────────
+
+const addToast = vi.spyOn(toastManager, "add");
+
+beforeEach(() => {
+  addToast.mockClear();
+});
+
 // ── Data helpers ──────────────────────────────────────────────────────────────
 
 const AUTHOR_ME = {
@@ -58,21 +67,28 @@ const AUTHOR_OTHER = {
 type AddCommentOverrides = Partial<{
   id: string;
   author: typeof AUTHOR_ME | typeof AUTHOR_OTHER;
+  // the authors of the versions, by default the comment author alone
+  editors: (typeof AUTHOR_ME | typeof AUTHOR_OTHER)[];
   message: string;
   createdAt: string;
-  lastEdit: string | null;
+  lastEdit: string;
   edited: boolean;
 }>;
 
-function makeAddComment(overrides: AddCommentOverrides = {}) {
+function makeAddComment({ editors, ...overrides }: AddCommentOverrides = {}) {
+  const author = overrides.author ?? AUTHOR_ME;
   return {
     __typename: "BugAddCommentTimelineItem" as const,
     id: "comment-1",
-    author: AUTHOR_ME,
+    author,
     message: "Original message",
     createdAt: "2024-01-01T00:00:00Z",
-    lastEdit: null,
-    edited: false,
+    lastEdit: "2024-01-01T00:00:00Z",
+    edited: (editors?.length ?? 1) > 1,
+    history: (editors ?? [author]).map((a) => ({
+      __typename: "BugCommentHistoryStep" as const,
+      author: a,
+    })),
     ...overrides,
   };
 }
@@ -82,12 +98,6 @@ function makeTimeline(nodes: TimelineItemsFragment["nodes"]) {
   return makeFragmentData(data, TIMELINE_ITEMS_FRAGMENT);
 }
 
-const REFETCH_MOCK = {
-  request: { query: BugDetailDocument, variables: vi.fn().mockReturnValue(true) },
-  result: { data: { repository: null } },
-  maxUsageCount: 10,
-};
-
 function renderTimeline(
   nodes: TimelineItemsFragment["nodes"],
   mocks: MockedResponse<any, any>[] = [],
@@ -96,7 +106,7 @@ function renderTimeline(
   return render(
     <MockedProvider mocks={mocks} showWarnings={false}>
       <Suspense>
-        <Timeline repo={repo} bugPrefix="bug1" timeline={makeTimeline(nodes)} />
+        <Timeline repo={repo} timeline={makeTimeline(nodes)} />
       </Suspense>
     </MockedProvider>,
   );
@@ -116,7 +126,11 @@ describe("Timeline — edit button auth gate", () => {
   });
 
   it("hides Edit button when there is no logged-in user", async () => {
-    vi.mocked(useAuth).mockReturnValueOnce({ user: null });
+    // for every call: the timeline and each comment read the user
+    vi.mocked(useAuth).mockReturnValue({ user: null });
+    onTestFinished(() => {
+      vi.mocked(useAuth).mockReset();
+    });
     renderTimeline([makeAddComment()]);
     expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
   });
@@ -180,7 +194,7 @@ describe("Timeline — edit flow", () => {
       result: { data: { bugEditComment: { bug: { id: "1" } } } },
     };
 
-    renderTimeline([makeAddComment({ message: "Original" })], [mock, REFETCH_MOCK]);
+    renderTimeline([makeAddComment({ message: "Original" })], [mock]);
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "Updated" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
@@ -200,10 +214,7 @@ describe("Timeline — mutation variables", () => {
       result: { data: { bugEditComment: { bug: { id: "1" } } } },
     };
 
-    renderTimeline(
-      [makeAddComment({ id: COMMENT_ID, message: "Old message" })],
-      [mock, REFETCH_MOCK],
-    );
+    renderTimeline([makeAddComment({ id: COMMENT_ID, message: "Old message" })], [mock]);
 
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "  New message  " } });
@@ -223,7 +234,7 @@ describe("Timeline — mutation variables", () => {
       result: { data: { bugEditComment: { bug: { id: "1" } } } },
     };
 
-    renderTimeline([makeAddComment({ id: COMMENT_ID, message: "Old" })], [mock, REFETCH_MOCK]);
+    renderTimeline([makeAddComment({ id: COMMENT_ID, message: "Old" })], [mock]);
 
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "New" } });
@@ -243,11 +254,7 @@ describe("Timeline — mutation variables", () => {
       result: { data: { bugEditComment: { bug: { id: "1" } } } },
     };
 
-    renderTimeline(
-      [makeAddComment({ id: COMMENT_ID, message: "Old" })],
-      [mock, REFETCH_MOCK],
-      null,
-    );
+    renderTimeline([makeAddComment({ id: COMMENT_ID, message: "Old" })], [mock], null);
 
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "New" } });
@@ -258,5 +265,95 @@ describe("Timeline — mutation variables", () => {
       input: { targetPrefix: COMMENT_ID, message: "New", repoRef: null },
     });
     await waitFor(() => expect(screen.queryByRole("textbox")).toBeNull());
+  });
+});
+
+describe("Timeline — changes by others", () => {
+  function renderChanging(nodes: TimelineItemsFragment["nodes"]) {
+    const view = renderTimeline(nodes);
+    return {
+      ...view,
+      change: (next: TimelineItemsFragment["nodes"]) =>
+        view.rerender(
+          <MockedProvider mocks={[]} showWarnings={false}>
+            <Suspense>
+              <Timeline repo="myrepo" timeline={makeTimeline(next)} />
+            </Suspense>
+          </MockedProvider>,
+        ),
+    };
+  }
+
+  const highlighted = (container: HTMLElement) => container.querySelectorAll(".animate-highlight");
+
+  it("announces nothing on the first render", () => {
+    const { container } = renderTimeline([makeAddComment({ author: AUTHOR_OTHER })]);
+    expect(addToast).not.toHaveBeenCalled();
+    expect(highlighted(container)).toHaveLength(0);
+  });
+
+  it("announces and highlights a comment added by someone else", () => {
+    const first = makeAddComment({ id: "c1" });
+    const { container, change } = renderChanging([first]);
+    change([first, makeAddComment({ id: "c2", author: AUTHOR_OTHER })]);
+
+    expect(addToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Other User commented" }),
+    );
+    expect(highlighted(container)).toHaveLength(1);
+    expect(container.querySelector("#timeline-c2 .animate-highlight")).not.toBeNull();
+  });
+
+  it("replays the highlight when the toast action is used", async () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    render(<Toasts>{null}</Toasts>);
+    const first = makeAddComment({ id: "c1" });
+    const { container, change } = renderChanging([first]);
+    change([first, makeAddComment({ id: "c2", author: AUTHOR_OTHER })]);
+    const played = container.querySelector("#timeline-c2 .animate-highlight");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Show" }));
+
+    const replayed = container.querySelector("#timeline-c2 .animate-highlight");
+    expect(replayed).not.toBeNull();
+    expect(replayed).not.toBe(played);
+  });
+
+  it("announces a comment edited by someone else, even within the same second", () => {
+    const comment = { id: "c1", author: AUTHOR_OTHER };
+    const { change } = renderChanging([makeAddComment(comment)]);
+    // lastEdit unchanged: only the history tells the new version
+    change([makeAddComment({ ...comment, message: "New", editors: [AUTHOR_OTHER, AUTHOR_OTHER] })]);
+
+    expect(addToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Other User edited a comment" }),
+    );
+  });
+
+  it("announces someone else's edit of the user's comment, naming the editor", () => {
+    const comment = { id: "c1", author: AUTHOR_ME };
+    const { change } = renderChanging([makeAddComment(comment)]);
+    change([makeAddComment({ ...comment, message: "New", editors: [AUTHOR_ME, AUTHOR_OTHER] })]);
+
+    expect(addToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Other User edited a comment" }),
+    );
+  });
+
+  it("doesn't announce the user's edit of someone else's comment", () => {
+    const comment = { id: "c1", author: AUTHOR_OTHER };
+    const { change } = renderChanging([makeAddComment(comment)]);
+    change([makeAddComment({ ...comment, message: "New", editors: [AUTHOR_OTHER, AUTHOR_ME] })]);
+
+    expect(addToast).not.toHaveBeenCalled();
+  });
+
+  it("doesn't announce the user's own changes", () => {
+    const first = makeAddComment({ id: "c1" });
+    const { container, change } = renderChanging([first]);
+    change([first, makeAddComment({ id: "c2", author: AUTHOR_ME })]);
+
+    expect(addToast).not.toHaveBeenCalled();
+    expect(highlighted(container)).toHaveLength(0);
   });
 });

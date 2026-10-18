@@ -74,6 +74,22 @@ func TestEdit(t *testing.T) {
 	require.Equal(t, snapshot.Comments[0].Message, "create edited")
 	require.Equal(t, snapshot.Comments[1].Message, "comment 1 edited")
 	require.Equal(t, snapshot.Comments[2].Message, "comment 2 edited")
+
+	t.Run("history records who wrote each step", func(t *testing.T) {
+		isaac, err := identity.NewIdentity(repo, "Isaac Newton", "isaac@newton.uk")
+		require.NoError(t, err)
+
+		edit4 := NewEditCommentOp(isaac, unix, comment2.Id(), "comment 2 edited by isaac", nil)
+		edit4.Apply(&snapshot)
+
+		history := snapshot.Timeline[3].(*AddCommentTimelineItem).History
+		require.Len(t, history, 3)
+		require.Equal(t, rene.Id(), history[0].Author.Id())
+		require.Equal(t, rene.Id(), history[1].Author.Id())
+		require.Equal(t, isaac.Id(), history[2].Author.Id())
+		// the comment keeps its original author
+		require.Equal(t, rene.Id(), snapshot.Timeline[3].(*AddCommentTimelineItem).Author.Id())
+	})
 }
 
 func TestEditCommentSerialize(t *testing.T) {

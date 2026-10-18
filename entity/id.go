@@ -47,7 +47,7 @@ func (i *Id) UnmarshalGQL(v interface{}) error {
 		return fmt.Errorf("IDs must be strings")
 	}
 
-	*i = v.(Id)
+	*i = Id(v.(string))
 
 	if err := i.Validate(); err != nil {
 		return fmt.Errorf("invalid ID: %w", err)

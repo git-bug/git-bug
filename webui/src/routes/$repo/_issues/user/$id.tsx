@@ -9,6 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 import { CircleDot, CircleCheck, ShieldCheck } from "lucide-react";
 import * as v from "valibot";
 
+import { EntityType } from "@/__generated__/enums";
 import { graphql } from "@/__generated__/gql";
 import * as IssueRow from "@/components/shared/issue-row";
 
@@ -68,6 +69,7 @@ const USER_PROFILE_QUERY = graphql(`
     }
   }
 `);
+import { ChangesBanner } from "@/components/shared/changes-banner";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LabelBadge } from "@/components/shared/label-badge";
 import * as Pagination from "@/components/shared/pagination";
@@ -75,6 +77,7 @@ import * as StatusTabs from "@/components/shared/status-tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BackLink } from "@/components/ui/back-link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEntitiesChanged, usePendingChanges, useRefetch } from "@/lib/live-updates";
 
 const profileSearchSchema = v.object({
   status: v.fallback(v.picklist(["open", "closed"]), "open"),
@@ -92,6 +95,7 @@ export const Route = createFileRoute("/$repo/_issues/user/$id")({
   loaderDeps: ({ search: { status, after, page, prev } }) => ({ status, after, page, prev }),
   loader: async ({ context: { preloadQuery, ref }, params: { id }, deps: { status, after } }) => {
     const profileRef = preloadQuery(USER_PROFILE_QUERY, {
+      fetchPolicy: "network-only",
       variables: {
         ref,
         prefix: id,
@@ -108,10 +112,18 @@ export const Route = createFileRoute("/$repo/_issues/user/$id")({
 function RouteComponent() {
   const { id, repo } = Route.useParams();
   const { status: statusFilter, after, page = 1, prev = "" } = Route.useSearch();
+  const { ref } = Route.useRouteContext();
   const { profileRef } = Route.useLoaderData();
   const { data } = useReadQuery(profileRef);
+  const changes = usePendingChanges(ref, EntityType.Bug, USER_PROFILE_QUERY, profileRef);
 
   const identity = data?.repository?.identity;
+  useEntitiesChanged(
+    ref,
+    EntityType.Identity,
+    identity ? [identity.id] : [],
+    useRefetch(USER_PROFILE_QUERY),
+  );
   if (!identity) {
     return <div className="text-muted-foreground py-16 text-center text-sm">User not found.</div>;
   }
@@ -193,6 +205,8 @@ function RouteComponent() {
             <StatusTabs.Count>{closedCount}</StatusTabs.Count>
           </StatusTabs.Tab>
         </StatusTabs.Root>
+
+        <ChangesBanner count={changes.count} onRefresh={changes.refresh} />
 
         {bugs?.nodes.length === 0 && <EmptyState>No {statusFilter} issues.</EmptyState>}
 

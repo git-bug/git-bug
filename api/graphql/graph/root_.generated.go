@@ -11,6 +11,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/git-bug/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -137,6 +138,7 @@ type ComplexityRoot struct {
 	}
 
 	BugCommentHistoryStep struct {
+		Author  func(childComplexity int) int
 		Date    func(childComplexity int) int
 		Message func(childComplexity int) int
 	}
@@ -193,11 +195,6 @@ type ComplexityRoot struct {
 		Bug              func(childComplexity int) int
 		ClientMutationID func(childComplexity int) int
 		Operation        func(childComplexity int) int
-	}
-
-	BugEvent struct {
-		Bug  func(childComplexity int) int
-		Type func(childComplexity int) int
 	}
 
 	BugLabelChangeOperation struct {
@@ -282,9 +279,9 @@ type ComplexityRoot struct {
 		R func(childComplexity int) int
 	}
 
-	EntityEvent struct {
-		Entity func(childComplexity int) int
-		Type   func(childComplexity int) int
+	EntityChange struct {
+		Event func(childComplexity int) int
+		ID    func(childComplexity int) int
 	}
 
 	GitBlob struct {
@@ -400,11 +397,6 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
-	IdentityEvent struct {
-		Identity func(childComplexity int) int
-		Type     func(childComplexity int) int
-	}
-
 	Label struct {
 		Color func(childComplexity int) int
 		Name  func(childComplexity int) int
@@ -493,9 +485,7 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
-		AllEvents      func(childComplexity int, repoRef *string, typename *string) int
-		BugEvents      func(childComplexity int, repoRef *string) int
-		IdentityEvents func(childComplexity int, repoRef *string) int
+		EntitiesChanged func(childComplexity int, repoRef *string, typeArg models.EntityType, ids []entity.Id) int
 	}
 }
 
@@ -860,6 +850,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.BugCommentEdge.Node(childComplexity), true
 
+	case "BugCommentHistoryStep.author":
+		if e.ComplexityRoot.BugCommentHistoryStep.Author == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BugCommentHistoryStep.Author(childComplexity), true
 	case "BugCommentHistoryStep.date":
 		if e.ComplexityRoot.BugCommentHistoryStep.Date == nil {
 			break
@@ -1077,19 +1073,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.BugEditCommentPayload.Operation(childComplexity), true
-
-	case "BugEvent.bug":
-		if e.ComplexityRoot.BugEvent.Bug == nil {
-			break
-		}
-
-		return e.ComplexityRoot.BugEvent.Bug(childComplexity), true
-	case "BugEvent.type":
-		if e.ComplexityRoot.BugEvent.Type == nil {
-			break
-		}
-
-		return e.ComplexityRoot.BugEvent.Type(childComplexity), true
 
 	case "BugLabelChangeOperation.added":
 		if e.ComplexityRoot.BugLabelChangeOperation.Added == nil {
@@ -1379,18 +1362,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Color.R(childComplexity), true
 
-	case "EntityEvent.entity":
-		if e.ComplexityRoot.EntityEvent.Entity == nil {
+	case "EntityChange.event":
+		if e.ComplexityRoot.EntityChange.Event == nil {
 			break
 		}
 
-		return e.ComplexityRoot.EntityEvent.Entity(childComplexity), true
-	case "EntityEvent.type":
-		if e.ComplexityRoot.EntityEvent.Type == nil {
+		return e.ComplexityRoot.EntityChange.Event(childComplexity), true
+	case "EntityChange.id":
+		if e.ComplexityRoot.EntityChange.ID == nil {
 			break
 		}
 
-		return e.ComplexityRoot.EntityEvent.Type(childComplexity), true
+		return e.ComplexityRoot.EntityChange.ID(childComplexity), true
 
 	case "GitBlob.hash":
 		if e.ComplexityRoot.GitBlob.Hash == nil {
@@ -1825,19 +1808,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.IdentityEdge.Node(childComplexity), true
 
-	case "IdentityEvent.identity":
-		if e.ComplexityRoot.IdentityEvent.Identity == nil {
-			break
-		}
-
-		return e.ComplexityRoot.IdentityEvent.Identity(childComplexity), true
-	case "IdentityEvent.type":
-		if e.ComplexityRoot.IdentityEvent.Type == nil {
-			break
-		}
-
-		return e.ComplexityRoot.IdentityEvent.Type(childComplexity), true
-
 	case "Label.color":
 		if e.ComplexityRoot.Label.Color == nil {
 			break
@@ -2266,39 +2236,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.RepositoryEdge.Node(childComplexity), true
 
-	case "Subscription.allEvents":
-		if e.ComplexityRoot.Subscription.AllEvents == nil {
+	case "Subscription.entitiesChanged":
+		if e.ComplexityRoot.Subscription.EntitiesChanged == nil {
 			break
 		}
 
-		args, err := ec.field_Subscription_allEvents_args(ctx, rawArgs)
+		args, err := ec.field_Subscription_entitiesChanged_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Subscription.AllEvents(childComplexity, args["repoRef"].(*string), args["typename"].(*string)), true
-	case "Subscription.bugEvents":
-		if e.ComplexityRoot.Subscription.BugEvents == nil {
-			break
-		}
-
-		args, err := ec.field_Subscription_bugEvents_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.ComplexityRoot.Subscription.BugEvents(childComplexity, args["repoRef"].(*string)), true
-	case "Subscription.identityEvents":
-		if e.ComplexityRoot.Subscription.IdentityEvents == nil {
-			break
-		}
-
-		args, err := ec.field_Subscription_identityEvents_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.ComplexityRoot.Subscription.IdentityEvents(childComplexity, args["repoRef"].(*string)), true
+		return e.ComplexityRoot.Subscription.EntitiesChanged(childComplexity, args["repoRef"].(*string), args["type"].(models.EntityType), args["ids"].([]entity.Id)), true
 
 	}
 	return 0, false
@@ -2828,8 +2776,10 @@ interface BugTimelineItem
 }
 
 """CommentHistoryStep hold one version of a message in the history"""
-type BugCommentHistoryStep
+type BugCommentHistoryStep implements Authored
 @goModel(model: "github.com/git-bug/git-bug/entities/bug.CommentHistoryStep") {
+    """The author of this version, not necessarily the author of the comment"""
+    author: Identity!
     message: String!
     date: Time!
 }
@@ -3254,8 +3204,8 @@ type OperationEdge {
 }
 `, BuiltIn: false},
 	{Name: "../schema/repository.graphql", Input: `type Repository {
-    """The name of the repository. Null for the default (unnamed) repository in a single-repo setup."""
-    name: String
+    """The name of the repository. Empty for the default (unnamed) repository in a single-repo setup."""
+    name: String!
 
     """All the bugs"""
     allBugs(
@@ -3395,13 +3345,19 @@ type Mutation # See each entity mutations
     CLOSED
 }
 `, BuiltIn: false},
-	{Name: "../schema/subscription.graphql", Input: `type Subscription {
-  """Subscribe to events on all entities. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
-  allEvents(repoRef: String, typename: String): EntityEvent!
-  """Subscribe to identity entity events. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
-  identityEvents(repoRef: String): IdentityEvent!
-  """Subscribe to bug entity events. For events on a specific repo you can provide a repo reference. Without it, you get the unique default repo or all repo events."""
-  bugEvents(repoRef: String): BugEvent!
+	{Name: "../schema/subscription.graphql", Input: `"""
+Subscriptions tell what changed, not the new state: a client refetches what it
+displays with the usual queries. Changes are merged while the client hasn't
+received them, so a client only learns the latest change of each entity.
+"""
+type Subscription {
+  """Changes of the entities of a type: all of them, or only those given by ids. Sent in batches, at most once per second. For a specific repo you can provide a repo reference. Without it, you get the unique default repo."""
+  entitiesChanged(repoRef: String, type: EntityType!, ids: [ID!]): [EntityChange!]!
+}
+
+enum EntityType {
+  BUG
+  IDENTITY
 }
 
 enum EntityEventType {
@@ -3410,19 +3366,9 @@ enum EntityEventType {
   REMOVED
 }
 
-type EntityEvent {
-  type: EntityEventType!
-  entity: Entity
-}
-
-type IdentityEvent {
-  type: EntityEventType!
-  identity: Identity!
-}
-
-type BugEvent {
-  type: EntityEventType!
-  bug: Bug!
+type EntityChange {
+  event: EntityEventType!
+  id: ID!
 }
 `, BuiltIn: false},
 	{Name: "../schema/types.graphql", Input: `scalar CombinedId
@@ -3615,6 +3561,8 @@ func (ec *executionContext) childFields_BugCommentEdge(ctx context.Context, fiel
 
 func (ec *executionContext) childFields_BugCommentHistoryStep(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
+	case "author":
+		return ec.fieldContext_BugCommentHistoryStep_author(ctx, field)
 	case "message":
 		return ec.fieldContext_BugCommentHistoryStep_message(ctx, field)
 	case "date":
@@ -3705,16 +3653,6 @@ func (ec *executionContext) childFields_BugEditCommentPayload(ctx context.Contex
 		return ec.fieldContext_BugEditCommentPayload_operation(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type BugEditCommentPayload", field.Name)
-}
-
-func (ec *executionContext) childFields_BugEvent(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-	switch field.Name {
-	case "type":
-		return ec.fieldContext_BugEvent_type(ctx, field)
-	case "bug":
-		return ec.fieldContext_BugEvent_bug(ctx, field)
-	}
-	return nil, fmt.Errorf("no field named %q was found under type BugEvent", field.Name)
 }
 
 func (ec *executionContext) childFields_BugLabelChangeOperation(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -3835,14 +3773,14 @@ func (ec *executionContext) childFields_Color(ctx context.Context, field graphql
 	return nil, fmt.Errorf("no field named %q was found under type Color", field.Name)
 }
 
-func (ec *executionContext) childFields_EntityEvent(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+func (ec *executionContext) childFields_EntityChange(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
-	case "type":
-		return ec.fieldContext_EntityEvent_type(ctx, field)
-	case "entity":
-		return ec.fieldContext_EntityEvent_entity(ctx, field)
+	case "event":
+		return ec.fieldContext_EntityChange_event(ctx, field)
+	case "id":
+		return ec.fieldContext_EntityChange_id(ctx, field)
 	}
-	return nil, fmt.Errorf("no field named %q was found under type EntityEvent", field.Name)
+	return nil, fmt.Errorf("no field named %q was found under type EntityChange", field.Name)
 }
 
 func (ec *executionContext) childFields_GitBlob(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -4069,16 +4007,6 @@ func (ec *executionContext) childFields_IdentityEdge(ctx context.Context, field 
 		return ec.fieldContext_IdentityEdge_node(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type IdentityEdge", field.Name)
-}
-
-func (ec *executionContext) childFields_IdentityEvent(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-	switch field.Name {
-	case "type":
-		return ec.fieldContext_IdentityEvent_type(ctx, field)
-	case "identity":
-		return ec.fieldContext_IdentityEvent_identity(ctx, field)
-	}
-	return nil, fmt.Errorf("no field named %q was found under type IdentityEvent", field.Name)
 }
 
 func (ec *executionContext) childFields_Label(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

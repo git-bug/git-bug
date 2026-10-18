@@ -19,7 +19,7 @@ import {
 } from "graphql";
 import { describe, expect, it } from "vitest";
 
-import { typePolicies } from "./apollo";
+import { possibleTypes, typePolicies } from "./apollo";
 import { USER_IDENTITY_QUERY } from "./auth";
 
 const REPOSITORIES = gql`
@@ -180,7 +180,7 @@ describe("apollo cache — every Repository selection asks for name", () => {
       data: {
         repository: {
           __typename: "Repository",
-          name: null,
+          name: "",
           userIdentity: {
             __typename: "Identity",
             id: "id1",
@@ -199,7 +199,7 @@ describe("apollo cache — every Repository selection asks for name", () => {
       query: USER_IDENTITY_QUERY,
     });
     expect(read?.repository.userIdentity.displayName).toBe("Alice");
-    expect(Object.keys(cache.extract())).toContain('Repository:{"name":null}');
+    expect(Object.keys(cache.extract())).toContain('Repository:{"name":""}');
   });
 });
 describe("apollo cache — Repository", () => {
@@ -273,5 +273,65 @@ describe("apollo cache — Repository", () => {
     });
 
     expect([first?.repository.name, second?.repository.name]).toEqual(["one", "two"]);
+  });
+});
+
+describe("apollo cache — fragments on interfaces", () => {
+  const TIMELINE = gql`
+    query InterfaceFragment {
+      repository {
+        name
+        bug(prefix: "b1") {
+          id
+          timeline(first: 1) {
+            nodes {
+              __typename
+              id
+              ... on Authored {
+                author {
+                  id
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+  type Data = {
+    repository: { bug: { timeline: { nodes: { author?: { id: string } }[] } } };
+  };
+  const data = {
+    repository: {
+      __typename: "Repository",
+      name: "",
+      bug: {
+        __typename: "Bug",
+        id: "b1",
+        timeline: {
+          __typename: "BugTimelineItemConnection",
+          nodes: [
+            {
+              __typename: "BugLabelChangeTimelineItem",
+              id: "t1",
+              author: { __typename: "Identity", id: "alice" },
+            },
+          ],
+        },
+      },
+    },
+  };
+  const author = (cache: InMemoryCache) => {
+    cache.writeQuery({ query: TIMELINE, data });
+    return cache.readQuery<Data>({ query: TIMELINE })?.repository.bug.timeline.nodes[0]?.author;
+  };
+
+  it("keeps the fields of a fragment on an interface", () => {
+    expect(author(new InMemoryCache({ typePolicies, possibleTypes }))?.id).toBe("alice");
+  });
+
+  it("drops them without possibleTypes", () => {
+    // why the client needs possibleTypes: the timeline reads authors this way
+    expect(author(new InMemoryCache({ typePolicies }))).toBeUndefined();
   });
 });
