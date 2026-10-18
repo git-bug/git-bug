@@ -44,9 +44,10 @@ tag the package still compiles with an empty asset set, which means `go build`,
 — you just get a binary whose `git-bug webui` command explains that it has no
 web UI and how to get one.
 
-Every `make` target that produces a binary builds the frontend and passes
-`-tags webui`, so `make build` and `make install` give you the real thing.
-Release binaries do the same, via [`.goreleaser.yaml`](./.goreleaser.yaml).
+`make build` and `make install` build the frontend and pass `-tags webui`, so
+they give you the real thing; `make build/noweb` and `make install/noweb` skip
+both. Release binaries are built with the web UI, via
+[`.goreleaser.yaml`](./.goreleaser.yaml).
 
 To work on the web UI itself, see [`webui/README.md`](./webui/README.md).
 

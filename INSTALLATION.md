@@ -25,6 +25,7 @@ and verify your installation.
 - [OpenBSD and NetBSD](#openbsd-and-netbsd)
 - [MacOS](#macos)
 - [Windows](#windows)
+- [mise](#mise)
 - [Build from source](#build-from-source)
 - [Verify your installation](#verify-your-installation)
 
@@ -202,6 +203,15 @@ Or download it from the release:
 | x86-64 | [⬇][bin/windows_amd64] | [⬇][arc/windows_amd64] |
 | ARM64  | [⬇][bin/windows_arm64] | [⬇][arc/windows_arm64] |
 
+## mise<a name="mise"></a>
+
+On macOS, Windows, and Linux x86-64, `git-bug` can be installed with
+[**mise**][mise]:
+
+```
+mise use -g aqua:git-bug/git-bug
+```
+
 ## Build from source<a name="build-from-source"></a>
 
 You'll need `git`, `go`, `make`, and optionally `node` and `pnpm` if you also build the web UI.
@@ -273,6 +283,7 @@ ______________________________________________________________________
 [brew.sh]: https://brew.sh
 [cosign]: https://docs.sigstore.dev/cosign/system_config/installation/
 [docs/home]: ./doc
+[mise]: https://mise.jdx.dev
 [p/arch-repo]: https://archlinux.org/packages/extra/x86_64/git-bug/
 [p/aur]: https://aur.archlinux.org/packages/git-bug-bin
 [p/nix]: https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/applications/version-management/git-bug/default.nix
