@@ -244,3 +244,37 @@ describe("LabelEditor — failed save", () => {
     await waitFor(() => expect(screen.getByRole("combobox")).toBeEnabled());
   });
 });
+
+describe("LabelEditor — leaving with the picker open", () => {
+  it("applies the choices, like closing the picker", async () => {
+    const matchVars = vi.fn().mockReturnValue(true);
+    const mock = {
+      request: { query: BugChangeLabelsDocument, variables: matchVars },
+      result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] } } } },
+    };
+    const { unmount } = renderEditor({ currentLabels: [], mocks: [mock] });
+    openPopover();
+    fireEvent.click(screen.getByRole("option", { name: "bug" }));
+    expect(matchVars).not.toHaveBeenCalled();
+    unmount();
+
+    await waitFor(() =>
+      expect(matchVars).toHaveBeenCalledWith({
+        input: { prefix: "bug1", repoRef: "myrepo", added: ["bug"], Removed: [] },
+      }),
+    );
+  });
+
+  it("applies nothing when nothing was toggled", () => {
+    const matchVars = vi.fn().mockReturnValue(true);
+    const mock = {
+      request: { query: BugChangeLabelsDocument, variables: matchVars },
+      result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] } } } },
+    };
+    const { unmount } = renderEditor({ currentLabels: [], mocks: [mock] });
+    openPopover();
+    unmount();
+
+    expect(matchVars).not.toHaveBeenCalled();
+  });
+});

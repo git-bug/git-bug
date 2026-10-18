@@ -34,7 +34,8 @@ function RouteComponent() {
   // kept until the issue is created, even across a reload
   const [title, setTitle] = useDraft(`${ref ?? "_"}:new-issue:title`);
   const [message, setMessage] = useDraft(`${ref ?? "_"}:new-issue:message`);
-  const [createBug, { loading, error }] = useMutation(BUG_CREATE_MUTATION);
+  // a failure resolves with its error, shown below the form, rather than throwing
+  const [createBug, { loading, error }] = useMutation(BUG_CREATE_MUTATION, { errorPolicy: "all" });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

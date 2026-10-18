@@ -133,7 +133,8 @@ function SortFilter({
   const selectedIndex = SORT_OPTIONS.findIndex((o) => o.value === sort);
 
   const elementsRef = useRef<(HTMLElement | null)[]>([]);
-  const labelsRef = useRef<(string | null)[]>([]);
+  // the typeahead labels, fixed like the options
+  const labelsRef = useRef<(string | null)[]>(SORT_OPTIONS.map((o) => o.label));
 
   const { refs, floatingStyles, context } = useFloating({
     open,
@@ -194,10 +195,10 @@ function SortFilter({
       {open && (
         <FloatingPortal>
           <FloatingFocusManager context={context} modal={false}>
+            {/* oxlint-disable-next-line react/refs -- floating-ui's ref setter, not a .current read */}
             <Listbox.Content ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
               <Listbox.ScrollArea>
                 {SORT_OPTIONS.map((opt, i) => {
-                  labelsRef.current[i] = opt.label;
                   return (
                     <Listbox.Item
                       key={opt.value}
@@ -559,6 +560,7 @@ function AuthorFilter({
       {open && (
         <FloatingPortal>
           <FloatingFocusManager context={context} modal={false} initialFocus={searchRef}>
+            {/* oxlint-disable-next-line react/refs -- floating-ui's ref setter, not a .current read */}
             <Listbox.Content ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
               <Listbox.Search
                 ref={searchRef}

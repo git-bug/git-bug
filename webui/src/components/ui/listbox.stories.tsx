@@ -37,7 +37,8 @@ function SimpleSelect() {
   const selectedIndex = fruits.indexOf(selected);
 
   const elementsRef = useRef<(HTMLElement | null)[]>([]);
-  const labelsRef = useRef<(string | null)[]>([]);
+  // the typeahead labels, fixed like the fruits
+  const labelsRef = useRef<(string | null)[]>(fruits);
 
   const { refs, floatingStyles, context } = useFloating({
     open,
@@ -85,10 +86,10 @@ function SimpleSelect() {
       {open && (
         <FloatingPortal>
           <FloatingFocusManager context={context} modal={false}>
+            {/* oxlint-disable-next-line react/refs -- floating-ui's ref setter, not a .current read */}
             <Listbox.Content ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
               <Listbox.ScrollArea>
                 {fruits.map((fruit, i) => {
-                  labelsRef.current[i] = fruit;
                   return (
                     <Listbox.Item
                       key={fruit}
@@ -203,6 +204,7 @@ function MultiSelectWithSearch() {
       {open && (
         <FloatingPortal>
           <FloatingFocusManager context={context} modal={false} initialFocus={searchRef}>
+            {/* oxlint-disable-next-line react/refs -- floating-ui's ref setter, not a .current read */}
             <Listbox.Content ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
               <Listbox.Search
                 ref={searchRef}
@@ -330,6 +332,7 @@ function GroupedSelect() {
         <FloatingPortal>
           <FloatingFocusManager context={context} modal={false} initialFocus={searchRef}>
             <Listbox.Content
+              // oxlint-disable-next-line react/refs -- floating-ui's ref setter, not a .current read
               ref={refs.setFloating}
               style={floatingStyles}
               className="w-64"

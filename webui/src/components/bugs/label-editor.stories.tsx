@@ -121,6 +121,7 @@ function LabelEditorDemo() {
         <FloatingPortal>
           <FloatingFocusManager context={context} modal={false}>
             <Listbox.Content
+              // oxlint-disable-next-line react/refs -- floating-ui's ref setter, not a .current read
               ref={refs.setFloating}
               style={floatingStyles}
               className="w-56"

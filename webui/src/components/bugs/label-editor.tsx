@@ -12,7 +12,7 @@ import {
   FloatingFocusManager,
 } from "@floating-ui/react";
 import { Settings2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { FragmentType } from "@/__generated__/fragment-masking";
 import { graphql } from "@/__generated__/gql";
@@ -90,6 +90,20 @@ export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: Lab
     });
   }
 
+  // Leaving the bug with the picker open applies its choices, like closing it
+  // does.  Through a ref to the latest applyLabels: the one of the first render
+  // knows no choices.
+  const applyOnLeave = useRef(applyLabels);
+  useEffect(() => {
+    applyOnLeave.current = applyLabels;
+  });
+  useEffect(
+    () => () => {
+      applyOnLeave.current();
+    },
+    [],
+  );
+
   // floating-ui state
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -143,6 +157,7 @@ export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: Lab
         <FloatingPortal>
           <FloatingFocusManager context={context} modal={false}>
             <Listbox.Content
+              // oxlint-disable-next-line react/refs -- floating-ui's ref setter, not a .current read
               ref={refs.setFloating}
               style={floatingStyles}
               className="w-56"
