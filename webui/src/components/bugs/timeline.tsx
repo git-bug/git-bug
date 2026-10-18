@@ -343,8 +343,10 @@ function CommentBody({ data: item, repo }: { data: CommentData; repo: string | n
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(item.message ?? "");
 
-  const [editComment, { loading }] = useMutation(BUG_EDIT_COMMENT_MUTATION, {
+  // on failure, the editor stays open with the text and the error
+  const [editComment, { loading, error, reset }] = useMutation(BUG_EDIT_COMMENT_MUTATION, {
     refetchQueries: [BugDetailDocument],
+    errorPolicy: "all",
   });
 
   function handleSave() {
@@ -354,12 +356,15 @@ function CommentBody({ data: item, repo }: { data: CommentData; repo: string | n
     }
     void editComment({
       variables: { input: { targetPrefix: item.id, message: editValue.trim(), repoRef: repo } },
-    }).then(() => setEditing(false));
+    }).then((result) => {
+      if (!result.error) setEditing(false);
+    });
   }
 
   function handleCancel() {
     setEditValue(item.message ?? "");
     setEditing(false);
+    reset();
   }
 
   const canEdit = user !== null && user.id === item.author.id;
@@ -386,6 +391,7 @@ function CommentBody({ data: item, repo }: { data: CommentData; repo: string | n
               onClick={() => {
                 // the message may have changed since the last edit (e.g. after a refetch)
                 setEditValue(item.message ?? "");
+                reset();
                 setEditing(true);
               }}
               className="text-muted-foreground hover:bg-muted hover:text-foreground ml-auto rounded-sm px-1.5 py-0.5 text-xs"
@@ -418,6 +424,11 @@ function CommentBody({ data: item, repo }: { data: CommentData; repo: string | n
                 Cancel
               </Button>
             </div>
+            {error && (
+              <p className="text-destructive text-sm">
+                Failed to save the comment: {error.message}
+              </p>
+            )}
           </div>
         ) : (
           <CommentCard.CardBody>

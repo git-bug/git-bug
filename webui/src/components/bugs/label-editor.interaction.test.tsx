@@ -2,11 +2,12 @@ import type { MockedResponse } from "@apollo/client/testing";
 import { MockedProvider } from "@apollo/client/testing/react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Suspense } from "react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, onTestFinished, vi } from "vitest";
 
 import type { FragmentType } from "@/__generated__/fragment-masking";
 import { BugChangeLabelsDocument } from "@/__generated__/graphql";
 import type { LABEL_FIELDS_FRAGMENT } from "@/components/shared/label-badge";
+import { toastManager } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth";
 
 import { LabelEditor } from "./label-editor";
@@ -202,5 +203,44 @@ describe("LabelEditor — applying labels", () => {
     expect(matchVars).toHaveBeenCalledWith({
       input: { prefix: "bug1", repoRef: null, added: ["bug"], Removed: [] },
     });
+  });
+});
+
+describe("LabelEditor — failed save", () => {
+  it("restores the choices and reports the error", async () => {
+    const addToast = vi.spyOn(toastManager, "add");
+    onTestFinished(() => addToast.mockRestore());
+    const mock = {
+      request: { query: BugChangeLabelsDocument, variables: () => true },
+      error: new Error("network down"),
+    };
+    renderEditor({ currentLabels: [], mocks: [mock] });
+    openPopover();
+    fireEvent.click(screen.getByRole("option", { name: "bug" }));
+    fireEvent.keyDown(document.body, { key: "Escape" });
+
+    await waitFor(() =>
+      expect(addToast).toHaveBeenCalledWith({
+        title: "Failed to save the labels",
+        description: "network down",
+      }),
+    );
+    openPopover();
+    expect(screen.getByRole("option", { name: "bug" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("can't be reopened while saving", async () => {
+    const mock = {
+      request: { query: BugChangeLabelsDocument, variables: () => true },
+      result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] } } } },
+      delay: 50,
+    };
+    renderEditor({ currentLabels: [], mocks: [mock] });
+    openPopover();
+    fireEvent.click(screen.getByRole("option", { name: "bug" }));
+    fireEvent.keyDown(document.body, { key: "Escape" });
+
+    await waitFor(() => expect(screen.getByRole("combobox")).toBeDisabled());
+    await waitFor(() => expect(screen.getByRole("combobox")).toBeEnabled());
   });
 });

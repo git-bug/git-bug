@@ -1,3 +1,4 @@
+import type { ErrorLike } from "@apollo/client";
 import { useMutation } from "@apollo/client/react";
 import { useState } from "react";
 
@@ -10,6 +11,7 @@ import * as WritePreview from "@/components/shared/write-preview";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
+import { useDraft } from "@/lib/draft";
 
 const BUG_ADD_COMMENT_MUTATION = graphql(`
   mutation BugAddComment($input: BugAddCommentInput!) {
@@ -74,57 +76,60 @@ interface CommentBoxProps {
 // Close / Reopen button. Hidden entirely in read-only mode (no logged-in user).
 export function CommentBox({ bugPrefix, bugStatus, repo }: CommentBoxProps) {
   const { user } = useAuth();
-  const [message, setMessage] = useState("");
+  // kept until sent, even across a reload
+  const [message, setMessage] = useDraft(`${repo ?? "_"}:${bugPrefix}:comment`);
   const [preview, setPreview] = useState(false);
 
   // The live updates refetch the bug too, but not without the websocket: the
-  // user's own changes must show regardless.
-  const refetch = { refetchQueries: [BugDetailDocument] };
+  // user's own changes must show regardless.  A failure resolves with its
+  // error rather than throwing, for submit to show it.
+  const options = { refetchQueries: [BugDetailDocument], errorPolicy: "all" as const };
 
-  const [addComment, { loading: addingComment }] = useMutation(BUG_ADD_COMMENT_MUTATION, refetch);
+  const [addComment, { loading: addingComment }] = useMutation(BUG_ADD_COMMENT_MUTATION, options);
   const [addAndClose, { loading: addingAndClosing }] = useMutation(
     BUG_ADD_COMMENT_AND_CLOSE_MUTATION,
-    refetch,
+    options,
   );
   const [addAndReopen, { loading: addingAndReopening }] = useMutation(
     BUG_ADD_COMMENT_AND_REOPEN_MUTATION,
-    refetch,
+    options,
   );
-  const [statusClose, { loading: closing }] = useMutation(BUG_STATUS_CLOSE_MUTATION, refetch);
-  const [statusOpen, { loading: reopening }] = useMutation(BUG_STATUS_OPEN_MUTATION, refetch);
+  const [statusClose, { loading: closing }] = useMutation(BUG_STATUS_CLOSE_MUTATION, options);
+  const [statusOpen, { loading: reopening }] = useMutation(BUG_STATUS_OPEN_MUTATION, options);
 
   const isOpen = bugStatus === Status.Open;
   const busy = addingComment || addingAndClosing || addingAndReopening || closing || reopening;
   const hasMessage = message.trim().length > 0;
 
-  async function handleComment() {
-    await addComment({
-      variables: { input: { prefix: bugPrefix, message: message.trim(), repoRef: repo } },
-    });
+  // the error of the last attempt: on failure, the message stays to retry
+  const [error, setError] = useState<ErrorLike | null>(null);
+
+  async function submit(mutation: Promise<{ error?: ErrorLike }>) {
+    const result = await mutation;
+    setError(result.error ?? null);
+    if (result.error) return;
     setMessage("");
     setPreview(false);
   }
 
+  async function handleComment() {
+    await submit(
+      addComment({
+        variables: { input: { prefix: bugPrefix, message: message.trim(), repoRef: repo } },
+      }),
+    );
+  }
+
   async function handleToggleStatus() {
+    const withMessage = {
+      variables: { input: { prefix: bugPrefix, message: message.trim(), repoRef: repo } },
+    };
+    const withoutMessage = { variables: { input: { prefix: bugPrefix, repoRef: repo } } };
     if (isOpen) {
-      if (hasMessage) {
-        await addAndClose({
-          variables: { input: { prefix: bugPrefix, message: message.trim(), repoRef: repo } },
-        });
-      } else {
-        await statusClose({ variables: { input: { prefix: bugPrefix, repoRef: repo } } });
-      }
+      await submit(hasMessage ? addAndClose(withMessage) : statusClose(withoutMessage));
     } else {
-      if (hasMessage) {
-        await addAndReopen({
-          variables: { input: { prefix: bugPrefix, message: message.trim(), repoRef: repo } },
-        });
-      } else {
-        await statusOpen({ variables: { input: { prefix: bugPrefix, repoRef: repo } } });
-      }
+      await submit(hasMessage ? addAndReopen(withMessage) : statusOpen(withoutMessage));
     }
-    setMessage("");
-    setPreview(false);
   }
 
   if (!user) return null;
@@ -152,6 +157,9 @@ export function CommentBox({ bugPrefix, bugStatus, repo }: CommentBoxProps) {
         </WritePreview.Root>
 
         <div className="border-border flex items-center justify-end gap-2 border-t px-3 py-2">
+          {error && (
+            <p className="text-destructive mr-auto text-sm">Failed to save: {error.message}</p>
+          )}
           <Button
             variant="outline"
             size="sm"

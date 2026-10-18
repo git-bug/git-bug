@@ -20,6 +20,7 @@ import { BugDetailDocument } from "@/__generated__/graphql";
 import { LabelBadge, LABEL_FIELDS_FRAGMENT } from "@/components/shared/label-badge";
 import { SectionHeading } from "@/components/shared/section-heading";
 import * as Listbox from "@/components/ui/listbox";
+import { toastManager } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth";
 
 const BUG_CHANGE_LABELS_MUTATION = graphql(`
@@ -55,8 +56,9 @@ interface LabelEditorProps {
 // read-only mode.
 export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: LabelEditorProps) {
   const { user } = useAuth();
-  const [changeLabels] = useMutation(BUG_CHANGE_LABELS_MUTATION, {
+  const [changeLabels, { loading: saving }] = useMutation(BUG_CHANGE_LABELS_MUTATION, {
     refetchQueries: [BugDetailDocument],
+    errorPolicy: "all",
   });
 
   const currentNames = new Set(currentLabels.map((l) => l.name));
@@ -74,10 +76,17 @@ export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: Lab
     const wanted = [...toggled];
     const added = wanted.filter(([name, on]) => on && !currentNames.has(name)).map(([n]) => n);
     const removed = wanted.filter(([name, on]) => !on && currentNames.has(name)).map(([n]) => n);
+    // cleared now rather than on success, to keep the toggles made meanwhile
+    // out of this change
     setToggled(new Map());
     if (added.length === 0 && removed.length === 0) return;
     void changeLabels({
       variables: { input: { prefix: bugPrefix, repoRef: repo, added, Removed: removed } },
+    }).then((result) => {
+      if (!result.error) return;
+      // back for the next opening, unless toggled again meanwhile
+      setToggled((prev) => new Map([...wanted, ...prev]));
+      toastManager.add({ title: "Failed to save the labels", description: result.error.message });
     });
   }
 
@@ -120,7 +129,9 @@ export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: Lab
         {user && validLabels.length > 0 && (
           <button
             ref={refs.setReference}
-            className="text-muted-foreground hover:text-foreground"
+            // one change at a time, so that a failed one restores no stale choice
+            disabled={saving}
+            className="text-muted-foreground hover:text-foreground disabled:opacity-50"
             {...getReferenceProps()}
           >
             <Settings2 className="size-3.5" />

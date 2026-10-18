@@ -291,3 +291,50 @@ describe("CommentBox — state transitions", () => {
     await waitFor(() => expect(textarea).toHaveValue(""));
   });
 });
+
+describe("CommentBox — failures", () => {
+  it("keeps the message and shows the error when the comment fails", async () => {
+    const mock = {
+      request: { query: BugAddCommentDocument, variables: () => true },
+      error: new Error("network down"),
+    };
+    render(
+      <MockedProvider mocks={[mock]} showWarnings={false}>
+        <Suspense>
+          <CommentBox bugPrefix="bug1" bugStatus={Status.Open} repo="myrepo" />
+        </Suspense>
+      </MockedProvider>,
+    );
+
+    typeComment("my comment");
+    fireEvent.click(screen.getByRole("button", { name: "Comment" }));
+
+    expect(await screen.findByText("Failed to save: network down")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Leave a comment…")).toHaveValue("my comment");
+  });
+});
+
+describe("CommentBox — drafts", () => {
+  it("keeps an unsent comment across a remount, and forgets it once posted", async () => {
+    const mock = {
+      request: { query: BugAddCommentDocument, variables: () => true },
+      result: { data: { bugAddComment: { bug: { id: "1" } } } },
+    };
+    const first = renderCommentBox({});
+    typeComment("half a comment");
+    first.unmount();
+
+    render(
+      <MockedProvider mocks={[mock]} showWarnings={false}>
+        <Suspense>
+          <CommentBox bugPrefix="bug1" bugStatus={Status.Open} repo="myrepo" />
+        </Suspense>
+      </MockedProvider>,
+    );
+    expect(screen.getByPlaceholderText("Leave a comment…")).toHaveValue("half a comment");
+
+    fireEvent.click(screen.getByRole("button", { name: "Comment" }));
+    await waitFor(() => expect(screen.getByPlaceholderText("Leave a comment…")).toHaveValue(""));
+    expect(localStorage.length).toBe(0);
+  });
+});

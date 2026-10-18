@@ -35,8 +35,10 @@ export function TitleEditor({ bugPrefix, title, humanId, repo }: TitleEditorProp
   const [value, setValue] = useState(title);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [setTitle, { loading }] = useMutation(BUG_SET_TITLE_MUTATION, {
+  // on failure, the editor stays open with the title and the error
+  const [setTitle, { loading, error, reset }] = useMutation(BUG_SET_TITLE_MUTATION, {
     refetchQueries: [BugDetailDocument],
+    errorPolicy: "all",
   });
 
   useEffect(() => {
@@ -46,51 +48,53 @@ export function TitleEditor({ bugPrefix, title, humanId, repo }: TitleEditorProp
   async function handleSave() {
     const trimmed = value.trim();
     if (trimmed && trimmed !== title) {
-      await setTitle({
+      const result = await setTitle({
         variables: { input: { prefix: bugPrefix, title: trimmed, repoRef: repo } },
       });
+      if (result.error) return;
     }
     setEditing(false);
   }
 
+  function handleCancel() {
+    setValue(title);
+    setEditing(false);
+    reset();
+  }
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter") void handleSave();
-    if (e.key === "Escape") {
-      setValue(title);
-      setEditing(false);
-    }
+    if (e.key === "Escape") handleCancel();
   }
 
   if (editing) {
     return (
-      <div className="flex items-start gap-2">
-        <Input
-          ref={inputRef}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="text-xl font-semibold"
-          disabled={loading}
-        />
-        <Button
-          size="sm"
-          onClick={() => {
-            void handleSave();
-          }}
-          disabled={loading || !value.trim()}
-        >
-          Save
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => {
-            setValue(title);
-            setEditing(false);
-          }}
-        >
-          Cancel
-        </Button>
+      <div className="space-y-2">
+        <div className="flex items-start gap-2">
+          <Input
+            ref={inputRef}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="text-xl font-semibold"
+            disabled={loading}
+          />
+          <Button
+            size="sm"
+            onClick={() => {
+              void handleSave();
+            }}
+            disabled={loading || !value.trim()}
+          >
+            Save
+          </Button>
+          <Button size="sm" variant="ghost" onClick={handleCancel} disabled={loading}>
+            Cancel
+          </Button>
+        </div>
+        {error && (
+          <p className="text-destructive text-sm">Failed to save the title: {error.message}</p>
+        )}
       </div>
     );
   }
@@ -107,6 +111,7 @@ export function TitleEditor({ bugPrefix, title, humanId, repo }: TitleEditorProp
             // Seed the draft from the current title, which may have changed
             // since the last edit (e.g. after a refetch).
             setValue(title);
+            reset();
             setEditing(true);
           }}
           className="text-muted-foreground hover:text-foreground mt-1 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"

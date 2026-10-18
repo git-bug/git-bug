@@ -1,6 +1,5 @@
 import { useMutation } from "@apollo/client/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
 
 import { graphql } from "@/__generated__/gql";
 import { Markdown } from "@/components/content/markdown";
@@ -10,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useDraft } from "@/lib/draft";
 
 const BUG_CREATE_MUTATION = graphql(`
   mutation BugCreate($input: BugCreateInput!) {
@@ -31,8 +31,9 @@ function RouteComponent() {
   const navigate = useNavigate();
   const { repo } = Route.useParams();
   const { ref } = Route.useRouteContext();
-  const [title, setTitle] = useState("");
-  const [message, setMessage] = useState("");
+  // kept until the issue is created, even across a reload
+  const [title, setTitle] = useDraft(`${ref ?? "_"}:new-issue:title`);
+  const [message, setMessage] = useDraft(`${ref ?? "_"}:new-issue:message`);
   const [createBug, { loading, error }] = useMutation(BUG_CREATE_MUTATION);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -42,6 +43,8 @@ function RouteComponent() {
     });
     const humanId = result.data?.bugCreate.bug.humanId;
     if (humanId) {
+      setTitle("");
+      setMessage("");
       void navigate({
         to: "/$repo/issues/$id",
         params: { repo: repo, id: humanId },
