@@ -34,7 +34,6 @@ release artifacts locally, so feel free to skip it.
 ```shell
 make            # build the web UI, then the binary, into ./git-bug
 make install    # same, but install into $GOPATH/bin
-make build/debug  # a debugger-friendly build (no optimisation, no inlining)
 make test       # run the Go test suite
 ```
 

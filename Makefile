@@ -9,25 +9,30 @@ LDFLAGS:=-X main.version="${TAG}"
 
 all: build
 
-.PHONY: build-webui
-build-webui:
+.PHONY: webui/dist
+webui/dist:
 	cd webui && pnpm install && pnpm run build
 
 .PHONY: build
-build: build-webui
+build: webui/dist
 	go generate
 	go build -tags webui -ldflags "$(LDFLAGS)" .
 
-# produce a debugger-friendly build
-.PHONY: build/debug
-build/debug: build-webui
-	go generate
-	go build -tags webui -ldflags "$(LDFLAGS)" -gcflags=all="-N -l" .
-
 .PHONY: install
-install: build-webui
+install: webui/dist
 	go generate
 	go install -tags webui -ldflags "$(LDFLAGS)" .
+
+# build or install without the web UI, which doesn't require node and pnpm
+.PHONY: build/noweb
+build/noweb:
+	go generate
+	go build -ldflags "$(LDFLAGS)" .
+
+.PHONY: install/noweb
+install/noweb:
+	go generate
+	go install -ldflags "$(LDFLAGS)" .
 
 .PHONY: secure
 secure:

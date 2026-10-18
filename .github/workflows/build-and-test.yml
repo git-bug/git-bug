@@ -155,6 +155,6 @@ jobs:
       # pulls in //commands, which pulls in //webui and its //go:embed.
       - name: Check generated files are up to date
         run: |
-          make build-webui
+          make webui/dist
           go generate
           git diff --exit-code -- doc/man doc/md misc/completion
