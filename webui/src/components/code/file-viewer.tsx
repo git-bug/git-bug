@@ -186,7 +186,7 @@ export function FileViewer({ blob: blobProp }: FileViewerProps) {
   useEffect(() => {
     if (blob.isBinary || !blob.text) {
       setHighlighted({ node: null, lineCount: 0 });
-      return;
+      return () => {};
     }
     setHighlighted(null);
     let cancelled = false;

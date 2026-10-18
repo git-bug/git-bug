@@ -305,7 +305,7 @@ export function Root({
   // completion left is done wherever the completion is cleared, so this effect
   // only ever has fetching to do.
   useEffect(() => {
-    if (!completion) return;
+    if (!completion) return () => {};
 
     let cancelled = false;
     const result = completion.provider.getSuggestions(completion.query);
@@ -412,6 +412,7 @@ export function Root({
     handleKeyDown,
     handleSelect,
     selectSuggestion,
+    // oxlint-disable-next-line react/refs -- floating-ui's ref setter, not a .current read
     floatingRef: refs.setFloating,
     floatingStyles,
     getFloatingProps,
@@ -420,8 +421,10 @@ export function Root({
   };
 
   return (
+    // oxlint-disable-next-line react/refs -- ctx holds floating-ui's ref setters
     <QueryInputContext value={ctx}>
       <div
+        // oxlint-disable-next-line react/refs -- floating-ui's ref setter, not a .current read
         ref={refs.setReference}
         className={cn(
           "relative flex flex-1 items-center rounded-md border border-input bg-background",

@@ -16,10 +16,10 @@
     "typescript/no-unsafe-return": "warn",
     "typescript/await-thenable": "error",
     "typescript/no-unnecessary-type-assertion": "warn",
-    // oxlint 1.82 flags any member access on an identifier named `refs` as a ref
-    // read during render, including floating-ui's `ref={refs.setFloating}` (a
-    // callback setter, not a `.current` read).  There is no way to write that
-    // API differently, so this stays a warning rather than an error.
+    // oxlint 1.82 takes what useFloating returns for refs, so floating-ui's
+    // `ref={refs.setFloating}` (a callback setter, not a `.current` read) counts
+    // as a ref read during render, however it is named or hoisted.  Those sites
+    // carry an oxlint-disable-next-line saying so.
     "react/refs": "warn",
     "react/react-in-jsx-scope": "off",
     // Names imposed by GraphQL and TanStack Router.
