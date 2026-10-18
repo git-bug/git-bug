@@ -25,6 +25,7 @@ and verify your installation.
 - [OpenBSD and NetBSD](#openbsd-and-netbsd)
 - [MacOS](#macos)
 - [Windows](#windows)
+- [mise](#mise)
 - [Build from source](#build-from-source)
 - [Verify your installation](#verify-your-installation)
 
@@ -202,128 +203,36 @@ Or download it from the release:
 | x86-64 | [⬇][bin/windows_amd64] | [⬇][arc/windows_amd64] |
 | ARM64  | [⬇][bin/windows_arm64] | [⬇][arc/windows_arm64] |
 
+## mise<a name="mise"></a>
+
+On macOS, Windows, and Linux x86-64, `git-bug` can be installed with
+[**mise**][mise]:
+
+```
+mise use -g aqua:git-bug/git-bug
+```
+
 ## Build from source<a name="build-from-source"></a>
 
-You can also build `git-bug` from source, if you wish. You'll need the following
-dependencies:
-
-- `git`
-- `go`
-- `make`
-
-Ensure that the `go` binary directory (`$GOPATH/bin`) is in your `PATH`. It is
-recommended to set this within your shell configuration file(s), such as
-`~/.zprofile` or `~/.bashrc`.
+You'll need `git`, `go`, `make`, and optionally `node` and `pnpm` if you also build the web UI.
+The versions we use are pinned in [`.tool-versions`](./.tool-versions).
 
 ```
-export PATH=$PATH:$(go env GOROOT)/bin:$(go env GOPATH)/bin
-```
-
-> [!NOTE]
-> The commands below assume you do not want to keep the repository on disk, and
-> thus clones the repository to a new temporary directory and performs a
-> lightweight clone in order to reduce network latency and data transfer.
->
-> As a result, the repository cloned during these steps will not contain the
-> full history. If that is important to you, clone the repository using the
-> method you prefer, check out your preferred revision, and run `make install`.
-
-**First, create a new repository on disk:**
-
-```
-cd $(mktemp -d) && git init .
-```
-
-**Next, set the remote to the upstream source:**
-
-```
-git remote add origin git@github.com:git-bug/git-bug.git
-```
-
-Next, choose whether you want to build from a release tag, branch, or
-development head and expand the instructions below.
-
-<details><summary>Build from <strong>a release tag</strong></summary>
-
-First, list all of the tags from the repository (we use `sed` in the command
-below to filter out some unnecessary visual noise):
-
-<pre>
-git ls-remote origin refs/tags/\* | sed -e 's/refs\/tags\///'
-</pre>
-
-You'll see output similar to:
-
-<pre>
-c1a08111b603403d4ee0a78c1214f322fecaa3ca        0.1.0
-d959acc29dcbc467790ae87389f9569bb830c8c6        0.2.0
-ad59f77fd425b00ae4b8d7360a64dc3dc1c73bd0        0.3.0
-...
-</pre>
-
-<blockquote><strong>Tip</strong><p>
-The <em>tags</em> are in the right-most column. Old revisions up to and
-including <code>0.7.1</code> do not contain a <em>v</em> prefix, however, all
-revisions after, do.
-</p></blockquote>
-
-Select the tag you wish to build, and fetch it using the command below. Be sure
-to replace <code>REPLACE-ME</code> with the tag you selected:
-
-<pre>
-git fetch --no-tags --depth 1 origin +refs/tags/REPLACE-ME:refs/tags/REPLACE-ME
-</pre>
-
-<blockquote><strong>NOTE</strong><p>
-The <code>--no-tags</code> flag might seem out of place, since we <em>are</em>
-fetching a tag, but it isn't -- the reason we use this is avoid fetching other
-tags, in case you have <code>fetch.pruneTags</code> enabled in your global
-configuration, which causes <code>git</code> to fetch <em>all</em> tags.
-</p></blockquote>
-
-Next, check out the tag, replacing <code>REPLACE-ME</code> with the tag you
-selected:
-
-<pre>
-git checkout REPLACE-ME
-</pre>
-
-Finally, run the <code>install</code> target from <code>//:Makefile</code>:
-
-<pre>
+git clone https://github.com/git-bug/git-bug.git
+cd git-bug
+git checkout v0.11.0 # optional: pick a release, or stay on the development head
 make install
-</pre>
+```
 
-This will build <code>git-bug</code> and place it in your Go binary directory.
+If you don't need the web UI, run `make install/noweb` instead: it doesn't need
+`node` or `pnpm`, and `git bug webui` will report that it was not included.
 
-</details>
+`make install` places `git-bug` in your Go binary directory. Make sure it is in
+your `PATH`, for example by adding this to `~/.zprofile` or `~/.bashrc`:
 
-<details>
-<summary>
-Build the <strong>unstable development <code>HEAD</code></strong>
-</summary>
-
-First, fetch the most recent commit for the default branch:
-
-<pre>
-git fetch --no-tags --depth 1 origin HEAD:refs/remotes/origin/HEAD
-</pre>
-
-Next, check out the tree you pulled:
-
-<pre>
-git checkout origin/HEAD
-</pre>
-
-Finally, run the <code>install</code> target from <code>//:Makefile</code>:
-
-<pre>
-make install
-</pre>
-
-This will build <code>git-bug</code> and place it in your Go binary directory.
-
-</details>
+```
+export PATH=$PATH:$(go env GOPATH)/bin
+```
 
 ## Verify your installation<a name="verify-your-installation"></a>
 
@@ -374,6 +283,7 @@ ______________________________________________________________________
 [brew.sh]: https://brew.sh
 [cosign]: https://docs.sigstore.dev/cosign/system_config/installation/
 [docs/home]: ./doc
+[mise]: https://mise.jdx.dev
 [p/arch-repo]: https://archlinux.org/packages/extra/x86_64/git-bug/
 [p/aur]: https://aur.archlinux.org/packages/git-bug-bin
 [p/nix]: https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/applications/version-management/git-bug/default.nix
