@@ -153,4 +153,3 @@ func (l *lockedFilesystem) Root() string {
 	// Root does not modify state, no lock needed
 	return l.fs.Root()
 }
-
