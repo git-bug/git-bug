@@ -1,10 +1,9 @@
-package buginput
+package boardinput
 
 import (
+	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/commands/input"
 	"github.com/git-bug/git-bug/repository"

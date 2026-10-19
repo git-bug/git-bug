@@ -9,7 +9,7 @@ git-bug board description edit [BUG_ID] [flags]
 ### Options
 
 ```
-  -t, --description string   Provide a description for the board
+  -d, --description string   Provide a description for the board
       --non-interactive      Do not ask for user input
   -h, --help                 help for edit
 ```

@@ -1,6 +1,6 @@
 """Represents a column on a Board."""
 type BoardColumn
-@goModel(model: "github.com/git-bug/git-bug/entities/board.Column") {
+@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.BoardColumn") {
     id: CombinedId! @goField(name: "CombinedId")
 
     name: String!

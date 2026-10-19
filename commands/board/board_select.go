@@ -15,8 +15,7 @@ func ResolveSelected(repo *cache.RepoCache, args []string) (*cache.BoardCache, [
 	return _select.Resolve[*cache.BoardCache](repo, board.Typename, board.Namespace, repo.Boards(), args)
 }
 
-func newBoardSelectCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBoardSelectCommand(env *execenv.Env) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "select BOARD_ID",

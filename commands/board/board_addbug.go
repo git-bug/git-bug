@@ -11,14 +11,13 @@ type boardAddBugOptions struct {
 	column string
 }
 
-func newBoardAddBugCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBoardAddBugCommand(env *execenv.Env) *cobra.Command {
 	options := boardAddBugOptions{}
 
 	cmd := &cobra.Command{
 		Use:     "add-bug [BOARD_ID] [BUG_ID]",
 		Short:   "Add a bug to a board",
-		PreRunE: execenv.LoadBackend(env),
+		PreRunE: execenv.LoadBackend(env, execenv.EnsureUser()),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBoardAddBug(env, options, args)
 		}),
@@ -36,7 +35,7 @@ func newBoardAddBugCommand() *cobra.Command {
 }
 
 func runBoardAddBug(env *execenv.Env, opts boardAddBugOptions, args []string) error {
-	b, columnId, err := resolveColumnId(env, opts.column, args)
+	b, columnId, args, err := resolveColumnId(env, opts.column, args)
 	if err != nil {
 		return err
 	}

@@ -10,34 +10,50 @@ import (
 	"github.com/git-bug/git-bug/repository"
 )
 
-type RepoCacheBoard struct {
-	*SubCache[*board.Board, *BoardExcerpt, *BoardCache]
+// sharedBoard is the single loaded copy of a board, see sharedEntity.
+type sharedBoard = sharedEntity[*board.Snapshot, board.Operation]
+
+func newSharedBoard(b *board.Board) *sharedBoard {
+	return &sharedBoard{Tracked: b}
 }
 
-func NewRepoCacheBoard(repo repository.ClockedRepo,
+type RepoCacheBoard struct {
+	*SubCache[*sharedBoard, *BoardExcerpt, *BoardCache]
+}
+
+func NewRepoCacheBoard(repo repository.Repo,
 	resolvers func() entity.Resolvers,
 	getUserIdentity getUserIdentityFunc) *RepoCacheBoard {
 
-	makeCached := func(b *board.Board, entityUpdated func(id entity.Id) error) *BoardCache {
-		return NewBoardCache(b, repo, getUserIdentity, entityUpdated)
+	makeView := func(shared *sharedBoard, onCommit func() error) *BoardCache {
+		return newBoardCache(shared, repo, resolvers, getUserIdentity, onCommit)
 	}
 
-	makeIndexData := func(b *BoardCache) []string {
-		// no indexing
-		return nil
+	makeIndexData := func(b *sharedBoard) []string {
+		snap := b.Compile()
+		return []string{snap.Title, snap.Description}
 	}
 
-	actions := Actions[*board.Board]{
-		ReadWithResolver:    board.ReadWithResolver,
-		ReadAllWithResolver: board.ReadAllWithResolver,
-		Remove:              board.Remove,
-		RemoveAll:           board.RemoveAll,
-		MergeAll:            board.MergeAll,
+	actions := Actions[*sharedBoard]{
+		ReadWithResolver: func(repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (*sharedBoard, error) {
+			b, err := board.ReadWithResolver(repo, resolvers, id)
+			if err != nil {
+				return nil, err
+			}
+			return newSharedBoard(b), nil
+		},
+		Refresh: func(repo repository.Repo, resolvers entity.Resolvers, shared *sharedBoard) (*sharedBoard, error) {
+			return shared, shared.Repair(repo, resolvers)
+		},
+		Remove:       board.Remove,
+		RemoveAll:    board.RemoveAll,
+		MergeAll:     board.MergeAll,
+		EnsureClocks: board.EnsureClocks,
 	}
 
-	sc := NewSubCache[*board.Board, *BoardExcerpt, *BoardCache](
+	sc := NewSubCache[*sharedBoard, *BoardExcerpt, *BoardCache](
 		repo, resolvers, getUserIdentity,
-		makeCached, NewBoardExcerpt, makeIndexData, actions,
+		makeView, newBoardExcerpt, makeIndexData, actions,
 		board.Typename, board.Namespace,
 		formatVersion, defaultMaxLoadedBugs,
 	)
@@ -45,8 +61,9 @@ func NewRepoCacheBoard(repo repository.ClockedRepo,
 	return &RepoCacheBoard{SubCache: sc}
 }
 
-// ResolveBoardCreateMetadata retrieve a board that has the exact given metadata on its Create operation, that is, the first operation.
-// It fails if multiple bugs match.
+// ResolveBoardCreateMetadata retrieve a board that has the exact given metadata on
+// its Create operation, that is, the first operation. It fails if multiple boards
+// match.
 func (c *RepoCacheBoard) ResolveBoardCreateMetadata(key string, value string) (*BoardCache, error) {
 	return c.ResolveMatcher(func(excerpt *BoardExcerpt) bool {
 		return excerpt.CreateMetadata[key] == value
@@ -59,13 +76,13 @@ func (c *RepoCacheBoard) ResolveColumn(prefix string) (*BoardCache, entity.Combi
 	boardCandidate := make([]entity.Id, 0, 5)
 
 	// build a list of possible matching boards
-	c.mu.RLock()
+	c.muMaps.RLock()
 	for _, excerpt := range c.excerpts {
 		if excerpt.Id().HasPrefix(boardPrefix) {
 			boardCandidate = append(boardCandidate, excerpt.Id())
 		}
 	}
-	c.mu.RUnlock()
+	c.muMaps.RUnlock()
 
 	matchingBoardIds := make([]entity.Id, 0, 5)
 	matchingColumnId := entity.UnsetCombinedId
@@ -130,7 +147,7 @@ func (c *RepoCacheBoard) NewRaw(author identity.Interface, unixTime int64, title
 		return nil, nil, err
 	}
 
-	cached, err := c.add(b)
+	cached, err := c.add(newSharedBoard(b))
 	if err != nil {
 		return nil, nil, err
 	}

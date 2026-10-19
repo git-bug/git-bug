@@ -110,17 +110,12 @@ func NewRepoCache(r repository.Repo, changes repository.ChangeSource) (*RepoCach
 	c.subcaches = append(c.subcaches, c.boards)
 
 	c.resolvers = entity.Resolvers{
-		identity.Interface(nil): entity.ResolverFunc[*IdentityCache](c.identities.Resolve),
-		&IdentityCache{}:        entity.ResolverFunc[*IdentityCache](c.identities.Resolve),
-		&IdentityExcerpt{}:      entity.ResolverFunc[*IdentityExcerpt](c.identities.ResolveExcerpt),
-		bug.ReadOnly(nil):       entity.ResolverFunc[*BugCache](c.bugs.Resolve),
-		&bug.Bug{}:              entity.ResolverFunc[*BugCache](c.bugs.Resolve),
-		&BugCache{}:             entity.ResolverFunc[*BugCache](c.bugs.Resolve),
-		&BugExcerpt{}:           entity.ResolverFunc[*BugExcerpt](c.bugs.ResolveExcerpt),
-		board.ReadOnly(nil):     entity.ResolverFunc[*BoardCache](c.boards.Resolve),
-		&board.Board{}:          entity.ResolverFunc[*BoardCache](c.boards.Resolve),
-		&BoardCache{}:           entity.ResolverFunc[*BoardCache](c.boards.Resolve),
-		&BoardExcerpt{}:         entity.ResolverFunc[*BoardExcerpt](c.boards.ResolveExcerpt),
+		&IdentityCache{}:   entity.ResolverFunc[*IdentityCache](c.identities.Resolve),
+		&IdentityExcerpt{}: entity.ResolverFunc[*IdentityExcerpt](c.identities.ResolveExcerpt),
+		&BugCache{}:        entity.ResolverFunc[*BugCache](c.bugs.Resolve),
+		&BugExcerpt{}:      entity.ResolverFunc[*BugExcerpt](c.bugs.ResolveExcerpt),
+		&BoardCache{}:      entity.ResolverFunc[*BoardCache](c.boards.Resolve),
+		&BoardExcerpt{}:    entity.ResolverFunc[*BoardExcerpt](c.boards.ResolveExcerpt),
 	}
 
 	// small buffer so that the functions below can emit an event without blocking
@@ -311,6 +306,8 @@ func (c *RepoCache) Close() error {
 
 func (c *RepoCache) registerObserver(repoName string, typename string, observer Observer) error {
 	switch typename {
+	case board.Typename:
+		c.boards.RegisterObserver(repoName, observer)
 	case bug.Typename:
 		c.bugs.RegisterObserver(repoName, observer)
 	case identity.Typename:

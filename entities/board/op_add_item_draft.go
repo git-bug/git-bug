@@ -70,7 +70,7 @@ func NewAddItemDraftOp(author identity.Interface, unixTime int64, columnId entit
 }
 
 // AddItemDraft is a convenience function to add a draft item to a Board
-func AddItemDraft(b ReadWrite, author identity.Interface, unixTime int64, columnId entity.Id, title string, metadata map[string]string) (entity.CombinedId, *AddItemDraftOperation, error) {
+func AddItemDraft(b Mutable, author identity.Interface, unixTime int64, columnId entity.Id, title string, metadata map[string]string) (entity.CombinedId, *AddItemDraftOperation, error) {
 	op := NewAddItemDraftOp(author, unixTime, columnId, title)
 	for key, val := range metadata {
 		op.SetMetadata(key, val)

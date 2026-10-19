@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/git-bug/git-bug/entities/board"
@@ -9,22 +10,28 @@ import (
 	"github.com/git-bug/git-bug/repository"
 )
 
+var _ board.Mutable = &BoardCache{}
+
 // BoardCache is a wrapper around a Board. It provides multiple functions:
 //
 // 1. Provides a higher level API to use than the raw API from Board.
 // 2. Maintain an up-to-date Snapshot available.
 // 3. Deal with concurrency.
+//
+// It is a view of the board loaded in the cache, see CachedEntityBase: what it
+// stages is its own until committed.
 type BoardCache struct {
 	CachedEntityBase[*board.Snapshot, board.Operation]
 }
 
-func NewBoardCache(b *board.Board, repo repository.ClockedRepo, getUserIdentity getUserIdentityFunc, entityUpdated func(id entity.Id) error) *BoardCache {
+func newBoardCache(shared *sharedBoard, repo repository.Repo, resolvers func() entity.Resolvers, getUserIdentity getUserIdentityFunc, onCommit func() error) *BoardCache {
 	return &BoardCache{
 		CachedEntityBase: CachedEntityBase[*board.Snapshot, board.Operation]{
 			repo:            repo,
-			entityUpdated:   entityUpdated,
+			resolvers:       resolvers,
+			onCommit:        onCommit,
 			getUserIdentity: getUserIdentity,
-			entity:          newWithSnapshot[*board.Snapshot, board.Operation](b),
+			shared:          shared,
 		},
 	}
 }
@@ -44,16 +51,11 @@ func (c *BoardCache) AddItemDraftRaw(author identity.Interface, unixTime int64, 
 		return entity.UnsetCombinedId, nil, err
 	}
 
-	c.mu.Lock()
-	itemId, op, err := board.AddItemDraft(c.entity, author, unixTime, column.Id, title, metadata)
-	c.mu.Unlock()
-	if err != nil {
-		return entity.UnsetCombinedId, nil, err
-	}
-	return itemId, op, c.notifyUpdated()
+	return board.AddItemDraft(c, author, unixTime, column.Id, title, metadata)
 }
 
-func (c *BoardCache) AddItemEntity(columnId entity.CombinedId, e entity.Interface) (entity.CombinedId, *board.AddItemEntityOperation, error) {
+// AddItemEntity adds an item referring to the given entity (a bug ...) to a column.
+func (c *BoardCache) AddItemEntity(columnId entity.CombinedId, e entity.Resolved) (entity.CombinedId, *board.AddItemEntityOperation, error) {
 	author, err := c.getUserIdentity()
 	if err != nil {
 		return entity.UnsetCombinedId, nil, err
@@ -62,7 +64,7 @@ func (c *BoardCache) AddItemEntity(columnId entity.CombinedId, e entity.Interfac
 	return c.AddItemEntityRaw(author, time.Now().Unix(), columnId, e, nil)
 }
 
-func (c *BoardCache) AddItemEntityRaw(author identity.Interface, unixTime int64, columnId entity.CombinedId, e entity.Interface, metadata map[string]string) (entity.CombinedId, *board.AddItemEntityOperation, error) {
+func (c *BoardCache) AddItemEntityRaw(author identity.Interface, unixTime int64, columnId entity.CombinedId, e entity.Resolved, metadata map[string]string) (entity.CombinedId, *board.AddItemEntityOperation, error) {
 	column, err := c.Snapshot().SearchColumn(columnId)
 	if err != nil {
 		return entity.UnsetCombinedId, nil, err
@@ -70,19 +72,13 @@ func (c *BoardCache) AddItemEntityRaw(author identity.Interface, unixTime int64,
 
 	var entityType board.ItemEntityType
 	switch e.(type) {
-	case *BugCache:
+	case *BugCache, *BugExcerpt:
 		entityType = board.EntityTypeBug
 	default:
-		panic("unknown entity type")
+		return entity.UnsetCombinedId, nil, fmt.Errorf("unsupported entity type %T", e)
 	}
 
-	c.mu.Lock()
-	itemId, op, err := board.AddItemEntity(c.entity, author, unixTime, column.Id, entityType, e, metadata)
-	c.mu.Unlock()
-	if err != nil {
-		return entity.UnsetCombinedId, nil, err
-	}
-	return itemId, op, c.notifyUpdated()
+	return board.AddItemEntity(c, author, unixTime, column.Id, entityType, e.Id(), metadata)
 }
 
 func (c *BoardCache) SetDescription(description string) (*board.SetDescriptionOperation, error) {
@@ -95,13 +91,7 @@ func (c *BoardCache) SetDescription(description string) (*board.SetDescriptionOp
 }
 
 func (c *BoardCache) SetDescriptionRaw(author identity.Interface, unixTime int64, description string, metadata map[string]string) (*board.SetDescriptionOperation, error) {
-	c.mu.Lock()
-	op, err := board.SetDescription(c.entity, author, unixTime, description, metadata)
-	c.mu.Unlock()
-	if err != nil {
-		return nil, err
-	}
-	return op, c.notifyUpdated()
+	return board.SetDescription(c, author, unixTime, description, metadata)
 }
 
 func (c *BoardCache) SetTitle(title string) (*board.SetTitleOperation, error) {
@@ -114,11 +104,5 @@ func (c *BoardCache) SetTitle(title string) (*board.SetTitleOperation, error) {
 }
 
 func (c *BoardCache) SetTitleRaw(author identity.Interface, unixTime int64, title string, metadata map[string]string) (*board.SetTitleOperation, error) {
-	c.mu.Lock()
-	op, err := board.SetTitle(c.entity, author, unixTime, title, metadata)
-	c.mu.Unlock()
-	if err != nil {
-		return nil, err
-	}
-	return op, c.notifyUpdated()
+	return board.SetTitle(c, author, unixTime, title, metadata)
 }

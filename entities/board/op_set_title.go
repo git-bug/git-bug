@@ -56,21 +56,8 @@ func NewSetTitleOp(author identity.Interface, unixTime int64, title string, was 
 }
 
 // SetTitle is a convenience function to change a board title
-func SetTitle(b ReadWrite, author identity.Interface, unixTime int64, title string, metadata map[string]string) (*SetTitleOperation, error) {
-	var lastTitleOp *SetTitleOperation
-	for _, op := range b.Operations() {
-		switch op := op.(type) {
-		case *SetTitleOperation:
-			lastTitleOp = op
-		}
-	}
-
-	var was string
-	if lastTitleOp != nil {
-		was = lastTitleOp.Title
-	} else {
-		was = b.FirstOp().(*CreateOperation).Title
-	}
+func SetTitle(b Mutable, author identity.Interface, unixTime int64, title string, metadata map[string]string) (*SetTitleOperation, error) {
+	was := b.Compile().Title
 
 	op := NewSetTitleOp(author, unixTime, title, was)
 	for key, val := range metadata {

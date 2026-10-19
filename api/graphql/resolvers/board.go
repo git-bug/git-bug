@@ -7,7 +7,7 @@ import (
 	"github.com/git-bug/git-bug/api/graphql/graph"
 	"github.com/git-bug/git-bug/api/graphql/models"
 	"github.com/git-bug/git-bug/entities/board"
-	"github.com/git-bug/git-bug/entities/common"
+	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
 )
 
@@ -27,14 +27,14 @@ func (boardResolver) Columns(ctx context.Context, obj models.BoardWrapper, after
 		Last:   last,
 	}
 
-	edger := func(column *board.Column, offset int) connections.Edge {
+	edger := func(column *models.BoardColumn, offset int) connections.Edge {
 		return models.BoardColumnEdge{
 			Node:   column,
 			Cursor: connections.OffsetToCursor(offset),
 		}
 	}
 
-	conMaker := func(edges []*models.BoardColumnEdge, nodes []*board.Column, info *models.PageInfo, totalCount int) (*models.BoardColumnConnection, error) {
+	conMaker := func(edges []*models.BoardColumnEdge, nodes []*models.BoardColumn, info *models.PageInfo, totalCount int) (*models.BoardColumnConnection, error) {
 		return &models.BoardColumnConnection{
 			Edges:      edges,
 			Nodes:      nodes,
@@ -119,7 +119,7 @@ var _ graph.BoardColumnResolver = &boardColumnResolver{}
 
 type boardColumnResolver struct{}
 
-func (b boardColumnResolver) Items(ctx context.Context, obj *board.Column, after *string, before *string, first *int, last *int) (*models.BoardItemConnection, error) {
+func (boardColumnResolver) Items(ctx context.Context, obj *models.BoardColumn, after *string, before *string, first *int, last *int) (*models.BoardItemConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -143,15 +143,33 @@ func (b boardColumnResolver) Items(ctx context.Context, obj *board.Column, after
 		}, nil
 	}
 
-	return connections.Connection(obj.Items, edger, conMaker, input)
+	// the items referring to another entity need the repo to resolve it
+	items := make([]board.Item, len(obj.Items))
+	for i, item := range obj.Items {
+		switch item := item.(type) {
+		case *board.BugItem:
+			items[i] = &models.BoardItemBug{Repo: obj.Repo, BugItem: item}
+		default:
+			items[i] = item
+		}
+	}
+
+	return connections.Connection(items, edger, conMaker, input)
 }
 
 var _ graph.BoardItemBugResolver = &boardItemBugResolver{}
 
 type boardItemBugResolver struct{}
 
-func (boardItemBugResolver) Author(ctx context.Context, obj *board.BugItem) (models.IdentityWrapper, error) {
-	return models.NewLoadedIdentity(obj.Author()), nil
+func (boardItemBugResolver) Bug(_ context.Context, obj *models.BoardItemBug) (models.BugWrapper, error) {
+	excerpt, err := obj.Repo.Bugs().ResolveExcerpt(obj.BugId)
+	if entity.IsErrNotFound(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return models.NewLazyBug(obj.Repo, excerpt), nil
 }
 
 var _ graph.BoardItemDraftResolver = &boardItemDraftResolver{}
@@ -160,8 +178,4 @@ type boardItemDraftResolver struct{}
 
 func (boardItemDraftResolver) Author(ctx context.Context, obj *board.Draft) (models.IdentityWrapper, error) {
 	return models.NewLoadedIdentity(obj.Author()), nil
-}
-
-func (boardItemDraftResolver) Labels(ctx context.Context, obj *board.Draft) ([]common.Label, error) {
-	return nil, nil
 }

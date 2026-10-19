@@ -20,14 +20,13 @@ type boardAddDraftOptions struct {
 	nonInteractive bool
 }
 
-func newBoardAddDraftCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBoardAddDraftCommand(env *execenv.Env) *cobra.Command {
 	options := boardAddDraftOptions{}
 
 	cmd := &cobra.Command{
 		Use:     "add-draft [BOARD_ID]",
 		Short:   "Add a draft item to a board",
-		PreRunE: execenv.LoadBackend(env),
+		PreRunE: execenv.LoadBackend(env, execenv.EnsureUser()),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBoardAddDraft(env, options, args)
 		}),
@@ -50,7 +49,7 @@ func newBoardAddDraftCommand() *cobra.Command {
 }
 
 func runBoardAddDraft(env *execenv.Env, opts boardAddDraftOptions, args []string) error {
-	b, columnId, err := resolveColumnId(env, opts.column, args)
+	b, columnId, _, err := resolveColumnId(env, opts.column, args)
 	if err != nil {
 		return err
 	}
@@ -83,9 +82,11 @@ func runBoardAddDraft(env *execenv.Env, opts boardAddDraftOptions, args []string
 	return b.Commit()
 }
 
-func resolveColumnId(env *execenv.Env, column string, args []string) (*cache.BoardCache, entity.CombinedId, error) {
+// resolveColumnId resolves the board and the column to add an item to. It returns
+// the arguments left once the board id has been consumed, if any.
+func resolveColumnId(env *execenv.Env, column string, args []string) (*cache.BoardCache, entity.CombinedId, []string, error) {
 	if column == "" {
-		return nil, entity.UnsetCombinedId, fmt.Errorf("flag --column is required")
+		return nil, entity.UnsetCombinedId, args, fmt.Errorf("flag --column is required")
 	}
 
 	b, args, err := ResolveSelected(env.Backend, args)
@@ -95,14 +96,15 @@ func resolveColumnId(env *execenv.Env, column string, args []string) (*cache.Boa
 		// we have a pre-selected board, try to parse as column number
 		index, err := strconv.Atoi(column)
 		if err == nil && index-1 >= 0 && index-1 < len(b.Snapshot().Columns) {
-			return b, b.Snapshot().Columns[index-1].CombinedId, nil
+			return b, b.Snapshot().Columns[index-1].CombinedId, args, nil
 		}
 		fallthrough // could be an Id
 	case _select.IsErrNoValidId(err):
-		return env.Backend.Boards().ResolveColumn(column)
+		b, columnId, err := env.Backend.Boards().ResolveColumn(column)
+		return b, columnId, args, err
 
 	default:
 		// actual error
-		return nil, entity.UnsetCombinedId, err
+		return nil, entity.UnsetCombinedId, args, err
 	}
 }

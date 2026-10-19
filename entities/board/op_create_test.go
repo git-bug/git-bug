@@ -8,7 +8,7 @@ import (
 
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
-	"github.com/git-bug/git-bug/entity/dag"
+	"github.com/git-bug/git-bug/entity/dag/dagtest"
 	"github.com/git-bug/git-bug/repository"
 )
 
@@ -67,7 +67,7 @@ func TestNonUnique(t *testing.T) {
 }
 
 func TestCreateSerialize(t *testing.T) {
-	dag.SerializeRoundTripTest(t, operationUnmarshaler, func(author identity.Interface, unixTime int64) (*CreateOperation, entity.Resolvers) {
+	dagtest.SerializeRoundTripTest(t, operationUnmarshaler, func(author identity.Interface, unixTime int64) (*CreateOperation, entity.Resolvers) {
 		return NewCreateOp(author, unixTime, "title", "description", DefaultColumns), nil
 	})
 }

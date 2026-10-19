@@ -1,18 +1,16 @@
 package board
 
 import (
-	"github.com/git-bug/git-bug/entities/bug"
-	"github.com/git-bug/git-bug/entities/common"
-	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
-	"github.com/git-bug/git-bug/entity/dag"
 )
 
 var _ Item = &BugItem{}
 
+// BugItem is a board item referring to a bug. It only holds the bug's id: the
+// bug itself lives on its own and is resolved when the board is displayed.
 type BugItem struct {
 	combinedId entity.CombinedId
-	Bug        dag.CompileTo[*bug.Snapshot]
+	BugId      entity.Id
 }
 
 func (e *BugItem) CombinedId() entity.CombinedId {
@@ -22,18 +20,3 @@ func (e *BugItem) CombinedId() entity.CombinedId {
 	}
 	return e.combinedId
 }
-
-func (e *BugItem) Author() identity.Interface {
-	return e.Bug.Snapshot().Author
-}
-
-func (e *BugItem) Title() string {
-	return e.Bug.Snapshot().Title
-}
-
-func (e *BugItem) Labels() []common.Label {
-	return e.Bug.Snapshot().Labels
-}
-
-// IsAuthored is a sign post method for gqlgen
-func (e *BugItem) IsAuthored() {}

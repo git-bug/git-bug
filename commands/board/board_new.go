@@ -19,16 +19,15 @@ type boardNewOptions struct {
 	nonInteractive bool
 }
 
-func newBoardNewCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBoardNewCommand(env *execenv.Env) *cobra.Command {
 	options := boardNewOptions{}
 
 	cmd := &cobra.Command{
 		Use:     "new",
 		Short:   "Create a new board",
-		PreRunE: execenv.LoadBackendEnsureUser(env),
+		PreRunE: execenv.LoadBackend(env, execenv.EnsureUser()),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
-			return runBugNew(env, options)
+			return runBoardNew(env, options)
 		}),
 	}
 
@@ -47,7 +46,7 @@ func newBoardNewCommand() *cobra.Command {
 	return cmd
 }
 
-func runBugNew(env *execenv.Env, opts boardNewOptions) error {
+func runBoardNew(env *execenv.Env, opts boardNewOptions) error {
 	var err error
 
 	if !opts.nonInteractive && opts.title == "" {

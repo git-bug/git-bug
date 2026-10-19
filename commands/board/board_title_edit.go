@@ -13,16 +13,15 @@ type boardTitleEditOptions struct {
 	nonInteractive bool
 }
 
-func newBoardTitleEditCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBoardTitleEditCommand(env *execenv.Env) *cobra.Command {
 	options := boardTitleEditOptions{}
 
 	cmd := &cobra.Command{
 		Use:     "edit [BUG_ID]",
 		Short:   "Edit a title of a board",
-		PreRunE: execenv.LoadBackendEnsureUser(env),
+		PreRunE: execenv.LoadBackend(env, execenv.EnsureUser()),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
-			return runBugTitleEdit(env, options, args)
+			return runBoardTitleEdit(env, options, args)
 		}),
 		ValidArgsFunction: BoardCompletion(env),
 	}
@@ -38,7 +37,7 @@ func newBoardTitleEditCommand() *cobra.Command {
 	return cmd
 }
 
-func runBugTitleEdit(env *execenv.Env, opts boardTitleEditOptions, args []string) error {
+func runBoardTitleEdit(env *execenv.Env, opts boardTitleEditOptions, args []string) error {
 	b, args, err := ResolveSelected(env.Backend, args)
 	if err != nil {
 		return err
@@ -59,6 +58,7 @@ func runBugTitleEdit(env *execenv.Env, opts boardTitleEditOptions, args []string
 
 	if opts.title == snap.Title {
 		env.Err.Println("No change, aborting.")
+		return nil
 	}
 
 	_, err = b.SetTitle(text.CleanupOneLine(opts.title))

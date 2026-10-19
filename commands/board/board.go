@@ -21,8 +21,7 @@ type boardOptions struct {
 	outputFormat  string
 }
 
-func NewBoardCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func NewBoardCommand(env *execenv.Env) *cobra.Command {
 	options := boardOptions{}
 
 	cmd := &cobra.Command{
@@ -58,16 +57,16 @@ func NewBoardCommand() *cobra.Command {
 		child.GroupID = groupID
 	}
 
-	addCmdWithGroup(newBoardDeselectCommand(), selectGroup)
-	addCmdWithGroup(newBoardSelectCommand(), selectGroup)
+	addCmdWithGroup(newBoardDeselectCommand(env), selectGroup)
+	addCmdWithGroup(newBoardSelectCommand(env), selectGroup)
 
-	cmd.AddCommand(newBoardNewCommand())
-	cmd.AddCommand(newBoardRmCommand())
-	cmd.AddCommand(newBoardShowCommand())
-	cmd.AddCommand(newBoardDescriptionCommand())
-	cmd.AddCommand(newBoardTitleCommand())
-	cmd.AddCommand(newBoardAddDraftCommand())
-	cmd.AddCommand(newBoardAddBugCommand())
+	cmd.AddCommand(newBoardNewCommand(env))
+	cmd.AddCommand(newBoardRmCommand(env))
+	cmd.AddCommand(newBoardShowCommand(env))
+	cmd.AddCommand(newBoardDescriptionCommand(env))
+	cmd.AddCommand(newBoardTitleCommand(env))
+	cmd.AddCommand(newBoardAddDraftCommand(env))
+	cmd.AddCommand(newBoardAddBugCommand(env))
 
 	return cmd
 }

@@ -14,6 +14,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/git-bug/git-bug/api/graphql/models"
+	"github.com/git-bug/git-bug/entities/board"
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
@@ -269,6 +270,36 @@ func (ec *executionContext) _Authored(ctx context.Context, sel ast.SelectionSet,
 			return graphql.Null
 		}
 		return ec._Bug(ctx, sel, obj)
+	case *board.SetTitleOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardSetTitleOperation(ctx, sel, obj)
+	case *board.SetDescriptionOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardSetDescriptionOperation(ctx, sel, obj)
+	case *board.Draft:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardItemDraft(ctx, sel, obj)
+	case *board.CreateOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardCreateOperation(ctx, sel, obj)
+	case *board.AddItemEntityOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardAddItemEntityOperation(ctx, sel, obj)
+	case *board.AddItemDraftOperation:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BoardAddItemDraftOperation(ctx, sel, obj)
 	case bug.CommentHistoryStep:
 		return ec._BugCommentHistoryStep(ctx, sel, &obj)
 	case *bug.CommentHistoryStep:
@@ -306,6 +337,11 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet, o
 			return graphql.Null
 		}
 		return ec._Identity(ctx, sel, obj)
+	case models.BoardWrapper:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Board(ctx, sel, obj)
 	default:
 		if typedObj, ok := obj.(graphql.Marshaler); ok {
 			return typedObj

@@ -13,16 +13,15 @@ type boardDescriptionEditOptions struct {
 	nonInteractive bool
 }
 
-func newBoardDescriptionEditCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBoardDescriptionEditCommand(env *execenv.Env) *cobra.Command {
 	options := boardDescriptionEditOptions{}
 
 	cmd := &cobra.Command{
 		Use:     "edit [BUG_ID]",
 		Short:   "Edit a description of a board",
-		PreRunE: execenv.LoadBackendEnsureUser(env),
+		PreRunE: execenv.LoadBackend(env, execenv.EnsureUser()),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
-			return runBugDescriptionEdit(env, options, args)
+			return runBoardDescriptionEdit(env, options, args)
 		}),
 		ValidArgsFunction: BoardCompletion(env),
 	}
@@ -30,7 +29,7 @@ func newBoardDescriptionEditCommand() *cobra.Command {
 	flags := cmd.Flags()
 	flags.SortFlags = false
 
-	flags.StringVarP(&options.description, "description", "t", "",
+	flags.StringVarP(&options.description, "description", "d", "",
 		"Provide a description for the board",
 	)
 	flags.BoolVar(&options.nonInteractive, "non-interactive", false, "Do not ask for user input")
@@ -38,7 +37,7 @@ func newBoardDescriptionEditCommand() *cobra.Command {
 	return cmd
 }
 
-func runBugDescriptionEdit(env *execenv.Env, opts boardDescriptionEditOptions, args []string) error {
+func runBoardDescriptionEdit(env *execenv.Env, opts boardDescriptionEditOptions, args []string) error {
 	b, args, err := ResolveSelected(env.Backend, args)
 	if err != nil {
 		return err
@@ -59,6 +58,7 @@ func runBugDescriptionEdit(env *execenv.Env, opts boardDescriptionEditOptions, a
 
 	if opts.description == snap.Description {
 		env.Err.Println("No change, aborting.")
+		return nil
 	}
 
 	_, err = b.SetDescription(text.CleanupOneLine(opts.description))

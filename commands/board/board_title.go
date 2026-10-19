@@ -6,8 +6,7 @@ import (
 	"github.com/git-bug/git-bug/commands/execenv"
 )
 
-func newBoardTitleCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBoardTitleCommand(env *execenv.Env) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "title [BOARD_ID]",
@@ -19,7 +18,7 @@ func newBoardTitleCommand() *cobra.Command {
 		ValidArgsFunction: BoardCompletion(env),
 	}
 
-	cmd.AddCommand(newBoardTitleEditCommand())
+	cmd.AddCommand(newBoardTitleEditCommand(env))
 
 	return cmd
 }

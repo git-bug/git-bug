@@ -8,8 +8,7 @@ import (
 	"github.com/git-bug/git-bug/entities/board"
 )
 
-func newBoardDeselectCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBoardDeselectCommand(env *execenv.Env) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "deselect",

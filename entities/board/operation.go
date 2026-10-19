@@ -2,9 +2,7 @@ package board
 
 import (
 	"encoding/json"
-	"fmt"
 
-	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
 )
@@ -26,11 +24,12 @@ const (
 	// TODO: change columns?
 )
 
-type Operation interface {
-	dag.Operation
-	// Apply the operation to a Snapshot to create the final state
-	Apply(snapshot *Snapshot)
-}
+// Operation define the interface to fulfill for an edit operation of a Board
+type Operation = dag.OperationWithApply[*Snapshot]
+
+// make sure that package external operations do conform to our interface
+var _ Operation = &dag.SetMetadataOperation[*Snapshot]{}
+var _ Operation = &dag.UnknownOperation[*Snapshot]{}
 
 func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.Operation, error) {
 	var t struct {
@@ -57,25 +56,12 @@ func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.
 	case AddItemEntityOp:
 		op = &AddItemEntityOperation{}
 	default:
-		panic(fmt.Sprintf("unknown operation type %v", t.OperationType))
+		return dag.NewUnknownOp[*Snapshot](raw)
 	}
 
 	err := json.Unmarshal(raw, &op)
 	if err != nil {
 		return nil, err
-	}
-
-	switch op := op.(type) {
-	case *AddItemEntityOperation:
-		switch op.EntityType {
-		case EntityTypeBug:
-			op.entity, err = entity.Resolve[bug.ReadOnly](resolvers, op.EntityId)
-		default:
-			return nil, fmt.Errorf("unknown entity type")
-		}
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return op, nil

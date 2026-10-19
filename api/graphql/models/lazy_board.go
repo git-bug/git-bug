@@ -10,9 +10,8 @@ import (
 	"github.com/git-bug/git-bug/entity/dag"
 )
 
-// BoardWrapper is an interface used by the GraphQL resolvers to handle a board.
-// Depending on the situation, a Board can already be fully loaded in memory or not.
-// This interface is used to wrap either a lazyBoard or a loadedBoard depending on the situation.
+// BoardWrapper is an interface used by the GraphQL resolvers to handle a board,
+// loaded from the cache only when necessary, see lazyBoard.
 type BoardWrapper interface {
 	Id() entity.Id
 	LastEdit() time.Time
@@ -20,14 +19,19 @@ type BoardWrapper interface {
 
 	Title() string
 	Description() string
-	Columns() ([]*board.Column, error)
+	Columns() ([]*BoardColumn, error)
 
 	Actors() ([]IdentityWrapper, error)
 	Operations() ([]dag.Operation, error)
+
+	// IsEntity is a sign post-method for gqlgen, to mark compliance to an interface.
+	IsEntity()
 }
 
 var _ BoardWrapper = &lazyBoard{}
 
+// lazyBoard is a lazy-loading wrapper that fetches data from the cache (BoardExcerpt) in priority,
+// and load the complete board and snapshot only when necessary.
 type lazyBoard struct {
 	cache   *cache.RepoCache
 	excerpt *cache.BoardExcerpt
@@ -88,12 +92,16 @@ func (lb *lazyBoard) Description() string {
 	return lb.excerpt.Description
 }
 
-func (lb *lazyBoard) Columns() ([]*board.Column, error) {
+func (lb *lazyBoard) Columns() ([]*BoardColumn, error) {
 	err := lb.load()
 	if err != nil {
 		return nil, err
 	}
-	return lb.snap.Columns, nil
+	res := make([]*BoardColumn, len(lb.snap.Columns))
+	for i, column := range lb.snap.Columns {
+		res[i] = &BoardColumn{Repo: lb.cache, Column: column}
+	}
+	return res, nil
 }
 
 func (lb *lazyBoard) Actors() ([]IdentityWrapper, error) {
@@ -116,44 +124,19 @@ func (lb *lazyBoard) Operations() ([]dag.Operation, error) {
 	return lb.snap.Operations, nil
 }
 
-var _ BoardWrapper = &loadedBoard{}
+// IsEntity is a sign post-method for gqlgen, to mark compliance to an interface.
+func (lb *lazyBoard) IsEntity() {}
 
-type loadedBoard struct {
-	*board.Snapshot
+// BoardColumn is a wrapper around a board Column that includes the Repo, to
+// keep the repo context in sub-resolvers.
+type BoardColumn struct {
+	Repo *cache.RepoCache
+	*board.Column
 }
 
-func NewLoadedBoard(snap *board.Snapshot) *loadedBoard {
-	return &loadedBoard{Snapshot: snap}
-}
-
-func (l *loadedBoard) LastEdit() time.Time {
-	return l.Snapshot.EditTime()
-}
-
-func (l *loadedBoard) CreatedAt() time.Time {
-	return l.Snapshot.CreateTime
-}
-
-func (l *loadedBoard) Title() string {
-	return l.Snapshot.Title
-}
-
-func (l *loadedBoard) Description() string {
-	return l.Snapshot.Description
-}
-
-func (l *loadedBoard) Columns() ([]*board.Column, error) {
-	return l.Snapshot.Columns, nil
-}
-
-func (l *loadedBoard) Actors() ([]IdentityWrapper, error) {
-	res := make([]IdentityWrapper, len(l.Snapshot.Actors))
-	for i, actor := range l.Snapshot.Actors {
-		res[i] = NewLoadedIdentity(actor)
-	}
-	return res, nil
-}
-
-func (l *loadedBoard) Operations() ([]dag.Operation, error) {
-	return l.Snapshot.Operations, nil
+// BoardItemBug is a wrapper around a board BugItem that includes the Repo, to
+// resolve the bug it refers to.
+type BoardItemBug struct {
+	Repo *cache.RepoCache
+	*board.BugItem
 }

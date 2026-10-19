@@ -25,5 +25,7 @@ models:
     model: image/color.RGBA
   Identity:
     model: github.com/git-bug/git-bug/api/graphql/models.IdentityWrapper
+  Board:
+    model: github.com/git-bug/git-bug/api/graphql/models.BoardWrapper
   Bug:
     model: github.com/git-bug/git-bug/api/graphql/models.BugWrapper

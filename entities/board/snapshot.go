@@ -2,6 +2,7 @@ package board
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/git-bug/git-bug/entities/identity"
@@ -22,18 +23,6 @@ type Column struct {
 type Item interface {
 	// CombinedId returns the global identifier of the item.
 	CombinedId() entity.CombinedId
-
-	// Author returns the author of the item.
-	Author() identity.Interface
-
-	// Title returns the title of the item.
-	Title() string
-
-	// TODO: add status, show bug's status, draft has no status
-	// Status() common.Status
-
-	// TODO: add labels, show bug's label, draft has no label
-	// Labels() []common.Label
 }
 
 var _ dag.Snapshot = &Snapshot{}
@@ -67,6 +56,24 @@ func (snap *Snapshot) AllOperations() []dag.Operation {
 
 func (snap *Snapshot) AppendOperation(op dag.Operation) {
 	snap.Operations = append(snap.Operations, op)
+}
+
+// Clone returns a copy of the snapshot that operations can be applied to without
+// the original noticing, and conversely: the slices and the columns that applying
+// an operation modifies are copied, the rest is shared.
+// Operations, items and identities are shared, as they don't change once created.
+func (snap *Snapshot) Clone() *Snapshot {
+	clone := *snap
+	clone.Actors = slices.Clone(snap.Actors)
+	clone.Operations = slices.Clone(snap.Operations)
+	clone.Columns = make([]*Column, len(snap.Columns))
+	for i, column := range snap.Columns {
+		// items are appended in place, see AddItemDraftOperation.Apply
+		c := *column
+		c.Items = slices.Clone(column.Items)
+		clone.Columns[i] = &c
+	}
+	return &clone
 }
 
 // EditTime returns the last time the board was modified

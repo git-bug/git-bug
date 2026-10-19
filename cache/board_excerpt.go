@@ -1,17 +1,11 @@
 package cache
 
 import (
-	"encoding/gob"
 	"time"
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/util/lamport"
 )
-
-// Package initialisation used to register the type for (de)serialization
-func init() {
-	gob.Register(BoardExcerpt{})
-}
 
 var _ Excerpt = &BoardExcerpt{}
 
@@ -33,8 +27,8 @@ type BoardExcerpt struct {
 	CreateMetadata map[string]string
 }
 
-func NewBoardExcerpt(b *BoardCache) *BoardExcerpt {
-	snap := b.Snapshot()
+func newBoardExcerpt(b *sharedBoard) *BoardExcerpt {
+	snap := b.Compile()
 
 	actorsIds := make([]entity.Id, 0, len(snap.Actors))
 	for _, participant := range snap.Actors {
@@ -45,13 +39,13 @@ func NewBoardExcerpt(b *BoardCache) *BoardExcerpt {
 		id:                b.Id(),
 		CreateLamportTime: b.CreateLamportTime(),
 		EditLamportTime:   b.EditLamportTime(),
-		CreateUnixTime:    b.FirstOp().Time().Unix(),
+		CreateUnixTime:    snap.Operations[0].Time().Unix(),
 		EditUnixTime:      snap.EditTime().Unix(),
 		Title:             snap.Title,
 		Description:       snap.Description,
 		ItemCount:         snap.ItemCount(),
 		Actors:            actorsIds,
-		CreateMetadata:    b.FirstOp().AllMetadata(),
+		CreateMetadata:    snap.Operations[0].AllMetadata(),
 	}
 }
 

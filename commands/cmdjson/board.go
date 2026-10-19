@@ -3,6 +3,7 @@ package cmdjson
 import (
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/board"
+	"github.com/git-bug/git-bug/entity"
 )
 
 type BoardSnapshot struct {
@@ -17,7 +18,7 @@ type BoardSnapshot struct {
 	Columns     []BoardColumn `json:"columns"`
 }
 
-func NewBoardSnapshot(snapshot *board.Snapshot) BoardSnapshot {
+func NewBoardSnapshot(backend *cache.RepoCache, snapshot *board.Snapshot) (BoardSnapshot, error) {
 	jsonBoard := BoardSnapshot{
 		Id:          snapshot.Id().String(),
 		HumanId:     snapshot.Id().Human(),
@@ -34,10 +35,14 @@ func NewBoardSnapshot(snapshot *board.Snapshot) BoardSnapshot {
 
 	jsonBoard.Columns = make([]BoardColumn, len(snapshot.Columns))
 	for i, column := range snapshot.Columns {
-		jsonBoard.Columns[i] = NewBoardColumn(column)
+		jsonColumn, err := NewBoardColumn(backend, column)
+		if err != nil {
+			return BoardSnapshot{}, err
+		}
+		jsonBoard.Columns[i] = jsonColumn
 	}
 
-	return jsonBoard
+	return jsonBoard, nil
 }
 
 type BoardColumn struct {
@@ -47,7 +52,7 @@ type BoardColumn struct {
 	Items   []any  `json:"items"`
 }
 
-func NewBoardColumn(column *board.Column) BoardColumn {
+func NewBoardColumn(backend *cache.RepoCache, column *board.Column) (BoardColumn, error) {
 	jsonColumn := BoardColumn{
 		Id:      column.CombinedId.String(),
 		HumanId: column.CombinedId.Human(),
@@ -59,12 +64,16 @@ func NewBoardColumn(column *board.Column) BoardColumn {
 		case *board.Draft:
 			jsonColumn.Items[j] = NewBoardDraftItem(item)
 		case *board.BugItem:
-			jsonColumn.Items[j] = NewBoardBugItem(item)
+			jsonItem, err := NewBoardBugItem(backend, item)
+			if err != nil {
+				return BoardColumn{}, err
+			}
+			jsonColumn.Items[j] = jsonItem
 		default:
 			panic("unknown item type")
 		}
 	}
-	return jsonColumn
+	return jsonColumn, nil
 }
 
 type BoardDraftItem struct {
@@ -85,22 +94,42 @@ func NewBoardDraftItem(item *board.Draft) BoardDraftItem {
 	}
 }
 
+// BoardBugItem is a board item referring to a bug. The bug's fields are missing
+// when the bug is not available locally.
 type BoardBugItem struct {
-	Type    string   `json:"type"`
-	Id      string   `json:"id"`
-	HumanId string   `json:"human_id"`
-	Author  Identity `json:"author"`
-	BugId   string   `json:"bug_id"`
+	Type    string    `json:"type"`
+	Id      string    `json:"id"`
+	HumanId string    `json:"human_id"`
+	BugId   string    `json:"bug_id"`
+	Author  *Identity `json:"author,omitempty"`
+	Title   string    `json:"title,omitempty"`
 }
 
-func NewBoardBugItem(item *board.BugItem) BoardBugItem {
-	return BoardBugItem{
+func NewBoardBugItem(backend *cache.RepoCache, item *board.BugItem) (BoardBugItem, error) {
+	jsonItem := BoardBugItem{
 		Type:    "bug",
 		Id:      item.CombinedId().String(),
 		HumanId: item.CombinedId().Human(),
-		Author:  NewIdentity(item.Author()),
-		BugId:   item.Bug.Snapshot().Id().String(),
+		BugId:   item.BugId.String(),
 	}
+
+	excerpt, err := backend.Bugs().ResolveExcerpt(item.BugId)
+	if entity.IsErrNotFound(err) {
+		return jsonItem, nil
+	}
+	if err != nil {
+		return BoardBugItem{}, err
+	}
+	jsonItem.Title = excerpt.Title
+
+	author, err := backend.Identities().ResolveExcerpt(excerpt.AuthorId)
+	if err != nil {
+		return BoardBugItem{}, err
+	}
+	jsonAuthor := NewIdentityFromExcerpt(author)
+	jsonItem.Author = &jsonAuthor
+
+	return jsonItem, nil
 }
 
 type BoardExcerpt struct {

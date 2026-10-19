@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"slices"
 	"sort"
 	"time"
 
@@ -24,7 +25,7 @@ var _ graph.RepositoryResolver = &repoResolver{}
 
 type repoResolver struct{}
 
-func (r repoResolver) AllBoards(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, query *string) (*models.BoardConnection, error) {
+func (repoResolver) AllBoards(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.BoardConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -32,8 +33,10 @@ func (r repoResolver) AllBoards(ctx context.Context, obj *models.Repository, aft
 		Last:   last,
 	}
 
-	// Simply pass a []string with the ids to the pagination algorithm
+	// Simply pass a []string with the ids to the pagination algorithm, sorted for
+	// the pages to be stable
 	source := obj.Repo.Boards().AllIds()
+	slices.Sort(source)
 
 	// The edger create a custom edge holding just the id
 	edger := func(id entity.Id, offset int) connections.Edge {
@@ -48,19 +51,19 @@ func (r repoResolver) AllBoards(ctx context.Context, obj *models.Repository, aft
 		edges := make([]*models.BoardEdge, len(lazyBoardEdges))
 		nodes := make([]models.BoardWrapper, len(lazyBoardEdges))
 
-		for k, lazyBoardEdge := range lazyBoardEdges {
+		for i, lazyBoardEdge := range lazyBoardEdges {
 			excerpt, err := obj.Repo.Boards().ResolveExcerpt(lazyBoardEdge.Id)
 			if err != nil {
 				return nil, err
 			}
 
-			i := models.NewLazyBoard(obj.Repo, excerpt)
+			b := models.NewLazyBoard(obj.Repo, excerpt)
 
-			edges[k] = &models.BoardEdge{
+			edges[i] = &models.BoardEdge{
 				Cursor: lazyBoardEdge.Cursor,
-				Node:   i,
+				Node:   b,
 			}
-			nodes[k] = i
+			nodes[i] = b
 		}
 
 		return &models.BoardConnection{
@@ -74,8 +77,11 @@ func (r repoResolver) AllBoards(ctx context.Context, obj *models.Repository, aft
 	return connections.Connection(source, edger, conMaker, input)
 }
 
-func (r repoResolver) Board(ctx context.Context, obj *models.Repository, prefix string) (models.BoardWrapper, error) {
+func (repoResolver) Board(_ context.Context, obj *models.Repository, prefix string) (models.BoardWrapper, error) {
 	excerpt, err := obj.Repo.Boards().ResolveExcerptPrefix(prefix)
+	if entity.IsErrNotFound(err) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}

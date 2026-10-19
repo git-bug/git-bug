@@ -14,8 +14,7 @@ type boardShowOptions struct {
 	format string
 }
 
-func newBoardShowCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBoardShowCommand(env *execenv.Env) *cobra.Command {
 	options := boardShowOptions{}
 
 	cmd := &cobra.Command{
@@ -131,6 +130,9 @@ func showDefaultFormatter(env *execenv.Env, snapshot *board.Snapshot) error {
 }
 
 func showJsonFormatter(env *execenv.Env, snap *board.Snapshot) error {
-	jsonBoard := cmdjson.NewBoardSnapshot(snap)
+	jsonBoard, err := cmdjson.NewBoardSnapshot(env.Backend, snap)
+	if err != nil {
+		return err
+	}
 	return env.Out.PrintJSON(jsonBoard)
 }

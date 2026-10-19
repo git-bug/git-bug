@@ -8,14 +8,13 @@ import (
 	"github.com/git-bug/git-bug/commands/execenv"
 )
 
-func newBoardRmCommand() *cobra.Command {
-	env := execenv.NewEnv()
+func newBoardRmCommand(env *execenv.Env) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "rm BOARD_ID",
 		Short:   "Remove an existing board",
 		Long:    "Remove an existing board in the local repository.",
-		PreRunE: execenv.LoadBackendEnsureUser(env),
+		PreRunE: execenv.LoadBackend(env, execenv.EnsureUser()),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
 			return runBoardRm(env, args)
 		}),

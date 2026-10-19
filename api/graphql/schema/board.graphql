@@ -1,6 +1,4 @@
-type Board
-@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.BoardWrapper") {
-
+type Board implements Entity {
     """The identifier for this board"""
     id: ID!
     """The human version (truncated) identifier for this board"""

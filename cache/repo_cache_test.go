@@ -10,6 +10,7 @@ import (
 	"github.com/go-git/go-billy/v5/util"
 	"github.com/stretchr/testify/require"
 
+	"github.com/git-bug/git-bug/entities/board"
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
@@ -800,7 +801,10 @@ func TestCacheRebuildsUnusableClocks(t *testing.T) {
 		},
 	}
 
-	clocks := []string{bug.Namespace + "-create", bug.Namespace + "-edit"}
+	clocks := []string{
+		bug.Namespace + "-create", bug.Namespace + "-edit",
+		board.Namespace + "-create", board.Namespace + "-edit",
+	}
 
 	clockTimes := func(t *testing.T, repo repository.Repo) map[string]lamport.Time {
 		t.Helper()
