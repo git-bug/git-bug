@@ -5,13 +5,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/git-bug/git-bug/commands/execenv"
-	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/commands/execenv/envtest"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 func TestPushSuccess(t *testing.T) {
-	repoA, _, _ := repository.SetupGoGitReposAndRemote(t)
-	envA := execenv.NewTestEnvWithRepo(t, repoA)
+	repoA, _, _ := repotest.SetupGoGitReposAndRemote(t)
+	envA := envtest.NewEnvWithRepo(t, repoA)
 
 	// Create and set user identity in repoA
 	user, err := envA.Backend.Identities().New("Test User", "test@example.com")
@@ -45,7 +45,7 @@ func TestPushSuccess(t *testing.T) {
 }
 
 func TestPushVerbose(t *testing.T) {
-	env := execenv.NewTestEnv(t)
+	env := envtest.NewEnv(t)
 
 	// Test that both verbose and non-verbose handle errors similarly
 	// (they return early on error)
@@ -76,7 +76,7 @@ func TestPushVerbose(t *testing.T) {
 }
 
 func TestPushDefaultRemote(t *testing.T) {
-	env := execenv.NewTestEnv(t)
+	env := envtest.NewEnv(t)
 
 	// Test default to origin when no remote specified
 	err := runPush(env, []string{}, false)
@@ -84,7 +84,7 @@ func TestPushDefaultRemote(t *testing.T) {
 }
 
 func TestPushTooManyRemotes(t *testing.T) {
-	env := execenv.NewTestEnv(t)
+	env := envtest.NewEnv(t)
 
 	// Test with too many remotes
 	err := runPush(env, []string{"remote1", "remote2"}, false)

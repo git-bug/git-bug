@@ -5,14 +5,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/git-bug/git-bug/commands/execenv"
-	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/commands/execenv/envtest"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 func TestPullSuccess(t *testing.T) {
-	repoA, repoB, _ := repository.SetupGoGitReposAndRemote(t)
-	envA := execenv.NewTestEnvWithRepo(t, repoA)
-	envB := execenv.NewTestEnvWithRepo(t, repoB)
+	repoA, repoB, _ := repotest.SetupGoGitReposAndRemote(t)
+	envA := envtest.NewEnvWithRepo(t, repoA)
+	envB := envtest.NewEnvWithRepo(t, repoB)
 
 	// Create user identity in envA and push to origin
 	userA, err := envA.Backend.Identities().New("User A", "a@example.com")
@@ -72,9 +72,9 @@ func TestPullSuccess(t *testing.T) {
 }
 
 func TestPullFailedMerge(t *testing.T) {
-	repoA, repoB, _ := repository.SetupGoGitReposAndRemote(t)
-	envA := execenv.NewTestEnvWithRepo(t, repoA)
-	envB := execenv.NewTestEnvWithRepo(t, repoB)
+	repoA, repoB, _ := repotest.SetupGoGitReposAndRemote(t)
+	envA := envtest.NewEnvWithRepo(t, repoA)
+	envB := envtest.NewEnvWithRepo(t, repoB)
 
 	userA, err := envA.Backend.Identities().New("User A", "a@example.com")
 	require.NoError(t, err)
@@ -128,7 +128,7 @@ func TestPullFailedMerge(t *testing.T) {
 }
 
 func TestPullVerbose(t *testing.T) {
-	env := execenv.NewTestEnv(t)
+	env := envtest.NewEnv(t)
 
 	// Test without verbose with no remotes (should fail with some kind of error)
 	err := runPull(env, []string{"nonexistent"}, false)
@@ -160,7 +160,7 @@ func TestPullVerbose(t *testing.T) {
 }
 
 func TestPullOutputModes(t *testing.T) {
-	env := execenv.NewTestEnv(t)
+	env := envtest.NewEnv(t)
 
 	// Test default to origin when no remote specified (non-verbose)
 	err := runPull(env, []string{}, false)
@@ -191,7 +191,7 @@ func TestPullOutputModes(t *testing.T) {
 }
 
 func TestPullTooManyRemotes(t *testing.T) {
-	env := execenv.NewTestEnv(t)
+	env := envtest.NewEnv(t)
 
 	// Test with too many remotes
 	err := runPull(env, []string{"remote1", "remote2"}, false)
