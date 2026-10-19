@@ -4124,6 +4124,7 @@ type Subscription {
 }
 
 enum EntityType {
+  BOARD
   BUG
   IDENTITY
 }

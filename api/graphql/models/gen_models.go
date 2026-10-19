@@ -491,18 +491,20 @@ func (e BoardItemEntityType) MarshalJSON() ([]byte, error) {
 type EntityType string
 
 const (
+	EntityTypeBoard    EntityType = "BOARD"
 	EntityTypeBug      EntityType = "BUG"
 	EntityTypeIdentity EntityType = "IDENTITY"
 )
 
 var AllEntityType = []EntityType{
+	EntityTypeBoard,
 	EntityTypeBug,
 	EntityTypeIdentity,
 }
 
 func (e EntityType) IsValid() bool {
 	switch e {
-	case EntityTypeBug, EntityTypeIdentity:
+	case EntityTypeBoard, EntityTypeBug, EntityTypeIdentity:
 		return true
 	}
 	return false

@@ -8,6 +8,7 @@ import (
 	"github.com/git-bug/git-bug/api/graphql/graph"
 	"github.com/git-bug/git-bug/api/graphql/models"
 	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entities/board"
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
@@ -21,6 +22,7 @@ const entitiesChangedInterval = time.Second
 
 // cacheTypenames are the cache typenames of the entity types.
 var cacheTypenames = map[models.EntityType]string{
+	models.EntityTypeBoard:    board.Typename,
 	models.EntityTypeBug:      bug.Typename,
 	models.EntityTypeIdentity: identity.Typename,
 }

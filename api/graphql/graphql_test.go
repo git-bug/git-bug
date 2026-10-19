@@ -683,6 +683,28 @@ func TestSubscriptions(t *testing.T) {
 		}
 	})
 
+	t.Run("boards", func(t *testing.T) {
+		board, _, err := rc.Boards().NewDefaultColumns("board", "description")
+		require.NoError(t, err)
+
+		sub := c.Websocket(`subscription { entitiesChanged(type: BOARD) { event id } }`)
+		t.Cleanup(func() { _ = sub.Close() })
+
+		stop := keepDoing(t, func() {
+			_, err := b.SetTitle("bug title")
+			assert.NoError(t, err)
+			assert.NoError(t, b.Commit())
+			_, err = board.SetTitle("board title")
+			assert.NoError(t, err)
+			assert.NoError(t, board.Commit())
+		})
+		var resp struct{ EntitiesChanged []entityChange }
+		err = sub.Next(&resp)
+		stop()
+		require.NoError(t, err)
+		require.Equal(t, []entityChange{{Event: "UPDATED", Id: board.Id().String()}}, resp.EntitiesChanged)
+	})
+
 	t.Run("a client leaving doesn't hold the changes", func(t *testing.T) {
 		sub := c.Websocket(fmt.Sprintf(`subscription { entitiesChanged(type: BUG, ids: ["%s"]) { id } }`, b.Id()))
 
