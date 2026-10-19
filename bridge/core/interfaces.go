@@ -35,6 +35,12 @@ type BridgeImpl interface {
 	LoginMetaKey() string
 }
 
+// CredentialMetadataProvider lets a bridge bind added credentials and identity
+// logins to a particular server without changing other bridges' auth behavior.
+type CredentialMetadataProvider interface {
+	CredentialMetadata(login, baseURL string) (identityMetadata, credentialMetadata map[string]string, err error)
+}
+
 type Importer interface {
 	Init(ctx context.Context, repo *cache.RepoCache, conf Configuration) error
 	ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan ImportResult, error)

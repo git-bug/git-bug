@@ -35,6 +35,7 @@ func TestQueriesMatchCheckedInSchema(t *testing.T) {
 	for name, query := range map[string]string{
 		"tracker": getTrackerByNameQuery,
 		"tickets": getTicketsQuery,
+		"ticket":  getTicketQuery,
 		"events":  getEventsQuery,
 		"labels":  getLabelsQuery,
 	} {

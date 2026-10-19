@@ -1,9 +1,11 @@
 package todosrht
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/git-bug/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/bridge/core/auth"
 )
 
 const (
@@ -39,6 +41,18 @@ func (b *TodoSourceHut) Target() string {
 
 func (b *TodoSourceHut) LoginMetaKey() string {
 	return metaKeyTodoSourceHutLogin
+}
+
+func (*TodoSourceHut) CredentialMetadata(login, baseURL string) (map[string]string, map[string]string, error) {
+	if baseURL == "" {
+		return nil, nil, fmt.Errorf("--base-url is required for todosrht credentials")
+	}
+	baseURL, err := validateBaseURL(baseURL)
+	if err != nil {
+		return nil, nil, err
+	}
+	return map[string]string{identityLoginKey(baseURL): login},
+		map[string]string{auth.MetaKeyLogin: login, auth.MetaKeyBaseURL: baseURL}, nil
 }
 
 // NewImporter returns the todosrht importer

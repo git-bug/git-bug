@@ -49,6 +49,8 @@ func (je *todosrhtExporter) Init(ctx context.Context, repo *cache.RepoCache, con
 	je.conf = conf
 	je.identityClient = make(map[entity.Id]TodosrhtClient)
 	je.cachedOperationIDs = make(map[entity.Id]string)
+	je.defaultClient = nil
+	je.tracker = nil
 
 	// Preload all clients based on configured tokens
 	err := je.cacheAllClient(ctx, repo)
@@ -77,6 +79,11 @@ func (je *todosrhtExporter) Init(ctx context.Context, repo *cache.RepoCache, con
 		return fmt.Errorf("tracker '%s' not found for login %s", trackerName, defaultLogin)
 	}
 	je.tracker = tracker
+	canonicalName, err := tracker.CanonicalName()
+	if err != nil {
+		return fmt.Errorf("failed to identify tracker: %w", err)
+	}
+	je.conf[confKeyTrackerName] = canonicalName
 
 	return nil
 }
@@ -97,7 +104,7 @@ func (je *todosrhtExporter) cacheAllClient(ctx context.Context, repo *cache.Repo
 			continue
 		}
 
-		if base, ok := cred.GetMetadata(auth.MetaKeyBaseURL); ok && base != je.conf[confKeyBaseUrl] {
+		if base, ok := cred.GetMetadata(auth.MetaKeyBaseURL); !ok || base != je.conf[confKeyBaseUrl] {
 			continue
 		}
 
@@ -277,6 +284,7 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 		if err == nil {
 			_, err = b.SetMetadata(createOp.Id(), map[string]string{
 				metaKeyTodoSourceHutBaseUrl: je.conf[confKeyBaseUrl],
+				metaKeyRemoteState:          encodeRemoteState(remoteState{Subject: createOp.Title, Body: createOp.Message}),
 			})
 		}
 		if err != nil {
@@ -317,7 +325,7 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 			out <- core.NewExportError(
 				fmt.Errorf("missing operation author credentials for user %.8s",
 					opAuthor.Id().String()), b.Id())
-			continue
+			return ErrMissingCredentials
 		}
 
 		var todosrhtOpID string
@@ -356,6 +364,9 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 				todosrhtOpID = fmt.Sprintf("%d", ticket.Id)
 				exportTime = ticket.Updated.Unix()
 				out <- core.NewExportCommentEdition(b.Id())
+				if err := recordExportedField(b, "body", opr.Message); err != nil {
+					return err
+				}
 			} else {
 				// For now, ignore comment edits that are not on the initial ticket body.
 				// This is a limitation due to SourceHut API not directly supporting
@@ -392,6 +403,9 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 			todosrhtOpID = fmt.Sprintf("%d", ticket.Id)
 			exportTime = ticket.Updated.Unix()
 			out <- core.NewExportTitleEdition(b.Id())
+			if err := recordExportedField(b, "subject", opr.Title); err != nil {
+				return err
+			}
 
 		case *bug.LabelChangeOperation:
 			// Fetch all labels for the tracker to get their IDs
@@ -402,16 +416,16 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 			}
 
 			// Fetch current remote ticket to reconcile labels idempotently
-			currentTicket, err := client.GetTicket(ctx, bugTodoSourceHutID)
+			currentTicket, err := client.GetTicket(ctx, je.conf[confKeyTrackerName], bugTodoSourceHutID)
 			if err != nil {
 				return errors.Wrap(err, "fetching ticket labels")
 			}
 			if currentTicket == nil {
 				return fmt.Errorf("ticket %d not found while fetching labels", bugTodoSourceHutID)
 			}
-			currentLabelNames := make(map[string]int)
+			currentLabelIDs := make(map[int]bool)
 			for _, l := range currentTicket.Labels {
-				currentLabelNames[l.Name] = l.Id
+				currentLabelIDs[l.Id] = true
 			}
 
 			// Add labels
@@ -419,11 +433,6 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 				labelName := strings.TrimSpace(string(addedLabel))
 				if labelName == "" {
 					out <- core.NewExportWarning(fmt.Errorf("skipping empty label name"), b.Id())
-					continue
-				}
-
-				if _, alreadyOnTicket := currentLabelNames[labelName]; alreadyOnTicket {
-					// Label already exists on remote ticket; skip to avoid duplicate events
 					continue
 				}
 
@@ -440,12 +449,15 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 					allLabels = append(allLabels, *newLabel)
 					out <- core.NewExportWarning(fmt.Errorf("created new label '%s' on SourceHut", labelName), b.Id())
 				}
+				if currentLabelIDs[labelID] {
+					continue
+				}
 				labelEvent, err := addTodoSRHTLabel(ctx, client, je.tracker.Id, bugTodoSourceHutID, labelID)
 				if err != nil {
 					out <- core.NewExportError(fmt.Errorf("failed to add label '%s' to ticket: %w", labelName, err), b.Id())
 					return err
 				}
-				currentLabelNames[labelName] = labelID
+				currentLabelIDs[labelID] = true
 				// Use the last label event ID and time
 				todosrhtOpID = fmt.Sprintf("%d", labelEvent.Id)
 				exportTime = labelEvent.Created.Unix()
@@ -464,7 +476,7 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 					out <- core.NewExportWarning(fmt.Errorf("label '%s' not found on SourceHut, cannot remove", labelName), b.Id())
 					continue
 				}
-				if _, onTicket := currentLabelNames[labelName]; !onTicket {
+				if !currentLabelIDs[labelID] {
 					// Label is already removed from ticket; skip
 					continue
 				}
@@ -473,7 +485,7 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 					out <- core.NewExportError(fmt.Errorf("failed to remove label '%s' from ticket: %w", labelName, err), b.Id())
 					return err
 				}
-				delete(currentLabelNames, labelName)
+				delete(currentLabelIDs, labelID)
 				// Use the last label event ID and time
 				todosrhtOpID = fmt.Sprintf("%d", labelEvent.Id)
 				exportTime = labelEvent.Created.Unix()

@@ -68,7 +68,7 @@ func TestTrackerQueriesUseSchemaPaths(t *testing.T) {
 					require.NotContains(t, request.Query, "$owner:")
 				}
 				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprint(w, `{"data":{"me":{"tracker":{"id":7,"name":"tracker","tickets":{"results":[]},"labels":{"results":[]},"ticket":{"events":{"results":[]}}}}}}`)
+				fmt.Fprint(w, `{"data":{"me":{"tracker":{"id":7,"name":"tracker","tickets":{"results":[]},"labels":{"results":[]},"ticket":{"id":8,"labels":[{"id":99,"name":"bug"}],"events":{"results":[]}}}}}}`)
 			}))
 			defer server.Close()
 			client := NewTodoSClient(context.Background(), server.URL, "secret")
@@ -81,7 +81,11 @@ func TestTrackerQueriesUseSchemaPaths(t *testing.T) {
 			require.NoError(t, err)
 			_, err = client.GetLabels(context.Background(), ref, nil)
 			require.NoError(t, err)
-			require.Len(t, queries, 4)
+			ticket, err := client.GetTicket(context.Background(), ref, 1)
+			require.NoError(t, err)
+			require.Equal(t, 8, ticket.Id)
+			require.Equal(t, []Label{{Id: 99, Name: "bug"}}, ticket.Labels)
+			require.Len(t, queries, 5)
 			for _, query := range queries {
 				require.NotContains(t, query, "tracker(id:")
 				require.NotContains(t, query, "{\n\t\ttracker(name:")

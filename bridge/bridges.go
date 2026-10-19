@@ -32,6 +32,11 @@ func LoginMetaKey(target string) (string, error) {
 	return core.LoginMetaKey(target)
 }
 
+// CredentialMetadata returns the identity and token metadata for add-token.
+func CredentialMetadata(target, login, baseURL string) (map[string]string, map[string]string, error) {
+	return core.CredentialMetadata(target, login, baseURL)
+}
+
 // Instantiate a new Bridge for a repo, from the given target and name
 func NewBridge(repo *cache.RepoCache, target string, name string) (*core.Bridge, error) {
 	return core.NewBridge(repo, target, name)

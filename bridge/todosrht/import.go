@@ -28,35 +28,30 @@ type todosrhtImporter struct {
 }
 
 // Init .
-func (ji *todosrhtImporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
+func (ji *todosrhtImporter) Init(ctx context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	ji.conf = conf
+	ji.client = nil
 
 	creds, err := auth.List(repo,
 		auth.WithTarget(target),
 		auth.WithKind(auth.KindToken),
 		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),
+		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseUrl]),
 	)
 	if err != nil {
 		return err
 	}
 
-	var matchingCreds []auth.Credential
-	for _, cred := range creds {
-		if base, ok := cred.GetMetadata(auth.MetaKeyBaseURL); !ok || base == conf[confKeyBaseUrl] {
-			matchingCreds = append(matchingCreds, cred)
-		}
-	}
-
-	if len(matchingCreds) == 0 {
+	if len(creds) == 0 {
 		return ErrMissingCredentials
 	}
 
-	tokenCred, ok := matchingCreds[0].(*auth.Token)
+	tokenCred, ok := creds[0].(*auth.Token)
 	if !ok {
-		return fmt.Errorf("expected token credential, got %T", matchingCreds[0])
+		return fmt.Errorf("expected token credential, got %T", creds[0])
 	}
 
-	ji.client = NewTodoSClient(context.TODO(), conf[confKeyBaseUrl], tokenCred.Value)
+	ji.client = NewTodoSClient(ctx, conf[confKeyBaseUrl], tokenCred.Value)
 
 	return nil
 }
@@ -81,6 +76,12 @@ func (ji *todosrhtImporter) ImportAll(ctx context.Context, repo *cache.RepoCache
 			ji.out <- core.NewImportError(fmt.Errorf("tracker '%s' not found", trackerName), "")
 			return
 		}
+		trackerName, err = tracker.CanonicalName()
+		if err != nil {
+			ji.out <- core.NewImportError(fmt.Errorf("failed to identify tracker: %w", err), "")
+			return
+		}
+		ji.conf[confKeyTrackerName] = trackerName
 
 		var cursor *string
 		for {
@@ -129,7 +130,7 @@ func (ji *todosrhtImporter) ImportAll(ctx context.Context, repo *cache.RepoCache
 					return allEvents[i].Id < allEvents[j].Id
 				})
 
-				commentRoots := make(map[string]string)
+				commentRoots := commentRootsForEvents(allEvents)
 				if !eventsComplete {
 					// Wait for a complete history to preserve ordering on retry.
 					allEvents = nil
@@ -137,8 +138,15 @@ func (ji *todosrhtImporter) ImportAll(ctx context.Context, repo *cache.RepoCache
 				for _, event := range allEvents {
 					if err := ji.importEvent(repo, b, event, commentRoots); err != nil {
 						ji.out <- core.NewImportError(fmt.Errorf("failed to ensure event %d for ticket %d: %w", event.Id, ticket.Id, err), b.Id())
-						continue
+						eventsComplete = false
+						break
 					}
+				}
+				if !eventsComplete {
+					if err := b.CommitAsNeeded(); err != nil {
+						ji.out <- core.NewImportError(fmt.Errorf("failed to commit partial import for ticket %d: %w", ticket.Id, err), b.Id())
+					}
+					continue
 				}
 
 				if b.NeedCommit() {
@@ -288,6 +296,9 @@ func (ji *todosrhtImporter) ensureIssue(repo *cache.RepoCache, ticket Ticket) (*
 				metaKeyTodoSourceHutTracker: ji.conf[confKeyTrackerName],
 				metaKeyTodoSourceHutRef:     ticket.Ref, // Store ticket reference
 				metaKeyTodoSourceHutBaseUrl: ji.conf[confKeyBaseUrl],
+				metaKeyRemoteState: encodeRemoteState(remoteState{
+					Subject: text.CleanupOneLine(ticket.Subject), Body: text.Cleanup(ticket.Body),
+				}),
 			})
 		if err != nil {
 			return nil, false, err
@@ -295,8 +306,20 @@ func (ji *todosrhtImporter) ensureIssue(repo *cache.RepoCache, ticket Ticket) (*
 		return b, true, nil
 	}
 
-	// Reconcile remote edits on title and body
+	// Reconcile only changes since the last observed remote state. A local
+	// difference alone is not evidence that the remote ticket was edited.
 	snapshot := b.Snapshot()
+	previous, err := lastRemoteState(snapshot)
+	if err != nil {
+		return nil, false, err
+	}
+	current := remoteState{Subject: text.CleanupOneLine(ticket.Subject), Body: text.Cleanup(ticket.Body)}
+	if current.Subject != previous.Subject && snapshot.Title != previous.Subject && snapshot.Title != current.Subject {
+		return nil, false, fmt.Errorf("ticket %d has conflicting local and remote title edits; push or reconcile them before pulling", ticket.Id)
+	}
+	if len(snapshot.Comments) > 0 && current.Body != previous.Body && snapshot.Comments[0].Message != previous.Body && snapshot.Comments[0].Message != current.Body {
+		return nil, false, fmt.Errorf("ticket %d has conflicting local and remote body edits; push or reconcile them before pulling", ticket.Id)
+	}
 	editTime := ticket.Updated.Unix()
 	if editTime <= 0 {
 		editTime = ticket.Created.Unix()
@@ -305,26 +328,57 @@ func (ji *todosrhtImporter) ensureIssue(repo *cache.RepoCache, ticket Ticket) (*
 		editTime = time.Now().Unix()
 	}
 
-	cleanSubject := text.CleanupOneLine(ticket.Subject)
 	metadata := map[string]string{metaKeyTodoSourceHutId: fmt.Sprintf("ticket:%d:%d", ticket.Id, editTime)}
-	if cleanSubject != "" && cleanSubject != snapshot.Title {
-		op, err := b.SetTitleRaw(author, editTime, cleanSubject, metadata)
+	changeTitle := current.Subject != previous.Subject && current.Subject != "" && current.Subject != snapshot.Title
+	changeBody := len(snapshot.Comments) > 0 && current.Body != previous.Body && current.Body != snapshot.Comments[0].Message
+	if changeTitle || changeBody {
+		// SourceHut's ticket snapshot exposes no editor for title/body edits.
+		// Do not misattribute these operations to the original submitter.
+		author, err = ji.ensureSyncPerson(repo)
+		if err != nil {
+			return nil, false, err
+		}
+	}
+	if changeTitle {
+		op, err := b.SetTitleRaw(author, editTime, current.Subject, metadata)
 		if err != nil {
 			return nil, false, err
 		}
 		ji.out <- core.NewImportTitleEdition(b.Id(), op.Id())
 	}
 
-	cleanBody := text.Cleanup(ticket.Body)
-	if len(snapshot.Comments) > 0 && cleanBody != snapshot.Comments[0].Message {
-		commentID, _, err := b.EditCreateCommentRaw(author, editTime, cleanBody, metadata)
+	if changeBody {
+		commentID, _, err := b.EditCreateCommentRaw(author, editTime, current.Body, metadata)
 		if err != nil {
 			return nil, false, err
 		}
 		ji.out <- core.NewImportCommentEdition(b.Id(), commentID)
 	}
+	encoded := encodeRemoteState(current)
+	if stored, _ := remoteStateCheckpoint(b.Snapshot()); stored != encoded {
+		operations := b.Snapshot().Operations
+		if _, err := b.SetMetadataRaw(author, editTime, operations[len(operations)-1].Id(), map[string]string{metaKeyRemoteState: encoded}); err != nil {
+			return nil, false, err
+		}
+	}
 
 	return b, false, nil
+}
+
+func (ji *todosrhtImporter) ensureSyncPerson(repo *cache.RepoCache) (*cache.IdentityCache, error) {
+	const key = "todosrht-sync-instance"
+	baseURL := ji.conf[confKeyBaseUrl]
+	person, err := repo.Identities().ResolveMatcher(func(excerpt *cache.IdentityExcerpt) bool {
+		return excerpt.ImmutableMetadata[key] == baseURL
+	})
+	if err == nil || !entity.IsErrNotFound(err) {
+		return person, err
+	}
+	person, err = repo.Identities().NewRaw("SourceHut synchronization", "", "", "", nil, map[string]string{key: baseURL})
+	if err == nil {
+		ji.out <- core.NewImportIdentity(person.Id())
+	}
+	return person, err
 }
 
 func hasOperationWithMetadata(b *cache.BugCache, key string, values ...string) bool {
@@ -363,6 +417,35 @@ func commentKey(c *Comment) (string, error) {
 	return author.CanonicalName + "\x00" + c.Text, nil
 }
 
+const ambiguousCommentRoot = "ambiguous"
+
+// SourceHut exposes no stable ID on Comment or supersededBy. If several
+// comments have the same author/text, retain them rather than guess which
+// event is a revision and lose an independent comment.
+func commentRootsForEvents(events []Event) map[string]string {
+	roots := make(map[string]string)
+	counts := make(map[string]int)
+	for _, event := range events {
+		changes, err := event.GetChanges()
+		if err != nil {
+			continue // importEvent reports this error in chronological order.
+		}
+		for _, change := range changes {
+			if comment, ok := change.(*Comment); ok {
+				key, err := commentKey(comment)
+				if err != nil {
+					continue
+				}
+				counts[key]++
+				if counts[key] > 1 {
+					roots[key] = ambiguousCommentRoot
+				}
+			}
+		}
+	}
+	return roots
+}
+
 func (ji *todosrhtImporter) importEvent(repo *cache.RepoCache, b *cache.BugCache, event Event, commentRoots map[string]string) error {
 	changes, err := event.GetChanges()
 	if err != nil {
@@ -372,6 +455,7 @@ func (ji *todosrhtImporter) importEvent(repo *cache.RepoCache, b *cache.BugCache
 	for i, change := range changes {
 		changeID := fmt.Sprintf("%d:%d", event.Id, i)
 		legacyID := fmt.Sprintf("%d", event.Id)
+		ambiguousRevision := false
 		// Build revision links even for already imported events, so a later
 		// revision can edit the original local comment on a subsequent pull.
 		if c, ok := change.(*Comment); ok {
@@ -380,8 +464,10 @@ func (ji *todosrhtImporter) importEvent(repo *cache.RepoCache, b *cache.BugCache
 				return err
 			}
 			root := commentRoots[key]
-			if root == "" {
+			if root == "" || root == ambiguousCommentRoot {
 				root = changeID
+			} else {
+				delete(commentRoots, key) // A revision link can be consumed only once.
 			}
 			c.OriginalChangeID = root
 			if c.SupersededBy != nil {
@@ -389,11 +475,18 @@ func (ji *todosrhtImporter) importEvent(repo *cache.RepoCache, b *cache.BugCache
 				if err != nil {
 					return err
 				}
-				commentRoots[nextKey] = root
+				if commentRoots[nextKey] == ambiguousCommentRoot {
+					ambiguousRevision = true
+				} else {
+					commentRoots[nextKey] = root
+				}
 			}
 		}
 		if hasOperationWithMetadata(b, metaKeyTodoSourceHutId, changeID, legacyID) {
 			continue
+		}
+		if ambiguousRevision {
+			ji.out <- core.NewImportWarning(fmt.Errorf("ambiguous SourceHut comment revision in event %d; retaining comments separately", event.Id), b.Id())
 		}
 
 		switch c := change.(type) {

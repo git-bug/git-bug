@@ -222,6 +222,22 @@ type Tracker struct {
 	Visibility  Visibility       `json:"visibility"`
 }
 
+// CanonicalName identifies a tracker independently of the authenticated user.
+func (t *Tracker) CanonicalName() (string, error) {
+	owner, err := UnmarshalEntity(t.Owner)
+	if err != nil {
+		return "", fmt.Errorf("decode tracker owner: %w", err)
+	}
+	if owner == nil || owner.GetCanonicalName() == "" {
+		return "", fmt.Errorf("tracker %q has no owner", t.Name)
+	}
+	ref := "~" + strings.TrimPrefix(owner.GetCanonicalName(), "~") + "/" + t.Name
+	if _, _, err := splitTracker(ref); err != nil {
+		return "", err
+	}
+	return ref, nil
+}
+
 type Ticket struct {
 	Id           int               `json:"id"`
 	Created      Time              `json:"created"`
@@ -536,6 +552,7 @@ const getTrackerByNameQuery = `
 		me {
 			tracker(name: $trackerName) {
 				id
+				owner { __typename canonicalName }
 				name
 				description
 				visibility
@@ -609,56 +626,60 @@ const getTicketsQuery = `
 `
 
 const getTicketQuery = `
-	query GetTicket($id: Int!) {
-		ticket(id: $id) {
-			id
-			created
-			updated
-			subject
-			body
-			status
-			resolution
-			ref
-			submitter {
-				__typename
-				... on User {
-					canonicalName
-					username
-					email
-				}
-				... on ExternalUser {
-					canonicalName
-					externalId
-					externalUrl
-				}
-				... on EmailAddress {
-					canonicalName
-					mailbox
-					name
-				}
-			}
-			labels {
-				id
-				name
-				backgroundColor
-				foregroundColor
-			}
-			assignees {
-				__typename
-				... on User {
-					canonicalName
-					username
-					email
-				}
-				... on ExternalUser {
-					canonicalName
-					externalId
-					externalUrl
-				}
-				... on EmailAddress {
-					canonicalName
-					mailbox
-					name
+	query GetTicket($owner: String!, $trackerName: String!, $id: Int!) {
+		me {
+			tracker(name: $trackerName) {
+				ticket(id: $id) {
+					id
+					created
+					updated
+					subject
+					body
+					status
+					resolution
+					ref
+					submitter {
+						__typename
+						... on User {
+							canonicalName
+							username
+							email
+						}
+						... on ExternalUser {
+							canonicalName
+							externalId
+							externalUrl
+						}
+						... on EmailAddress {
+							canonicalName
+							mailbox
+							name
+						}
+					}
+					labels {
+						id
+						name
+						backgroundColor
+						foregroundColor
+					}
+					assignees {
+						__typename
+						... on User {
+							canonicalName
+							username
+							email
+						}
+						... on ExternalUser {
+							canonicalName
+							externalId
+							externalUrl
+						}
+						... on EmailAddress {
+							canonicalName
+							mailbox
+							name
+						}
+					}
 				}
 			}
 		}
@@ -1168,21 +1189,27 @@ func (c *TodoSClient) GetTickets(ctx context.Context, trackerName string, cursor
 }
 
 // GetTicket fetches a specific ticket
-func (c *TodoSClient) GetTicket(ctx context.Context, id int) (*Ticket, error) {
+func (c *TodoSClient) GetTicket(ctx context.Context, trackerName string, id int) (*Ticket, error) {
 	var result struct {
-		Ticket *Ticket `json:"ticket"`
+		Me struct {
+			Tracker struct {
+				Ticket *Ticket `json:"ticket"`
+			} `json:"tracker"`
+		} `json:"me"`
 	}
 
-	variables := map[string]interface{}{
-		"id": id,
+	query, variables, err := trackerQuery(getTicketQuery, trackerName)
+	if err != nil {
+		return nil, err
 	}
+	variables["id"] = id
 
-	err := c.executeRequest(ctx, getTicketQuery, variables, &result)
+	err = c.executeRequest(ctx, query, variables, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch ticket")
 	}
 
-	return result.Ticket, nil
+	return result.Me.Tracker.Ticket, nil
 }
 
 // GetEvents fetches events for a ticket with pagination

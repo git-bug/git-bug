@@ -207,6 +207,12 @@ func (j *TodoSourceHut) Configure(repo *cache.RepoCache, params core.BridgeParam
 	if !ok {
 		return nil, fmt.Errorf("the SourceHut bridge only handles token credentials")
 	}
+	if tokenCred.Target() != target {
+		return nil, fmt.Errorf("credential belongs to a different bridge target")
+	}
+	if boundURL, ok := tokenCred.GetMetadata(auth.MetaKeyBaseURL); ok && boundURL != baseURL {
+		return nil, fmt.Errorf("credential is bound to %s, not %s", boundURL, baseURL)
+	}
 
 	conf := make(core.Configuration)
 	conf[core.ConfigKeyTarget] = target
@@ -234,6 +240,11 @@ func (j *TodoSourceHut) Configure(repo *cache.RepoCache, params core.BridgeParam
 			"Authentication credentials for (%s) are invalid or insufficient to access tracker %s.\nFor more details, set GIT_BUG_DEBUG=1 and try again",
 			login, trackerName)
 	}
+	trackerName, err = tracker.CanonicalName()
+	if err != nil {
+		return nil, fmt.Errorf("failed to identify tracker: %w", err)
+	}
+	conf[confKeyTrackerName] = trackerName
 
 	// don't forget to store the now known valid token
 	tokenCred.SetMetadata(auth.MetaKeyBaseURL, baseURL)

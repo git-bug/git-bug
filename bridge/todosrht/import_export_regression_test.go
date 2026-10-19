@@ -377,7 +377,7 @@ func TestExportLabelIdempotency(t *testing.T) {
 
 	addLabelCalled := false
 	mockClient := &MockClient{
-		MockGetTicket: func(ctx context.Context, id int) (*Ticket, error) {
+		MockGetTicket: func(ctx context.Context, trackerName string, id int) (*Ticket, error) {
 			return &Ticket{
 				Id: 10,
 				Labels: []Label{
@@ -418,7 +418,7 @@ func TestExportLabelIdempotency(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, b.CommitAsNeeded())
 	remote := &Ticket{Id: 10}
-	mockClient.MockGetTicket = func(context.Context, int) (*Ticket, error) { return remote, nil }
+	mockClient.MockGetTicket = func(context.Context, string, int) (*Ticket, error) { return remote, nil }
 	mockClient.MockGetLabels = func(context.Context, string, *string) (*LabelCursor, error) {
 		return &LabelCursor{Results: []Label{{Id: 1, Name: "first"}, {Id: 2, Name: "second"}}}, nil
 	}
@@ -444,7 +444,7 @@ func TestExportLabelIdempotency(t *testing.T) {
 	_, err = b.ForceChangeLabels([]string{"third"}, nil)
 	require.NoError(t, err)
 	require.NoError(t, b.CommitAsNeeded())
-	mockClient.MockGetTicket = func(context.Context, int) (*Ticket, error) {
+	mockClient.MockGetTicket = func(context.Context, string, int) (*Ticket, error) {
 		return nil, fmt.Errorf("lookup failed")
 	}
 	require.ErrorContains(t, exporter.exportBug(context.Background(), b, out), "fetching ticket labels")
@@ -471,8 +471,8 @@ func TestInitTokensWithoutBaseURL(t *testing.T) {
 	}
 
 	err = importer.Init(context.Background(), backend, conf)
-	require.NoError(t, err, "importer.Init should accept token without baseURL metadata")
-	assert.NotNil(t, importer.client)
+	require.ErrorIs(t, err, ErrMissingCredentials, "unscoped tokens must not be sent to any instance")
+	assert.Nil(t, importer.client)
 }
 
 func TestIdentitiesSeparatedByBaseURL(t *testing.T) {
@@ -565,7 +565,7 @@ func TestImportOrdersEventsAcrossPages(t *testing.T) {
 	}
 	next := "older"
 	client := &MockClient{
-		MockGetTracker: func(context.Context, string) (*Tracker, error) { return &Tracker{Id: 1}, nil },
+		MockGetTracker: func(context.Context, string) (*Tracker, error) { return trackerForTest("tester", "proj"), nil },
 		MockGetTickets: func(context.Context, string, *string) ([]Ticket, *string, error) {
 			return []Ticket{{Id: 1, Subject: "Ticket", Body: "Body", Created: Time(created), Updated: Time(time.Now()), Submitter: &user}}, nil, nil
 		},

@@ -9,10 +9,11 @@ git-bug bridge auth add-token [TOKEN] [flags]
 ### Options
 
 ```
-  -t, --target string   The target of the bridge. Valid values are [github,gitlab,jira,launchpad-preview,todosrht]
-  -l, --login string    The login in the remote bug-tracker
-  -u, --user string     The user to add the token to. Default is the current user
-  -h, --help            help for add-token
+  -t, --target string     The target of the bridge. Valid values are [github,gitlab,jira,launchpad-preview,todosrht]
+  -l, --login string      The login in the remote bug-tracker
+  -u, --user string       The user to add the token to. Default is the current user
+      --base-url string   The server base URL for instance-scoped credentials
+  -h, --help              help for add-token
 ```
 
 ### SEE ALSO

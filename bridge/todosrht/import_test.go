@@ -55,7 +55,7 @@ func TestImporter(t *testing.T) {
 
 	mockClient.MockGetTracker = func(ctx context.Context, name string) (*Tracker, error) {
 		assert.Equal(t, conf[confKeyTrackerName], name)
-		return &Tracker{Id: 1, Name: name}, nil
+		return trackerForTest("test-user", "test-tracker"), nil
 	}
 
 	t.Run("Import simple ticket with comments", func(t *testing.T) {

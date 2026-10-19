@@ -54,6 +54,43 @@ The SourceHut bridge supports the following functionality:
 
 Once configured, you can use `git bug bridge pull <bridge_name>` to import tickets and events, and `git bug bridge push <bridge_name>` to export your local changes.
 
+Configuration resolves bare tracker names to `~owner/name` before saving them.
+Ticket mappings include that qualified name and the server URL, so equally
+numbered tickets from different owners or servers stay separate. Older bare-name
+mappings cannot be associated with an owner safely and are not reused.
+
+### Additional contributor credentials
+
+Bind each contributor's token and local identity to the server explicitly:
+
+```bash
+git bug bridge auth add-token --target todosrht --login contributor \
+    --user <local-identity-id> --base-url https://todo.sr.ht
+```
+
+Enter the token at the prompt. The same local identity can have a different
+login on each instance. Tokens without a server URL are not selected for pull
+or push. To use an older unscoped token, explicitly select it with
+`bridge new --credential <credential-id>` for the intended server; configuration
+verifies access and binds that token to the server.
+
+### Synchronization limits
+
+Pull compares remote title/body content with the last imported or exported
+content, not just the current local snapshot. Unpushed local edits survive an
+unchanged remote ticket. If both sides changed the same field differently,
+pull reports a conflict and leaves the local value intact.
+
+SourceHut does not expose the editor of a ticket's title or body. Imported edits
+therefore use a `SourceHut synchronization` identity, not the original submitter.
+Comment revision links expose only author and text, not a stable comment ID.
+When several comments match a revision link, pull retains them separately and
+warns rather than risk dropping an independent comment.
+
+Import stops applying a ticket's events at the first failed event. Export stops
+at the first missing author credential. Fix the reported problem and retry;
+later state changes are not sent ahead of the pending change.
+
 ### Examples
 
 ```bash
