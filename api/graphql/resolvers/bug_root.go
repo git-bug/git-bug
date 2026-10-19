@@ -14,7 +14,7 @@ func (bugRootSubResolver) BugAddCommentTimelineItem() graph.BugAddCommentTimelin
 	return &bugAddCommentTimelineItemResolver{}
 }
 
-func (r bugRootSubResolver) BugComment() graph.BugCommentResolver {
+func (bugRootSubResolver) BugComment() graph.BugCommentResolver {
 	return &commentResolver{}
 }
 
@@ -30,7 +30,7 @@ func (bugRootSubResolver) BugCreateTimelineItem() graph.BugCreateTimelineItemRes
 	return &bugCreateTimelineItemResolver{}
 }
 
-func (r bugRootSubResolver) BugEditCommentOperation() graph.BugEditCommentOperationResolver {
+func (bugRootSubResolver) BugEditCommentOperation() graph.BugEditCommentOperationResolver {
 	return &bugEditCommentOperationResolver{}
 }
 
@@ -38,7 +38,7 @@ func (bugRootSubResolver) BugLabelChangeOperation() graph.BugLabelChangeOperatio
 	return &bugLabelChangeOperationResolver{}
 }
 
-func (r bugRootSubResolver) BugLabelChangeTimelineItem() graph.BugLabelChangeTimelineItemResolver {
+func (bugRootSubResolver) BugLabelChangeTimelineItem() graph.BugLabelChangeTimelineItemResolver {
 	return &bugLabelChangeTimelineItem{}
 }
 
@@ -46,14 +46,14 @@ func (bugRootSubResolver) BugSetStatusOperation() graph.BugSetStatusOperationRes
 	return &bugSetStatusOperationResolver{}
 }
 
-func (r bugRootSubResolver) BugSetStatusTimelineItem() graph.BugSetStatusTimelineItemResolver {
+func (bugRootSubResolver) BugSetStatusTimelineItem() graph.BugSetStatusTimelineItemResolver {
 	return &bugSetStatusTimelineItem{}
 }
 
-func (r bugRootSubResolver) BugSetTitleOperation() graph.BugSetTitleOperationResolver {
+func (bugRootSubResolver) BugSetTitleOperation() graph.BugSetTitleOperationResolver {
 	return &bugSetTitleOperationResolver{}
 }
 
-func (r bugRootSubResolver) BugSetTitleTimelineItem() graph.BugSetTitleTimelineItemResolver {
+func (bugRootSubResolver) BugSetTitleTimelineItem() graph.BugSetTitleTimelineItemResolver {
 	return &bugSetTitleTimelineItem{}
 }

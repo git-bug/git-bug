@@ -1,0 +1,38 @@
+"""Represents an Item on a Board's Column."""
+interface BoardItem
+@goModel(model: "github.com/git-bug/git-bug/entities/board.Item") {
+    """The identifier of the item"""
+    id: CombinedId! @goField(name: "CombinedId")
+}
+
+type BoardItemConnection {
+    edges: [BoardItemEdge!]!
+    nodes: [BoardItem!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type BoardItemEdge {
+    cursor: String!
+    node: BoardItem!
+}
+
+"""A draft item, living only on the board."""
+type BoardItemDraft implements BoardItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/board.Draft") {
+    """The identifier of the item"""
+    id: CombinedId! @goField(name: "CombinedId")
+    """The item's author."""
+    author: Identity!
+    """The item's title."""
+    title: String!
+}
+
+"""An item referring to a bug."""
+type BoardItemBug implements BoardItem
+@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.BoardItemBug") {
+    """The identifier of the item"""
+    id: CombinedId! @goField(name: "CombinedId")
+    """The bug, null if it is not available locally."""
+    bug: Bug
+}

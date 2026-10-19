@@ -1,0 +1,37 @@
+package boardcmd
+
+import (
+	"github.com/spf13/cobra"
+
+	"github.com/git-bug/git-bug/commands/execenv"
+)
+
+func newBoardDescriptionCommand(env *execenv.Env) *cobra.Command {
+
+	cmd := &cobra.Command{
+		Use:     "description [BOARD_ID]",
+		Short:   "Display the description of a board",
+		PreRunE: execenv.LoadBackend(env),
+		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
+			return runBoardDescription(env, args)
+		}),
+		ValidArgsFunction: BoardCompletion(env),
+	}
+
+	cmd.AddCommand(newBoardDescriptionEditCommand(env))
+
+	return cmd
+}
+
+func runBoardDescription(env *execenv.Env, args []string) error {
+	b, args, err := ResolveSelected(env.Backend, args)
+	if err != nil {
+		return err
+	}
+
+	snap := b.Snapshot()
+
+	env.Out.Println(snap.Description)
+
+	return nil
+}

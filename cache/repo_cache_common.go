@@ -91,7 +91,7 @@ func (c *RepoCache) MergeAll(remote string) <-chan entity.MergeResult {
 
 	dependency := [][]cacheMgmt{
 		{c.identities},
-		{c.bugs},
+		{c.bugs, c.boards},
 	}
 
 	// run MergeAll according to entities dependencies and merge the results

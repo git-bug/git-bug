@@ -25,6 +25,15 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
+	Board() BoardResolver
+	BoardAddItemDraftOperation() BoardAddItemDraftOperationResolver
+	BoardAddItemEntityOperation() BoardAddItemEntityOperationResolver
+	BoardColumn() BoardColumnResolver
+	BoardCreateOperation() BoardCreateOperationResolver
+	BoardItemBug() BoardItemBugResolver
+	BoardItemDraft() BoardItemDraftResolver
+	BoardSetDescriptionOperation() BoardSetDescriptionOperationResolver
+	BoardSetTitleOperation() BoardSetTitleOperationResolver
 	Bug() BugResolver
 	BugAddCommentOperation() BugAddCommentOperationResolver
 	BugAddCommentTimelineItem() BugAddCommentTimelineItemResolver
@@ -55,6 +64,113 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Board struct {
+		Actors      func(childComplexity int, after *string, before *string, first *int, last *int) int
+		Columns     func(childComplexity int, after *string, before *string, first *int, last *int) int
+		CreatedAt   func(childComplexity int) int
+		Description func(childComplexity int) int
+		HumanID     func(childComplexity int) int
+		Id          func(childComplexity int) int
+		LastEdit    func(childComplexity int) int
+		Operations  func(childComplexity int, after *string, before *string, first *int, last *int) int
+		Title       func(childComplexity int) int
+	}
+
+	BoardAddItemDraftOperation struct {
+		Author   func(childComplexity int) int
+		ColumnId func(childComplexity int) int
+		Id       func(childComplexity int) int
+		Time     func(childComplexity int) int
+		Title    func(childComplexity int) int
+	}
+
+	BoardAddItemEntityOperation struct {
+		Author     func(childComplexity int) int
+		ColumnId   func(childComplexity int) int
+		EntityId   func(childComplexity int) int
+		EntityType func(childComplexity int) int
+		Id         func(childComplexity int) int
+		Time       func(childComplexity int) int
+	}
+
+	BoardColumn struct {
+		CombinedId func(childComplexity int) int
+		Items      func(childComplexity int, after *string, before *string, first *int, last *int) int
+		Name       func(childComplexity int) int
+	}
+
+	BoardColumnConnection struct {
+		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	BoardColumnEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	BoardConnection struct {
+		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	BoardCreateOperation struct {
+		Author      func(childComplexity int) int
+		Columns     func(childComplexity int) int
+		Description func(childComplexity int) int
+		Id          func(childComplexity int) int
+		Time        func(childComplexity int) int
+		Title       func(childComplexity int) int
+	}
+
+	BoardEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	BoardItemBug struct {
+		Bug        func(childComplexity int) int
+		CombinedId func(childComplexity int) int
+	}
+
+	BoardItemConnection struct {
+		Edges      func(childComplexity int) int
+		Nodes      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	BoardItemDraft struct {
+		Author     func(childComplexity int) int
+		CombinedId func(childComplexity int) int
+		Title      func(childComplexity int) int
+	}
+
+	BoardItemEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	BoardSetDescriptionOperation struct {
+		Author      func(childComplexity int) int
+		Description func(childComplexity int) int
+		Id          func(childComplexity int) int
+		Time        func(childComplexity int) int
+		Was         func(childComplexity int) int
+	}
+
+	BoardSetTitleOperation struct {
+		Author func(childComplexity int) int
+		Id     func(childComplexity int) int
+		Time   func(childComplexity int) int
+		Title  func(childComplexity int) int
+		Was    func(childComplexity int) int
+	}
+
 	Bug struct {
 		Actors       func(childComplexity int, after *string, before *string, first *int, last *int) int
 		Author       func(childComplexity int) int
@@ -456,9 +572,11 @@ type ComplexityRoot struct {
 	}
 
 	Repository struct {
+		AllBoards     func(childComplexity int, after *string, before *string, first *int, last *int) int
 		AllBugs       func(childComplexity int, after *string, before *string, first *int, last *int, query *string) int
 		AllIdentities func(childComplexity int, after *string, before *string, first *int, last *int) int
 		Blob          func(childComplexity int, ref string, path string) int
+		Board         func(childComplexity int, prefix string) int
 		Bug           func(childComplexity int, prefix string) int
 		Commit        func(childComplexity int, hash string) int
 		Commits       func(childComplexity int, after *string, first *int, ref string, path *string, since *time.Time, until *time.Time) int
@@ -502,6 +620,413 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Board.actors":
+		if e.ComplexityRoot.Board.Actors == nil {
+			break
+		}
+
+		args, err := ec.field_Board_actors_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Board.Actors(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
+	case "Board.columns":
+		if e.ComplexityRoot.Board.Columns == nil {
+			break
+		}
+
+		args, err := ec.field_Board_columns_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Board.Columns(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
+	case "Board.createdAt":
+		if e.ComplexityRoot.Board.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Board.CreatedAt(childComplexity), true
+	case "Board.description":
+		if e.ComplexityRoot.Board.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Board.Description(childComplexity), true
+	case "Board.humanId":
+		if e.ComplexityRoot.Board.HumanID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Board.HumanID(childComplexity), true
+	case "Board.id":
+		if e.ComplexityRoot.Board.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Board.Id(childComplexity), true
+	case "Board.lastEdit":
+		if e.ComplexityRoot.Board.LastEdit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Board.LastEdit(childComplexity), true
+	case "Board.operations":
+		if e.ComplexityRoot.Board.Operations == nil {
+			break
+		}
+
+		args, err := ec.field_Board_operations_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Board.Operations(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
+	case "Board.title":
+		if e.ComplexityRoot.Board.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Board.Title(childComplexity), true
+
+	case "BoardAddItemDraftOperation.author":
+		if e.ComplexityRoot.BoardAddItemDraftOperation.Author == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardAddItemDraftOperation.Author(childComplexity), true
+	case "BoardAddItemDraftOperation.columnId":
+		if e.ComplexityRoot.BoardAddItemDraftOperation.ColumnId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardAddItemDraftOperation.ColumnId(childComplexity), true
+	case "BoardAddItemDraftOperation.id":
+		if e.ComplexityRoot.BoardAddItemDraftOperation.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardAddItemDraftOperation.Id(childComplexity), true
+	case "BoardAddItemDraftOperation.date":
+		if e.ComplexityRoot.BoardAddItemDraftOperation.Time == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardAddItemDraftOperation.Time(childComplexity), true
+	case "BoardAddItemDraftOperation.title":
+		if e.ComplexityRoot.BoardAddItemDraftOperation.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardAddItemDraftOperation.Title(childComplexity), true
+
+	case "BoardAddItemEntityOperation.author":
+		if e.ComplexityRoot.BoardAddItemEntityOperation.Author == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardAddItemEntityOperation.Author(childComplexity), true
+	case "BoardAddItemEntityOperation.columnId":
+		if e.ComplexityRoot.BoardAddItemEntityOperation.ColumnId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardAddItemEntityOperation.ColumnId(childComplexity), true
+	case "BoardAddItemEntityOperation.entityId":
+		if e.ComplexityRoot.BoardAddItemEntityOperation.EntityId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardAddItemEntityOperation.EntityId(childComplexity), true
+	case "BoardAddItemEntityOperation.entityType":
+		if e.ComplexityRoot.BoardAddItemEntityOperation.EntityType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardAddItemEntityOperation.EntityType(childComplexity), true
+	case "BoardAddItemEntityOperation.id":
+		if e.ComplexityRoot.BoardAddItemEntityOperation.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardAddItemEntityOperation.Id(childComplexity), true
+	case "BoardAddItemEntityOperation.date":
+		if e.ComplexityRoot.BoardAddItemEntityOperation.Time == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardAddItemEntityOperation.Time(childComplexity), true
+
+	case "BoardColumn.id":
+		if e.ComplexityRoot.BoardColumn.CombinedId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardColumn.CombinedId(childComplexity), true
+	case "BoardColumn.items":
+		if e.ComplexityRoot.BoardColumn.Items == nil {
+			break
+		}
+
+		args, err := ec.field_BoardColumn_items_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.BoardColumn.Items(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
+	case "BoardColumn.name":
+		if e.ComplexityRoot.BoardColumn.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardColumn.Name(childComplexity), true
+
+	case "BoardColumnConnection.edges":
+		if e.ComplexityRoot.BoardColumnConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardColumnConnection.Edges(childComplexity), true
+	case "BoardColumnConnection.nodes":
+		if e.ComplexityRoot.BoardColumnConnection.Nodes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardColumnConnection.Nodes(childComplexity), true
+	case "BoardColumnConnection.pageInfo":
+		if e.ComplexityRoot.BoardColumnConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardColumnConnection.PageInfo(childComplexity), true
+	case "BoardColumnConnection.totalCount":
+		if e.ComplexityRoot.BoardColumnConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardColumnConnection.TotalCount(childComplexity), true
+
+	case "BoardColumnEdge.cursor":
+		if e.ComplexityRoot.BoardColumnEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardColumnEdge.Cursor(childComplexity), true
+	case "BoardColumnEdge.node":
+		if e.ComplexityRoot.BoardColumnEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardColumnEdge.Node(childComplexity), true
+
+	case "BoardConnection.edges":
+		if e.ComplexityRoot.BoardConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardConnection.Edges(childComplexity), true
+	case "BoardConnection.nodes":
+		if e.ComplexityRoot.BoardConnection.Nodes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardConnection.Nodes(childComplexity), true
+	case "BoardConnection.pageInfo":
+		if e.ComplexityRoot.BoardConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardConnection.PageInfo(childComplexity), true
+	case "BoardConnection.totalCount":
+		if e.ComplexityRoot.BoardConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardConnection.TotalCount(childComplexity), true
+
+	case "BoardCreateOperation.author":
+		if e.ComplexityRoot.BoardCreateOperation.Author == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardCreateOperation.Author(childComplexity), true
+	case "BoardCreateOperation.columns":
+		if e.ComplexityRoot.BoardCreateOperation.Columns == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardCreateOperation.Columns(childComplexity), true
+	case "BoardCreateOperation.description":
+		if e.ComplexityRoot.BoardCreateOperation.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardCreateOperation.Description(childComplexity), true
+	case "BoardCreateOperation.id":
+		if e.ComplexityRoot.BoardCreateOperation.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardCreateOperation.Id(childComplexity), true
+	case "BoardCreateOperation.date":
+		if e.ComplexityRoot.BoardCreateOperation.Time == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardCreateOperation.Time(childComplexity), true
+	case "BoardCreateOperation.title":
+		if e.ComplexityRoot.BoardCreateOperation.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardCreateOperation.Title(childComplexity), true
+
+	case "BoardEdge.cursor":
+		if e.ComplexityRoot.BoardEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardEdge.Cursor(childComplexity), true
+	case "BoardEdge.node":
+		if e.ComplexityRoot.BoardEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardEdge.Node(childComplexity), true
+
+	case "BoardItemBug.bug":
+		if e.ComplexityRoot.BoardItemBug.Bug == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardItemBug.Bug(childComplexity), true
+	case "BoardItemBug.id":
+		if e.ComplexityRoot.BoardItemBug.CombinedId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardItemBug.CombinedId(childComplexity), true
+
+	case "BoardItemConnection.edges":
+		if e.ComplexityRoot.BoardItemConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardItemConnection.Edges(childComplexity), true
+	case "BoardItemConnection.nodes":
+		if e.ComplexityRoot.BoardItemConnection.Nodes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardItemConnection.Nodes(childComplexity), true
+	case "BoardItemConnection.pageInfo":
+		if e.ComplexityRoot.BoardItemConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardItemConnection.PageInfo(childComplexity), true
+	case "BoardItemConnection.totalCount":
+		if e.ComplexityRoot.BoardItemConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardItemConnection.TotalCount(childComplexity), true
+
+	case "BoardItemDraft.author":
+		if e.ComplexityRoot.BoardItemDraft.Author == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardItemDraft.Author(childComplexity), true
+	case "BoardItemDraft.id":
+		if e.ComplexityRoot.BoardItemDraft.CombinedId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardItemDraft.CombinedId(childComplexity), true
+	case "BoardItemDraft.title":
+		if e.ComplexityRoot.BoardItemDraft.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardItemDraft.Title(childComplexity), true
+
+	case "BoardItemEdge.cursor":
+		if e.ComplexityRoot.BoardItemEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardItemEdge.Cursor(childComplexity), true
+	case "BoardItemEdge.node":
+		if e.ComplexityRoot.BoardItemEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardItemEdge.Node(childComplexity), true
+
+	case "BoardSetDescriptionOperation.author":
+		if e.ComplexityRoot.BoardSetDescriptionOperation.Author == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardSetDescriptionOperation.Author(childComplexity), true
+	case "BoardSetDescriptionOperation.description":
+		if e.ComplexityRoot.BoardSetDescriptionOperation.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardSetDescriptionOperation.Description(childComplexity), true
+	case "BoardSetDescriptionOperation.id":
+		if e.ComplexityRoot.BoardSetDescriptionOperation.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardSetDescriptionOperation.Id(childComplexity), true
+	case "BoardSetDescriptionOperation.date":
+		if e.ComplexityRoot.BoardSetDescriptionOperation.Time == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardSetDescriptionOperation.Time(childComplexity), true
+	case "BoardSetDescriptionOperation.was":
+		if e.ComplexityRoot.BoardSetDescriptionOperation.Was == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardSetDescriptionOperation.Was(childComplexity), true
+
+	case "BoardSetTitleOperation.author":
+		if e.ComplexityRoot.BoardSetTitleOperation.Author == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardSetTitleOperation.Author(childComplexity), true
+	case "BoardSetTitleOperation.id":
+		if e.ComplexityRoot.BoardSetTitleOperation.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardSetTitleOperation.Id(childComplexity), true
+	case "BoardSetTitleOperation.date":
+		if e.ComplexityRoot.BoardSetTitleOperation.Time == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardSetTitleOperation.Time(childComplexity), true
+	case "BoardSetTitleOperation.title":
+		if e.ComplexityRoot.BoardSetTitleOperation.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardSetTitleOperation.Title(childComplexity), true
+	case "BoardSetTitleOperation.was":
+		if e.ComplexityRoot.BoardSetTitleOperation.Was == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BoardSetTitleOperation.Was(childComplexity), true
 
 	case "Bug.actors":
 		if e.ComplexityRoot.Bug.Actors == nil {
@@ -2058,6 +2583,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Query.Repository(childComplexity, args["ref"].(*string)), true
 
+	case "Repository.allBoards":
+		if e.ComplexityRoot.Repository.AllBoards == nil {
+			break
+		}
+
+		args, err := ec.field_Repository_allBoards_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Repository.AllBoards(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 	case "Repository.allBugs":
 		if e.ComplexityRoot.Repository.AllBugs == nil {
 			break
@@ -2091,6 +2627,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Repository.Blob(childComplexity, args["ref"].(string), args["path"].(string)), true
+	case "Repository.board":
+		if e.ComplexityRoot.Repository.Board == nil {
+			break
+		}
+
+		args, err := ec.field_Repository_board_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Repository.Board(childComplexity, args["prefix"].(string)), true
 	case "Repository.bug":
 		if e.ComplexityRoot.Repository.Bug == nil {
 			break
@@ -2357,6 +2904,213 @@ func newExecutionContext(
 }
 
 var sources = []*ast.Source{
+	{Name: "../schema/board.graphql", Input: `type Board implements Entity {
+    """The identifier for this board"""
+    id: ID!
+    """The human version (truncated) identifier for this board"""
+    humanId: String!
+
+    createdAt: Time!
+    lastEdit: Time!
+
+    title: String!
+    description: String!
+
+    columns(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+    ): BoardColumnConnection!
+
+    """The actors of the board. Actors are Identity that have interacted with the board."""
+    actors(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+    ): IdentityConnection!
+
+    operations(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+    ): OperationConnection!
+}
+
+"""The connection type for Board."""
+type BoardConnection {
+    """A list of edges."""
+    edges: [BoardEdge!]!
+    nodes: [Board!]!
+    """Information to aid in pagination."""
+    pageInfo: PageInfo!
+    """Identifies the total count of items in the connection."""
+    totalCount: Int!
+}
+
+"""An edge in a connection."""
+type BoardEdge {
+    """A cursor for use in pagination."""
+    cursor: String!
+    """The item at the end of the edge."""
+    node: Board!
+}
+`, BuiltIn: false},
+	{Name: "../schema/board_columns.graphql", Input: `"""Represents a column on a Board."""
+type BoardColumn
+@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.BoardColumn") {
+    id: CombinedId! @goField(name: "CombinedId")
+
+    name: String!
+
+    items(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+    ): BoardItemConnection!
+}
+
+type BoardColumnConnection {
+    edges: [BoardColumnEdge!]!
+    nodes: [BoardColumn!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type BoardColumnEdge {
+    cursor: String!
+    node: BoardColumn!
+}
+`, BuiltIn: false},
+	{Name: "../schema/board_item.graphql", Input: `"""Represents an Item on a Board's Column."""
+interface BoardItem
+@goModel(model: "github.com/git-bug/git-bug/entities/board.Item") {
+    """The identifier of the item"""
+    id: CombinedId! @goField(name: "CombinedId")
+}
+
+type BoardItemConnection {
+    edges: [BoardItemEdge!]!
+    nodes: [BoardItem!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type BoardItemEdge {
+    cursor: String!
+    node: BoardItem!
+}
+
+"""A draft item, living only on the board."""
+type BoardItemDraft implements BoardItem & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/board.Draft") {
+    """The identifier of the item"""
+    id: CombinedId! @goField(name: "CombinedId")
+    """The item's author."""
+    author: Identity!
+    """The item's title."""
+    title: String!
+}
+
+"""An item referring to a bug."""
+type BoardItemBug implements BoardItem
+@goModel(model: "github.com/git-bug/git-bug/api/graphql/models.BoardItemBug") {
+    """The identifier of the item"""
+    id: CombinedId! @goField(name: "CombinedId")
+    """The bug, null if it is not available locally."""
+    bug: Bug
+}
+`, BuiltIn: false},
+	{Name: "../schema/board_operations.graphql", Input: `type BoardCreateOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/board.CreateOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    title: String!
+    description: String!
+    columns: [String!]!
+}
+
+type BoardAddItemDraftOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/board.AddItemDraftOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    columnId: ID!
+    title: String!
+}
+
+type BoardAddItemEntityOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/board.AddItemEntityOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    columnId: ID!
+    entityType: BoardItemEntityType!
+    entityId: ID!
+}
+
+enum BoardItemEntityType {
+    BUG
+}
+
+type BoardSetDescriptionOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/board.SetDescriptionOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    description: String!
+    was: String!
+}
+
+type BoardSetTitleOperation implements Operation & Authored
+@goModel(model: "github.com/git-bug/git-bug/entities/board.SetTitleOperation") {
+    """The identifier of the operation"""
+    id: ID!
+    """The author of this object."""
+    author: Identity!
+    """The datetime when this operation was issued."""
+    date: Time! @goField(name: "Time")
+
+    title: String!
+    was: String!
+}
+`, BuiltIn: false},
 	{Name: "../schema/bug.graphql", Input: `type Bug implements Authored & Entity {
   """The identifier for this bug"""
   id: ID!
@@ -3207,6 +3961,20 @@ type OperationEdge {
     """The name of the repository. Empty for the default (unnamed) repository in a single-repo setup."""
     name: String!
 
+    """All the boards"""
+    allBoards(
+      """Returns the elements in the list that come after the specified cursor."""
+      after: String
+      """Returns the elements in the list that come before the specified cursor."""
+      before: String
+      """Returns the first _n_ elements from the list."""
+      first: Int
+      """Returns the last _n_ elements from the list."""
+      last: Int
+    ): BoardConnection!
+
+    board(prefix: String!): Board
+
     """All the bugs"""
     allBugs(
         """Returns the elements in the list that come after the specified cursor."""
@@ -3356,6 +4124,7 @@ type Subscription {
 }
 
 enum EntityType {
+  BOARD
   BUG
   IDENTITY
 }
@@ -3418,6 +4187,114 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // childFields_* functions provide shared child field context lookups.
 // Each function is generated once per unique object type, deduplicating the
 // switch statements that were previously inlined in every fieldContext_* function.
+
+func (ec *executionContext) childFields_Board(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_Board_id(ctx, field)
+	case "humanId":
+		return ec.fieldContext_Board_humanId(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_Board_createdAt(ctx, field)
+	case "lastEdit":
+		return ec.fieldContext_Board_lastEdit(ctx, field)
+	case "title":
+		return ec.fieldContext_Board_title(ctx, field)
+	case "description":
+		return ec.fieldContext_Board_description(ctx, field)
+	case "columns":
+		return ec.fieldContext_Board_columns(ctx, field)
+	case "actors":
+		return ec.fieldContext_Board_actors(ctx, field)
+	case "operations":
+		return ec.fieldContext_Board_operations(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type Board", field.Name)
+}
+
+func (ec *executionContext) childFields_BoardColumn(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_BoardColumn_id(ctx, field)
+	case "name":
+		return ec.fieldContext_BoardColumn_name(ctx, field)
+	case "items":
+		return ec.fieldContext_BoardColumn_items(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BoardColumn", field.Name)
+}
+
+func (ec *executionContext) childFields_BoardColumnConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_BoardColumnConnection_edges(ctx, field)
+	case "nodes":
+		return ec.fieldContext_BoardColumnConnection_nodes(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_BoardColumnConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_BoardColumnConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BoardColumnConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_BoardColumnEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "cursor":
+		return ec.fieldContext_BoardColumnEdge_cursor(ctx, field)
+	case "node":
+		return ec.fieldContext_BoardColumnEdge_node(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BoardColumnEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_BoardConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_BoardConnection_edges(ctx, field)
+	case "nodes":
+		return ec.fieldContext_BoardConnection_nodes(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_BoardConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_BoardConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BoardConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_BoardEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "cursor":
+		return ec.fieldContext_BoardEdge_cursor(ctx, field)
+	case "node":
+		return ec.fieldContext_BoardEdge_node(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BoardEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_BoardItemConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_BoardItemConnection_edges(ctx, field)
+	case "nodes":
+		return ec.fieldContext_BoardItemConnection_nodes(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_BoardItemConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_BoardItemConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BoardItemConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_BoardItemEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "cursor":
+		return ec.fieldContext_BoardItemEdge_cursor(ctx, field)
+	case "node":
+		return ec.fieldContext_BoardItemEdge_node(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BoardItemEdge", field.Name)
+}
 
 func (ec *executionContext) childFields_Bug(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
@@ -4095,6 +4972,10 @@ func (ec *executionContext) childFields_Repository(ctx context.Context, field gr
 	switch field.Name {
 	case "name":
 		return ec.fieldContext_Repository_name(ctx, field)
+	case "allBoards":
+		return ec.fieldContext_Repository_allBoards(ctx, field)
+	case "board":
+		return ec.fieldContext_Repository_board(ctx, field)
 	case "allBugs":
 		return ec.fieldContext_Repository_allBugs(ctx, field)
 	case "bug":
