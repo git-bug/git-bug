@@ -21,7 +21,7 @@ import (
 
 func TestImporterReusesExportedBug(t *testing.T) {
 	repo := repository.NewMockRepo()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	author, err := backend.Identities().New("Tester", "tester@example.com")
 	require.NoError(t, err)
@@ -56,7 +56,7 @@ func TestImporterReusesExportedBug(t *testing.T) {
 
 func TestExportRejectsUnverifiedTicketID(t *testing.T) {
 	repo := repository.NewMockRepo()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 
 	author, err := backend.Identities().New("Tester", "tester@example.com")
@@ -134,7 +134,7 @@ func TestExportRejectsUnverifiedTicketID(t *testing.T) {
 
 func TestImportReconcilesRemoteEdits(t *testing.T) {
 	repo := repository.NewMockRepo()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 
 	author, err := backend.Identities().New("Tester", "tester@example.com")
@@ -228,7 +228,7 @@ func TestImportReconcilesRemoteEdits(t *testing.T) {
 }
 
 func TestImportCommentRevisions(t *testing.T) {
-	backend, err := cache.NewRepoCacheNoEvents(repository.NewMockRepo())
+	backend, err := cache.NewRepoCacheNoEvents(repository.NewMockRepo(), nil)
 	require.NoError(t, err)
 	author, err := backend.Identities().New("Tester", "tester@example.com")
 	require.NoError(t, err)
@@ -270,7 +270,7 @@ func TestImportCommentRevisions(t *testing.T) {
 
 func TestImportMultiChangeEvents(t *testing.T) {
 	repo := repository.NewMockRepo()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 
 	author, err := backend.Identities().New("Tester", "tester@example.com")
@@ -352,7 +352,7 @@ func TestImportMultiChangeEvents(t *testing.T) {
 
 func TestExportLabelIdempotency(t *testing.T) {
 	repo := repository.NewMockRepo()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 
 	author, err := backend.Identities().New("Tester", "tester@example.com")
@@ -454,7 +454,7 @@ func TestExportLabelIdempotency(t *testing.T) {
 
 func TestInitTokensWithoutBaseURL(t *testing.T) {
 	repo := repository.NewMockRepo()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 
 	// Store token with login but NO base URL (as added by `git bug bridge auth add-token`)
@@ -477,7 +477,7 @@ func TestInitTokensWithoutBaseURL(t *testing.T) {
 
 func TestIdentitiesSeparatedByBaseURL(t *testing.T) {
 	repo := repository.NewMockRepo()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 
 	// Create user1 on instance A
@@ -534,7 +534,7 @@ func TestIdentitiesSeparatedByBaseURL(t *testing.T) {
 }
 
 func TestUnsupportedEventWarnsOnce(t *testing.T) {
-	backend, err := cache.NewRepoCacheNoEvents(repository.NewMockRepo())
+	backend, err := cache.NewRepoCacheNoEvents(repository.NewMockRepo(), nil)
 	require.NoError(t, err)
 	author, err := backend.Identities().New("Tester", "tester@example.com")
 	require.NoError(t, err)
@@ -552,7 +552,7 @@ func TestUnsupportedEventWarnsOnce(t *testing.T) {
 }
 
 func TestImportOrdersEventsAcrossPages(t *testing.T) {
-	backend, err := cache.NewRepoCacheNoEvents(repository.NewMockRepo())
+	backend, err := cache.NewRepoCacheNoEvents(repository.NewMockRepo(), nil)
 	require.NoError(t, err)
 	user := json.RawMessage(`{"__typename":"User","canonicalName":"~tester","username":"tester"}`)
 	created := time.Now().Add(-time.Hour)

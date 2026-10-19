@@ -18,7 +18,7 @@ import (
 
 func TestImporter(t *testing.T) {
 	repo := repository.NewMockRepo()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 
 	conf := core.Configuration{

@@ -18,7 +18,7 @@ import (
 func TestExporter(t *testing.T) {
 	repo := repository.NewMockRepo()
 	t.Cleanup(func() { require.NoError(t, repo.Close()) })
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, backend.Close()) })
 
