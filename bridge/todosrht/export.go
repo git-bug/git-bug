@@ -319,6 +319,13 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 			continue
 		}
 
+		// Ordinary comment edits have no supported remote mutation. They must
+		// not block supported operations just because their author has no token.
+		if edit, ok := op.(*bug.EditCommentOperation); ok && edit.Target != createOp.Id() {
+			out <- core.NewExportNothing(b.Id(), fmt.Sprintf("ignoring comment edit for op %s, SourceHut API limitation", op.Id().Human()))
+			continue
+		}
+
 		opAuthor := op.Author()
 		client, err := je.getClientForIdentity(opAuthor.Id())
 		if err != nil {
@@ -347,32 +354,18 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 			je.cachedOperationIDs[op.Id()] = todosrhtOpID
 
 		case *bug.EditCommentOperation:
-			// SourceHut doesn't have explicit "edit comment" mutations.
-			// It tracks comments as events, and comments can be superseded by new ones.
-			// For simplicity and to fit git-bug's model, we'll treat
-			// EditCommentOperation targeting the initial ticket body as an UpdateTicket
-			// and ignore actual comment edits for now if they are not the initial body.
-			// A more complex implementation would involve trying to find the last comment
-			// and creating a new one that supersedes it.
-			if opr.Target == createOp.Id() {
-				ticket, err := updateTodoSRHTTicketBody(ctx, client, je.tracker.Id, bugTodoSourceHutID, opr.Message)
-				if err != nil {
-					err := errors.Wrap(err, "editing issue body")
-					out <- core.NewExportError(err, b.Id())
-					return err
-				}
-				todosrhtOpID = fmt.Sprintf("%d", ticket.Id)
-				exportTime = ticket.Updated.Unix()
-				out <- core.NewExportCommentEdition(b.Id())
-				if err := recordExportedField(b, "body", opr.Message); err != nil {
-					return err
-				}
-			} else {
-				// For now, ignore comment edits that are not on the initial ticket body.
-				// This is a limitation due to SourceHut API not directly supporting
-				// editing arbitrary comments, but rather superseding them.
-				out <- core.NewExportNothing(b.Id(), fmt.Sprintf("ignoring comment edit for op %s, SourceHut API limitation", op.Id().Human()))
-				continue
+			// Only edits of the initial ticket body reach this branch.
+			ticket, err := updateTodoSRHTTicketBody(ctx, client, je.tracker.Id, bugTodoSourceHutID, opr.Message)
+			if err != nil {
+				err := errors.Wrap(err, "editing issue body")
+				out <- core.NewExportError(err, b.Id())
+				return err
+			}
+			todosrhtOpID = fmt.Sprintf("%d", ticket.Id)
+			exportTime = ticket.Updated.Unix()
+			out <- core.NewExportCommentEdition(b.Id())
+			if err := recordExportedField(b, "body", opr.Message); err != nil {
+				return err
 			}
 
 		case *bug.SetStatusOperation:

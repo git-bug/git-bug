@@ -6,6 +6,7 @@ import (
 
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/util/text"
 )
 
 const metaKeyRemoteState = "todosrht-remote-state"
@@ -17,8 +18,12 @@ type remoteState struct {
 	Body    string `json:"body"`
 }
 
+func (state remoteState) normalized() remoteState {
+	return remoteState{Subject: text.CleanupOneLine(state.Subject), Body: text.Cleanup(state.Body)}
+}
+
 func encodeRemoteState(state remoteState) string {
-	raw, _ := json.Marshal(state) // A struct containing only strings cannot fail.
+	raw, _ := json.Marshal(state.normalized()) // A struct containing only strings cannot fail.
 	return string(raw)
 }
 
@@ -28,7 +33,7 @@ func lastRemoteState(snapshot *bug.Snapshot) (remoteState, error) {
 		if err := json.Unmarshal([]byte(raw), &state); err != nil {
 			return remoteState{}, fmt.Errorf("invalid SourceHut remote state: %w", err)
 		}
-		return state, nil
+		return state.normalized(), nil
 	}
 
 	// Migrate older mappings using only imported/exported operations. Pending
@@ -48,7 +53,7 @@ func lastRemoteState(snapshot *bug.Snapshot) (remoteState, error) {
 			}
 		}
 	}
-	return state, nil
+	return state.normalized(), nil
 }
 
 func remoteStateCheckpoint(snapshot *bug.Snapshot) (string, bool) {

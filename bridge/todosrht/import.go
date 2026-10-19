@@ -313,11 +313,16 @@ func (ji *todosrhtImporter) ensureIssue(repo *cache.RepoCache, ticket Ticket) (*
 	if err != nil {
 		return nil, false, err
 	}
-	current := remoteState{Subject: text.CleanupOneLine(ticket.Subject), Body: text.Cleanup(ticket.Body)}
-	if current.Subject != previous.Subject && snapshot.Title != previous.Subject && snapshot.Title != current.Subject {
+	current := (remoteState{Subject: ticket.Subject, Body: ticket.Body}).normalized()
+	local := remoteState{Subject: snapshot.Title}
+	if len(snapshot.Comments) > 0 {
+		local.Body = snapshot.Comments[0].Message
+	}
+	local = local.normalized()
+	if current.Subject != previous.Subject && local.Subject != previous.Subject && local.Subject != current.Subject {
 		return nil, false, fmt.Errorf("ticket %d has conflicting local and remote title edits; push or reconcile them before pulling", ticket.Id)
 	}
-	if len(snapshot.Comments) > 0 && current.Body != previous.Body && snapshot.Comments[0].Message != previous.Body && snapshot.Comments[0].Message != current.Body {
+	if len(snapshot.Comments) > 0 && current.Body != previous.Body && local.Body != previous.Body && local.Body != current.Body {
 		return nil, false, fmt.Errorf("ticket %d has conflicting local and remote body edits; push or reconcile them before pulling", ticket.Id)
 	}
 	editTime := ticket.Updated.Unix()
@@ -329,8 +334,8 @@ func (ji *todosrhtImporter) ensureIssue(repo *cache.RepoCache, ticket Ticket) (*
 	}
 
 	metadata := map[string]string{metaKeyTodoSourceHutId: fmt.Sprintf("ticket:%d:%d", ticket.Id, editTime)}
-	changeTitle := current.Subject != previous.Subject && current.Subject != "" && current.Subject != snapshot.Title
-	changeBody := len(snapshot.Comments) > 0 && current.Body != previous.Body && current.Body != snapshot.Comments[0].Message
+	changeTitle := current.Subject != previous.Subject && current.Subject != "" && current.Subject != local.Subject
+	changeBody := len(snapshot.Comments) > 0 && current.Body != previous.Body && current.Body != local.Body
 	if changeTitle || changeBody {
 		// SourceHut's ticket snapshot exposes no editor for title/body edits.
 		// Do not misattribute these operations to the original submitter.
