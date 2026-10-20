@@ -23,8 +23,9 @@ import (
 )
 
 // lastCommitDepthLimit is the maximum number of commits walked by
-// LastCommitForEntries. Entries not found within this horizon are omitted from
-// the result rather than stalling the caller indefinitely.
+// LastCommitForEntries. Past it, the entries left are found by bisecting along
+// the first-parent chain if the repository has a commit-graph, and omitted from
+// the result otherwise, rather than stalling the caller indefinitely.
 const lastCommitDepthLimit = 1000
 
 // lastCommitCacheSize is the number of (resolvedHash, dirPath) pairs kept in
@@ -898,87 +899,22 @@ func (repo *GoGitRepo) LastCommitForEntries(rev, path string, names []string) (m
 			return cached, nil
 		}
 
-		remaining := make(map[string]bool, len(startEntries))
+		pending := make(map[string]bool, len(startEntries))
 		for name := range startEntries {
-			remaining[name] = true
+			pending[name] = true
 		}
-		result := make(map[string]CommitMeta, len(remaining))
 
-		repo.rMutex.Lock()
-
-		iter, err := repo.r.Log(&gogit.LogOptions{
-			From:  startHash,
-			Order: gogit.LogOrderCommitterTime,
-		})
+		result, err := repo.lastCommitWalk(startHash, path, pending)
 		if err != nil {
-			repo.rMutex.Unlock()
 			return nil, err
 		}
 
-		// Seed the parent-reuse cache with the entries we already fetched above
-		// so the first iteration's current-tree read is skipped for free.
-		// In a linear history this halves tree reads for every subsequent step:
-		// the parent fetched at depth D is the current commit at depth D+1.
-		cachedParentHash := startHash
-		cachedParentEntries := startEntries
-
-		for depth := 0; len(remaining) > 0 && depth < lastCommitDepthLimit; depth++ {
-			c, err := iter.Next()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				iter.Close()
-				repo.rMutex.Unlock()
-				return nil, err
-			}
-
-			var currentEntries map[string]plumbing.Hash
-			if c.Hash == cachedParentHash && cachedParentEntries != nil {
-				currentEntries = cachedParentEntries
-			} else {
-				_, currentEntries, err = treeEntriesAtPath(c, path)
-				if err != nil {
-					// path may not exist in this commit; treat as empty
-					currentEntries = map[string]plumbing.Hash{}
-				}
-			}
-
-			var parentEntries map[string]plumbing.Hash
-			cachedParentHash = plumbing.ZeroHash
-			cachedParentEntries = nil
-			if len(c.ParentHashes) > 0 {
-				if parent, err := c.Parents().Next(); err == nil {
-					_, parentEntries, _ = treeEntriesAtPath(parent, path)
-					cachedParentHash = c.ParentHashes[0]
-					cachedParentEntries = parentEntries
-				}
-			}
-
-			meta := commitToMeta(c)
-			for name := range remaining {
-				curHash, inCurrent := currentEntries[name]
-				parentHash, inParent := parentEntries[name]
-				if inCurrent != inParent || (inCurrent && curHash != parentHash) {
-					result[name] = meta
-					delete(remaining, name)
-				}
-			}
-		}
-
-		iter.Close()
-		repo.rMutex.Unlock()
-
-		// Store a defensive copy so that callers cannot mutate cached entries.
 		// The cached map contains all directory entries, not just the requested
 		// names, so future calls for the same directory are fully served from
-		// cache regardless of which names they request.
-		cached := make(map[string]CommitMeta, len(result))
-		for k, v := range result {
-			cached[k] = v
-		}
-		repo.lastCommitCache.Add(cacheKey, cached)
-		return cached, nil
+		// cache regardless of which names they request. Callers only get
+		// copies of it.
+		repo.lastCommitCache.Add(cacheKey, result)
+		return result, nil
 	})
 	if err != nil {
 		return nil, err

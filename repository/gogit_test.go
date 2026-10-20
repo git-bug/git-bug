@@ -27,7 +27,7 @@ func newTestGoGitRepo(t testing.TB, bare bool) *GoGitRepo {
 }
 
 // requireGitBinary skips the test when the git binary is not available.
-func requireGitBinary(t *testing.T) {
+func requireGitBinary(t testing.TB) {
 	t.Helper()
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("git binary not available")
@@ -36,15 +36,23 @@ func requireGitBinary(t *testing.T) {
 
 // runGit runs the git binary in dir, which can be a worktree or a git
 // directory, and returns its trimmed output.
+func runGit(t testing.TB, dir string, args ...string) string {
+	t.Helper()
+	cmd := gitCommand(t, dir, args...)
+	out, err := cmd.CombinedOutput()
+	require.NoError(t, err, "%s: %s", cmd, out)
+	return strings.TrimSpace(string(out))
+}
+
+// gitCommand returns the command running the git binary in dir, as runGit
+// does, for a test needing more than runGit, such as giving it an input.
 //
 // git is isolated from the environment running the tests: no inherited GIT_*
 // variable redirecting it (a GIT_DIR set by a hook would win over -C), no
 // system or user config, which could run hooks (core.hooksPath) or change its
 // behavior, and no automatic gc or maintenance changing the object store
 // behind the test's back. Commits get a fixed identity.
-func runGit(t *testing.T, dir string, args ...string) string {
-	t.Helper()
-
+func gitCommand(t testing.TB, dir string, args ...string) *exec.Cmd {
 	home := t.TempDir()
 	env := []string{
 		"GIT_CONFIG_NOSYSTEM=1",
@@ -63,9 +71,7 @@ func runGit(t *testing.T, dir string, args ...string) string {
 	args = append([]string{"-C", dir, "-c", "gc.auto=0", "-c", "maintenance.auto=false"}, args...)
 	cmd := exec.Command("git", args...)
 	cmd.Env = env
-	out, err := cmd.CombinedOutput()
-	require.NoError(t, err, "git %s: %s", strings.Join(args, " "), out)
-	return strings.TrimSpace(string(out))
+	return cmd
 }
 
 func TestFindGitDir(t *testing.T) {

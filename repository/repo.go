@@ -281,8 +281,10 @@ type RepoBrowse interface {
 	CommitLog(rev, path string, limit int, after Hash, since, until *time.Time) ([]CommitMeta, error)
 
 	// LastCommitForEntries returns the most recent commit that touched each
-	// name in the directory at path under rev. Entries not resolved within
-	// the implementation's depth limit are silently absent from the result.
+	// name in the directory at path under rev. Implementations may bound the
+	// cost of old entries: an entry not resolved within that bound is either
+	// silently absent from the result, or resolved approximately, possibly to
+	// an older commit than the most recent one that touched it.
 	LastCommitForEntries(rev, path string, names []string) (map[string]CommitMeta, error)
 
 	// CommitDetail returns the full metadata and changed-file list for a
