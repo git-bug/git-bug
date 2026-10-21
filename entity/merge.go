@@ -18,7 +18,7 @@ const (
 
 // MergeResult hold the result of a merge operation on an Entity.
 type MergeResult struct {
-	// Err is set when a terminal error occur in the process
+	// Err is set when a terminal error occurs in the process
 	Err error
 
 	Id     Id
