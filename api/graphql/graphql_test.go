@@ -2,6 +2,9 @@ package graphql
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -11,8 +14,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/git-bug/git-bug/api/auth"
 	"github.com/git-bug/git-bug/api/graphql/models"
 	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/misc/random_bugs"
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/repository/repotest"
@@ -712,4 +718,219 @@ func TestSubscriptions(t *testing.T) {
 			t.Fatal("changes blocked by a subscription whose client left")
 		}
 	})
+}
+
+func TestMutations(t *testing.T) {
+	repo := repotest.NewGoGitRepo(t, false)
+
+	mrc := cache.NewMultiRepoCache()
+	t.Cleanup(func() { require.NoError(t, mrc.Close()) })
+	rc, err := cache.NewRepoCacheNoEvents(repo, nil)
+	require.NoError(t, err)
+	mrc.Add("", rc)
+
+	rene, err := rc.Identities().New("René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+	require.NoError(t, rc.SetUserIdentity(rene))
+
+	c := client.New(auth.Middleware(rene.Id())(NewHandler(mrc, nil, false)))
+
+	// mutate runs the mutations, which must succeed
+	mutate := func(query string) {
+		var data map[string]any
+		c.MustPost(query, &data)
+	}
+
+	// requireOnePack checks that the bug has a single new operation pack on top
+	// of the commit before, and returns its fresh state
+	requireOnePack := func(t *testing.T, rc *cache.RepoCache, repo repository.Repo, id entity.Id, before repository.Hash) *bug.Snapshot {
+		t.Helper()
+		b, err := rc.Bugs().Resolve(id)
+		require.NoError(t, err)
+		commit, err := repo.ReadCommit(b.LastCommit())
+		require.NoError(t, err)
+		require.Equal(t, []repository.Hash{before}, commit.Parents)
+		return b.Snapshot()
+	}
+
+	t.Run("mutations on the same bug are committed together", func(t *testing.T) {
+		b, _, err := rc.Bugs().New("title", "body")
+		require.NoError(t, err)
+		before := b.LastCommit()
+
+		var data struct {
+			BugSetTitle    struct{ Operation struct{ Id string } }
+			BugAddComment  struct{ Operation struct{ Id string } }
+			BugStatusClose struct {
+				Bug struct {
+					Title    string
+					Status   string
+					Comments struct{ TotalCount int }
+				}
+			}
+		}
+		c.MustPost(fmt.Sprintf(`mutation {
+			bugSetTitle(input: {prefix: "%[1]s", title: "new title"}) { operation { id } }
+			bugAddComment(input: {prefix: "%[1]s", message: "comment"}) { operation { id } }
+			bugStatusClose(input: {prefix: "%[1]s"}) { bug { title status comments { totalCount } } }
+		}`, b.Id()), &data)
+
+		// a later mutation sees what the earlier ones staged
+		require.Equal(t, "new title", data.BugStatusClose.Bug.Title)
+		require.Equal(t, "CLOSED", data.BugStatusClose.Bug.Status)
+		require.Equal(t, 2, data.BugStatusClose.Bug.Comments.TotalCount)
+
+		snap := requireOnePack(t, rc, repo, b.Id(), before)
+		require.Equal(t, "new title", snap.Title)
+		require.Len(t, snap.Comments, 2)
+	})
+
+	t.Run("a single mutation is committed", func(t *testing.T) {
+		b, _, err := rc.Bugs().New("title", "body")
+		require.NoError(t, err)
+		before := b.LastCommit()
+
+		mutate(fmt.Sprintf(`mutation {
+			bugSetTitle(input: {prefix: "%s", title: "new title"}) { operation { id } }
+		}`, b.Id()))
+
+		snap := requireOnePack(t, rc, repo, b.Id(), before)
+		require.Equal(t, "new title", snap.Title)
+	})
+
+	t.Run("a bug found through a comment shares the view", func(t *testing.T) {
+		b, _, err := rc.Bugs().New("title", "body")
+		require.NoError(t, err)
+		before := b.LastCommit()
+		comment := b.Snapshot().Comments[0].CombinedId()
+
+		mutate(fmt.Sprintf(`mutation {
+			bugSetTitle(input: {prefix: "%s", title: "new title"}) { operation { id } }
+			bugEditComment(input: {targetPrefix: "%s", message: "edited"}) { operation { id } }
+		}`, b.Id(), comment))
+
+		snap := requireOnePack(t, rc, repo, b.Id(), before)
+		require.Equal(t, "new title", snap.Title)
+		require.Equal(t, "edited", snap.Comments[0].Message)
+	})
+
+	t.Run("mutations on several bugs are all committed", func(t *testing.T) {
+		b1, _, err := rc.Bugs().New("title 1", "body")
+		require.NoError(t, err)
+		before1 := b1.LastCommit()
+		b2, _, err := rc.Bugs().New("title 2", "body")
+		require.NoError(t, err)
+		before2 := b2.LastCommit()
+
+		mutate(fmt.Sprintf(`mutation {
+			a: bugSetTitle(input: {prefix: "%s", title: "new title 1"}) { operation { id } }
+			b: bugSetTitle(input: {prefix: "%s", title: "new title 2"}) { operation { id } }
+		}`, b1.Id(), b2.Id()))
+
+		require.Equal(t, "new title 1", requireOnePack(t, rc, repo, b1.Id(), before1).Title)
+		require.Equal(t, "new title 2", requireOnePack(t, rc, repo, b2.Id(), before2).Title)
+	})
+
+	t.Run("the same bug in two repositories is committed in each", func(t *testing.T) {
+		repoA, repoB, _ := repotest.SetupGoGitReposAndRemote(t)
+
+		mrc := cache.NewMultiRepoCache()
+		t.Cleanup(func() { require.NoError(t, mrc.Close()) })
+		rcA, err := cache.NewRepoCacheNoEvents(repoA, nil)
+		require.NoError(t, err)
+		mrc.Add("a", rcA)
+		rcB, err := cache.NewRepoCacheNoEvents(repoB, nil)
+		require.NoError(t, err)
+		mrc.Add("b", rcB)
+
+		rene, err := rcA.Identities().New("René Descartes", "rene@descartes.fr")
+		require.NoError(t, err)
+		require.NoError(t, rcA.SetUserIdentity(rene))
+		b, _, err := rcA.Bugs().New("title", "body")
+		require.NoError(t, err)
+		before := b.LastCommit()
+
+		_, err = rcA.Push("origin")
+		require.NoError(t, err)
+		require.NoError(t, rcB.Pull("origin"))
+
+		c := client.New(auth.Middleware(rene.Id())(NewHandler(mrc, nil, false)))
+		var data map[string]any
+		c.MustPost(fmt.Sprintf(`mutation {
+			a: bugSetTitle(input: {repoRef: "a", prefix: "%[1]s", title: "title a"}) { operation { id } }
+			b: bugSetTitle(input: {repoRef: "b", prefix: "%[1]s", title: "title b"}) { operation { id } }
+		}`, b.Id()), &data)
+
+		require.Equal(t, "title a", requireOnePack(t, rcA, repoA, b.Id(), before).Title)
+		require.Equal(t, "title b", requireOnePack(t, rcB, repoB, b.Id(), before).Title)
+	})
+
+	t.Run("a failing mutation commits nothing", func(t *testing.T) {
+		b, _, err := rc.Bugs().New("title", "body")
+		require.NoError(t, err)
+		before := b.LastCommit()
+
+		resp, err := c.RawPost(fmt.Sprintf(`mutation {
+			bugSetTitle(input: {prefix: "%s", title: "new title"}) { operation { id } }
+			bugEditComment(input: {targetPrefix: "%s", message: "edit"}) { operation { id } }
+		}`, b.Id(), "0000000"))
+		require.NoError(t, err)
+		require.NotEmpty(t, resp.Errors)
+		require.Nil(t, resp.Data)
+
+		b, err = rc.Bugs().Resolve(b.Id())
+		require.NoError(t, err)
+		require.Equal(t, before, b.LastCommit())
+		require.Equal(t, "title", b.Snapshot().Title)
+	})
+}
+
+func TestRequestErrors(t *testing.T) {
+	mrc := cache.NewMultiRepoCache()
+	t.Cleanup(func() { require.NoError(t, mrc.Close()) })
+	h := NewHandler(mrc, nil, false)
+
+	tests := []struct {
+		name     string
+		body     string
+		status   int
+		response string
+	}{
+		{
+			name:     "malformed body",
+			body:     `not json`,
+			status:   http.StatusBadRequest,
+			response: `{"errors":[{"message":"json request body could not be decoded: invalid character 'o' in literal null (expecting 'u') body:not json"}],"data":null}`,
+		},
+		{
+			name:     "parse error",
+			body:     `{"query": "mutation {"}`,
+			status:   http.StatusUnprocessableEntity,
+			response: `{"errors":[{"message":"Expected Name, found <EOF>","locations":[{"line":1,"column":11}],"extensions":{"code":"GRAPHQL_PARSE_FAILED"}}],"data":null}`,
+		},
+		{
+			name:     "unknown operation",
+			body:     `{"query": "mutation a { __typename }", "operationName": "b"}`,
+			status:   http.StatusUnprocessableEntity,
+			response: `{"errors":[{"message":"operation b not found","extensions":{"code":"GRAPHQL_VALIDATION_FAILED"}}],"data":null}`,
+		},
+		{
+			name:     "validation error",
+			body:     `{"query": "mutation { nope }"}`,
+			status:   http.StatusUnprocessableEntity,
+			response: `{"errors":[{"message":"Cannot query field \"nope\" on type \"Mutation\".","locations":[{"line":1,"column":12}],"extensions":{"code":"GRAPHQL_VALIDATION_FAILED"}}],"data":null}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+			h.ServeHTTP(rec, req)
+
+			require.Equal(t, tt.status, rec.Code)
+			require.JSONEq(t, tt.response, rec.Body.String())
+		})
+	}
 }
