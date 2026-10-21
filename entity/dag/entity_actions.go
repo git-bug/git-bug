@@ -1,6 +1,7 @@
 package dag
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"slices"
@@ -29,19 +30,19 @@ func ListLocalIds(def Definition, repo repository.RepoData) ([]entity.Id, error)
 
 // Fetch retrieve updates from a remote
 // This does not change the local entity state
-func Fetch(def Definition, repo repository.Repo, remote string) (string, error) {
-	return repo.FetchRefs(remote, def.Namespace)
+func Fetch(ctx context.Context, def Definition, repo repository.Repo, remote string) (string, error) {
+	return repo.FetchRefs(ctx, remote, def.Namespace)
 }
 
 // Push update a remote with the local changes
-func Push(def Definition, repo repository.Repo, remote string) (string, error) {
-	return repo.PushRefs(remote, def.Namespace)
+func Push(ctx context.Context, def Definition, repo repository.Repo, remote string) (string, error) {
+	return repo.PushRefs(ctx, remote, def.Namespace)
 }
 
 // Pull will do a Fetch + MergeAll
 // Contrary to MergeAll, this function will return an error if a merge fail.
-func Pull[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, remote string, author identity.Interface) error {
-	_, err := Fetch(def, repo, remote)
+func Pull[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, remote string, author identity.Interface) error {
+	_, err := Fetch(ctx, def, repo, remote)
 	if err != nil {
 		return err
 	}

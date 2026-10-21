@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"errors"
 
 	"github.com/spf13/cobra"
@@ -16,7 +17,7 @@ func newPullCommand(env *execenv.Env) *cobra.Command {
 		Short:   "Pull updates from a git remote",
 		PreRunE: execenv.LoadBackend(env),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
-			return runPull(env, args)
+			return runPull(cmd.Context(), env, args)
 		}),
 		ValidArgsFunction: completion.GitRemote(env),
 	}
@@ -24,7 +25,7 @@ func newPullCommand(env *execenv.Env) *cobra.Command {
 	return cmd
 }
 
-func runPull(env *execenv.Env, args []string) error {
+func runPull(ctx context.Context, env *execenv.Env, args []string) error {
 	var remote string
 	switch {
 	case len(args) > 1:
@@ -41,7 +42,7 @@ func runPull(env *execenv.Env, args []string) error {
 
 	env.Out.Println("Fetching remote ...")
 
-	stdout, err := env.Backend.Fetch(remote)
+	stdout, err := env.Backend.Fetch(ctx, remote)
 	if err != nil {
 		return err
 	}

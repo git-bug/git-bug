@@ -129,9 +129,9 @@ func makeTestContextRemote(t *testing.T) (repository.Repo, repository.Repo, repo
 	id1, id2, resolver, def := makeTestContextInternal(repoA)
 
 	// distribute the identities
-	_, err := identity.Push(repoA, "remote")
+	_, err := identity.Push(t.Context(), repoA, "remote")
 	require.NoError(t, err)
-	err = identity.Pull(repoB, "remote")
+	err = identity.Pull(t.Context(), repoB, "remote")
 	require.NoError(t, err)
 
 	return repoA, repoB, remote, id1, id2, resolver, def

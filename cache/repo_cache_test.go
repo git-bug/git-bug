@@ -261,9 +261,9 @@ func TestCachePushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	// distribute the identity
-	_, err = cacheA.Push("origin")
+	_, err = cacheA.Push(t.Context(), "origin")
 	require.NoError(t, err)
-	err = cacheB.Pull("origin")
+	err = cacheB.Pull(t.Context(), "origin")
 	require.NoError(t, err)
 
 	// Create a bug in A
@@ -272,10 +272,10 @@ func TestCachePushPull(t *testing.T) {
 	require.NoError(t, bug1A.Commit())
 
 	// A --> remote --> B
-	_, err = cacheA.Push("origin")
+	_, err = cacheA.Push(t.Context(), "origin")
 	require.NoError(t, err)
 
-	err = cacheB.Pull("origin")
+	err = cacheB.Pull(t.Context(), "origin")
 	require.NoError(t, err)
 
 	require.Len(t, cacheB.Bugs().AllIds(), 1)
@@ -295,10 +295,10 @@ func TestCachePushPull(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, bug2B.Commit())
 
-	_, err = cacheB.Push("origin")
+	_, err = cacheB.Push(t.Context(), "origin")
 	require.NoError(t, err)
 
-	err = cacheA.Pull("origin")
+	err = cacheA.Pull(t.Context(), "origin")
 	require.NoError(t, err)
 
 	require.Len(t, cacheA.Bugs().AllIds(), 2)
@@ -315,10 +315,10 @@ func TestCachePushPull(t *testing.T) {
 		require.NoError(t, b.Commit())
 	}
 
-	_, err = cacheB.Push("origin")
+	_, err = cacheB.Push(t.Context(), "origin")
 	require.NoError(t, err)
 
-	err = cacheA.Pull("origin")
+	err = cacheA.Pull(t.Context(), "origin")
 	require.NoError(t, err)
 
 	// the loaded bug1 is replaced with the merged version, so that it's not
@@ -393,12 +393,12 @@ func TestCacheMerge(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, bugA.Commit())
 
-	_, err = cacheA.Push("origin")
+	_, err = cacheA.Push(t.Context(), "origin")
 	require.NoError(t, err)
 
 	// a bug merged as new is searchable in B, already when observers are notified
 	obs.watch("markercreate")
-	err = cacheB.Pull("origin")
+	err = cacheB.Pull(t.Context(), "origin")
 	require.NoError(t, err)
 	require.Equal(t, []entity.Id{bugA.Id()}, search(t, cacheB, "markercreate"))
 	require.Equal(t, []searchEvent{{EntityEventCreated, bugA.Id(), true}}, obs.events)
@@ -409,13 +409,13 @@ func TestCacheMerge(t *testing.T) {
 	err = bugA.Commit()
 	require.NoError(t, err)
 
-	_, err = cacheA.Push("origin")
+	_, err = cacheA.Push(t.Context(), "origin")
 	require.NoError(t, err)
 
 	// the new text of a bug merged as updated is searchable in B, already when
 	// observers are notified
 	obs.watch("markerupdate")
-	err = cacheB.Pull("origin")
+	err = cacheB.Pull(t.Context(), "origin")
 	require.NoError(t, err)
 	require.Equal(t, []entity.Id{bugA.Id()}, search(t, cacheB, "markerupdate"))
 	require.Equal(t, []searchEvent{{EntityEventUpdated, bugA.Id(), true}}, obs.events)
@@ -434,7 +434,7 @@ func TestCacheMerge(t *testing.T) {
 	err = bugA.Commit()
 	require.NoError(t, err)
 
-	_, err = cacheA.Push("origin")
+	_, err = cacheA.Push(t.Context(), "origin")
 	require.NoError(t, err)
 
 	bugB, err := cacheB.Bugs().Resolve(bugA.Id())
@@ -447,7 +447,7 @@ func TestCacheMerge(t *testing.T) {
 	// the text of both sides of a merge commit is searchable in B, already when
 	// observers are notified
 	obs.watch("markerremote")
-	err = cacheB.Pull("origin")
+	err = cacheB.Pull(t.Context(), "origin")
 	require.NoError(t, err)
 	require.Equal(t, []entity.Id{bugA.Id()}, search(t, cacheB, "markerremote"))
 	require.Equal(t, []entity.Id{bugA.Id()}, search(t, cacheB, "markerlocal"))
@@ -496,14 +496,14 @@ func TestCachePullWithoutIdentity(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, created.Commit())
 
-	_, err = cacheA.Push("origin")
+	_, err = cacheA.Push(t.Context(), "origin")
 	require.NoError(t, err)
 
 	// B has no identity set
 	_, err = cacheB.GetUserIdentity()
 	require.ErrorIs(t, err, identity.ErrNoIdentitySet)
 
-	err = cacheB.Pull("origin")
+	err = cacheB.Pull(t.Context(), "origin")
 	require.NoError(t, err)
 
 	require.Len(t, cacheB.Identities().AllIds(), 1)
@@ -525,7 +525,7 @@ func TestCachePullWithoutIdentity(t *testing.T) {
 	_, _, err = bugA.AddComment("from A")
 	require.NoError(t, err)
 	require.NoError(t, bugA.Commit())
-	_, err = cacheA.Push("origin")
+	_, err = cacheA.Push(t.Context(), "origin")
 	require.NoError(t, err)
 
 	bugB, err := cacheB.Bugs().Resolve(bugA.Id())
@@ -538,7 +538,7 @@ func TestCachePullWithoutIdentity(t *testing.T) {
 	err = cacheB.ClearUserIdentity()
 	require.NoError(t, err)
 
-	_, err = cacheB.Fetch("origin")
+	_, err = cacheB.Fetch(t.Context(), "origin")
 	require.NoError(t, err)
 	var mergeErrs []error
 	for result := range cacheB.MergeAll("origin") {
@@ -575,16 +575,16 @@ func TestRemove(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, b1.Commit())
 
-	_, err = repoCache.Push("remoteA")
+	_, err = repoCache.Push(t.Context(), "remoteA")
 	require.NoError(t, err)
 
-	_, err = repoCache.Push("remoteB")
+	_, err = repoCache.Push(t.Context(), "remoteB")
 	require.NoError(t, err)
 
-	_, err = repoCache.Fetch("remoteA")
+	_, err = repoCache.Fetch(t.Context(), "remoteA")
 	require.NoError(t, err)
 
-	_, err = repoCache.Fetch("remoteB")
+	_, err = repoCache.Fetch(t.Context(), "remoteB")
 	require.NoError(t, err)
 
 	for _, remote := range []string{"remoteA", "remoteB"} {

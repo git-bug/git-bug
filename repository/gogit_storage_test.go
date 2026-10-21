@@ -231,7 +231,7 @@ func TestGoGitStorage(t *testing.T) {
 		t.Run("objects readable", func(t *testing.T) {
 			repo, head := setup(t)
 
-			_, err := repo.FetchRefs("src", "bugs")
+			_, err := repo.FetchRefs(t.Context(), "src", "bugs")
 			require.NoError(t, err)
 
 			refs, err := repo.ListTrackingRefs("src", "bugs")
@@ -262,7 +262,7 @@ func TestGoGitStorage(t *testing.T) {
 					}
 				}
 			})
-			_, err := repo.FetchRefs("src", "bugs")
+			_, err := repo.FetchRefs(t.Context(), "src", "bugs")
 			close(done)
 			wg.Wait()
 			require.NoError(t, err)

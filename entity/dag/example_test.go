@@ -1,6 +1,7 @@
 package dag_test
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -328,7 +329,7 @@ func Example_entity() {
 	isaac, _ := identity.NewIdentity(repoRene, "Isaac Newton", "isaac@newton.uk")
 	_ = rene.Commit(repoRene)
 	_ = isaac.Commit(repoRene)
-	_ = identity.Pull(repoIsaac, "origin")
+	_ = identity.Pull(context.Background(), repoIsaac, "origin")
 
 	// create a new entity
 	confRene := NewProjectConfig()
@@ -342,7 +343,7 @@ func Example_entity() {
 	_ = confRene.Commit(repoRene)
 
 	// Isaac pull and read the config
-	_ = dag.Pull(def, wrapper, repoIsaac, simpleResolvers(repoIsaac), "origin", isaac)
+	_ = dag.Pull(context.Background(), def, wrapper, repoIsaac, simpleResolvers(repoIsaac), "origin", isaac)
 	confIsaac, _ := Read(repoIsaac, confRene.Id())
 
 	// Compile gives the current state of the config

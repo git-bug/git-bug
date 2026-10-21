@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"sync"
@@ -62,14 +63,14 @@ func (c *RepoCache) StoreData(data []byte) (repository.Hash, error) {
 
 // Fetch retrieve updates from a remote
 // This does not change the local bugs or identities state
-func (c *RepoCache) Fetch(remote string) (string, error) {
+func (c *RepoCache) Fetch(ctx context.Context, remote string) (string, error) {
 	prefixes := make([]string, len(c.subcaches))
 	for i, subcache := range c.subcaches {
 		prefixes[i] = subcache.GetNamespace()
 	}
 
 	// fetch everything at once, to have a single auth step if required.
-	return c.repo.FetchRefs(remote, prefixes...)
+	return c.repo.FetchRefs(ctx, remote, prefixes...)
 }
 
 // RemoveAll deletes all entities from the cache and the disk.
@@ -117,20 +118,20 @@ func (c *RepoCache) MergeAll(remote string) <-chan entity.MergeResult {
 }
 
 // Push update a remote with the local changes
-func (c *RepoCache) Push(remote string) (string, error) {
+func (c *RepoCache) Push(ctx context.Context, remote string) (string, error) {
 	prefixes := make([]string, len(c.subcaches))
 	for i, subcache := range c.subcaches {
 		prefixes[i] = subcache.GetNamespace()
 	}
 
 	// push everything at once, to have a single auth step if required
-	return c.repo.PushRefs(remote, prefixes...)
+	return c.repo.PushRefs(ctx, remote, prefixes...)
 }
 
 // Pull will do a Fetch + MergeAll
 // This function will return an error if a merge fail
-func (c *RepoCache) Pull(remote string) error {
-	_, err := c.Fetch(remote)
+func (c *RepoCache) Pull(ctx context.Context, remote string) error {
+	_, err := c.Fetch(ctx, remote)
 	if err != nil {
 		return err
 	}

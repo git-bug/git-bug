@@ -2,6 +2,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"io"
 	"time"
@@ -31,6 +32,7 @@ type Repo interface {
 	RepoStorage
 	RepoIndex
 	RepoData
+	RepoRemote
 	RepoBrowse
 	RepoClock
 
@@ -148,17 +150,21 @@ type Commit struct {
 	Signature  io.Reader // if signed, reader for the (non-armored) signature
 }
 
-// RepoData give access to the git data storage
-type RepoData interface {
+// RepoRemote gives access to the network operations on a git remote, the
+// only ones of a repository. They stop when ctx is done.
+type RepoRemote interface {
 	// FetchRefs retrieves the refs of the given namespaces (and the data they
 	// point to) from a remote, and stores them as that remote's tracking refs.
 	// Local refs are left untouched.
-	FetchRefs(remote string, namespaces ...string) (string, error)
+	FetchRefs(ctx context.Context, remote string, namespaces ...string) (string, error)
 
 	// PushRefs sends the local refs of the given namespaces (and the data they
 	// point to) to a remote, and updates that remote's tracking refs to match.
-	PushRefs(remote string, namespaces ...string) (string, error)
+	PushRefs(ctx context.Context, remote string, namespaces ...string) (string, error)
+}
 
+// RepoData give access to the git data storage
+type RepoData interface {
 	// StoreData will store arbitrary data and return the corresponding hash
 	StoreData(data []byte) (Hash, error)
 

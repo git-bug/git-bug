@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"errors"
 
 	"github.com/spf13/cobra"
@@ -15,7 +16,7 @@ func newPushCommand(env *execenv.Env) *cobra.Command {
 		Short:   "Push updates to a git remote",
 		PreRunE: execenv.LoadBackend(env),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
-			return runPush(env, args)
+			return runPush(cmd.Context(), env, args)
 		}),
 		ValidArgsFunction: completion.GitRemote(env),
 	}
@@ -23,7 +24,7 @@ func newPushCommand(env *execenv.Env) *cobra.Command {
 	return cmd
 }
 
-func runPush(env *execenv.Env, args []string) error {
+func runPush(ctx context.Context, env *execenv.Env, args []string) error {
 	var remote string
 	switch {
 	case len(args) > 1:
@@ -38,7 +39,7 @@ func runPush(env *execenv.Env, args []string) error {
 		remote = cfg.Value("git-bug.remote", "origin")
 	}
 
-	stdout, err := env.Backend.Push(remote)
+	stdout, err := env.Backend.Push(ctx, remote)
 	if err != nil {
 		return err
 	}

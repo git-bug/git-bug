@@ -456,22 +456,22 @@ func TestRepair(t *testing.T) {
 		eA := wrapper(New(def))
 		eA.Append(newOp1(id1, "foo"))
 		require.NoError(t, eA.Commit(repoA))
-		_, err := Push(def, repoA, "remote")
+		_, err := Push(t.Context(), def, repoA, "remote")
 		require.NoError(t, err)
-		require.NoError(t, Pull(def, wrapper, repoB, resolver, "remote", id2))
+		require.NoError(t, Pull(t.Context(), def, wrapper, repoB, resolver, "remote", id2))
 
 		eB, err := Read(def, wrapper, repoB, resolver, eA.Id())
 		require.NoError(t, err)
 		eB.Append(newOp2(id2, "from B"))
 		require.NoError(t, eB.Commit(repoB))
-		_, err = Push(def, repoB, "remote")
+		_, err = Push(t.Context(), def, repoB, "remote")
 		require.NoError(t, err)
 
 		eA.Append(newOp2(id1, "from A"))
 		require.NoError(t, eA.Commit(repoA))
 
 		// merge moves the ref of repoA behind eA's back
-		require.NoError(t, Pull(def, wrapper, repoA, resolver, "remote", id1))
+		require.NoError(t, Pull(t.Context(), def, wrapper, repoA, resolver, "remote", id1))
 		ref, err := repoA.ResolveRef(def.Namespace, eA.Id().String())
 		require.NoError(t, err)
 		head, err := repoA.ReadCommit(ref)

@@ -18,10 +18,10 @@ func TestIdentityPushPull(t *testing.T) {
 	require.NoError(t, err)
 
 	// A --> remote --> B
-	_, err = Push(repoA, "origin")
+	_, err = Push(t.Context(), repoA, "origin")
 	require.NoError(t, err)
 
-	err = Pull(repoB, "origin")
+	err = Pull(t.Context(), repoB, "origin")
 	require.NoError(t, err)
 
 	identities := allIdentities(t, ReadAll(repoB))
@@ -36,10 +36,10 @@ func TestIdentityPushPull(t *testing.T) {
 	err = identity2.Commit(repoB)
 	require.NoError(t, err)
 
-	_, err = Push(repoB, "origin")
+	_, err = Push(t.Context(), repoB, "origin")
 	require.NoError(t, err)
 
-	err = Pull(repoA, "origin")
+	err = Pull(t.Context(), repoA, "origin")
 	require.NoError(t, err)
 
 	identities = allIdentities(t, ReadAll(repoA))
@@ -68,10 +68,10 @@ func TestIdentityPushPull(t *testing.T) {
 
 	//  A --> remote --> B
 
-	_, err = Push(repoA, "origin")
+	_, err = Push(t.Context(), repoA, "origin")
 	require.NoError(t, err)
 
-	err = Pull(repoB, "origin")
+	err = Pull(t.Context(), repoB, "origin")
 	require.NoError(t, err)
 
 	identities = allIdentities(t, ReadAll(repoB))
@@ -82,10 +82,10 @@ func TestIdentityPushPull(t *testing.T) {
 
 	// B --> remote --> A
 
-	_, err = Push(repoB, "origin")
+	_, err = Push(t.Context(), repoB, "origin")
 	require.NoError(t, err)
 
-	err = Pull(repoA, "origin")
+	err = Pull(t.Context(), repoA, "origin")
 	require.NoError(t, err)
 
 	identities = allIdentities(t, ReadAll(repoA))
@@ -117,11 +117,11 @@ func TestIdentityPushPull(t *testing.T) {
 
 	//  A --> remote --> B
 
-	_, err = Push(repoA, "origin")
+	_, err = Push(t.Context(), repoA, "origin")
 	require.NoError(t, err)
 
 	// Pulling a non-fast-forward update should fail
-	err = Pull(repoB, "origin")
+	err = Pull(t.Context(), repoB, "origin")
 	require.Error(t, err)
 
 	identities = allIdentities(t, ReadAll(repoB))
@@ -133,10 +133,10 @@ func TestIdentityPushPull(t *testing.T) {
 	// B --> remote --> A
 
 	// Pushing a non-fast-forward update should fail
-	_, err = Push(repoB, "origin")
+	_, err = Push(t.Context(), repoB, "origin")
 	require.Error(t, err)
 
-	err = Pull(repoA, "origin")
+	err = Pull(t.Context(), repoA, "origin")
 	require.NoError(t, err)
 
 	identities = allIdentities(t, ReadAll(repoA))

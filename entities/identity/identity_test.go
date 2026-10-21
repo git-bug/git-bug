@@ -383,16 +383,16 @@ func TestIdentityRemove(t *testing.T) {
 	err = rene.Commit(repo)
 	require.NoError(t, err)
 
-	_, err = Push(repo, "remoteA")
+	_, err = Push(t.Context(), repo, "remoteA")
 	require.NoError(t, err)
 
-	_, err = Push(repo, "remoteB")
+	_, err = Push(t.Context(), repo, "remoteB")
 	require.NoError(t, err)
 
-	_, err = Fetch(repo, "remoteA")
+	_, err = Fetch(t.Context(), repo, "remoteA")
 	require.NoError(t, err)
 
-	_, err = Fetch(repo, "remoteB")
+	_, err = Fetch(t.Context(), repo, "remoteB")
 	require.NoError(t, err)
 
 	err = Remove(repo, rene.Id())
