@@ -67,5 +67,8 @@ func NewHandler(mrc *cache.MultiRepoCache, errorOut io.Writer, devMode bool) htt
 		h.Use(&Tracer{Out: errorOut})
 	}
 
+	// after the tracer, for it to see the commit errors
+	h.Use(resolvers.CommitMutations{})
+
 	return h
 }
