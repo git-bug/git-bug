@@ -194,6 +194,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 	snapshot := b.Snapshot()
 
 	var bugUpdated bool
+	var missingToken bool
 	var err error
 	var bugGitlabID int64
 	var bugGitlabIDString string
@@ -310,6 +311,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		opAuthor := op.Author()
 		client, err := ge.getIdentityClient(opAuthor.Id())
 		if err != nil {
+			missingToken = true
 			continue
 		}
 
@@ -440,7 +442,9 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		bugUpdated = true
 	}
 
-	if !bugUpdated {
+	if missingToken {
+		out <- core.NewExportNothing(b.Id(), core.ReasonNoTokenActor)
+	} else if !bugUpdated {
 		out <- core.NewExportNothing(b.Id(), core.ReasonNothingExported)
 	}
 }

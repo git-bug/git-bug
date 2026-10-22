@@ -2,6 +2,7 @@ package bridgecmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -38,6 +39,7 @@ func newBridgePushCommand(env *execenv.Env) *cobra.Command {
 	flags.SortFlags = false
 	flags.BoolVarP(&options.verbose, "verbose", "v", false,
 		"Explain why issues were not pushed")
+
 	return cmd
 }
 
@@ -105,6 +107,9 @@ func reportExportResults(out execenv.Out, name string, events <-chan core.Export
 	skipped := map[string]int{}
 	var skipOrder []string
 	for result := range events {
+		if result.Event == core.ExportEventError && errors.Is(result.Err, context.Canceled) {
+			continue
+		}
 		if result.Event == core.ExportEventNothing && result.Reason != core.ReasonNothingExported {
 			if skipped[result.Reason] == 0 {
 				skipOrder = append(skipOrder, result.Reason)

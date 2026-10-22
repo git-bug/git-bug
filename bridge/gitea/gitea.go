@@ -9,6 +9,7 @@ import (
 
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
+	"github.com/git-bug/git-bug/repository"
 )
 
 const (
@@ -18,17 +19,19 @@ const (
 	metaKeyGiteaCommentID = "gitea-comment-id"
 	// metaKeyGiteaEvent identifies the timeline event an operation was
 	// imported from, so re-imports don't duplicate it.
-	metaKeyGiteaEvent       = "gitea-timeline-event"
-	metaKeyGiteaLogin       = "gitea-login"
-	metaKeyGiteaScopedLogin = "gitea-instance-login"
-	metaKeyGiteaOwner       = "gitea-owner"
-	metaKeyGiteaProject     = "gitea-project"
-	metaKeyGiteaBaseURL     = "gitea-base-url"
+	metaKeyGiteaEvent           = "gitea-timeline-event"
+	metaKeyGiteaLogin           = "gitea-login"
+	metaKeyGiteaScopedLogin     = "gitea-instance-login"
+	metaKeyGiteaOwner           = "gitea-owner"
+	metaKeyGiteaProject         = "gitea-project"
+	metaKeyGiteaBaseURL         = "gitea-base-url"
+	metaKeyGiteaHistoryComplete = "gitea-history-complete"
 
 	confKeyOwner        = "owner"
 	confKeyProject      = "project"
 	confKeyBaseURL      = "base-url"
 	confKeyDefaultLogin = "default-login"
+	confKeyCredentialID = "credential-id"
 
 	defaultTimeout = 60 * time.Second
 )
@@ -51,6 +54,26 @@ func (Gitea) NewImporter() core.Importer {
 
 func (Gitea) NewExporter() core.Exporter {
 	return &giteaExporter{}
+}
+
+// Legacy configurations have no pin and retain newest-token selection.
+// A configured pin must never silently switch to another stored secret.
+func configuredToken(repo repository.RepoKeyring, conf core.Configuration) (*auth.Token, error) {
+	creds, err := auth.List(repo, auth.WithTarget(target), auth.WithKind(auth.KindToken),
+		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseURL]),
+		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]))
+	if err != nil {
+		return nil, err
+	}
+	for _, cred := range creds {
+		if conf[confKeyCredentialID] == "" || cred.ID().String() == conf[confKeyCredentialID] {
+			return cred.(*auth.Token), nil
+		}
+	}
+	if conf[confKeyCredentialID] != "" {
+		return nil, fmt.Errorf("configured Gitea credential is unavailable; reconfigure the bridge with --credential")
+	}
+	return nil, ErrMissingIdentityToken
 }
 
 func buildClient(baseURL string, token *auth.Token) (*gitea.Client, error) {

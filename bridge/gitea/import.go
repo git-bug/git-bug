@@ -10,7 +10,6 @@ import (
 	gitea "gitea.dev/sdk"
 
 	"github.com/git-bug/git-bug/bridge/core"
-	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/bridge/gitea/iterator"
 	"github.com/git-bug/git-bug/cache"
 	bugpkg "github.com/git-bug/git-bug/entities/bug"
@@ -42,21 +41,12 @@ const DeletedIdentity = "@deleted-user"
 func (gi *giteaImporter) Init(ctx context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	gi.conf = conf
 
-	creds, err := auth.List(repo,
-		auth.WithTarget(target),
-		auth.WithKind(auth.KindToken),
-		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseURL]),
-		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),
-	)
+	token, err := configuredToken(repo, conf)
 	if err != nil {
 		return err
 	}
 
-	if len(creds) == 0 {
-		return ErrMissingIdentityToken
-	}
-
-	gi.client, err = buildClient(conf[confKeyBaseURL], creds[0].(*auth.Token))
+	gi.client, err = buildClient(conf[confKeyBaseURL], token)
 	if err != nil {
 		return err
 	}
@@ -82,7 +72,7 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 
 			// Buffer a new issue's history before creation so its first title
 			// comes from the oldest rename, not the current issue listing.
-			_, lookupErr := repo.Bugs().ResolveMatcher(ctx, func(excerpt *cache.BugExcerpt) bool {
+			existing, lookupErr := repo.Bugs().ResolveMatcher(ctx, func(excerpt *cache.BugExcerpt) bool {
 				return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
 					excerpt.CreateMetadata[metaKeyGiteaID] == strconv.FormatInt(issue.Index, 10) &&
 					excerpt.CreateMetadata[metaKeyGiteaBaseURL] == gi.conf[confKeyBaseURL] &&
@@ -94,7 +84,11 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 				return
 			}
 			newIssue := entity.IsErrNotFound(lookupErr)
-			if newIssue {
+			historyComplete := false
+			if existing != nil {
+				_, historyComplete = existing.Snapshot().GetCreateMetadata(metaKeyGiteaHistoryComplete)
+			}
+			if !historyComplete {
 				gi.iterator.SetTimelineSince(time.Time{})
 			} else {
 				gi.iterator.SetTimelineSince(since)
@@ -138,6 +132,12 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 				return
 			}
 
+			if !historyComplete {
+				if _, err := b.SetMetadataRaw(b.Snapshot().Author, time.Now().Unix(), b.Snapshot().Operations[0].Id(), map[string]string{metaKeyGiteaHistoryComplete: "true"}); err != nil {
+					gi.reportBugError(ctx, err, "mark complete history", b.Id())
+					return
+				}
+			}
 			if !b.NeedCommit() {
 				gi.sendImportResult(ctx, core.NewImportNothing(b.Id(), "no imported operation"))
 			} else if err := b.Commit(ctx); err != nil {
@@ -204,12 +204,22 @@ func timelineEventKey(kind string, id int64, at time.Time) string {
 // alreadyImported reports whether an operation carrying the given timeline
 // event key exists on the bug.
 func alreadyImported(bug *cache.BugCache, key string) bool {
+	if _, seen := bug.Snapshot().GetCreateMetadata("gitea-seen:" + key); seen {
+		return true
+	}
 	for _, op := range bug.Snapshot().Operations {
 		if v, ok := op.GetMetadata(metaKeyGiteaEvent); ok && v == key {
 			return true
 		}
 	}
 	return false
+}
+
+// rememberEvent records an observed no-op without adding a state change.
+// Full pulls must not replay it after a later local edit.
+func rememberEvent(b *cache.BugCache, key string) error {
+	_, err := b.SetMetadataRaw(b.Snapshot().Author, time.Now().Unix(), b.Snapshot().Operations[0].Id(), map[string]string{"gitea-seen:" + key: "true"})
+	return err
 }
 
 func (gi *giteaImporter) importComment(ctx context.Context, repo *cache.RepoCache, bug *cache.BugCache, remoteComment *iterator.CommentEvent) error {
@@ -303,7 +313,7 @@ func (gi *giteaImporter) importLabel(ctx context.Context, repo *cache.RepoCache,
 	case event.Kind == iterator.LabelRemoved && present:
 		removed = []string{local}
 	default:
-		return nil
+		return rememberEvent(bug, key)
 	}
 
 	author, err := gi.ensurePerson(ctx, repo, event.Poster)
@@ -350,12 +360,16 @@ func (gi *giteaImporter) reconcileLabels(ctx context.Context, repo *cache.RepoCa
 	}
 
 	imported := map[string]bool{}
+	pending := map[string]bool{}
 	for _, op := range bug.Snapshot().Operations {
 		labelOp, ok := op.(*bugpkg.LabelChangeOperation)
 		if !ok {
 			continue
 		}
-		if _, fromGitea := op.GetMetadata(metaKeyGiteaID); !fromGitea {
+		for _, name := range append(append([]common.Label{}, labelOp.Added...), labelOp.Removed...) {
+			pending[strings.ToLower(string(name))] = !isExportedOrImported(op)
+		}
+		if !isExportedOrImported(op) {
 			continue
 		}
 		for _, l := range labelOp.Added {
@@ -373,14 +387,14 @@ func (gi *giteaImporter) reconcileLabels(ctx context.Context, repo *cache.RepoCa
 			continue
 		}
 		upstream[strings.ToLower(l.Name)] = true
-		if _, present := findLabelFold(bug, l.Name); !present {
+		if _, present := findLabelFold(bug, l.Name); !present && !pending[strings.ToLower(l.Name)] {
 			added = append(added, l.Name)
 		}
 	}
 	var removed []string
 	for _, l := range bug.Snapshot().Labels {
 		folded := strings.ToLower(string(l))
-		if !upstream[folded] && imported[folded] {
+		if !upstream[folded] && imported[folded] && !pending[folded] {
 			removed = append(removed, string(l))
 		}
 	}
@@ -500,8 +514,11 @@ func (gi *giteaImporter) importStatus(ctx context.Context, repo *cache.RepoCache
 	}
 	// A status that is already current carries no new information, for
 	// example the echo of a change that git-bug exported.
-	if alreadyImported(bug, key) || bug.Snapshot().Status == status {
+	if alreadyImported(bug, key) {
 		return nil
+	}
+	if bug.Snapshot().Status == status {
+		return rememberEvent(bug, key)
 	}
 
 	author, err := gi.ensurePerson(ctx, repo, event.Poster)

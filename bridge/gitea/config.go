@@ -126,6 +126,13 @@ func (g *Gitea) Configure(ctx context.Context, repo *cache.RepoCache, params cor
 		return nil, fmt.Errorf("the Gitea bridge only handle token credentials")
 	}
 
+	// Interactive token entry verifies its owner, which may differ from
+	// the login typed before the token prompt. Save that verified owner.
+	login, ok = token.GetMetadata(auth.MetaKeyLogin)
+	if !ok || login == "" {
+		return nil, fmt.Errorf("credential doesn't have a login")
+	}
+
 	// verify access to the repository with token
 	_, err = validateProject(ctx, baseURL, owner, project, token)
 	if err != nil && hasAlt && (params.CredPrefix == "" || auth.NormalizeBaseURL(alt.baseURL) == auth.NormalizeBaseURL(baseURL)) {
@@ -144,6 +151,7 @@ func (g *Gitea) Configure(ctx context.Context, repo *cache.RepoCache, params cor
 	conf[confKeyOwner] = owner
 	conf[confKeyProject] = project
 	conf[confKeyDefaultLogin] = login
+	conf[confKeyCredentialID] = cred.ID().String()
 
 	err = g.ValidateConfig(conf)
 	if err != nil {

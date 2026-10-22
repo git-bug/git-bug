@@ -248,6 +248,7 @@ func (ge *githubExporter) foreignReason(b *cache.BugCache) (string, bool) {
 func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out chan<- core.ExportResult) {
 	snapshot := b.Snapshot()
 	var bugUpdated bool
+	var missingToken bool
 
 	var bugGithubID string
 	var bugGithubURL string
@@ -344,6 +345,7 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		opAuthor := op.Author()
 		client, err := ge.getClientForIdentity(opAuthor.Id())
 		if err != nil {
+			missingToken = true
 			continue
 		}
 
@@ -460,7 +462,9 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		bugUpdated = true
 	}
 
-	if !bugUpdated {
+	if missingToken {
+		out <- core.NewExportNothing(b.Id(), core.ReasonNoTokenActor)
+	} else if !bugUpdated {
 		out <- core.NewExportNothing(b.Id(), core.ReasonNothingExported)
 	}
 }

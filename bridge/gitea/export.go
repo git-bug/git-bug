@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/git-bug/git-bug/bridge/core"
-	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
@@ -43,20 +42,12 @@ func (ge *giteaExporter) Init(ctx context.Context, repo *cache.RepoCache, conf c
 	ge.conf = conf
 	ge.labels = nil
 
-	creds, err := auth.List(repo,
-		auth.WithTarget(target),
-		auth.WithKind(auth.KindToken),
-		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseURL]),
-		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),
-	)
+	token, err := configuredToken(repo, conf)
 	if err != nil {
 		return err
 	}
-	if len(creds) == 0 {
-		return ErrMissingIdentityToken
-	}
 
-	ge.client, err = buildClient(conf[confKeyBaseURL], creds[0].(*auth.Token))
+	ge.client, err = buildClient(conf[confKeyBaseURL], token)
 	if err != nil {
 		return err
 	}
@@ -87,6 +78,7 @@ func (ge *giteaExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, s
 
 	go func() {
 		defer close(out)
+		ge.labels = nil
 
 		for _, id := range repo.Bugs().AllIds() {
 			if ctx.Err() != nil {

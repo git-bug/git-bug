@@ -81,6 +81,13 @@ func TestReportExportResultsFailsOnErrors(t *testing.T) {
 	assert.Contains(t, out.String(), "exported 0 issues with b bridge")
 }
 
+func TestReportExportResultsIgnoresWrappedCancellation(t *testing.T) {
+	out := newOut()
+	err := reportExportResults(out, "b", exportEvents(core.NewExportError(fmt.Errorf("request: %w", context.Canceled), bugA)), false)
+	require.NoError(t, err)
+	assert.Equal(t, "exported 0 issues with b bridge\n", out.String())
+}
+
 func TestReportImportResultsFailsOnErrors(t *testing.T) {
 	out := newOut()
 	err := reportImportResults(out, "b", importEvents(
