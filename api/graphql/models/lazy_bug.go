@@ -20,14 +20,14 @@ type BugWrapper interface {
 	LastEdit() time.Time
 	Status() common.Status
 	Title() string
-	Comments() ([]bug.Comment, error)
+	Comments(ctx context.Context) ([]bug.Comment, error)
 	Labels() []common.Label
 	Author() (IdentityWrapper, error)
 	Actors() ([]IdentityWrapper, error)
 	Participants() ([]IdentityWrapper, error)
 	CreatedAt() time.Time
-	Timeline() ([]bug.TimelineItem, error)
-	Operations() ([]dag.Operation, error)
+	Timeline(ctx context.Context) ([]bug.TimelineItem, error)
+	Operations(ctx context.Context) ([]dag.Operation, error)
 
 	// IsAuthored is a sign-post method for gqlgen, to mark compliance to an interface.
 	IsAuthored()
@@ -54,7 +54,7 @@ func NewLazyBug(cache *cache.RepoCache, excerpt *cache.BugExcerpt) *lazyBug {
 	}
 }
 
-func (lb *lazyBug) load() error {
+func (lb *lazyBug) load(ctx context.Context) error {
 	lb.mu.Lock()
 	defer lb.mu.Unlock()
 
@@ -62,7 +62,7 @@ func (lb *lazyBug) load() error {
 		return nil
 	}
 
-	b, err := lb.cache.Bugs().Resolve(context.TODO(), lb.excerpt.Id())
+	b, err := lb.cache.Bugs().Resolve(ctx, lb.excerpt.Id())
 	if err != nil {
 		return err
 	}
@@ -95,8 +95,8 @@ func (lb *lazyBug) Title() string {
 	return lb.excerpt.Title
 }
 
-func (lb *lazyBug) Comments() ([]bug.Comment, error) {
-	err := lb.load()
+func (lb *lazyBug) Comments(ctx context.Context) ([]bug.Comment, error) {
+	err := lb.load(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -139,16 +139,16 @@ func (lb *lazyBug) CreatedAt() time.Time {
 	return lb.excerpt.CreateTime()
 }
 
-func (lb *lazyBug) Timeline() ([]bug.TimelineItem, error) {
-	err := lb.load()
+func (lb *lazyBug) Timeline(ctx context.Context) ([]bug.TimelineItem, error) {
+	err := lb.load(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return lb.snap.Timeline, nil
 }
 
-func (lb *lazyBug) Operations() ([]dag.Operation, error) {
-	err := lb.load()
+func (lb *lazyBug) Operations(ctx context.Context) ([]dag.Operation, error) {
+	err := lb.load(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func (l *loadedBug) Title() string {
 	return l.Snapshot.Title
 }
 
-func (l *loadedBug) Comments() ([]bug.Comment, error) {
+func (l *loadedBug) Comments(ctx context.Context) ([]bug.Comment, error) {
 	return l.Snapshot.Comments, nil
 }
 
@@ -215,11 +215,11 @@ func (l *loadedBug) CreatedAt() time.Time {
 	return l.Snapshot.CreateTime
 }
 
-func (l *loadedBug) Timeline() ([]bug.TimelineItem, error) {
+func (l *loadedBug) Timeline(ctx context.Context) ([]bug.TimelineItem, error) {
 	return l.Snapshot.Timeline, nil
 }
 
-func (l *loadedBug) Operations() ([]dag.Operation, error) {
+func (l *loadedBug) Operations(ctx context.Context) ([]dag.Operation, error) {
 	return l.Snapshot.Operations, nil
 }
 

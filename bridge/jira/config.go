@@ -38,7 +38,7 @@ func (*Jira) ValidParams() map[string]interface{} {
 }
 
 // Configure sets up the bridge configuration
-func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
+func (j *Jira) Configure(ctx context.Context, repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
 	var err error
 
 	baseURL := params.BaseURL
@@ -125,7 +125,7 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 	}
 
 	fmt.Printf("Attempting to login with credentials...\n")
-	client, err := buildClient(context.TODO(), baseURL, credType, cred)
+	client, err := buildClient(ctx, baseURL, credType, cred)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 		}
 	}
 
-	err = core.FinishConfig(context.TODO(), repo, metaKeyJiraLogin, login)
+	err = core.FinishConfig(ctx, repo, metaKeyJiraLogin, login)
 	if err != nil {
 		return nil, err
 	}

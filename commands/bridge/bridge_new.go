@@ -200,7 +200,7 @@ func runBridgeNew(env *execenv.Env, opts bridgeNewOptions) error {
 		return err
 	}
 
-	err = b.Configure(opts.params, !opts.nonInteractive)
+	err = b.Configure(env.Ctx, opts.params, !opts.nonInteractive)
 	if err != nil {
 		return err
 	}

@@ -26,10 +26,10 @@ func runBugStatusOpen(env *execenv.Env, args []string) error {
 		return err
 	}
 
-	_, err = b.Open()
+	_, err = b.Open(env.Ctx)
 	if err != nil {
 		return err
 	}
 
-	return b.Commit()
+	return b.Commit(env.Ctx)
 }

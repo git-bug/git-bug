@@ -239,15 +239,15 @@ func (c *RepoCacheBug) ValidLabels() []common.Label {
 // New create a new bug
 // The creation is staged, like any operation: Commit writes the new bug in the
 // repository.
-func (c *RepoCacheBug) New(title string, message string) (*BugCache, *bug.CreateOperation, error) {
-	return c.NewWithFiles(title, message, nil)
+func (c *RepoCacheBug) New(ctx context.Context, title string, message string) (*BugCache, *bug.CreateOperation, error) {
+	return c.NewWithFiles(ctx, title, message, nil)
 }
 
 // NewWithFiles create a new bug with attached files for the message
 // The creation is staged, like any operation: Commit writes the new bug in the
 // repository.
-func (c *RepoCacheBug) NewWithFiles(title string, message string, files []repository.Hash) (*BugCache, *bug.CreateOperation, error) {
-	author, err := c.getUserIdentity(context.TODO())
+func (c *RepoCacheBug) NewWithFiles(ctx context.Context, title string, message string, files []repository.Hash) (*BugCache, *bug.CreateOperation, error) {
+	author, err := c.getUserIdentity(ctx)
 	if err != nil {
 		return nil, nil, err
 	}

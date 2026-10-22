@@ -607,7 +607,7 @@ func TestSubscriptions(t *testing.T) {
 
 	rene, err := rc.Identities().New("René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
-	require.NoError(t, rc.SetUserIdentity(rene))
+	require.NoError(t, rc.SetUserIdentity(t.Context(), rene))
 
 	h := NewHandler(mrc, nil, false)
 	c := client.New(h)
@@ -636,12 +636,12 @@ func TestSubscriptions(t *testing.T) {
 		}
 	}
 
-	b, _, err := rc.Bugs().New("subscribed", "body")
+	b, _, err := rc.Bugs().New(t.Context(), "subscribed", "body")
 	require.NoError(t, err)
-	require.NoError(t, b.Commit())
-	other, _, err := rc.Bugs().New("not subscribed", "body")
+	require.NoError(t, b.Commit(t.Context()))
+	other, _, err := rc.Bugs().New(t.Context(), "not subscribed", "body")
 	require.NoError(t, err)
-	require.NoError(t, other.Commit())
+	require.NoError(t, other.Commit(t.Context()))
 
 	type entityChange struct {
 		Event string
@@ -653,12 +653,12 @@ func TestSubscriptions(t *testing.T) {
 		t.Cleanup(func() { _ = sub.Close() })
 
 		stop := keepDoing(t, func() {
-			_, err := other.SetTitle("other title")
+			_, err := other.SetTitle(t.Context(), "other title")
 			assert.NoError(t, err)
-			assert.NoError(t, other.Commit())
-			_, err = b.SetTitle("new title")
+			assert.NoError(t, other.Commit(t.Context()))
+			_, err = b.SetTitle(t.Context(), "new title")
 			assert.NoError(t, err)
-			assert.NoError(t, b.Commit())
+			assert.NoError(t, b.Commit(t.Context()))
 		})
 		var resp struct{ EntitiesChanged []entityChange }
 		err := sub.Next(&resp)
@@ -675,11 +675,11 @@ func TestSubscriptions(t *testing.T) {
 		var mu sync.Mutex
 		stop := keepDoing(t, func() {
 			// committed with its creation, the comment brings no update of its own
-			b, _, err := rc.Bugs().New("new bug", "body")
+			b, _, err := rc.Bugs().New(t.Context(), "new bug", "body")
 			assert.NoError(t, err)
-			_, _, err = b.AddComment("comment")
+			_, _, err = b.AddComment(t.Context(), "comment")
 			assert.NoError(t, err)
-			assert.NoError(t, b.Commit())
+			assert.NoError(t, b.Commit(t.Context()))
 			mu.Lock()
 			created[b.Id().String()] = true
 			mu.Unlock()
@@ -699,9 +699,9 @@ func TestSubscriptions(t *testing.T) {
 		sub := c.Websocket(fmt.Sprintf(`subscription { entitiesChanged(type: BUG, ids: ["%s"]) { id } }`, b.Id()))
 
 		stop := keepDoing(t, func() {
-			_, err := b.SetTitle("title")
+			_, err := b.SetTitle(t.Context(), "title")
 			assert.NoError(t, err)
-			assert.NoError(t, b.Commit())
+			assert.NoError(t, b.Commit(t.Context()))
 		})
 		var resp struct{ EntitiesChanged []entityChange }
 		err := sub.Next(&resp)
@@ -713,9 +713,9 @@ func TestSubscriptions(t *testing.T) {
 		go func() {
 			defer close(done)
 			for i := 0; i < 20; i++ {
-				_, err := b.SetTitle(fmt.Sprintf("title %d", i))
+				_, err := b.SetTitle(t.Context(), fmt.Sprintf("title %d", i))
 				assert.NoError(t, err)
-				assert.NoError(t, b.Commit())
+				assert.NoError(t, b.Commit(t.Context()))
 			}
 		}()
 		select {
@@ -737,7 +737,7 @@ func TestMutations(t *testing.T) {
 
 	rene, err := rc.Identities().New("René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
-	require.NoError(t, rc.SetUserIdentity(rene))
+	require.NoError(t, rc.SetUserIdentity(t.Context(), rene))
 
 	c := client.New(auth.Middleware(rene.Id())(NewHandler(mrc, nil, false)))
 
@@ -760,9 +760,9 @@ func TestMutations(t *testing.T) {
 	}
 
 	t.Run("mutations on the same bug are committed together", func(t *testing.T) {
-		b, _, err := rc.Bugs().New("title", "body")
+		b, _, err := rc.Bugs().New(t.Context(), "title", "body")
 		require.NoError(t, err)
-		require.NoError(t, b.Commit())
+		require.NoError(t, b.Commit(t.Context()))
 		before := b.LastCommit()
 
 		var data struct {
@@ -793,9 +793,9 @@ func TestMutations(t *testing.T) {
 	})
 
 	t.Run("a single mutation is committed", func(t *testing.T) {
-		b, _, err := rc.Bugs().New("title", "body")
+		b, _, err := rc.Bugs().New(t.Context(), "title", "body")
 		require.NoError(t, err)
-		require.NoError(t, b.Commit())
+		require.NoError(t, b.Commit(t.Context()))
 		before := b.LastCommit()
 
 		mutate(fmt.Sprintf(`mutation {
@@ -807,9 +807,9 @@ func TestMutations(t *testing.T) {
 	})
 
 	t.Run("a bug found through a comment shares the view", func(t *testing.T) {
-		b, _, err := rc.Bugs().New("title", "body")
+		b, _, err := rc.Bugs().New(t.Context(), "title", "body")
 		require.NoError(t, err)
-		require.NoError(t, b.Commit())
+		require.NoError(t, b.Commit(t.Context()))
 		before := b.LastCommit()
 		comment := b.Snapshot().Comments[0].CombinedId()
 
@@ -824,13 +824,13 @@ func TestMutations(t *testing.T) {
 	})
 
 	t.Run("mutations on several bugs are all committed", func(t *testing.T) {
-		b1, _, err := rc.Bugs().New("title 1", "body")
+		b1, _, err := rc.Bugs().New(t.Context(), "title 1", "body")
 		require.NoError(t, err)
-		require.NoError(t, b1.Commit())
+		require.NoError(t, b1.Commit(t.Context()))
 		before1 := b1.LastCommit()
-		b2, _, err := rc.Bugs().New("title 2", "body")
+		b2, _, err := rc.Bugs().New(t.Context(), "title 2", "body")
 		require.NoError(t, err)
-		require.NoError(t, b2.Commit())
+		require.NoError(t, b2.Commit(t.Context()))
 		before2 := b2.LastCommit()
 
 		mutate(fmt.Sprintf(`mutation {
@@ -856,10 +856,10 @@ func TestMutations(t *testing.T) {
 
 		rene, err := rcA.Identities().New("René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
-		require.NoError(t, rcA.SetUserIdentity(rene))
-		b, _, err := rcA.Bugs().New("title", "body")
+		require.NoError(t, rcA.SetUserIdentity(t.Context(), rene))
+		b, _, err := rcA.Bugs().New(t.Context(), "title", "body")
 		require.NoError(t, err)
-		require.NoError(t, b.Commit())
+		require.NoError(t, b.Commit(t.Context()))
 		before := b.LastCommit()
 
 		_, err = rcA.Push(t.Context(), "origin")
@@ -878,9 +878,9 @@ func TestMutations(t *testing.T) {
 	})
 
 	t.Run("a failing mutation commits nothing", func(t *testing.T) {
-		b, _, err := rc.Bugs().New("title", "body")
+		b, _, err := rc.Bugs().New(t.Context(), "title", "body")
 		require.NoError(t, err)
-		require.NoError(t, b.Commit())
+		require.NoError(t, b.Commit(t.Context()))
 		before := b.LastCommit()
 
 		resp, err := c.RawPost(fmt.Sprintf(`mutation {

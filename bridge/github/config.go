@@ -38,7 +38,7 @@ func (g *Github) ValidParams() map[string]interface{} {
 	}
 }
 
-func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
+func (g *Github) Configure(ctx context.Context, repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
 	var err error
 	var owner string
 	var project string
@@ -68,7 +68,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 	}
 
 	// validate project owner and override with the correct case
-	ok, owner, err = validateUsername(owner)
+	ok, owner, err = validateUsername(ctx, owner)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 		login = l
 	case params.TokenRaw != "":
 		token := auth.NewToken(target, params.TokenRaw)
-		login, err = getLoginFromToken(token)
+		login, err = getLoginFromToken(ctx, token)
 		if err != nil {
 			return nil, err
 		}
@@ -103,10 +103,10 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 			if !interactive {
 				return nil, fmt.Errorf("Non-interactive-mode is active. Please specify a login via the --login option.")
 			}
-			login, err = promptLogin()
+			login, err = promptLogin(ctx)
 		} else {
 			// validate login and override with the correct case
-			ok, login, err = validateUsername(params.Login)
+			ok, login, err = validateUsername(ctx, params.Login)
 			if !ok {
 				return nil, fmt.Errorf("invalid parameter login: %v", params.Login)
 			}
@@ -118,7 +118,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 		if !interactive {
 			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify a access token via the --token option.")
 		}
-		cred, err = promptTokenOptions(repo, login, owner, project)
+		cred, err = promptTokenOptions(ctx, repo, login, owner, project)
 		if err != nil {
 			return nil, err
 		}
@@ -130,7 +130,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 	}
 
 	// verify access to the repository with token
-	ok, err = validateProject(owner, project, token)
+	ok, err = validateProject(ctx, owner, project, token)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 		}
 	}
 
-	return conf, core.FinishConfig(context.TODO(), repo, metaKeyGithubLogin, login)
+	return conf, core.FinishConfig(ctx, repo, metaKeyGithubLogin, login)
 }
 
 func (*Github) ValidateConfig(conf core.Configuration) error {
@@ -179,17 +179,17 @@ func (*Github) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-func requestToken() (string, error) {
+func requestToken(ctx context.Context) (string, error) {
 	scope, err := promptUserForProjectVisibility()
 	if err != nil {
 		return "", err
 	}
-	resp, err := requestUserVerificationCode(scope)
+	resp, err := requestUserVerificationCode(ctx, scope)
 	if err != nil {
 		return "", err
 	}
 	promptUserToGoToBrowser(resp.uri, resp.userCode)
-	return pollGithubForAuthorization(resp.deviceCode, resp.interval)
+	return pollGithubForAuthorization(ctx, resp.deviceCode, resp.interval)
 }
 
 func promptUserForProjectVisibility() (string, error) {
@@ -215,15 +215,21 @@ type githRespT struct {
 	interval   int64
 }
 
-func requestUserVerificationCode(scope string) (*githRespT, error) {
+func requestUserVerificationCode(ctx context.Context, scope string) (*githRespT, error) {
 	params := url.Values{}
 	params.Set("client_id", githubClientID)
 	params.Set("scope", scope)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://github.com/login/device/code", strings.NewReader(params.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
 	client := &http.Client{
 		Timeout: defaultTimeout,
 	}
 
-	resp, err := client.PostForm("https://github.com/login/device/code", params)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error requesting user verification code: %w", err)
 	}
@@ -263,7 +269,7 @@ func promptUserToGoToBrowser(url, userCode string) {
 	fmt.Println()
 }
 
-func pollGithubForAuthorization(deviceCode string, intervalSec int64) (string, error) {
+func pollGithubForAuthorization(ctx context.Context, deviceCode string, intervalSec int64) (string, error) {
 	params := url.Values{}
 	params.Set("client_id", githubClientID)
 	params.Set("device_code", deviceCode)
@@ -274,7 +280,13 @@ func pollGithubForAuthorization(deviceCode string, intervalSec int64) (string, e
 	interval := time.Duration(intervalSec * 1100) // milliseconds, add 10% margin
 
 	for {
-		resp, err := client.PostForm("https://github.com/login/oauth/access_token", params)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://github.com/login/oauth/access_token", strings.NewReader(params.Encode()))
+		if err != nil {
+			return "", err
+		}
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		resp, err := client.Do(req)
 		if err != nil {
 			return "", fmt.Errorf("error polling the Github API: %w", err)
 		}
@@ -302,11 +314,7 @@ func pollGithubForAuthorization(deviceCode string, intervalSec int64) (string, e
 		switch apiError := values.Get("error"); apiError {
 		case "slow_down":
 			interval += 5500 // add 5 seconds (RFC 8628), plus some margin
-			time.Sleep(interval * time.Millisecond)
-			continue
 		case "authorization_pending":
-			time.Sleep(interval * time.Millisecond)
-			continue
 		case "":
 			return "", errors.New("unexpected response from Github API")
 		default:
@@ -314,10 +322,16 @@ func pollGithubForAuthorization(deviceCode string, intervalSec int64) (string, e
 			// "incorrect_client_credentials", "incorrect_device_code", or "access_denied"
 			return "", fmt.Errorf("error creating token: %v, %v", apiError, values.Get("error_description"))
 		}
+
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		case <-time.After(interval * time.Millisecond):
+		}
 	}
 }
 
-func promptTokenOptions(repo repository.RepoKeyring, login, owner, project string) (auth.Credential, error) {
+func promptTokenOptions(ctx context.Context, repo repository.RepoKeyring, login, owner, project string) (auth.Credential, error) {
 	creds, err := auth.List(repo,
 		auth.WithTarget(target),
 		auth.WithKind(auth.KindToken),
@@ -337,9 +351,9 @@ func promptTokenOptions(repo repository.RepoKeyring, login, owner, project strin
 	case cred != nil:
 		return cred, nil
 	case index == 0:
-		return promptToken()
+		return promptToken(ctx)
 	case index == 1:
-		value, err := requestToken()
+		value, err := requestToken(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -351,7 +365,7 @@ func promptTokenOptions(repo repository.RepoKeyring, login, owner, project strin
 	}
 }
 
-func promptToken() (*auth.Token, error) {
+func promptToken(ctx context.Context) (*auth.Token, error) {
 	fmt.Println("You can generate a new token by visiting https://github.com/settings/tokens.")
 	fmt.Println("Choose 'Generate new token' and set the necessary access scope for your repository.")
 	fmt.Println()
@@ -371,7 +385,10 @@ func promptToken() (*auth.Token, error) {
 		if !re.MatchString(value) && !legacyRe.MatchString(value) {
 			return "token has incorrect format", nil
 		}
-		login, err = getLoginFromToken(auth.NewToken(target, value))
+		login, err = getLoginFromToken(ctx, auth.NewToken(target, value))
+		if ctx.Err() != nil {
+			return "", ctx.Err()
+		}
 		if err != nil {
 			return fmt.Sprintf("token is invalid: %v", err), nil
 		}
@@ -450,11 +467,11 @@ func getValidGithubRemoteURLs(repo repository.RepoConfig) ([]string, error) {
 	return urls, nil
 }
 
-func promptLogin() (string, error) {
+func promptLogin(ctx context.Context) (string, error) {
 	var login string
 
 	validator := func(_ string, value string) (string, error) {
-		ok, fixed, err := validateUsername(value)
+		ok, fixed, err := validateUsername(ctx, value)
 		if err != nil {
 			return "", err
 		}
@@ -473,28 +490,29 @@ func promptLogin() (string, error) {
 	return login, nil
 }
 
-func validateUsername(username string) (bool, string, error) {
+func validateUsername(ctx context.Context, username string) (bool, string, error) {
 	url := fmt.Sprintf("%s/users/%s", githubV3Url, username)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return false, "", err
+	}
 
 	client := &http.Client{
 		Timeout: defaultTimeout,
 	}
 
-	resp, err := client.Get(url)
+	resp, err := client.Do(req)
 	if err != nil {
 		return false, "", err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return false, "", nil
 	}
 
 	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return false, "", err
-	}
-
-	err = resp.Body.Close()
 	if err != nil {
 		return false, "", err
 	}
@@ -514,10 +532,10 @@ func validateUsername(username string) (bool, string, error) {
 	return true, decoded.Login, nil
 }
 
-func validateProject(owner, project string, token *auth.Token) (bool, error) {
+func validateProject(ctx context.Context, owner, project string, token *auth.Token) (bool, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s", githubV3Url, owner, project)
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return false, err
 	}
@@ -542,8 +560,8 @@ func validateProject(owner, project string, token *auth.Token) (bool, error) {
 	return resp.StatusCode == http.StatusOK, nil
 }
 
-func getLoginFromToken(token *auth.Token) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+func getLoginFromToken(ctx context.Context, token *auth.Token) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	client := buildClient(token)

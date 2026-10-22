@@ -42,7 +42,7 @@ func FinishConfig(ctx context.Context, repo *cache.RepoCache, metaKey string, lo
 		return err
 	}
 
-	err = repo.SetUserIdentity(i)
+	err = repo.SetUserIdentity(ctx, i)
 	if err != nil {
 		return err
 	}

@@ -70,10 +70,10 @@ func runBugCommentNew(env *execenv.Env, opts bugCommentNewOptions, args []string
 		}
 	}
 
-	_, _, err = b.AddComment(text.Cleanup(opts.message))
+	_, _, err = b.AddComment(env.Ctx, text.Cleanup(opts.message))
 	if err != nil {
 		return err
 	}
 
-	return b.Commit()
+	return b.Commit(env.Ctx)
 }

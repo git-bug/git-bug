@@ -167,7 +167,7 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 
 			if !b.NeedCommit() {
 				out <- core.NewImportNothing(b.Id(), "no imported operation")
-			} else if err := b.Commit(); err != nil {
+			} else if err := b.Commit(ctx); err != nil {
 				err = fmt.Errorf("bug commit: %v", err)
 				out <- core.NewImportError(err, "")
 				return
@@ -426,7 +426,7 @@ func (ji *jiraImporter) ensureChange(ctx context.Context, repo *cache.RepoCache,
 
 			opr, isRightType := potentialOp.(*bug.LabelChangeOperation)
 			if isRightType && labelSetsMatch(addedLabels, opr.Added) && labelSetsMatch(removedLabels, opr.Removed) {
-				_, err := b.SetMetadata(opr.Id(), map[string]string{
+				_, err := b.SetMetadata(ctx, opr.Id(), map[string]string{
 					metaKeyJiraDerivedId: entry.ID,
 				})
 				if err != nil {
@@ -438,7 +438,7 @@ func (ji *jiraImporter) ensureChange(ctx context.Context, repo *cache.RepoCache,
 		case "status":
 			opr, isRightType := potentialOp.(*bug.SetStatusOperation)
 			if isRightType && statusMap[opr.Status.String()] == item.To {
-				_, err := b.SetMetadata(opr.Id(), map[string]string{
+				_, err := b.SetMetadata(ctx, opr.Id(), map[string]string{
 					metaKeyJiraDerivedId: entry.ID,
 				})
 				if err != nil {
@@ -452,7 +452,7 @@ func (ji *jiraImporter) ensureChange(ctx context.Context, repo *cache.RepoCache,
 			// text, but it's the title
 			opr, isRightType := potentialOp.(*bug.SetTitleOperation)
 			if isRightType && opr.Title == item.To {
-				_, err := b.SetMetadata(opr.Id(), map[string]string{
+				_, err := b.SetMetadata(ctx, opr.Id(), map[string]string{
 					metaKeyJiraDerivedId: entry.ID,
 				})
 				if err != nil {
@@ -468,7 +468,7 @@ func (ji *jiraImporter) ensureChange(ctx context.Context, repo *cache.RepoCache,
 			if isRightType &&
 				opr.Target == b.Snapshot().Operations[0].Id() &&
 				opr.Message == item.ToString {
-				_, err := b.SetMetadata(opr.Id(), map[string]string{
+				_, err := b.SetMetadata(ctx, opr.Id(), map[string]string{
 					metaKeyJiraDerivedId: entry.ID,
 				})
 				if err != nil {

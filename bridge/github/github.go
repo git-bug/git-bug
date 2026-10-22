@@ -50,6 +50,6 @@ func buildClient(token *auth.Token) *rateLimitHandlerClient {
 	src := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token.Value},
 	)
-	httpClient := oauth2.NewClient(context.TODO(), src)
+	httpClient := oauth2.NewClient(context.Background(), src)
 	return newRateLimitHandlerClient(httpClient)
 }

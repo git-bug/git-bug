@@ -34,7 +34,7 @@ func TestGitFileHandlers(t *testing.T) {
 
 	author, err := repoCache.Identities().New("test identity", "test@test.org")
 	require.NoError(t, err)
-	err = repoCache.SetUserIdentity(author)
+	err = repoCache.SetUserIdentity(t.Context(), author)
 	require.NoError(t, err)
 
 	// Build a PNG image to use as test content.

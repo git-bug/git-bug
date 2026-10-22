@@ -212,10 +212,10 @@ func RemoveBridge(repo repository.RepoConfig, name string) error {
 }
 
 // Configure run the target specific configuration process
-func (b *Bridge) Configure(params BridgeParams, interactive bool) error {
+func (b *Bridge) Configure(ctx context.Context, params BridgeParams, interactive bool) error {
 	validateParams(params, b.impl)
 
-	conf, err := b.impl.Configure(b.repo, params, interactive)
+	conf, err := b.impl.Configure(ctx, b.repo, params, interactive)
 	if err != nil {
 		return err
 	}

@@ -63,8 +63,7 @@ func runBridgePull(env *execenv.Env, opts bridgePullOptions, args []string) erro
 		return err
 	}
 
-	parentCtx := context.Background()
-	ctx, cancel := context.WithCancel(parentCtx)
+	ctx, cancel := context.WithCancel(env.Ctx)
 	defer cancel()
 
 	// buffered channel to avoid send block at the end
