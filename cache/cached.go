@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -185,7 +186,7 @@ func (e *CachedEntityBase[SnapT, OpT]) commitLocked() error {
 		if !errors.Is(err, repository.ErrRefChanged) || attempt == maxCommitRetries {
 			return err
 		}
-		err = e.shared.Repair(e.repo, e.resolvers())
+		err = e.shared.Repair(context.TODO(), e.repo, e.resolvers())
 		if err != nil {
 			return err
 		}

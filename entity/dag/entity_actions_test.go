@@ -1,6 +1,7 @@
 package dag
 
 import (
+	"context"
 	"fmt"
 	"maps"
 	"slices"
@@ -42,7 +43,7 @@ func TestEntityPushPull(t *testing.T) {
 	err = Pull(t.Context(), def, wrapper, repoB, resolvers, "remote", id1)
 	require.NoError(t, err)
 
-	entities := allEntities(t, ReadAll(def, wrapper, repoB, resolvers))
+	entities := allEntities(t, ReadAll(t.Context(), def, wrapper, repoB, resolvers))
 	require.Len(t, entities, 1)
 
 	// B --> remote --> A
@@ -58,7 +59,7 @@ func TestEntityPushPull(t *testing.T) {
 	err = Pull(t.Context(), def, wrapper, repoA, resolvers, "remote", id1)
 	require.NoError(t, err)
 
-	entities = allEntities(t, ReadAll(def, wrapper, repoB, resolvers))
+	entities = allEntities(t, ReadAll(t.Context(), def, wrapper, repoB, resolvers))
 	require.Len(t, entities, 2)
 }
 
@@ -186,7 +187,7 @@ func TestMerge(t *testing.T) {
 	_, err = Fetch(t.Context(), def, repoB, "remote")
 	require.NoError(t, err)
 
-	results := MergeAll(def, wrapper, repoB, resolvers, "remote", id1)
+	results := MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", id1)
 
 	assertMergeResults(t, []entity.MergeResult{
 		{
@@ -204,7 +205,7 @@ func TestMerge(t *testing.T) {
 	// SCENARIO 2
 	// if the remote and local Entity have the same state, nothing is changed
 
-	results = MergeAll(def, wrapper, repoB, resolvers, "remote", id1)
+	results = MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", id1)
 
 	assertMergeResults(t, []entity.MergeResult{
 		{
@@ -230,7 +231,7 @@ func TestMerge(t *testing.T) {
 	err = e2A.Commit(repoA)
 	require.NoError(t, err)
 
-	results = MergeAll(def, wrapper, repoA, resolvers, "remote", id1)
+	results = MergeAll(t.Context(), def, wrapper, repoA, resolvers, "remote", id1)
 
 	assertMergeResults(t, []entity.MergeResult{
 		{
@@ -255,7 +256,7 @@ func TestMerge(t *testing.T) {
 	_, err = Fetch(t.Context(), def, repoB, "remote")
 	require.NoError(t, err)
 
-	results = MergeAll(def, wrapper, repoB, resolvers, "remote", id1)
+	results = MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", id1)
 
 	assertMergeResults(t, []entity.MergeResult{
 		{
@@ -282,10 +283,10 @@ func TestMerge(t *testing.T) {
 	err = e2A.Commit(repoA)
 	require.NoError(t, err)
 
-	e1B, err := Read(def, wrapper, repoB, resolvers, e1A.Id())
+	e1B, err := Read(t.Context(), def, wrapper, repoB, resolvers, e1A.Id())
 	require.NoError(t, err)
 
-	e2B, err := Read(def, wrapper, repoB, resolvers, e2A.Id())
+	e2B, err := Read(t.Context(), def, wrapper, repoB, resolvers, e2A.Id())
 	require.NoError(t, err)
 
 	e1B.Append(newOp1(id1, "barbarfoofoo"))
@@ -302,7 +303,7 @@ func TestMerge(t *testing.T) {
 	_, err = Fetch(t.Context(), def, repoB, "remote")
 	require.NoError(t, err)
 
-	results = MergeAll(def, wrapper, repoB, resolvers, "remote", id1)
+	results = MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", id1)
 
 	assertMergeResults(t, []entity.MergeResult{
 		{
@@ -323,7 +324,7 @@ func TestMerge(t *testing.T) {
 	_, err = Fetch(t.Context(), def, repoA, "remote")
 	require.NoError(t, err)
 
-	results = MergeAll(def, wrapper, repoA, resolvers, "remote", id1)
+	results = MergeAll(t.Context(), def, wrapper, repoA, resolvers, "remote", id1)
 
 	assertMergeResults(t, []entity.MergeResult{
 		{
@@ -358,7 +359,7 @@ func TestMergeWithoutAuthor(t *testing.T) {
 	require.NoError(t, err)
 
 	// new entity: no author needed
-	results := MergeAll(def, wrapper, repoB, resolvers, "remote", nil)
+	results := MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", nil)
 	assertMergeResults(t, []entity.MergeResult{
 		{Id: eA.Id(), Status: entity.MergeStatusNew},
 	}, results)
@@ -368,7 +369,7 @@ func TestMergeWithoutAuthor(t *testing.T) {
 	err = eA.Commit(repoA)
 	require.NoError(t, err)
 
-	eB, err := Read(def, wrapper, repoB, resolvers, eA.Id())
+	eB, err := Read(t.Context(), def, wrapper, repoB, resolvers, eA.Id())
 	require.NoError(t, err)
 	eB.Append(newOp1(id1, "foobar"))
 	err = eB.Commit(repoB)
@@ -384,7 +385,7 @@ func TestMergeWithoutAuthor(t *testing.T) {
 
 	// merge commit required: error, and the local entity is left untouched
 	var all []entity.MergeResult
-	for result := range MergeAll(def, wrapper, repoB, resolvers, "remote", nil) {
+	for result := range MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", nil) {
 		all = append(all, result)
 	}
 	require.Len(t, all, 1)
@@ -397,7 +398,7 @@ func TestMergeWithoutAuthor(t *testing.T) {
 	require.Equal(t, before, after)
 
 	// with an author, the merge goes through
-	results = MergeAll(def, wrapper, repoB, resolvers, "remote", id1)
+	results = MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", id1)
 	assertMergeResults(t, []entity.MergeResult{
 		{Id: eA.Id(), Status: entity.MergeStatusUpdated},
 	}, results)
@@ -416,7 +417,7 @@ func TestMergeConcurrentJoinsBranches(t *testing.T) {
 	require.NoError(t, err)
 	_, err = Fetch(t.Context(), def, repoB, "remote")
 	require.NoError(t, err)
-	for result := range MergeAll(def, wrapper, repoB, resolvers, "remote", id1) {
+	for result := range MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", id1) {
 		require.NoError(t, result.Err)
 	}
 
@@ -424,7 +425,7 @@ func TestMergeConcurrentJoinsBranches(t *testing.T) {
 	eA.Append(newOp1(id1, "remote"))
 	require.NoError(t, eA.Commit(repoA))
 
-	eB, err := Read(def, wrapper, repoB, resolvers, eA.Id())
+	eB, err := Read(t.Context(), def, wrapper, repoB, resolvers, eA.Id())
 	require.NoError(t, err)
 	eB.Append(newOp1(id1, "local"))
 	require.NoError(t, eB.Commit(repoB))
@@ -435,14 +436,14 @@ func TestMergeConcurrentJoinsBranches(t *testing.T) {
 	require.NoError(t, err)
 
 	var all []entity.MergeResult
-	for result := range MergeAll(def, wrapper, repoB, resolvers, "remote", id1) {
+	for result := range MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", id1) {
 		all = append(all, result)
 	}
 	require.Len(t, all, 1)
 	require.NoError(t, all[0].Err)
 	require.Equal(t, entity.MergeStatusUpdated, all[0].Status)
 
-	merged, err := Read(def, wrapper, repoB, resolvers, eA.Id())
+	merged, err := Read(t.Context(), def, wrapper, repoB, resolvers, eA.Id())
 	require.NoError(t, err)
 
 	var fields []string
@@ -476,7 +477,7 @@ func TestMergeUnequalBranches(t *testing.T) {
 				eA.Append(newOp2(id1, fmt.Sprintf("remote %d", i)))
 				require.NoError(t, eA.Commit(repoA))
 			}
-			eB, err := Read(def, wrapper, repoB, resolvers, eA.Id())
+			eB, err := Read(t.Context(), def, wrapper, repoB, resolvers, eA.Id())
 			require.NoError(t, err)
 			for i := range tc.local {
 				eB.Append(newOp2(id2, fmt.Sprintf("local %d", i)))
@@ -491,11 +492,11 @@ func TestMergeUnequalBranches(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, Pull(t.Context(), def, wrapper, repoA, resolvers, "remote", id1))
 
-			readB, err := Read(def, wrapper, repoB, resolvers, eA.Id())
+			readB, err := Read(t.Context(), def, wrapper, repoB, resolvers, eA.Id())
 			require.NoError(t, err)
 			require.Len(t, readB.Operations(), 1+tc.local+tc.remote)
 
-			readA, err := Read(def, wrapper, repoA, resolvers, eA.Id())
+			readA, err := Read(t.Context(), def, wrapper, repoA, resolvers, eA.Id())
 			require.NoError(t, err)
 			require.Equal(t, readB.LastCommit(), readA.LastCommit())
 			require.Equal(t, readB.Operations(), readA.Operations())
@@ -527,13 +528,13 @@ func TestMergeInvalidRemote(t *testing.T) {
 				require.NoError(t, err)
 				_, err = Fetch(t.Context(), def, repoB, "remote")
 				require.NoError(t, err)
-				for result := range MergeAll(def, wrapper, repoB, resolvers, "remote", id1) {
+				for result := range MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", id1) {
 					require.NoError(t, result.Err)
 				}
 			}
 
 			if tc.diverged {
-				eB, err := Read(def, wrapper, repoB, resolvers, eA.Id())
+				eB, err := Read(t.Context(), def, wrapper, repoB, resolvers, eA.Id())
 				require.NoError(t, err)
 				eB.Append(newOp1(id1, "bar"))
 				require.NoError(t, eB.Commit(repoB))
@@ -567,7 +568,7 @@ func TestMergeInvalidRemote(t *testing.T) {
 			before := resolveLocal()
 
 			var all []entity.MergeResult
-			for result := range MergeAll(def, wrapper, repoB, resolvers, "remote", id1) {
+			for result := range MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", id1) {
 				all = append(all, result)
 			}
 			require.Len(t, all, 1)
@@ -598,13 +599,13 @@ func TestMergeNothingDoesntReadRemote(t *testing.T) {
 	// reading an entity resolves the author of its operations
 	var resolved int
 	counting := entity.Resolvers{
-		&identity.Identity{}: entity.ResolverFunc[identity.Interface](func(id entity.Id) (identity.Interface, error) {
+		&identity.Identity{}: entity.ResolverFunc[identity.Interface](func(ctx context.Context, id entity.Id) (identity.Interface, error) {
 			resolved++
-			return entity.Resolve[identity.Interface](resolvers, id)
+			return entity.Resolve[identity.Interface](ctx, resolvers, id)
 		}),
 	}
 
-	results := MergeAll(def, wrapper, repoB, counting, "remote", id1)
+	results := MergeAll(t.Context(), def, wrapper, repoB, counting, "remote", id1)
 	assertMergeResults(t, []entity.MergeResult{
 		{Id: e.Id(), Status: entity.MergeStatusNew},
 	}, results)
@@ -612,24 +613,73 @@ func TestMergeNothingDoesntReadRemote(t *testing.T) {
 
 	// same state on both sides
 	resolved = 0
-	results = MergeAll(def, wrapper, repoB, counting, "remote", id1)
+	results = MergeAll(t.Context(), def, wrapper, repoB, counting, "remote", id1)
 	assertMergeResults(t, []entity.MergeResult{
 		{Id: e.Id(), Status: entity.MergeStatusNothing},
 	}, results)
 	require.Zero(t, resolved)
 
 	// the local entity has new commits
-	eB, err := Read(def, wrapper, repoB, resolvers, e.Id())
+	eB, err := Read(t.Context(), def, wrapper, repoB, resolvers, e.Id())
 	require.NoError(t, err)
 	eB.Append(newOp1(id1, "bar"))
 	require.NoError(t, eB.Commit(repoB))
 
 	resolved = 0
-	results = MergeAll(def, wrapper, repoB, counting, "remote", id1)
+	results = MergeAll(t.Context(), def, wrapper, repoB, counting, "remote", id1)
 	assertMergeResults(t, []entity.MergeResult{
 		{Id: e.Id(), Status: entity.MergeStatusNothing},
 	}, results)
 	require.Zero(t, resolved)
+}
+
+// A merge cut short is an error, not invalid remote data, and nothing more is
+// merged.
+func TestMergeCanceled(t *testing.T) {
+	repoA, repoB, _, id1, id2, resolvers, def := makeTestContextRemote(t)
+
+	e1 := New(def)
+	e1.Append(newOp1(id1, "foo"))
+	require.NoError(t, e1.Commit(repoA))
+	e2 := New(def)
+	e2.Append(newOp2(id2, "bar"))
+	require.NoError(t, e2.Commit(repoA))
+
+	_, err := Push(t.Context(), def, repoA, "remote")
+	require.NoError(t, err)
+	_, err = Fetch(t.Context(), def, repoB, "remote")
+	require.NoError(t, err)
+
+	// canceled while reading the first remote entity
+	ctx, cancel := context.WithCancel(t.Context())
+	canceling := entity.Resolvers{
+		&identity.Identity{}: entity.ResolverFunc[identity.Interface](func(ctx context.Context, id entity.Id) (identity.Interface, error) {
+			cancel()
+			return nil, ctx.Err()
+		}),
+	}
+
+	var results []entity.MergeResult
+	for result := range MergeAll(ctx, def, wrapper, repoB, canceling, "remote", id1) {
+		results = append(results, result)
+	}
+	require.Len(t, results, 1)
+	require.Equal(t, entity.MergeStatusError, results[0].Status)
+	require.ErrorIs(t, results[0].Err, context.Canceled)
+
+	ids, err := ListLocalIds(def, repoB)
+	require.NoError(t, err)
+	require.Empty(t, ids)
+
+	// a later merge does it all
+	results = nil
+	for result := range MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", id1) {
+		results = append(results, result)
+	}
+	require.Len(t, results, 2)
+	for _, result := range results {
+		require.Equal(t, entity.MergeStatusNew, result.Status)
+	}
 }
 
 func TestRemove(t *testing.T) {
@@ -644,16 +694,16 @@ func TestRemove(t *testing.T) {
 
 	// the push created the remote-tracking ref, so the remote copy is readable,
 	// which makes the check below after the removal meaningful
-	_, err = readTracking(def, wrapper, repoA, resolvers, "remote", e.Id())
+	_, err = readTracking(t.Context(), def, wrapper, repoA, resolvers, "remote", e.Id())
 	require.NoError(t, err)
 
 	err = Remove(def, repoA, e.Id())
 	require.NoError(t, err)
 
-	_, err = Read(def, wrapper, repoA, resolvers, e.Id())
+	_, err = Read(t.Context(), def, wrapper, repoA, resolvers, e.Id())
 	require.Error(t, err)
 
-	_, err = readTracking(def, wrapper, repoA, resolvers, "remote", e.Id())
+	_, err = readTracking(t.Context(), def, wrapper, repoA, resolvers, "remote", e.Id())
 	require.Error(t, err)
 
 	// Remove is idempotent
@@ -680,10 +730,10 @@ func TestRemoveAll(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, id := range ids {
-		_, err = Read(def, wrapper, repoA, resolvers, id)
+		_, err = Read(t.Context(), def, wrapper, repoA, resolvers, id)
 		require.Error(t, err)
 
-		_, err = readTracking(def, wrapper, repoA, resolvers, "remote", id)
+		_, err = readTracking(t.Context(), def, wrapper, repoA, resolvers, "remote", id)
 		require.Error(t, err)
 	}
 

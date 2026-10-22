@@ -25,7 +25,7 @@ func newUserAdoptCommand(env *execenv.Env) *cobra.Command {
 func runUserAdopt(env *execenv.Env, args []string) error {
 	prefix := args[0]
 
-	i, err := env.Backend.Identities().ResolvePrefix(prefix)
+	i, err := env.Backend.Identities().ResolvePrefix(env.Ctx, prefix)
 	if err != nil {
 		return err
 	}

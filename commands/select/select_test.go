@@ -21,7 +21,7 @@ func TestSelect(t *testing.T) {
 	const namespace = "foos"
 
 	resolve := func(args []string) (*cache.BugCache, []string, error) {
-		return Resolve[*cache.BugCache](backend, typename, namespace, backend.Bugs(), args)
+		return Resolve[*cache.BugCache](t.Context(), backend, typename, namespace, backend.Bugs(), args)
 	}
 
 	_, _, err = resolve([]string{})

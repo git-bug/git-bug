@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -61,7 +62,7 @@ func (lb *lazyBug) load() error {
 		return nil
 	}
 
-	b, err := lb.cache.Bugs().Resolve(lb.excerpt.Id())
+	b, err := lb.cache.Bugs().Resolve(context.TODO(), lb.excerpt.Id())
 	if err != nil {
 		return err
 	}

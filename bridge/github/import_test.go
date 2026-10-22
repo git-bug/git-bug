@@ -204,7 +204,7 @@ func TestGithubImporter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b, err := backend.Bugs().ResolveBugCreateMetadata(metaKeyGithubUrl, tt.url)
+			b, err := backend.Bugs().ResolveBugCreateMetadata(t.Context(), metaKeyGithubUrl, tt.url)
 			require.NoError(t, err)
 
 			ops := b.Snapshot().Operations

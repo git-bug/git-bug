@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -51,7 +52,7 @@ func (li *lazyIdentity) load() (*cache.IdentityCache, error) {
 		return li.id, nil
 	}
 
-	id, err := li.cache.Identities().Resolve(li.excerpt.Id())
+	id, err := li.cache.Identities().Resolve(context.TODO(), li.excerpt.Id())
 	if err != nil {
 		return nil, fmt.Errorf("cache: missing identity %v", li.excerpt.Id())
 	}

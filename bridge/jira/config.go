@@ -148,7 +148,7 @@ func (j *Jira) Configure(repo *cache.RepoCache, params core.BridgeParams, intera
 		}
 	}
 
-	err = core.FinishConfig(repo, metaKeyJiraLogin, login)
+	err = core.FinishConfig(context.TODO(), repo, metaKeyJiraLogin, login)
 	if err != nil {
 		return nil, err
 	}

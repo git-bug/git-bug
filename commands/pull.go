@@ -51,7 +51,7 @@ func runPull(ctx context.Context, env *execenv.Env, args []string) error {
 
 	env.Out.Println("Merging data ...")
 
-	for result := range env.Backend.MergeAll(remote) {
+	for result := range env.Backend.MergeAll(ctx, remote) {
 		if result.Err != nil {
 			env.Err.Println(result.Err)
 		}

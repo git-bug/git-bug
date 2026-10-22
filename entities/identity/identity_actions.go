@@ -27,7 +27,7 @@ func Pull(ctx context.Context, repo repository.Repo, remote string) error {
 		return err
 	}
 
-	for merge := range MergeAll(repo, remote) {
+	for merge := range MergeAll(ctx, repo, remote) {
 		if merge.Err != nil {
 			return merge.Err
 		}
@@ -40,7 +40,7 @@ func Pull(ctx context.Context, repo repository.Repo, remote string) error {
 }
 
 // MergeAll will merge all the available remote identity
-func MergeAll(repo repository.Repo, remote string) <-chan entity.MergeResult {
+func MergeAll(ctx context.Context, repo repository.Repo, remote string) <-chan entity.MergeResult {
 	out := make(chan entity.MergeResult)
 
 	go func() {
@@ -54,10 +54,20 @@ func MergeAll(repo repository.Repo, remote string) <-chan entity.MergeResult {
 		}
 
 		for key, remoteCommit := range remoteRefs {
+			if err := ctx.Err(); err != nil {
+				out <- entity.NewMergeError(err, "")
+				return
+			}
+
 			id := entity.Id(key)
-			remoteIdentity, err := read(repo, id, remoteCommit)
+			remoteIdentity, err := read(ctx, repo, id, remoteCommit)
 
 			if err != nil {
+				// a read cut short says nothing of the remote data
+				if ctx.Err() != nil {
+					out <- entity.NewMergeError(err, id)
+					return
+				}
 				out <- entity.NewMergeInvalidStatus(id, fmt.Errorf("remote identity is not readable: %w", err).Error())
 				continue
 			}
@@ -88,7 +98,7 @@ func MergeAll(repo repository.Repo, remote string) <-chan entity.MergeResult {
 				continue
 			}
 
-			localIdentity, err := read(repo, id, localCommit)
+			localIdentity, err := read(ctx, repo, id, localCommit)
 
 			if err != nil {
 				out <- entity.NewMergeError(fmt.Errorf("local identity is not readable: %w", err), id)

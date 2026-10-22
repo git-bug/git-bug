@@ -87,7 +87,7 @@ func (c *RepoCache) RemoveAll() error {
 }
 
 // MergeAll will merge all the available remote bug and identities
-func (c *RepoCache) MergeAll(remote string) <-chan entity.MergeResult {
+func (c *RepoCache) MergeAll(ctx context.Context, remote string) <-chan entity.MergeResult {
 	out := make(chan entity.MergeResult)
 
 	dependency := [][]cacheMgmt{
@@ -104,7 +104,7 @@ func (c *RepoCache) MergeAll(remote string) <-chan entity.MergeResult {
 			for _, subcache := range subcaches {
 				wg.Add(1)
 				go func(subcache cacheMgmt) {
-					for res := range subcache.MergeAll(remote) {
+					for res := range subcache.MergeAll(ctx, remote) {
 						out <- res
 					}
 					wg.Done()
@@ -136,16 +136,20 @@ func (c *RepoCache) Pull(ctx context.Context, remote string) error {
 		return err
 	}
 
-	for merge := range c.MergeAll(remote) {
-		if merge.Err != nil {
-			return merge.Err
+	// MergeAll needs to be read to the end, so the first failure is kept for later
+	var firstErr error
+	for merge := range c.MergeAll(ctx, remote) {
+		if firstErr != nil {
+			continue
 		}
-		if merge.Status == entity.MergeStatusInvalid {
-			return fmt.Errorf("merge failure: %s", merge.Reason)
+		if merge.Err != nil {
+			firstErr = merge.Err
+		} else if merge.Status == entity.MergeStatusInvalid {
+			firstErr = fmt.Errorf("merge failure: %s", merge.Reason)
 		}
 	}
 
-	return nil
+	return firstErr
 }
 
 func (c *RepoCache) SetUserIdentity(i *IdentityCache) error {
@@ -153,7 +157,7 @@ func (c *RepoCache) SetUserIdentity(i *IdentityCache) error {
 	defer c.muUserIdentity.RUnlock()
 
 	// Make sure that everything is fine
-	if _, err := c.identities.Resolve(i.Id()); err != nil {
+	if _, err := c.identities.Resolve(context.TODO(), i.Id()); err != nil {
 		panic("SetUserIdentity while the identity is not from the cache, something is wrong")
 	}
 
@@ -180,11 +184,11 @@ func (c *RepoCache) ClearUserIdentity() error {
 	return nil
 }
 
-func (c *RepoCache) GetUserIdentity() (*IdentityCache, error) {
+func (c *RepoCache) GetUserIdentity(ctx context.Context) (*IdentityCache, error) {
 	c.muUserIdentity.RLock()
 	if c.userIdentityId != "" {
 		defer c.muUserIdentity.RUnlock()
-		return c.identities.Resolve(c.userIdentityId)
+		return c.identities.Resolve(ctx, c.userIdentityId)
 	}
 	c.muUserIdentity.RUnlock()
 
@@ -198,7 +202,7 @@ func (c *RepoCache) GetUserIdentity() (*IdentityCache, error) {
 
 	c.userIdentityId = i
 
-	return c.identities.Resolve(i)
+	return c.identities.Resolve(ctx, i)
 }
 
 func (c *RepoCache) GetUserIdentityExcerpt() (*IdentityExcerpt, error) {

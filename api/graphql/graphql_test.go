@@ -751,7 +751,7 @@ func TestMutations(t *testing.T) {
 	// of the commit before, and returns its fresh state
 	requireOnePack := func(t *testing.T, rc *cache.RepoCache, repo repository.Repo, id entity.Id, before repository.Hash) *bug.Snapshot {
 		t.Helper()
-		b, err := rc.Bugs().Resolve(id)
+		b, err := rc.Bugs().Resolve(t.Context(), id)
 		require.NoError(t, err)
 		commit, err := repo.ReadCommit(b.LastCommit())
 		require.NoError(t, err)
@@ -891,7 +891,7 @@ func TestMutations(t *testing.T) {
 		require.NotEmpty(t, resp.Errors)
 		require.Nil(t, resp.Data)
 
-		b, err = rc.Bugs().Resolve(b.Id())
+		b, err = rc.Bugs().Resolve(t.Context(), b.Id())
 		require.NoError(t, err)
 		require.Equal(t, before, b.LastCommit())
 		require.Equal(t, "title", b.Snapshot().Title)
@@ -905,7 +905,7 @@ func TestMutations(t *testing.T) {
 			bugCreate(input: {title: "created", message: "body"}) { bug { id } }
 		}`, &data)
 
-		b, err := rc.Bugs().Resolve(entity.Id(data.BugCreate.Bug.Id))
+		b, err := rc.Bugs().Resolve(t.Context(), entity.Id(data.BugCreate.Bug.Id))
 		require.NoError(t, err)
 		require.Equal(t, "created", b.Snapshot().Title)
 		commits, err := repo.ListCommits(t.Context(), b.LastCommit())

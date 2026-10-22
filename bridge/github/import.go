@@ -182,7 +182,7 @@ func (gi *githubImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 	}
 
 	// resolve bug
-	b, err := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
+	b, err := repo.Bugs().ResolveMatcher(ctx, func(excerpt *cache.BugExcerpt) bool {
 		return excerpt.CreateMetadata[metaKeyGithubUrl] == issue.Url.String() &&
 			excerpt.CreateMetadata[metaKeyGithubId] == parseId(issue.Id)
 	})
@@ -497,7 +497,7 @@ func (gi *githubImporter) ensurePerson(ctx context.Context, repo *cache.RepoCach
 	}
 
 	// Look first in the cache
-	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGithubLogin, string(actor.Login))
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(ctx, metaKeyGithubLogin, string(actor.Login))
 	if err == nil {
 		return i, nil
 	}
@@ -552,7 +552,7 @@ func (gi *githubImporter) ensurePerson(ctx context.Context, repo *cache.RepoCach
 func (gi *githubImporter) getGhost(ctx context.Context, repo *cache.RepoCache) (*cache.IdentityCache, error) {
 	loginName := "ghost"
 	// Look first in the cache
-	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGithubLogin, loginName)
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(ctx, metaKeyGithubLogin, loginName)
 	if err == nil {
 		return i, nil
 	}

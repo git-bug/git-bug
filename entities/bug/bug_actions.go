@@ -30,8 +30,8 @@ func Pull(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers,
 // MergeAll will merge all the available remote bug
 // Note: an author is necessary for the case where a merge commit is created, as this commit will
 // have an author and may be signed if a signing key is available.
-func MergeAll(repo repository.Repo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult {
-	return dag.MergeAll(def, wrapper, repo, resolvers, remote, mergeAuthor)
+func MergeAll(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult {
+	return dag.MergeAll(ctx, def, wrapper, repo, resolvers, remote, mergeAuthor)
 }
 
 // Remove will remove a local bug from its entity.Id

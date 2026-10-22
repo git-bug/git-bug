@@ -3,6 +3,7 @@
 package dag
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,7 +19,7 @@ import (
 const creationClockPattern = "%s-create"
 const editClockPattern = "%s-edit"
 
-type OperationUnmarshaler func(raw json.RawMessage, resolver entity.Resolvers) (Operation, error)
+type OperationUnmarshaler func(ctx context.Context, raw json.RawMessage, resolver entity.Resolvers) (Operation, error)
 
 // Definition hold the details defining one specialization of an Entity.
 type Definition struct {
@@ -62,7 +63,7 @@ func New(definition Definition) *Entity {
 }
 
 // Read will read and decode a stored local Entity from a repository
-func Read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (EntityT, error) {
+func Read[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (EntityT, error) {
 	if err := id.Validate(); err != nil {
 		return *new(EntityT), fmt.Errorf("invalid id: %w", err)
 	}
@@ -75,11 +76,11 @@ func Read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 		return *new(EntityT), err
 	}
 
-	return read[EntityT](def, wrapper, repo, resolvers, id, commit)
+	return read[EntityT](ctx, def, wrapper, repo, resolvers, id, commit)
 }
 
 // readTracking will read and decode an Entity from the tracking refs of a remote
-func readTracking[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, remote string, id entity.Id) (EntityT, error) {
+func readTracking[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, remote string, id entity.Id) (EntityT, error) {
 	if err := id.Validate(); err != nil {
 		return *new(EntityT), fmt.Errorf("invalid id: %w", err)
 	}
@@ -92,13 +93,13 @@ func readTracking[EntityT entity.Interface](def Definition, wrapper func(e *Enti
 		return *new(EntityT), err
 	}
 
-	return read[EntityT](def, wrapper, repo, resolvers, id, commit)
+	return read[EntityT](ctx, def, wrapper, repo, resolvers, id, commit)
 }
 
 // read fetch from git and decode an Entity from its last commit, and make sure
 // that it is the Entity with the given id.
-func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash) (EntityT, error) {
-	ops, createTime, editTime, err := readSince(def, repo, resolvers, id, lastCommit, "", 0)
+func read[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash) (EntityT, error) {
+	ops, createTime, editTime, err := readSince(ctx, def, repo, resolvers, id, lastCommit, "", 0)
 	if err != nil {
 		return *new(EntityT), err
 	}
@@ -116,7 +117,7 @@ func read[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Enti
 // and make sure that it is the Entity with the given id.
 // If since is not empty, only the commits after it are read, and sinceEditTime must be
 // its edit time. Those commits must all descend from it, otherwise an error is returned.
-func readSince(def Definition, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash, since repository.Hash, sinceEditTime lamport.Time) ([]Operation, lamport.Time, lamport.Time, error) {
+func readSince(ctx context.Context, def Definition, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash, since repository.Hash, sinceEditTime lamport.Time) ([]Operation, lamport.Time, lamport.Time, error) {
 	// Perform a breadth-first search to discover the commits of the DAG, going back in time
 	// up to the chronological root, or to since. Along the way, count the children of each
 	// commit.
@@ -136,6 +137,10 @@ func readSince(def Definition, repo repository.Repo, resolvers entity.Resolvers,
 		// pop
 		hash := queue[0]
 		queue = queue[1:]
+
+		if err := ctx.Err(); err != nil {
+			return nil, 0, 0, err
+		}
 
 		commit, err := repo.ReadCommit(hash)
 		if err != nil {
@@ -245,7 +250,11 @@ func readSince(def Definition, repo repository.Repo, resolvers entity.Resolvers,
 			return nil, 0, 0, fmt.Errorf("multiple leafs in the entity DAG")
 		}
 
-		opp, err := readOperationPack(def, repo, resolvers, commit)
+		if err := ctx.Err(); err != nil {
+			return nil, 0, 0, err
+		}
+
+		opp, err := readOperationPack(ctx, def, repo, resolvers, commit)
 		if err != nil {
 			return nil, 0, 0, err
 		}
@@ -405,7 +414,7 @@ func readClockNoCheck(repo repository.Repo, lastCommit repository.Hash) (createT
 }
 
 // ReadAll read and parse all local Entity
-func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[EntityT] {
+func ReadAll[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers) <-chan entity.StreamedEntity[EntityT] {
 	out := make(chan entity.StreamedEntity[EntityT])
 
 	go func() {
@@ -421,7 +430,7 @@ func ReadAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) E
 		current := int64(1)
 
 		for key, commit := range refs {
-			e, err := read[EntityT](def, wrapper, repo, resolvers, entity.Id(key), commit)
+			e, err := read[EntityT](ctx, def, wrapper, repo, resolvers, entity.Id(key), commit)
 
 			if err != nil {
 				out <- entity.StreamedEntity[EntityT]{Err: err}
@@ -702,7 +711,7 @@ func (e *Entity) commitOperationsLocked(repo repository.Repo, ops []Operation) e
 // When the new commits all descend from the last commit the Entity knows about, only
 // those are read. Otherwise, the whole Entity is read again.
 // On any error, the Entity is left unchanged.
-func (e *Entity) Repair(repo repository.Repo, resolvers entity.Resolvers) error {
+func (e *Entity) Repair(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
@@ -731,7 +740,7 @@ func (e *Entity) Repair(repo repository.Repo, resolvers entity.Resolvers) error 
 	// any real problem.
 	// Note: both read the clocks, so that the next commit get higher ones.
 	if e.lastCommit != "" {
-		ops, createTime, editTime, err := readSince(e.Definition, repo, resolvers, id, commit, e.lastCommit, e.editTime)
+		ops, createTime, editTime, err := readSince(ctx, e.Definition, repo, resolvers, id, commit, e.lastCommit, e.editTime)
 		if err == nil {
 			// readSince only sees the new operations, check them against the known ones
 			known := make(map[entity.Id]struct{}, len(e.ops))
@@ -751,9 +760,12 @@ func (e *Entity) Repair(repo repository.Repo, resolvers entity.Resolvers) error 
 			e.editTime, e.lastCommit = editTime, commit
 			return nil
 		}
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
 	}
 
-	ops, createTime, editTime, err := readSince(e.Definition, repo, resolvers, id, commit, "", 0)
+	ops, createTime, editTime, err := readSince(ctx, e.Definition, repo, resolvers, id, commit, "", 0)
 	if err != nil {
 		return err
 	}

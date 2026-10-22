@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"context"
+
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
@@ -37,16 +39,16 @@ func NewRepoCacheIdentity(repo repository.Repo,
 	//   resolved before keeps the previous copy until it is resolved again.
 
 	actions := Actions[*identity.Identity]{
-		ReadWithResolver: func(repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (*identity.Identity, error) {
-			return identity.Read(repo, id)
+		ReadWithResolver: func(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (*identity.Identity, error) {
+			return identity.Read(ctx, repo, id)
 		},
-		Refresh: func(repo repository.Repo, resolvers entity.Resolvers, i *identity.Identity) (*identity.Identity, error) {
-			return identity.Read(repo, i.Id())
+		Refresh: func(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers, i *identity.Identity) (*identity.Identity, error) {
+			return identity.Read(ctx, repo, i.Id())
 		},
 		Remove:    identity.Remove,
 		RemoveAll: identity.RemoveAll,
-		MergeAll: func(repo repository.Repo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult {
-			return identity.MergeAll(repo, remote)
+		MergeAll: func(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult {
+			return identity.MergeAll(ctx, repo, remote)
 		},
 		// identities carry no clock of their own, they record the others'
 		EnsureClocks: func(repo repository.Repo) error { return nil },
@@ -64,8 +66,8 @@ func NewRepoCacheIdentity(repo repository.Repo,
 
 // ResolveIdentityImmutableMetadata retrieve an Identity that has the exact given metadata on
 // one of its version. If multiple version have the same key, the first defined take precedence.
-func (c *RepoCacheIdentity) ResolveIdentityImmutableMetadata(key string, value string) (*IdentityCache, error) {
-	return c.ResolveMatcher(func(excerpt *IdentityExcerpt) bool {
+func (c *RepoCacheIdentity) ResolveIdentityImmutableMetadata(ctx context.Context, key string, value string) (*IdentityCache, error) {
+	return c.ResolveMatcher(ctx, func(excerpt *IdentityExcerpt) bool {
 		return excerpt.ImmutableMetadata[key] == value
 	})
 }

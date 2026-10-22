@@ -26,7 +26,7 @@ func TestBugNew(t *testing.T) {
 		ids := env.Backend.Bugs().AllIds()
 		require.Len(t, ids, 1)
 
-		b, err := env.Backend.Bugs().Resolve(ids[0])
+		b, err := env.Backend.Bugs().Resolve(t.Context(), ids[0])
 		require.NoError(t, err)
 
 		snap := b.Snapshot()

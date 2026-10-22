@@ -33,7 +33,7 @@ func (r mutationResolver) getBug(ctx context.Context, repoRef *string, bugPrefix
 		return nil, nil, err
 	}
 
-	b, err := unitOfWorkFromCtx(ctx).resolveBug(repo, bugPrefix)
+	b, err := unitOfWorkFromCtx(ctx).resolveBug(ctx, repo, bugPrefix)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -169,7 +169,7 @@ func (r mutationResolver) BugEditComment(ctx context.Context, input models.BugEd
 		return nil, err
 	}
 
-	b, target, err := unitOfWorkFromCtx(ctx).resolveBugComment(repo, input.TargetPrefix)
+	b, target, err := unitOfWorkFromCtx(ctx).resolveBugComment(ctx, repo, input.TargetPrefix)
 	if err != nil {
 		return nil, err
 	}

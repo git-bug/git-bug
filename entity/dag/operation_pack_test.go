@@ -30,7 +30,7 @@ func TestOperationPackReadWrite(t *testing.T) {
 	commit, err := repo.ReadCommit(commitHash)
 	require.NoError(t, err)
 
-	opp2, err := readOperationPack(def, repo, resolver, commit)
+	opp2, err := readOperationPack(t.Context(), def, repo, resolver, commit)
 	require.NoError(t, err)
 
 	for _, op := range opp.Operations {
@@ -72,7 +72,7 @@ func TestOperationPackSignedReadWrite(t *testing.T) {
 		commit, err := repo.ReadCommit(commitHash)
 		require.NoError(t, err)
 
-		opp2, err := readOperationPack(def, repo, resolver, commit)
+		opp2, err := readOperationPack(t.Context(), def, repo, resolver, commit)
 		require.NoError(t, err)
 
 		for _, op := range opp.Operations {
@@ -108,7 +108,7 @@ func TestOperationPackFiles(t *testing.T) {
 	commit, err := repo.ReadCommit(commitHash)
 	require.NoError(t, err)
 
-	opp2, err := readOperationPack(def, repo, resolver, commit)
+	opp2, err := readOperationPack(t.Context(), def, repo, resolver, commit)
 	require.NoError(t, err)
 
 	for _, op := range opp.Operations {

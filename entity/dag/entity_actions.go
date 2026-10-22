@@ -47,7 +47,7 @@ func Pull[EntityT entity.Interface](ctx context.Context, def Definition, wrapper
 		return err
 	}
 
-	for merge := range MergeAll(def, wrapper, repo, resolvers, remote, author) {
+	for merge := range MergeAll(ctx, def, wrapper, repo, resolvers, remote, author) {
 		if merge.Err != nil {
 			return merge.Err
 		}
@@ -78,7 +78,7 @@ func Pull[EntityT entity.Interface](ctx context.Context, def Definition, wrapper
 // Note: an author is necessary for the case where a merge commit is created, as this commit will
 // have an author and may be signed if a signing key is available. The author can be nil, in which
 // case entities that require a merge commit will yield a merge error.
-func MergeAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, remote string, author identity.Interface) <-chan entity.MergeResult {
+func MergeAll[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, remote string, author identity.Interface) <-chan entity.MergeResult {
 	out := make(chan entity.MergeResult)
 
 	go func() {
@@ -91,7 +91,16 @@ func MergeAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) 
 		}
 
 		for key, remoteCommit := range remoteRefs {
-			out <- merge[EntityT](def, wrapper, repo, resolvers, entity.Id(key), remoteCommit, author)
+			if err := ctx.Err(); err != nil {
+				out <- entity.NewMergeError(err, "")
+				return
+			}
+			result := merge[EntityT](ctx, def, wrapper, repo, resolvers, entity.Id(key), remoteCommit, author)
+			out <- result
+			if result.Err != nil && ctx.Err() != nil {
+				// cut short, already reported
+				return
+			}
 		}
 	}()
 
@@ -100,7 +109,7 @@ func MergeAll[EntityT entity.Interface](def Definition, wrapper func(e *Entity) 
 
 // merge perform a merge to make sure a local Entity is up-to-date.
 // See MergeAll for more details.
-func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, remoteCommit repository.Hash, author identity.Interface) entity.MergeResult {
+func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, remoteCommit repository.Hash, author identity.Interface) entity.MergeResult {
 	if err := id.Validate(); err != nil {
 		return entity.NewMergeInvalidStatus(id, fmt.Errorf("invalid id: %w", err).Error())
 	}
@@ -127,7 +136,7 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 		// SCENARIO 2
 		// if the local Entity has new commits but the remote don't, nothing is changed
 
-		localCommits, err := repo.ListCommits(context.TODO(), localCommit)
+		localCommits, err := repo.ListCommits(ctx, localCommit)
 		if err != nil {
 			return entity.NewMergeError(err, id)
 		}
@@ -137,8 +146,12 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 		}
 	}
 
-	remoteEntity, err := read[EntityT](def, wrapper, repo, resolvers, id, remoteCommit)
+	remoteEntity, err := read[EntityT](ctx, def, wrapper, repo, resolvers, id, remoteCommit)
 	if err != nil {
+		// a read cut short says nothing of the remote data
+		if ctx.Err() != nil {
+			return entity.NewMergeError(err, id)
+		}
 		return entity.NewMergeInvalidStatus(id, fmt.Errorf("remote %s is not readable: %w", def.Typename, err).Error())
 	}
 
@@ -164,7 +177,7 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 	// if the remote has new commit, the local bug is updated to match the same history
 	// (fast-forward update)
 
-	remoteCommits, err := repo.ListCommits(context.TODO(), remoteCommit)
+	remoteCommits, err := repo.ListCommits(ctx, remoteCommit)
 	if err != nil {
 		return entity.NewMergeError(err, id)
 	}

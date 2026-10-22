@@ -67,7 +67,7 @@ func TestCommitOperations(t *testing.T) {
 		b := NewBug()
 		require.NoError(t, b.CommitOperations(repo, []Operation{create(), comment()}))
 
-		read, err := Read(repo, b.Id())
+		read, err := Read(t.Context(), repo, b.Id())
 		require.NoError(t, err)
 		require.NoError(t, read.Validate())
 		require.Len(t, read.Operations(), 2)

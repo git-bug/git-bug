@@ -39,7 +39,7 @@ type gitlabExporter struct {
 }
 
 // Init .
-func (ge *gitlabExporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
+func (ge *gitlabExporter) Init(ctx context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	ge.conf = conf
 	ge.identityClient = make(map[entity.Id]*gitlab.Client)
 	ge.cachedOperationIDs = make(map[string]string)
@@ -48,7 +48,7 @@ func (ge *gitlabExporter) Init(_ context.Context, repo *cache.RepoCache, conf co
 	ge.repositoryID = ge.conf[confKeyProjectID]
 
 	// preload all clients
-	err := ge.cacheAllClient(repo, ge.conf[confKeyGitlabBaseUrl])
+	err := ge.cacheAllClient(ctx, repo, ge.conf[confKeyGitlabBaseUrl])
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func (ge *gitlabExporter) Init(_ context.Context, repo *cache.RepoCache, conf co
 	return nil
 }
 
-func (ge *gitlabExporter) cacheAllClient(repo *cache.RepoCache, baseURL string) error {
+func (ge *gitlabExporter) cacheAllClient(ctx context.Context, repo *cache.RepoCache, baseURL string) error {
 	creds, err := auth.List(repo,
 		auth.WithTarget(target),
 		auth.WithKind(auth.KindToken),
@@ -73,7 +73,7 @@ func (ge *gitlabExporter) cacheAllClient(repo *cache.RepoCache, baseURL string) 
 			continue
 		}
 
-		user, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGitlabLogin, login)
+		user, err := repo.Identities().ResolveIdentityImmutableMetadata(ctx, metaKeyGitlabLogin, login)
 		if entity.IsErrNotFound(err) {
 			continue
 		}
@@ -122,7 +122,7 @@ func (ge *gitlabExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 			case <-ctx.Done():
 				return
 			default:
-				b, err := repo.Bugs().Resolve(id)
+				b, err := repo.Bugs().Resolve(ctx, id)
 				if err != nil {
 					out <- core.NewExportError(err, id)
 					return

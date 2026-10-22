@@ -1,6 +1,7 @@
 package dag
 
 import (
+	"context"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/lamport"
@@ -36,7 +37,7 @@ type Tracked[SnapT Snapshot, OpT Operation] interface {
 
 	// Repair reloads the committed state from the repository, typically after a
 	// commit failed with repository.ErrRefChanged, leaving the staging area untouched
-	Repair(repo repository.Repo, resolvers entity.Resolvers) error
+	Repair(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers) error
 
 	// LastCommit returns the hash of the commit holding the last committed operations,
 	// that is what the Entity's reference points to as far as the Entity knows.

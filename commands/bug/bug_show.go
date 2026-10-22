@@ -47,7 +47,7 @@ func newBugShowCommand(env *execenv.Env) *cobra.Command {
 }
 
 func runBugShow(env *execenv.Env, opts bugShowOptions, args []string) error {
-	b, _, err := ResolveSelected(env.Backend, args)
+	b, _, err := ResolveSelected(env.Ctx, env.Backend, args)
 	if err != nil {
 		return err
 	}

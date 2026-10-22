@@ -49,7 +49,7 @@ func SerializeRoundTripTest[OpT dag.Operation](
 	e.Append(before)
 	require.NoError(t, e.Commit(repo))
 
-	read, err := dag.Read(def, func(e *dag.Entity) *dag.Entity { return e }, repo, resolvers, e.Id())
+	read, err := dag.Read(t.Context(), def, func(e *dag.Entity) *dag.Entity { return e }, repo, resolvers, e.Id())
 	require.NoError(t, err)
 	require.Len(t, read.Operations(), 1)
 

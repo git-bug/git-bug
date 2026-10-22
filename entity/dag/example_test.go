@@ -222,7 +222,7 @@ var def = dag.Definition{
 
 // operationUnmarshaler is a function doing the de-serialization of the JSON data into our own
 // concrete Operations. If needed, we can use the resolver to connect to other entities.
-func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.Operation, error) {
+func operationUnmarshaler(ctx context.Context, raw json.RawMessage, resolvers entity.Resolvers) (dag.Operation, error) {
 	var t struct {
 		OperationType dag.OperationType `json:"type"`
 	}
@@ -253,7 +253,7 @@ func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.
 	case *AddAdministrator:
 		// We need to resolve identities
 		for i, stub := range op.ToAdd {
-			iden, err := entity.Resolve[identity.Interface](resolvers, stub.Id())
+			iden, err := entity.Resolve[identity.Interface](ctx, resolvers, stub.Id())
 			if err != nil {
 				return nil, err
 			}
@@ -262,7 +262,7 @@ func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.
 	case *RemoveAdministrator:
 		// We need to resolve identities
 		for i, stub := range op.ToRemove {
-			iden, err := entity.Resolve[identity.Interface](resolvers, stub.Id())
+			iden, err := entity.Resolve[identity.Interface](ctx, resolvers, stub.Id())
 			if err != nil {
 				return nil, err
 			}
@@ -289,8 +289,8 @@ func (pc ProjectConfig) Compile() *Snapshot {
 }
 
 // Read is a helper to load a ProjectConfig from a Repository
-func Read(repo repository.Repo, id entity.Id) (*ProjectConfig, error) {
-	return dag.Read(def, wrapper, repo, simpleResolvers(repo), id)
+func Read(ctx context.Context, repo repository.Repo, id entity.Id) (*ProjectConfig, error) {
+	return dag.Read(ctx, def, wrapper, repo, simpleResolvers(repo), id)
 }
 
 func simpleResolvers(repo repository.Repo) entity.Resolvers {
@@ -344,7 +344,7 @@ func Example_entity() {
 
 	// Isaac pull and read the config
 	_ = dag.Pull(context.Background(), def, wrapper, repoIsaac, simpleResolvers(repoIsaac), "origin", isaac)
-	confIsaac, _ := Read(repoIsaac, confRene.Id())
+	confIsaac, _ := Read(context.Background(), repoIsaac, confRene.Id())
 
 	// Compile gives the current state of the config
 	snapshot := confIsaac.Compile()
@@ -354,7 +354,7 @@ func Example_entity() {
 
 	// Isaac add more operations
 	confIsaac.Append(NewSetSignatureRequired(isaac, false))
-	reneFromIsaacRepo, _ := identity.Read(repoIsaac, rene.Id())
+	reneFromIsaacRepo, _ := identity.Read(context.Background(), repoIsaac, rene.Id())
 	confIsaac.Append(NewRemoveAdministratorOp(isaac, reneFromIsaacRepo))
 	_ = confIsaac.Commit(repoIsaac)
 }

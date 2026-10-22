@@ -142,7 +142,7 @@ func runBug(env *execenv.Env, opts bugOptions, args []string) error {
 		return err
 	}
 
-	allIds, err := env.Backend.Bugs().Query(q)
+	allIds, err := env.Backend.Bugs().Query(env.Ctx, q)
 	if err != nil {
 		return err
 	}

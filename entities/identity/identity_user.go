@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -25,18 +26,21 @@ func ClearUserIdentity(repo repository.RepoConfig) error {
 }
 
 // GetUserIdentity read the current user identity, set with a git config entry
-func GetUserIdentity(repo repository.Repo) (*Identity, error) {
+func GetUserIdentity(ctx context.Context, repo repository.Repo) (*Identity, error) {
 	id, err := GetUserIdentityId(repo)
 	if err != nil {
 		return nil, err
 	}
 
-	i, err := Read(repo, id)
+	i, err := Read(ctx, repo, id)
 	if entity.IsErrNotFound(err) {
 		innerErr := ClearUserIdentity(repo)
 		if innerErr != nil {
 			_, _ = fmt.Fprintln(os.Stderr, fmt.Errorf("can't clear user identity: %w", innerErr).Error())
 		}
+		return nil, err
+	}
+	if err != nil {
 		return nil, err
 	}
 

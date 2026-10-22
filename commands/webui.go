@@ -94,7 +94,7 @@ func setupRoutes(env *execenv.Env, opts webUIOptions) (*mux.Router, error) {
 	// fixed identity: the default user of the repo
 	// TODO: support dynamic authentication with OAuth
 	if !opts.readOnly {
-		author, err := identity.GetUserIdentity(env.Repo)
+		author, err := identity.GetUserIdentity(env.Ctx, env.Repo)
 		if err != nil {
 			return nil, err
 		}

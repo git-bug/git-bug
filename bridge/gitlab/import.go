@@ -68,7 +68,7 @@ func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 			}
 			issue := result.Issue
 
-			b, err := gi.ensureIssue(repo, issue)
+			b, err := gi.ensureIssue(ctx, repo, issue)
 			if err != nil {
 				err := fmt.Errorf("issue creation: %v", err)
 				out <- core.NewImportError(err, "")
@@ -86,7 +86,7 @@ func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 					out <- core.NewImportError(e.Err, "")
 					continue
 				}
-				if err := gi.ensureIssueEvent(repo, b, issue, e); err != nil {
+				if err := gi.ensureIssueEvent(ctx, repo, b, issue, e); err != nil {
 					err := fmt.Errorf("unable to create issue event: %v", err)
 					out <- core.NewImportError(err, entity.Id(e.ID()))
 				}
@@ -106,15 +106,15 @@ func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 	return out, nil
 }
 
-func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue) (*cache.BugCache, error) {
+func (gi *gitlabImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache, issue *gitlab.Issue) (*cache.BugCache, error) {
 	// ensure issue author
-	author, err := gi.ensurePerson(repo, issue.Author.ID)
+	author, err := gi.ensurePerson(ctx, repo, issue.Author.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	// resolve bug
-	b, err := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
+	b, err := repo.Bugs().ResolveMatcher(ctx, func(excerpt *cache.BugExcerpt) bool {
 		return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
 			excerpt.CreateMetadata[metaKeyGitlabId] == fmt.Sprintf("%d", issue.IID) &&
 			excerpt.CreateMetadata[metaKeyGitlabBaseUrl] == gi.conf[confKeyGitlabBaseUrl] &&
@@ -153,14 +153,14 @@ func (gi *gitlabImporter) ensureIssue(repo *cache.RepoCache, issue *gitlab.Issue
 	return b, nil
 }
 
-func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCache, issue *gitlab.Issue, event Event) error {
+func (gi *gitlabImporter) ensureIssueEvent(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, issue *gitlab.Issue, event Event) error {
 	id, errResolve := b.ResolveOperationWithMetadata(metaKeyGitlabId, event.ID())
 	if errResolve != nil && errResolve != cache.ErrNoMatchingOp {
 		return errResolve
 	}
 
 	// ensure issue author
-	author, err := gi.ensurePerson(repo, event.UserID())
+	author, err := gi.ensurePerson(ctx, repo, event.UserID())
 	if err != nil {
 		return err
 	}
@@ -347,9 +347,9 @@ func (gi *gitlabImporter) ensureIssueEvent(repo *cache.RepoCache, b *cache.BugCa
 	return nil
 }
 
-func (gi *gitlabImporter) ensurePerson(repo *cache.RepoCache, id int64) (*cache.IdentityCache, error) {
+func (gi *gitlabImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache, id int64) (*cache.IdentityCache, error) {
 	// Look first in the cache
-	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGitlabId, strconv.FormatInt(id, 10))
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(ctx, metaKeyGitlabId, strconv.FormatInt(id, 10))
 	if err == nil {
 		return i, nil
 	}

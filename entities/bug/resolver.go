@@ -1,6 +1,8 @@
 package bug
 
 import (
+	"context"
+
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 )
@@ -16,6 +18,6 @@ func NewSimpleResolver(repo repository.Repo) *SimpleResolver {
 	return &SimpleResolver{repo: repo}
 }
 
-func (r *SimpleResolver) Resolve(id entity.Id) (entity.Resolved, error) {
-	return Read(r.repo, id)
+func (r *SimpleResolver) Resolve(ctx context.Context, id entity.Id) (entity.Resolved, error) {
+	return Read(ctx, r.repo, id)
 }
