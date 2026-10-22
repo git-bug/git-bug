@@ -29,7 +29,7 @@ func TestTokenCredentials(t *testing.T) {
 	defer server.Close()
 	repo := repository.NewMockRepo()
 	defer repo.Close()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	defer backend.Close()
 	token := auth.NewToken(target, "api-token")
@@ -65,7 +65,7 @@ func TestTokenCredentials(t *testing.T) {
 		{BaseURL: server.URL + "/", Project: "TEST", CredPrefix: token.ID().String()},
 		{BaseURL: server.URL + "/", Project: "TEST", Login: "alice", TokenRaw: "api-token"},
 	} {
-		configured, err := (&Jira{}).Configure(backend, params, false)
+		configured, err := (&Jira{}).Configure(context.Background(), backend, params, false)
 		require.NoError(t, err)
 		require.Equal(t, server.URL+"/", configured[confKeyBaseUrl], "preserve the URL used by existing imported issues")
 		require.Equal(t, "TOKEN", configured[confKeyCredentialType])
@@ -112,7 +112,7 @@ func TestSessionCredentialsIgnoreNewerToken(t *testing.T) {
 	defer server.Close()
 	repo := repository.NewMockRepo()
 	defer repo.Close()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	defer backend.Close()
 	password := auth.NewLoginPassword(target, "alice", "password")
@@ -139,14 +139,14 @@ func TestConfigureRejectsForeignCredentialBeforeNetworkAccess(t *testing.T) {
 		t.Run(targetName, func(t *testing.T) {
 			repo := repository.NewMockRepo()
 			defer repo.Close()
-			backend, err := cache.NewRepoCacheNoEvents(repo)
+			backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 			require.NoError(t, err)
 			defer backend.Close()
 			token := auth.NewToken(targetName, "secret")
 			token.SetMetadata(auth.MetaKeyLogin, "alice")
 			token.SetMetadata(auth.MetaKeyBaseURL, "https://original.example")
 			require.NoError(t, auth.Store(repo, token))
-			_, err = (&Jira{}).Configure(backend, core.BridgeParams{BaseURL: "https://different.example", Project: "TEST", CredPrefix: token.ID().String()}, false)
+			_, err = (&Jira{}).Configure(context.Background(), backend, core.BridgeParams{BaseURL: "https://different.example", Project: "TEST", CredPrefix: token.ID().String()}, false)
 			require.Error(t, err)
 			if targetName == target {
 				require.ErrorContains(t, err, "not bound")

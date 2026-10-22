@@ -339,8 +339,8 @@ func deleteRepository(ctx context.Context, project int64, token *auth.Token) err
 }
 
 func TestGitlabCacheAllClient_MultipleLogins(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	repo := repotest.NewGoGitRepo(t, false)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	defer backend.Close()
 
@@ -382,7 +382,7 @@ func TestGitlabCacheAllClient_MultipleLogins(t *testing.T) {
 		identityClient: make(map[entity.Id]*gitlab.Client),
 	}
 
-	require.NoError(t, ge.cacheAllClient(backend, ts.URL))
+	require.NoError(t, ge.cacheAllClient(context.Background(), backend, ts.URL))
 
 	aliceClient, err := ge.getIdentityClient(alice.Id())
 	require.NoError(t, err)
