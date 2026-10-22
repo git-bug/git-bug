@@ -151,6 +151,9 @@ type timelineItem struct {
 	ReopenedEvent struct {
 		actorEvent
 	} `graphql:"... on  ReopenedEvent"`
+	ConvertedToDiscussionEvent struct {
+		actorEvent
+	} `graphql:"... on ConvertedToDiscussionEvent"`
 
 	// Title
 	RenamedTitleEvent renamedTitleEvent `graphql:"... on RenamedTitleEvent"`
