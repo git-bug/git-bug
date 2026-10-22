@@ -46,7 +46,7 @@ func MergeAll(ctx context.Context, repo repository.Repo, remote string) <-chan e
 	go func() {
 		defer close(out)
 
-		remoteRefs, err := repo.ListTrackingRefs(remote, Namespace)
+		remoteRefs, err := repo.ListTrackingRefs(ctx, remote, Namespace)
 
 		if err != nil {
 			out <- entity.NewMergeError(err, "")
@@ -78,11 +78,11 @@ func MergeAll(ctx context.Context, repo repository.Repo, remote string) <-chan e
 				continue
 			}
 
-			localCommit, err := repo.ResolveRef(Namespace, id.String())
+			localCommit, err := repo.ResolveRef(ctx, Namespace, id.String())
 
 			// the identity is not local yet, simply create it
 			if errors.Is(err, repository.ErrNotFound) {
-				err := repo.UpdateRef(Namespace, id.String(), "", remoteCommit)
+				err := repo.UpdateRef(ctx, Namespace, id.String(), "", remoteCommit)
 
 				if err != nil {
 					out <- entity.NewMergeError(err, id)
@@ -105,7 +105,7 @@ func MergeAll(ctx context.Context, repo repository.Repo, remote string) <-chan e
 				return
 			}
 
-			updated, err := localIdentity.Merge(repo, remoteIdentity)
+			updated, err := localIdentity.Merge(ctx, repo, remoteIdentity)
 
 			if err != nil {
 				out <- entity.NewMergeInvalidStatus(id, fmt.Errorf("merge failed: %w", err).Error())
@@ -127,20 +127,23 @@ func MergeAll(ctx context.Context, repo repository.Repo, remote string) <-chan e
 // It is left as a responsibility to the caller to make sure that this identities is not
 // linked from another entity, otherwise it would break it.
 // Remove is idempotent.
-func Remove(repo repository.Repo, id entity.Id) error {
+func Remove(ctx context.Context, repo repository.Repo, id entity.Id) error {
 	// list the remotes before deleting anything, to not stop halfway on failure
 	remotes, err := repo.GetRemotes()
 	if err != nil {
 		return err
 	}
 
-	err = repo.RemoveRef(Namespace, id.String())
+	err = repo.RemoveRef(ctx, Namespace, id.String())
 	if err != nil {
 		return err
 	}
 
+	// once the local ref is gone, RemoveAll can't find the identity anymore:
+	// its tracking refs must be removed now, cancelled or not
+	cleanupCtx := context.WithoutCancel(ctx)
 	for remote := range remotes {
-		err = repo.RemoveTrackingRef(remote, Namespace, id.String())
+		err = repo.RemoveTrackingRef(cleanupCtx, remote, Namespace, id.String())
 		if err != nil {
 			return err
 		}
@@ -153,13 +156,13 @@ func Remove(repo repository.Repo, id entity.Id) error {
 // It is left as a responsibility to the caller to make sure that those identities are not
 // linked from another entity, otherwise it would break them.
 // RemoveAll is idempotent.
-func RemoveAll(repo repository.Repo) error {
-	localIds, err := ListLocalIds(repo)
+func RemoveAll(ctx context.Context, repo repository.Repo) error {
+	localIds, err := ListLocalIds(ctx, repo)
 	if err != nil {
 		return err
 	}
 	for _, id := range localIds {
-		err = Remove(repo, id)
+		err = Remove(ctx, repo, id)
 		if err != nil {
 			return err
 		}

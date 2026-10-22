@@ -1,6 +1,7 @@
 package random_bugs
 
 import (
+	"context"
 	"math/rand"
 	"strings"
 	"time"
@@ -30,28 +31,28 @@ func DefaultOptions() Options {
 	}
 }
 
-func FillRepo(repo repository.Repo, bugNumber int) {
-	FillRepoWithSeed(repo, bugNumber, time.Now().UnixNano())
+func FillRepo(ctx context.Context, repo repository.Repo, bugNumber int) {
+	FillRepoWithSeed(ctx, repo, bugNumber, time.Now().UnixNano())
 }
 
-func FillRepoWithSeed(repo repository.Repo, bugNumber int, seed int64) {
+func FillRepoWithSeed(ctx context.Context, repo repository.Repo, bugNumber int, seed int64) {
 	options := DefaultOptions()
 	options.BugNumber = bugNumber
 
-	CommitRandomBugsWithSeed(repo, options, seed)
+	CommitRandomBugsWithSeed(ctx, repo, options, seed)
 }
 
-func CommitRandomBugs(repo repository.Repo, opts Options) {
-	CommitRandomBugsWithSeed(repo, opts, time.Now().UnixNano())
+func CommitRandomBugs(ctx context.Context, repo repository.Repo, opts Options) {
+	CommitRandomBugsWithSeed(ctx, repo, opts, time.Now().UnixNano())
 }
 
-func CommitRandomBugsWithSeed(repo repository.Repo, opts Options, seed int64) {
-	generateRandomPersons(repo, opts.PersonNumber)
+func CommitRandomBugsWithSeed(ctx context.Context, repo repository.Repo, opts Options, seed int64) {
+	generateRandomPersons(ctx, repo, opts.PersonNumber)
 
 	bugs := generateRandomBugsWithSeed(opts, seed)
 
 	for _, b := range bugs {
-		err := b.Commit(repo)
+		err := b.Commit(ctx, repo)
 		if err != nil {
 			panic(err)
 		}
@@ -118,14 +119,14 @@ func person(repo repository.RepoClock) (*identity.Identity, error) {
 
 var persons []*identity.Identity
 
-func generateRandomPersons(repo repository.Repo, n int) {
+func generateRandomPersons(ctx context.Context, repo repository.Repo, n int) {
 	persons = make([]*identity.Identity, n)
 	for i := range persons {
 		p, err := person(repo)
 		if err != nil {
 			panic(err)
 		}
-		err = p.Commit(repo)
+		err = p.Commit(ctx, repo)
 		if err != nil {
 			panic(err)
 		}

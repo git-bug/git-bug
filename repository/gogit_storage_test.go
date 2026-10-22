@@ -32,7 +32,7 @@ func setupPrimedRepo(t *testing.T) (*GoGitRepo, string) {
 	repo, err := InitGoGitRepo(dir)
 	require.NoError(t, err)
 
-	h, err := repo.StoreData([]byte("already packed"))
+	h, err := repo.StoreData(t.Context(), []byte("already packed"))
 	require.NoError(t, err)
 	// repack only packs reachable objects.
 	runGit(t, dir, "update-ref", "refs/test/primed", string(h))
@@ -41,7 +41,7 @@ func setupPrimedRepo(t *testing.T) (*GoGitRepo, string) {
 
 	// A lookup served from a pack makes go-git build its index of the
 	// packs present right now.
-	_, err = repo.ReadData(h)
+	_, err = repo.ReadData(t.Context(), h)
 	require.NoError(t, err)
 
 	return repo, dir
@@ -94,7 +94,7 @@ func TestGoGitStorage(t *testing.T) {
 		t.Run("ReadCommit", func(t *testing.T) {
 			repo, dir := setupFetched(t)
 
-			commit, err := repo.ReadCommit(Hash(runGit(t, dir, "rev-parse", "main")))
+			commit, err := repo.ReadCommit(t.Context(), Hash(runGit(t, dir, "rev-parse", "main")))
 			require.NoError(t, err)
 			require.Equal(t, Hash(runGit(t, dir, "rev-parse", "main^{tree}")), commit.TreeHash)
 		})
@@ -102,7 +102,7 @@ func TestGoGitStorage(t *testing.T) {
 		t.Run("ReadTree", func(t *testing.T) {
 			repo, dir := setupFetched(t)
 
-			entries, err := repo.ReadTree(Hash(runGit(t, dir, "rev-parse", "main^{tree}")))
+			entries, err := repo.ReadTree(t.Context(), Hash(runGit(t, dir, "rev-parse", "main^{tree}")))
 			require.NoError(t, err)
 			require.Len(t, entries, 1)
 		})
@@ -110,7 +110,7 @@ func TestGoGitStorage(t *testing.T) {
 		t.Run("ReadData", func(t *testing.T) {
 			repo, dir := setupFetched(t)
 
-			r, err := repo.ReadData(Hash(runGit(t, dir, "rev-parse", "main:a/x")))
+			r, err := repo.ReadData(t.Context(), Hash(runGit(t, dir, "rev-parse", "main:a/x")))
 			require.NoError(t, err)
 			require.NoError(t, r.Close())
 		})
@@ -172,7 +172,7 @@ func TestGoGitStorage(t *testing.T) {
 		// themselves, not their content
 		require.Same(t, &packs[0], &s.packs[0], "the index was rebuilt")
 
-		_, err = repo.ReadCommit(Hash(missing.String()))
+		_, err = repo.ReadCommit(t.Context(), Hash(missing.String()))
 		require.ErrorIs(t, err, ErrNotFound)
 	})
 
@@ -234,7 +234,7 @@ func TestGoGitStorage(t *testing.T) {
 			_, err := repo.FetchRefs(t.Context(), "src", "bugs")
 			require.NoError(t, err)
 
-			refs, err := repo.ListTrackingRefs("src", "bugs")
+			refs, err := repo.ListTrackingRefs(t.Context(), "src", "bugs")
 			require.NoError(t, err)
 			require.Equal(t, map[string]Hash{"b1": head}, refs)
 
@@ -267,7 +267,7 @@ func TestGoGitStorage(t *testing.T) {
 			wg.Wait()
 			require.NoError(t, err)
 
-			_, err = repo.ReadCommit(head)
+			_, err = repo.ReadCommit(t.Context(), head)
 			require.NoError(t, err)
 		})
 	})
@@ -310,12 +310,12 @@ func TestGoGitStorage(t *testing.T) {
 		repo, dir := setupFetched(t)
 
 		// Load the new pack into the index, without reading the object below.
-		_, err := repo.ReadCommit(Hash(runGit(t, dir, "rev-parse", "main")))
+		_, err := repo.ReadCommit(t.Context(), Hash(runGit(t, dir, "rev-parse", "main")))
 		require.NoError(t, err)
 
 		runGit(t, dir, "repack", "-a", "-d")
 
-		r, err := repo.ReadData(Hash(runGit(t, dir, "rev-parse", "main:a/y")))
+		r, err := repo.ReadData(t.Context(), Hash(runGit(t, dir, "rev-parse", "main:a/y")))
 		require.NoError(t, err)
 		require.NoError(t, r.Close())
 	})
@@ -331,7 +331,7 @@ func TestGoGitStorage(t *testing.T) {
 		for range 4 {
 			wg.Go(func() {
 				for range 50 {
-					r, err := repo.ReadData(blob)
+					r, err := repo.ReadData(t.Context(), blob)
 					if assert.NoError(t, err) {
 						_ = r.Close()
 					}

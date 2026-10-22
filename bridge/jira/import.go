@@ -194,6 +194,7 @@ func (ji *jiraImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache,
 	}
 
 	i, err = repo.Identities().NewRaw(
+		ctx,
 		user.DisplayName,
 		user.EmailAddress,
 		user.Key,

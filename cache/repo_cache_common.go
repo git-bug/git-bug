@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"slices"
 	"sync"
 
 	"github.com/git-bug/git-bug/entities/identity"
@@ -52,13 +53,13 @@ func (c *RepoCache) LocalStorage() repository.LocalStorage {
 }
 
 // ReadData will attempt to read arbitrary data from the given hash
-func (c *RepoCache) ReadData(hash repository.Hash) (io.ReadCloser, error) {
-	return c.repo.ReadData(hash)
+func (c *RepoCache) ReadData(ctx context.Context, hash repository.Hash) (io.ReadCloser, error) {
+	return c.repo.ReadData(ctx, hash)
 }
 
 // StoreData will store arbitrary data and return the corresponding hash
-func (c *RepoCache) StoreData(data []byte) (repository.Hash, error) {
-	return c.repo.StoreData(data)
+func (c *RepoCache) StoreData(ctx context.Context, data []byte) (repository.Hash, error) {
+	return c.repo.StoreData(ctx, data)
 }
 
 // Fetch retrieve updates from a remote
@@ -74,12 +75,14 @@ func (c *RepoCache) Fetch(ctx context.Context, remote string) (string, error) {
 }
 
 // RemoveAll deletes all entities from the cache and the disk.
-func (c *RepoCache) RemoveAll() error {
+func (c *RepoCache) RemoveAll(ctx context.Context) error {
 	// This is done sequentially on purpose: listing refs reads every loose ref
 	// file, and on Windows a file can't be deleted while another goroutine has
 	// it open.
-	for _, mgmt := range c.subcaches {
-		if err := mgmt.RemoveAll(); err != nil {
+	// The subcaches are in dependency order, so they are removed in reverse:
+	// stopping halfway never leaves an entity whose dependencies are gone.
+	for _, mgmt := range slices.Backward(c.subcaches) {
+		if err := mgmt.RemoveAll(ctx); err != nil {
 			return err
 		}
 	}

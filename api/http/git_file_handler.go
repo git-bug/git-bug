@@ -59,7 +59,7 @@ func (gfh *gitFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// If rest is a single segment that is a valid git hash, serve by hash.
 	if !strings.Contains(rest, "/") {
 		if hash := repository.Hash(rest); hash.IsValid() {
-			reader, err := repo.ReadData(hash)
+			reader, err := repo.ReadData(r.Context(), hash)
 			if errors.Is(err, repository.ErrNotFound) {
 				http.Error(rw, "not found", http.StatusNotFound)
 				return

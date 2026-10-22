@@ -42,7 +42,7 @@ func changeOutside(t *testing.T, repo repository.Repo, author identity.Interface
 	require.NoError(t, err)
 	_, _, err = bug.AddComment(b, author, time.Now().Unix(), message, nil, nil)
 	require.NoError(t, err)
-	require.NoError(t, b.Commit(repo))
+	require.NoError(t, b.Commit(t.Context(), repo))
 }
 
 func TestViews(t *testing.T) {
@@ -211,7 +211,7 @@ func TestViews(t *testing.T) {
 		_, err = c.Bugs().Resolve(t.Context(), id)
 		require.True(t, entity.IsErrNotFound(err))
 		require.Empty(t, c.Bugs().AllIds())
-		_, err = repo.ResolveRef(bug.Namespace, id.String())
+		_, err = repo.ResolveRef(t.Context(), bug.Namespace, id.String())
 		require.ErrorIs(t, err, repository.ErrNotFound)
 
 		require.NoError(t, b.Commit(t.Context()))
@@ -239,14 +239,14 @@ func TestViews(t *testing.T) {
 
 		// moved after the view staged its operation
 		changeOutside(t, repo, rene, b.Id(), "markeroutside")
-		ref, err := repo.ResolveRef(bug.Namespace, b.Id().String())
+		ref, err := repo.ResolveRef(t.Context(), bug.Namespace, b.Id().String())
 		require.NoError(t, err)
 		require.NotEqual(t, ref, b.LastCommit())
 
 		require.NoError(t, b.Commit(t.Context()))
 		require.Equal(t, []string{"message", "markeroutside", "markerview"}, commentsInGit(t, repo, b.Id()))
 		require.Equal(t, []string{"message", "markeroutside", "markerview"}, commentMessages(b.Snapshot()))
-		ref, err = repo.ResolveRef(bug.Namespace, b.Id().String())
+		ref, err = repo.ResolveRef(t.Context(), bug.Namespace, b.Id().String())
 		require.NoError(t, err)
 		require.Equal(t, ref, b.LastCommit())
 		require.Equal(t, 3, lenComments(t, c, b.Id()))
@@ -393,7 +393,7 @@ func TestViews(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "René Descartes", excerpt.Name)
 
-		require.NoError(t, rene.Commit())
+		require.NoError(t, rene.Commit(t.Context()))
 		excerpt, err = c.Identities().ResolveExcerpt(rene.Id())
 		require.NoError(t, err)
 		require.Equal(t, "René Descartes, renamed", excerpt.Name)
@@ -412,7 +412,7 @@ func TestViews(t *testing.T) {
 		read, err := identity.Read(t.Context(), repo, rene.Id())
 		require.NoError(t, err)
 		require.NoError(t, read.Mutate(repo, func(m *identity.Mutator) { m.Name = "René Descartes, renamed" }))
-		require.NoError(t, read.Commit(repo))
+		require.NoError(t, read.Commit(t.Context(), repo))
 
 		require.NoError(t, c.identities.sync(rene.Id()))
 		excerpt, err := c.Identities().ResolveExcerpt(rene.Id())
@@ -429,13 +429,13 @@ func TestViews(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, rene := newTestCacheWithUser(t, repo)
 		c.setCacheSize(1)
-		_, err := c.Identities().New("Other", "other@example.com")
+		_, err := c.Identities().New(t.Context(), "Other", "other@example.com")
 		require.NoError(t, err)
 		require.NotContains(t, c.identities.cached, rene.Id())
 
 		// the view commits a copy of its own, the evicted one stays behind
 		require.NoError(t, rene.Mutate(repo, func(m *identity.Mutator) { m.Name = "René Descartes, renamed" }))
-		require.NoError(t, rene.Commit())
+		require.NoError(t, rene.Commit(t.Context()))
 
 		resolved, err := c.Identities().Resolve(t.Context(), rene.Id())
 		require.NoError(t, err)

@@ -15,7 +15,7 @@ func TestIdentityPushPull(t *testing.T) {
 
 	identity1, err := NewIdentity(repoA, "name1", "email1")
 	require.NoError(t, err)
-	err = identity1.Commit(repoA)
+	err = identity1.Commit(t.Context(), repoA)
 	require.NoError(t, err)
 
 	// A --> remote --> B
@@ -34,7 +34,7 @@ func TestIdentityPushPull(t *testing.T) {
 	// B --> remote --> A
 	identity2, err := NewIdentity(repoB, "name2", "email2")
 	require.NoError(t, err)
-	err = identity2.Commit(repoB)
+	err = identity2.Commit(t.Context(), repoB)
 	require.NoError(t, err)
 
 	_, err = Push(t.Context(), repoB, "origin")
@@ -56,7 +56,7 @@ func TestIdentityPushPull(t *testing.T) {
 		orig.Email = "email1b"
 	})
 	require.NoError(t, err)
-	err = identity1.Commit(repoA)
+	err = identity1.Commit(t.Context(), repoA)
 	require.NoError(t, err)
 
 	err = identity2.Mutate(repoB, func(orig *Mutator) {
@@ -64,7 +64,7 @@ func TestIdentityPushPull(t *testing.T) {
 		orig.Email = "email2b"
 	})
 	require.NoError(t, err)
-	err = identity2.Commit(repoB)
+	err = identity2.Commit(t.Context(), repoB)
 	require.NoError(t, err)
 
 	//  A --> remote --> B
@@ -102,7 +102,7 @@ func TestIdentityPushPull(t *testing.T) {
 		orig.Email = "email1c"
 	})
 	require.NoError(t, err)
-	err = identity1.Commit(repoA)
+	err = identity1.Commit(t.Context(), repoA)
 	require.NoError(t, err)
 
 	identity1B, err := Read(t.Context(), repoB, identity1.Id())
@@ -113,7 +113,7 @@ func TestIdentityPushPull(t *testing.T) {
 		orig.Email = "name1concurrent"
 	})
 	require.NoError(t, err)
-	err = identity1B.Commit(repoB)
+	err = identity1B.Commit(t.Context(), repoB)
 	require.NoError(t, err)
 
 	//  A --> remote --> B
@@ -166,7 +166,7 @@ func TestIdentityMergeCanceled(t *testing.T) {
 	for _, name := range []string{"name1", "name2"} {
 		i, err := NewIdentity(repoA, name, "email")
 		require.NoError(t, err)
-		require.NoError(t, i.Commit(repoA))
+		require.NoError(t, i.Commit(t.Context(), repoA))
 	}
 
 	_, err := Push(t.Context(), repoA, "origin")
@@ -185,7 +185,7 @@ func TestIdentityMergeCanceled(t *testing.T) {
 	require.Equal(t, entity.MergeStatusError, results[0].Status)
 	require.ErrorIs(t, results[0].Err, context.Canceled)
 
-	ids, err := ListLocalIds(repoB)
+	ids, err := ListLocalIds(t.Context(), repoB)
 	require.NoError(t, err)
 	require.Empty(t, ids)
 }

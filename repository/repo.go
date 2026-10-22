@@ -163,50 +163,51 @@ type RepoRemote interface {
 	PushRefs(ctx context.Context, remote string, namespaces ...string) (string, error)
 }
 
-// RepoData give access to the git data storage
+// RepoData give access to the git data storage. Its operations stop when ctx
+// is done.
 type RepoData interface {
 	// StoreData will store arbitrary data and return the corresponding hash
-	StoreData(data []byte) (Hash, error)
+	StoreData(ctx context.Context, data []byte) (Hash, error)
 
 	// ReadData returns a reader for arbitrary data associated with the given hash.
 	// Returns ErrNotFound if not found.
 	// The caller must close the reader.
-	ReadData(hash Hash) (io.ReadCloser, error)
+	ReadData(ctx context.Context, hash Hash) (io.ReadCloser, error)
 
 	// StoreTree will store a mapping key-->Hash as a Git tree
-	StoreTree(mapping []TreeEntry) (Hash, error)
+	StoreTree(ctx context.Context, mapping []TreeEntry) (Hash, error)
 
 	// ReadTree will return the list of entries in a Git tree
 	// The given hash could be from either a commit or a tree
 	// Returns ErrNotFound if not found.
-	ReadTree(hash Hash) ([]TreeEntry, error)
+	ReadTree(ctx context.Context, hash Hash) ([]TreeEntry, error)
 
 	// StoreCommit will store a Git commit with the given Git tree
-	StoreCommit(treeHash Hash, parents ...Hash) (Hash, error)
+	StoreCommit(ctx context.Context, treeHash Hash, parents ...Hash) (Hash, error)
 
 	// StoreSignedCommit will store a Git commit with the given Git tree. If signKey is not nil, the commit
 	// will be signed accordingly.
-	StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error)
+	StoreSignedCommit(ctx context.Context, treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error)
 
 	// ReadCommit read a Git commit and returns some of its characteristic
 	// Returns ErrNotFound if not found.
-	ReadCommit(hash Hash) (Commit, error)
+	ReadCommit(ctx context.Context, hash Hash) (Commit, error)
 
 	// ListRefs returns every local ref of a namespace, by key.
-	ListRefs(namespace string) (map[string]Hash, error)
+	ListRefs(ctx context.Context, namespace string) (map[string]Hash, error)
 
 	// ResolveRef returns the commit a local ref points to.
 	// Returns ErrNotFound if it doesn't exist.
-	ResolveRef(namespace string, key string) (Hash, error)
+	ResolveRef(ctx context.Context, namespace string, key string) (Hash, error)
 
 	// UpdateRef points a local ref to commit, only if it currently points to old.
 	// An empty old means that the ref must not exist yet.
 	// Returns ErrRefChanged otherwise, and the ref is left unchanged.
-	UpdateRef(namespace string, key string, old Hash, commit Hash) error
+	UpdateRef(ctx context.Context, namespace string, key string, old Hash, commit Hash) error
 
 	// RemoveRef deletes a local ref.
 	// RemoveRef is idempotent.
-	RemoveRef(namespace string, key string) error
+	RemoveRef(ctx context.Context, namespace string, key string) error
 
 	// A remote's tracking refs are the local record of that remote's refs, as
 	// of the last fetch or push. Reading or removing them never contacts the
@@ -214,15 +215,15 @@ type RepoData interface {
 
 	// ListTrackingRefs returns every tracking ref of a namespace for a remote,
 	// by key.
-	ListTrackingRefs(remote string, namespace string) (map[string]Hash, error)
+	ListTrackingRefs(ctx context.Context, remote string, namespace string) (map[string]Hash, error)
 
 	// ResolveTrackingRef returns the commit a tracking ref points to.
 	// Returns ErrNotFound if it doesn't exist.
-	ResolveTrackingRef(remote string, namespace string, key string) (Hash, error)
+	ResolveTrackingRef(ctx context.Context, remote string, namespace string, key string) (Hash, error)
 
 	// RemoveTrackingRef deletes a tracking ref.
 	// RemoveTrackingRef is idempotent.
-	RemoveTrackingRef(remote string, namespace string, key string) error
+	RemoveTrackingRef(ctx context.Context, remote string, namespace string, key string) error
 
 	// ListCommits returns the hashes of commit and all its ancestors, in
 	// chronological order.

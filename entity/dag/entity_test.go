@@ -1,6 +1,7 @@
 package dag
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -24,12 +25,12 @@ func TestWriteRead(t *testing.T) {
 	entity.Append(newOp2(id1, "bar"))
 
 	require.True(t, entity.NeedCommit())
-	require.NoError(t, entity.CommitAsNeeded(repo))
+	require.NoError(t, entity.CommitAsNeeded(t.Context(), repo))
 	require.False(t, entity.NeedCommit())
 
 	entity.Append(newOp2(id2, "foobar"))
 	require.True(t, entity.NeedCommit())
-	require.NoError(t, entity.CommitAsNeeded(repo))
+	require.NoError(t, entity.CommitAsNeeded(t.Context(), repo))
 	require.False(t, entity.NeedCommit())
 
 	read, err := Read(t.Context(), def, wrapper, repo, resolver, entity.Id())
@@ -46,10 +47,10 @@ func TestWriteReadMultipleAuthor(t *testing.T) {
 	entity.Append(newOp1(id1, "foo"))
 	entity.Append(newOp2(id2, "bar"))
 
-	require.NoError(t, entity.CommitAsNeeded(repo))
+	require.NoError(t, entity.CommitAsNeeded(t.Context(), repo))
 
 	entity.Append(newOp2(id1, "foobar"))
-	require.NoError(t, entity.CommitAsNeeded(repo))
+	require.NoError(t, entity.CommitAsNeeded(t.Context(), repo))
 
 	read, err := Read(t.Context(), def, wrapper, repo, resolver, entity.Id())
 	require.NoError(t, err)
@@ -63,14 +64,14 @@ func TestReadIdMismatch(t *testing.T) {
 
 	e1 := wrapper(New(def))
 	e1.Append(newOp1(id1, "foo"))
-	require.NoError(t, e1.Commit(repo))
+	require.NoError(t, e1.Commit(t.Context(), repo))
 
 	e2 := wrapper(New(def))
 	e2.Append(newOp1(id1, "bar"))
-	require.NoError(t, e2.Commit(repo))
+	require.NoError(t, e2.Commit(t.Context(), repo))
 
 	// the ref of e1 now points to the data of e2
-	require.NoError(t, repo.UpdateRef(def.Namespace, e1.Id().String(), e1.lastCommit, e2.lastCommit))
+	require.NoError(t, repo.UpdateRef(t.Context(), def.Namespace, e1.Id().String(), e1.lastCommit, e2.lastCommit))
 
 	_, err := Read(t.Context(), def, wrapper, repo, resolver, e1.Id())
 	require.ErrorContains(t, err, "doesn't match its id")
@@ -89,7 +90,7 @@ func TestCommitStaleCopy(t *testing.T) {
 
 	entity := wrapper(New(def))
 	entity.Append(newOp1(id1, "foo"))
-	require.NoError(t, entity.Commit(repo))
+	require.NoError(t, entity.Commit(t.Context(), repo))
 
 	copy1, err := Read(t.Context(), def, wrapper, repo, resolver, entity.Id())
 	require.NoError(t, err)
@@ -99,12 +100,12 @@ func TestCommitStaleCopy(t *testing.T) {
 	require.NoError(t, err)
 
 	copy1.Append(newOp2(id1, "first"))
-	require.NoError(t, copy1.Commit(repo))
+	require.NoError(t, copy1.Commit(t.Context(), repo))
 
 	op := newOp2(id1, "second")
 	copy2.Append(op)
 	expected.Append(op)
-	require.ErrorIs(t, copy2.Commit(repo), repository.ErrRefChanged)
+	require.ErrorIs(t, copy2.Commit(t.Context(), repo), repository.ErrRefChanged)
 
 	// the stale copy is left untouched, with its operation still pending
 	require.True(t, copy2.NeedCommit())
@@ -121,7 +122,7 @@ func TestLastCommit(t *testing.T) {
 
 	requireRef := func(t *testing.T, e *Foo) {
 		t.Helper()
-		ref, err := repo.ResolveRef(def.Namespace, e.Id().String())
+		ref, err := repo.ResolveRef(t.Context(), def.Namespace, e.Id().String())
 		require.NoError(t, err)
 		require.Equal(t, ref, e.LastCommit())
 	}
@@ -131,7 +132,7 @@ func TestLastCommit(t *testing.T) {
 
 	entity.Append(newOp1(id1, "foo"))
 	require.Empty(t, entity.LastCommit())
-	require.NoError(t, entity.Commit(repo))
+	require.NoError(t, entity.Commit(t.Context(), repo))
 	requireRef(t, entity)
 
 	read, err := Read(t.Context(), def, wrapper, repo, resolver, entity.Id())
@@ -141,13 +142,13 @@ func TestLastCommit(t *testing.T) {
 	// pending operations don't move it
 	entity.Append(newOp2(id1, "bar"))
 	requireRef(t, entity)
-	require.NoError(t, entity.Commit(repo))
+	require.NoError(t, entity.Commit(t.Context(), repo))
 	requireRef(t, entity)
 
 	// neither does a failed commit
 	read.Append(newOp2(id1, "stale"))
 	lastCommit := read.LastCommit()
-	require.ErrorIs(t, read.Commit(repo), repository.ErrRefChanged)
+	require.ErrorIs(t, read.Commit(t.Context(), repo), repository.ErrRefChanged)
 	require.Equal(t, lastCommit, read.LastCommit())
 }
 
@@ -158,12 +159,12 @@ type failingCommitRepo struct {
 	calls  int
 }
 
-func (r *failingCommitRepo) StoreCommit(treeHash repository.Hash, parents ...repository.Hash) (repository.Hash, error) {
+func (r *failingCommitRepo) StoreCommit(ctx context.Context, treeHash repository.Hash, parents ...repository.Hash) (repository.Hash, error) {
 	r.calls++
 	if r.calls == r.failAt {
 		return "", errors.New("store commit failed")
 	}
-	return r.Repo.StoreCommit(treeHash, parents...)
+	return r.Repo.StoreCommit(ctx, treeHash, parents...)
 }
 
 func TestCommitFailureMidway(t *testing.T) {
@@ -171,7 +172,7 @@ func TestCommitFailureMidway(t *testing.T) {
 
 	entity := wrapper(New(def))
 	entity.Append(newOp1(id1, "foo"))
-	require.NoError(t, entity.Commit(repo))
+	require.NoError(t, entity.Commit(t.Context(), repo))
 
 	expected, err := Read(t.Context(), def, wrapper, repo, resolver, entity.Id())
 	require.NoError(t, err)
@@ -184,13 +185,13 @@ func TestCommitFailureMidway(t *testing.T) {
 	expected.Append(op2)
 
 	failing := &failingCommitRepo{Repo: repo, failAt: 2}
-	require.Error(t, entity.Commit(failing))
+	require.Error(t, entity.Commit(t.Context(), failing))
 	require.Equal(t, 2, failing.calls)
 
 	require.True(t, entity.NeedCommit())
 	assertEqualEntities(t, expected.Entity, entity.Entity)
 
-	require.NoError(t, entity.Commit(repo))
+	require.NoError(t, entity.Commit(t.Context(), repo))
 }
 
 // git-bug never writes a merge commit with a parent that is also an ancestor of its
@@ -217,7 +218,7 @@ func TestReadMergeWithAncestorParent(t *testing.T) {
 			rootOp := newOp1(id1, "root")
 			e := wrapper(New(def))
 			e.Append(rootOp)
-			require.NoError(t, e.Commit(repo))
+			require.NoError(t, e.Commit(t.Context(), repo))
 			root := e.LastCommit()
 
 			xPack := &operationPack{
@@ -229,22 +230,22 @@ func TestReadMergeWithAncestorParent(t *testing.T) {
 				xPack.Operations = []Operation{rootOp}
 				xPack.CreateTime = e.CreateLamportTime()
 			}
-			x, err := xPack.Write(def, repo, root)
+			x, err := xPack.Write(t.Context(), def, repo, root)
 			require.NoError(t, err)
 
 			a, err := (&operationPack{
 				Author:     id1,
 				Operations: []Operation{newOp2(id1, "a")},
 				EditTime:   e.EditLamportTime() + 2,
-			}).Write(def, repo, x)
+			}).Write(t.Context(), def, repo, x)
 			require.NoError(t, err)
 
 			merge, err := (&operationPack{
 				Author:   id1,
 				EditTime: e.EditLamportTime() + 3,
-			}).Write(def, repo, a, root)
+			}).Write(t.Context(), def, repo, a, root)
 			require.NoError(t, err)
-			require.NoError(t, repo.UpdateRef(def.Namespace, e.Id().String(), root, merge))
+			require.NoError(t, repo.UpdateRef(t.Context(), def.Namespace, e.Id().String(), root, merge))
 
 			require.NotPanics(t, func() {
 				_, err = Read(t.Context(), def, wrapper, repo, resolver, e.Id())
@@ -261,9 +262,9 @@ type countingRepo struct {
 	reads int
 }
 
-func (r *countingRepo) ReadCommit(hash repository.Hash) (repository.Commit, error) {
+func (r *countingRepo) ReadCommit(ctx context.Context, hash repository.Hash) (repository.Commit, error) {
 	r.reads++
-	return r.Repo.ReadCommit(hash)
+	return r.Repo.ReadCommit(ctx, hash)
 }
 
 func TestCommitOperations(t *testing.T) {
@@ -274,7 +275,7 @@ func TestCommitOperations(t *testing.T) {
 		create := newOp1(id1, "foo")
 		e.Append(create)
 
-		require.Error(t, e.CommitOperations(repo, []Operation{newOp2(id1, "bar")}))
+		require.Error(t, e.CommitOperations(t.Context(), repo, []Operation{newOp2(id1, "bar")}))
 		require.Equal(t, []Operation{create}, e.Operations())
 		require.Empty(t, e.LastCommit())
 
@@ -292,7 +293,7 @@ func TestCommitOperations(t *testing.T) {
 		create := newOp1(id1, "foo")
 		id := create.Id()
 		ops := []Operation{create, newOp2(id1, "bar"), newOp2(id2, "foobar")}
-		require.NoError(t, e.CommitOperations(repo, ops))
+		require.NoError(t, e.CommitOperations(t.Context(), repo, ops))
 		require.Equal(t, id, e.Id())
 		require.Equal(t, ops, e.Operations())
 
@@ -316,13 +317,13 @@ func TestRepair(t *testing.T) {
 
 		e := wrapper(New(def))
 		e.Append(newOp1(id1, "foo"))
-		require.NoError(t, e.Commit(repo))
+		require.NoError(t, e.Commit(t.Context(), repo))
 
 		stale, err := Read(t.Context(), def, wrapper, repo, resolver, e.Id())
 		require.NoError(t, err)
 
 		e.Append(newOp2(id1, "moved"))
-		require.NoError(t, e.Commit(repo))
+		require.NoError(t, e.Commit(t.Context(), repo))
 
 		return repo, resolver, def, stale, e, id1, id2
 	}
@@ -362,12 +363,12 @@ func TestRepair(t *testing.T) {
 
 		op := newOp2(id1, "pending")
 		stale.Append(op)
-		require.ErrorIs(t, stale.Commit(repo), repository.ErrRefChanged)
+		require.ErrorIs(t, stale.Commit(t.Context(), repo), repository.ErrRefChanged)
 
 		require.NoError(t, stale.Repair(t.Context(), repo, resolver))
 		require.Equal(t, moved.LastCommit(), stale.LastCommit())
 		require.True(t, stale.NeedCommit())
-		require.NoError(t, stale.Commit(repo))
+		require.NoError(t, stale.Commit(t.Context(), repo))
 
 		read, err := Read(t.Context(), def, wrapper, repo, resolver, stale.Id())
 		require.NoError(t, err)
@@ -382,10 +383,10 @@ func TestRepair(t *testing.T) {
 		stale.Append(pending)
 
 		op := newOp2(id1, "write-through")
-		require.ErrorIs(t, stale.CommitOperations(repo, []Operation{op}), repository.ErrRefChanged)
+		require.ErrorIs(t, stale.CommitOperations(t.Context(), repo, []Operation{op}), repository.ErrRefChanged)
 
 		require.NoError(t, stale.Repair(t.Context(), repo, resolver))
-		require.NoError(t, stale.CommitOperations(repo, []Operation{op}))
+		require.NoError(t, stale.CommitOperations(t.Context(), repo, []Operation{op}))
 
 		// the pending operation is still there
 		require.True(t, stale.NeedCommit())
@@ -403,9 +404,9 @@ func TestRepair(t *testing.T) {
 		// two authors means two commits, plus one, plus the one from setup
 		moved.Append(newOp2(id2, "a"))
 		moved.Append(newOp2(id1, "b"))
-		require.NoError(t, moved.Commit(repo))
+		require.NoError(t, moved.Commit(t.Context(), repo))
 		moved.Append(newOp2(id2, "c"))
-		require.NoError(t, moved.Commit(repo))
+		require.NoError(t, moved.Commit(t.Context(), repo))
 
 		counting := &countingRepo{Repo: repo}
 		require.NoError(t, stale.Repair(t.Context(), counting, resolver))
@@ -427,15 +428,15 @@ func TestRepair(t *testing.T) {
 			Author:     id2,
 			Operations: []Operation{newOp2(id2, "branch")},
 			EditTime:   stale.EditLamportTime() + 1,
-		}).Write(def, repo, stale.LastCommit())
+		}).Write(t.Context(), def, repo, stale.LastCommit())
 		require.NoError(t, err)
 
 		merge, err := (&operationPack{
 			Author:   id1,
 			EditTime: moved.EditLamportTime() + 1,
-		}).Write(def, repo, moved.LastCommit(), branch)
+		}).Write(t.Context(), def, repo, moved.LastCommit(), branch)
 		require.NoError(t, err)
-		require.NoError(t, repo.UpdateRef(def.Namespace, moved.Id().String(), moved.LastCommit(), merge))
+		require.NoError(t, repo.UpdateRef(t.Context(), def.Namespace, moved.Id().String(), moved.LastCommit(), merge))
 
 		// the merge, and both branches
 		counting := &countingRepo{Repo: repo}
@@ -455,7 +456,7 @@ func TestRepair(t *testing.T) {
 
 		eA := wrapper(New(def))
 		eA.Append(newOp1(id1, "foo"))
-		require.NoError(t, eA.Commit(repoA))
+		require.NoError(t, eA.Commit(t.Context(), repoA))
 		_, err := Push(t.Context(), def, repoA, "remote")
 		require.NoError(t, err)
 		require.NoError(t, Pull(t.Context(), def, wrapper, repoB, resolver, "remote", id2))
@@ -463,18 +464,18 @@ func TestRepair(t *testing.T) {
 		eB, err := Read(t.Context(), def, wrapper, repoB, resolver, eA.Id())
 		require.NoError(t, err)
 		eB.Append(newOp2(id2, "from B"))
-		require.NoError(t, eB.Commit(repoB))
+		require.NoError(t, eB.Commit(t.Context(), repoB))
 		_, err = Push(t.Context(), def, repoB, "remote")
 		require.NoError(t, err)
 
 		eA.Append(newOp2(id1, "from A"))
-		require.NoError(t, eA.Commit(repoA))
+		require.NoError(t, eA.Commit(t.Context(), repoA))
 
 		// merge moves the ref of repoA behind eA's back
 		require.NoError(t, Pull(t.Context(), def, wrapper, repoA, resolver, "remote", id1))
-		ref, err := repoA.ResolveRef(def.Namespace, eA.Id().String())
+		ref, err := repoA.ResolveRef(t.Context(), def.Namespace, eA.Id().String())
 		require.NoError(t, err)
-		head, err := repoA.ReadCommit(ref)
+		head, err := repoA.ReadCommit(t.Context(), ref)
 		require.NoError(t, err)
 		require.Len(t, head.Parents, 2)
 
@@ -525,9 +526,9 @@ func TestRepair(t *testing.T) {
 					Operations: f.ops,
 					EditTime:   f.editTime,
 				}
-				forged, err := opp.Write(stale.Definition, repo, f.parents...)
+				forged, err := opp.Write(t.Context(), stale.Definition, repo, f.parents...)
 				require.NoError(t, err)
-				require.NoError(t, repo.UpdateRef(stale.Namespace, stale.Id().String(), moved.LastCommit(), forged))
+				require.NoError(t, repo.UpdateRef(t.Context(), stale.Namespace, stale.Id().String(), moved.LastCommit(), forged))
 
 				requireUnchanged(t, stale, func() {
 					require.ErrorContains(t, stale.Repair(t.Context(), repo, resolver), tc.err)
@@ -560,12 +561,12 @@ func TestRepair(t *testing.T) {
 
 		for i := range 5 {
 			moved.Append(newOp2(id1, fmt.Sprintf("moved %d", i)))
-			require.NoError(t, moved.Commit(repo))
+			require.NoError(t, moved.Commit(t.Context(), repo))
 
 			stale.Append(newOp2(id1, fmt.Sprintf("stale %d", i)))
-			require.ErrorIs(t, stale.Commit(repo), repository.ErrRefChanged)
+			require.ErrorIs(t, stale.Commit(t.Context(), repo), repository.ErrRefChanged)
 			require.NoError(t, stale.Repair(t.Context(), repo, resolver))
-			require.NoError(t, stale.Commit(repo))
+			require.NoError(t, stale.Commit(t.Context(), repo))
 			require.NoError(t, moved.Repair(t.Context(), repo, resolver))
 		}
 
@@ -614,7 +615,7 @@ func BenchmarkRead(b *testing.B) {
 
 		e := wrapper(New(def))
 		e.Append(newOp1(id1, "root"))
-		require.NoError(b, e.Commit(repo))
+		require.NoError(b, e.Commit(b.Context(), repo))
 
 		var n int
 		write := func(editTime lamport.Time, parents ...repository.Hash) repository.Hash {
@@ -623,7 +624,7 @@ func BenchmarkRead(b *testing.B) {
 				n++
 				opp.Operations = []Operation{newOp2(id1, fmt.Sprintf("op %d", n))}
 			}
-			hash, err := opp.Write(def, repo, parents...)
+			hash, err := opp.Write(b.Context(), def, repo, parents...)
 			require.NoError(b, err)
 			return hash
 		}

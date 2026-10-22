@@ -36,7 +36,7 @@ func nonNativeListCommits(ctx context.Context, repo RepoData, commit Hash) ([]Ha
 		visited[hash] = struct{}{}
 		result = append(result, hash)
 
-		commit, err := repo.ReadCommit(hash)
+		commit, err := repo.ReadCommit(ctx, hash)
 		if err != nil {
 			return nil, err
 		}

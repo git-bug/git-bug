@@ -162,7 +162,7 @@ func newWatchedRepo(t *testing.T) (*GoGitRepo, []Hash) {
 	t.Helper()
 	repo := newTestGoGitRepo(t, false)
 	commits := storeTestCommits(t, repo, 2)
-	require.NoError(t, repo.UpdateRef("bugs", randomKey(), "", commits[0]))
+	require.NoError(t, repo.UpdateRef(t.Context(), "bugs", randomKey(), "", commits[0]))
 	return repo, commits
 }
 
@@ -190,7 +190,7 @@ func TestWatchSource(t *testing.T) {
 			name: "a ref written by GoGitRepo names its key",
 			change: func(t *testing.T, repo *GoGitRepo, commits []Hash) Change {
 				key := randomKey()
-				require.NoError(t, repo.UpdateRef("bugs", key, "", commits[0]))
+				require.NoError(t, repo.UpdateRef(t.Context(), "bugs", key, "", commits[0]))
 				return named("bugs", key)
 			},
 		},
@@ -207,7 +207,7 @@ func TestWatchSource(t *testing.T) {
 			change: func(t *testing.T, repo *GoGitRepo, commits []Hash) Change {
 				keys := []string{randomKey(), randomKey(), randomKey()}
 				for _, key := range keys {
-					require.NoError(t, repo.UpdateRef("bugs", key, "", commits[0]))
+					require.NoError(t, repo.UpdateRef(t.Context(), "bugs", key, "", commits[0]))
 				}
 				return named("bugs", keys...)
 			},
@@ -222,7 +222,7 @@ func TestWatchSource(t *testing.T) {
 		{
 			name: "a namespace appearing names nothing",
 			change: func(t *testing.T, repo *GoGitRepo, commits []Hash) Change {
-				require.NoError(t, repo.UpdateRef("identities", randomKey(), "", commits[0]))
+				require.NoError(t, repo.UpdateRef(t.Context(), "identities", randomKey(), "", commits[0]))
 				return Change{}
 			},
 		},
@@ -240,9 +240,9 @@ func TestWatchSource(t *testing.T) {
 		ch := subscribe(t, repo)
 
 		key := randomKey()
-		require.NoError(t, repo.UpdateRef("bugs", key, "", commits[0]))
+		require.NoError(t, repo.UpdateRef(t.Context(), "bugs", key, "", commits[0]))
 		require.Equal(t, named("bugs", key), nextChange(t, ch))
-		require.NoError(t, repo.RemoveRef("bugs", key))
+		require.NoError(t, repo.RemoveRef(t.Context(), "bugs", key))
 		require.Equal(t, named("bugs", key), nextChange(t, ch))
 	})
 
@@ -250,11 +250,11 @@ func TestWatchSource(t *testing.T) {
 		repo, commits := newWatchedRepo(t)
 		ch := subscribe(t, repo)
 
-		require.NoError(t, repo.UpdateRef("identities", randomKey(), "", commits[0]))
+		require.NoError(t, repo.UpdateRef(t.Context(), "identities", randomKey(), "", commits[0]))
 		require.Equal(t, Change{}, nextChange(t, ch))
 
 		key := randomKey()
-		require.NoError(t, repo.UpdateRef("identities", key, "", commits[0]))
+		require.NoError(t, repo.UpdateRef(t.Context(), "identities", key, "", commits[0]))
 		require.Equal(t, named("identities", key), nextChange(t, ch))
 	})
 
@@ -264,7 +264,7 @@ func TestWatchSource(t *testing.T) {
 
 		runGit(t, repo.path, "update-ref", "refs/heads/main", commits[0].String())
 		runGit(t, repo.path, "update-ref", "refs/other/"+randomKey(), commits[0].String())
-		require.NoError(t, repo.UpdateRef("elsewhere", randomKey(), "", commits[0]))
+		require.NoError(t, repo.UpdateRef(t.Context(), "elsewhere", randomKey(), "", commits[0]))
 		requireNoChange(t, ch)
 	})
 
@@ -322,7 +322,7 @@ func TestPollSource(t *testing.T) {
 		{
 			name: "a ref written by GoGitRepo",
 			change: func(t *testing.T, repo *GoGitRepo, commits []Hash) {
-				require.NoError(t, repo.UpdateRef("bugs", randomKey(), "", commits[0]))
+				require.NoError(t, repo.UpdateRef(t.Context(), "bugs", randomKey(), "", commits[0]))
 			},
 		},
 		{
@@ -342,7 +342,7 @@ func TestPollSource(t *testing.T) {
 		{
 			name: "a namespace appearing",
 			change: func(t *testing.T, repo *GoGitRepo, commits []Hash) {
-				require.NoError(t, repo.UpdateRef("identities", randomKey(), "", commits[0]))
+				require.NoError(t, repo.UpdateRef(t.Context(), "identities", randomKey(), "", commits[0]))
 			},
 		},
 	} {

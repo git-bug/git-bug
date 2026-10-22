@@ -363,6 +363,7 @@ func (gi *gitlabImporter) ensurePerson(ctx context.Context, repo *cache.RepoCach
 	}
 
 	i, err = repo.Identities().NewRaw(
+		ctx,
 		user.Name,
 		user.PublicEmail,
 		user.Username,
