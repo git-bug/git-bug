@@ -33,7 +33,7 @@ func NewMockRepo() *mockRepo {
 		ComposedRepo: &ComposedRepo{
 			RepoConfig:  NewRepoConfig(newMockConfig()),
 			RepoKeyring: NewMockRepoKeyring(),
-			RepoStorage: NewRepoStorage(billyLocalStorage{Filesystem: memfs.New()}),
+			RepoStorage: NewRepoStorage(billyLocalStorage{Filesystem: NewLockedFilesystem(memfs.New())}),
 			RepoIndex:   NewSqliteIndex(":memory:"),
 			RepoData:    data,
 			RepoBrowse:  data,

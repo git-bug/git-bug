@@ -15,12 +15,14 @@ import (
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/commands/completion"
 	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/entity"
 )
 
 type bridgeAuthAddTokenOptions struct {
-	target string
-	login  string
-	user   string
+	target  string
+	login   string
+	user    string
+	baseURL string
 }
 
 func newBridgeAuthAddTokenCommand(env *execenv.Env) *cobra.Command {
@@ -47,16 +49,13 @@ func newBridgeAuthAddTokenCommand(env *execenv.Env) *cobra.Command {
 	flags.StringVarP(&options.user,
 		"user", "u", "", "The user to add the token to. Default is the current user")
 	cmd.RegisterFlagCompletionFunc("user", completion.User(env))
+	flags.StringVar(&options.baseURL, "base-url", "", "The server base URL for instance-scoped credentials")
 
 	return cmd
 }
 
 func runBridgeAuthAddToken(env *execenv.Env, opts bridgeAuthAddTokenOptions, args []string) error {
-	// Note: as bridgeAuthAddTokenLogin is not checked against the remote bug-tracker,
-	// it's possible to register a credential with an incorrect login (including bad case).
-	// The consequence is that it will not get picked later by the bridge. I find that
-	// checking it would require a cumbersome UX (need to provide a base URL for some bridges, ...)
-	// so it's probably not worth it, unless we refactor that entirely.
+	// The login is supplied by the user, not verified against the remote server.
 
 	if opts.target == "" {
 		return fmt.Errorf("flag --target is required")
@@ -67,6 +66,10 @@ func runBridgeAuthAddToken(env *execenv.Env, opts bridgeAuthAddTokenOptions, arg
 
 	if !core.TargetExist(opts.target) {
 		return fmt.Errorf("unknown target")
+	}
+	identityMetadata, credentialMetadata, err := bridge.CredentialMetadata(opts.target, opts.login, opts.baseURL)
+	if err != nil {
+		return err
 	}
 
 	var value string
@@ -87,7 +90,6 @@ func runBridgeAuthAddToken(env *execenv.Env, opts bridgeAuthAddTokenOptions, arg
 	}
 
 	var user *cache.IdentityCache
-	var err error
 
 	if opts.user == "" {
 		user, err = env.Backend.GetUserIdentity(env.Ctx)
@@ -98,27 +100,43 @@ func runBridgeAuthAddToken(env *execenv.Env, opts bridgeAuthAddTokenOptions, arg
 		return err
 	}
 
-	metaKey, _ := bridge.LoginMetaKey(opts.target)
-	login, ok := user.ImmutableMetadata()[metaKey]
+	for key, login := range identityMetadata {
+		if existing, ok := user.ImmutableMetadata()[key]; ok && existing != login {
+			return fmt.Errorf("this user is already tagged with a different %s login", opts.target)
+		}
+	}
 
-	switch {
-	case ok && login == opts.login:
-		// nothing to do
-	case ok && login != opts.login:
-		return fmt.Errorf("this user is already tagged with a different %s login", opts.target)
-	default:
-		user.SetMetadata(metaKey, opts.login)
-		err = user.Commit()
-		if err != nil {
+	if opts.target == "todosrht" {
+		baseURL := credentialMetadata[auth.MetaKeyBaseURL]
+		other, err := env.Backend.Identities().ResolveMatcher(env.Ctx, func(excerpt *cache.IdentityExcerpt) bool {
+			return excerpt.Id() != user.Id() &&
+				(excerpt.ImmutableMetadata["todosrht-login:"+baseURL] == opts.login ||
+					(excerpt.ImmutableMetadata["todosrht-base-url"] == baseURL && excerpt.ImmutableMetadata["todosrht-login"] == opts.login))
+		})
+		if err == nil {
+			return fmt.Errorf("SourceHut login %q on %s is already mapped to identity %s; use --user %s", opts.login, baseURL, other.Id().Human(), other.Id())
+		}
+		if !entity.IsErrNotFound(err) {
 			return err
 		}
 	}
 
 	token := auth.NewToken(opts.target, value)
 	token.SetMetadata(auth.MetaKeyLogin, opts.login)
+	for key, value := range credentialMetadata {
+		token.SetMetadata(key, value)
+	}
 
 	if err := token.Validate(); err != nil {
 		return fmt.Errorf("invalid token: %w", err)
+	}
+	for key, login := range identityMetadata {
+		if _, present := user.ImmutableMetadata()[key]; !present {
+			user.SetMetadata(key, login)
+		}
+	}
+	if err := user.CommitAsNeeded(); err != nil {
+		return err
 	}
 
 	err = auth.Store(env.Repo, token)

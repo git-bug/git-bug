@@ -22,6 +22,7 @@ require (
 	github.com/icrowley/fake v0.0.0-20240710202011-f797eb4a99c0
 	github.com/mattn/go-isatty v0.0.24
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
+	github.com/pkg/errors v0.9.1
 	github.com/shurcooL/githubv4 v0.0.0-20240429030203-be2daab69064
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.10.2

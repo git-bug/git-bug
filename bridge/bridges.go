@@ -7,6 +7,7 @@ import (
 	"github.com/git-bug/git-bug/bridge/gitlab"
 	"github.com/git-bug/git-bug/bridge/jira"
 	"github.com/git-bug/git-bug/bridge/launchpad"
+	"github.com/git-bug/git-bug/bridge/todosrht"
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/repository"
 )
@@ -15,6 +16,7 @@ func init() {
 	core.Register(&github.Github{})
 	core.Register(&gitlab.Gitlab{})
 	core.Register(&launchpad.Launchpad{})
+	core.Register(&todosrht.TodoSourceHut{})
 	core.Register(&jira.Jira{})
 }
 
@@ -28,6 +30,11 @@ func Targets() []string {
 // credentials.
 func LoginMetaKey(target string) (string, error) {
 	return core.LoginMetaKey(target)
+}
+
+// CredentialMetadata returns the identity and token metadata for add-token.
+func CredentialMetadata(target, login, baseURL string) (map[string]string, map[string]string, error) {
+	return core.CredentialMetadata(target, login, baseURL)
 }
 
 // Instantiate a new Bridge for a repo, from the given target and name

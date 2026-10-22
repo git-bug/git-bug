@@ -106,6 +106,22 @@ func LoginMetaKey(target string) (string, error) {
 	return metaKey, nil
 }
 
+// CredentialMetadata returns the identity and token metadata for add-token.
+func CredentialMetadata(target, login, baseURL string) (map[string]string, map[string]string, error) {
+	implType, ok := bridgeImpl[target]
+	if !ok {
+		return nil, nil, fmt.Errorf("unknown bridge target %v", target)
+	}
+	impl := reflect.New(implType).Interface().(BridgeImpl)
+	if provider, ok := impl.(CredentialMetadataProvider); ok {
+		return provider.CredentialMetadata(login, baseURL)
+	}
+	if baseURL != "" {
+		return nil, nil, fmt.Errorf("bridge target %s does not support --base-url for add-token", target)
+	}
+	return map[string]string{impl.LoginMetaKey(): login}, nil, nil
+}
+
 // Instantiate a new Bridge for a repo, from the given target and name
 func NewBridge(repo *cache.RepoCache, target string, name string) (*Bridge, error) {
 	implType, ok := bridgeImpl[target]
