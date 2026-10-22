@@ -15,6 +15,7 @@ import (
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/commands/completion"
 	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/entity"
 )
 
 type bridgeAuthAddTokenOptions struct {
@@ -102,6 +103,21 @@ func runBridgeAuthAddToken(env *execenv.Env, opts bridgeAuthAddTokenOptions, arg
 	for key, login := range identityMetadata {
 		if existing, ok := user.ImmutableMetadata()[key]; ok && existing != login {
 			return fmt.Errorf("this user is already tagged with a different %s login", opts.target)
+		}
+	}
+
+	if opts.target == "todosrht" {
+		baseURL := credentialMetadata[auth.MetaKeyBaseURL]
+		other, err := env.Backend.Identities().ResolveMatcher(env.Ctx, func(excerpt *cache.IdentityExcerpt) bool {
+			return excerpt.Id() != user.Id() &&
+				(excerpt.ImmutableMetadata["todosrht-login:"+baseURL] == opts.login ||
+					(excerpt.ImmutableMetadata["todosrht-base-url"] == baseURL && excerpt.ImmutableMetadata["todosrht-login"] == opts.login))
+		})
+		if err == nil {
+			return fmt.Errorf("SourceHut login %q on %s is already mapped to identity %s; use --user %s", opts.login, baseURL, other.Id().Human(), other.Id())
+		}
+		if !entity.IsErrNotFound(err) {
+			return err
 		}
 	}
 

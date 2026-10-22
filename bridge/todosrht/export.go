@@ -202,6 +202,22 @@ func (je *todosrhtExporter) ExportAll(ctx context.Context, repo *cache.RepoCache
 	return out, nil
 }
 
+const metaKeySuperseded = "todosrht-superseded"
+
+func exportedEventKey(id int) string {
+	return fmt.Sprintf("todosrht-exported-event:%d", id)
+}
+
+// Record every label event immediately, including partial exports. Multiple
+// requests can implement one local operation, so its single ID is not enough.
+func rememberExportedEvent(ctx context.Context, b *cache.BugCache, op dag.Operation, event *Event) error {
+	_, err := b.SetMetadataRaw(op.Author(), time.Now().Unix(), b.Snapshot().Operations[0].Id(), map[string]string{exportedEventKey(event.Id): "true"})
+	if err != nil {
+		return err
+	}
+	return b.CommitAsNeeded(context.WithoutCancel(ctx))
+}
+
 // exportBug publish bugs and related events
 func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, out chan<- core.ExportResult) error {
 	snapshot := b.Snapshot()
@@ -316,6 +332,10 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 		// TodoSourceHut
 		if id, ok := op.GetMetadata(metaKeyTodoSourceHutId); ok {
 			je.cachedOperationIDs[op.Id()] = id
+			continue
+		}
+
+		if _, superseded := op.GetMetadata(metaKeySuperseded); superseded {
 			continue
 		}
 
@@ -451,7 +471,10 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 					return err
 				}
 				currentLabelIDs[labelID] = true
-				// Use the last label event ID and time
+				if err := rememberExportedEvent(ctx, b, op, labelEvent); err != nil {
+					return err
+				}
+				// Keep the final event ID for compatibility with older mappings.
 				todosrhtOpID = fmt.Sprintf("%d", labelEvent.Id)
 				exportTime = labelEvent.Created.Unix()
 			}
@@ -479,7 +502,10 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 					return err
 				}
 				delete(currentLabelIDs, labelID)
-				// Use the last label event ID and time
+				if err := rememberExportedEvent(ctx, b, op, labelEvent); err != nil {
+					return err
+				}
+				// Keep the final event ID for compatibility with older mappings.
 				todosrhtOpID = fmt.Sprintf("%d", labelEvent.Id)
 				exportTime = labelEvent.Created.Unix()
 			}

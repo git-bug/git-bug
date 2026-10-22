@@ -144,6 +144,9 @@ func NewTodoSClient(ctx context.Context, baseURL, token string) *TodoSClient {
 	httpClient := &http.Client{
 		Timeout: 30 * time.Second,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return fmt.Errorf("stopped after 10 redirects")
+			}
 			if len(via) > 0 && (req.URL.Scheme != via[0].URL.Scheme ||
 				!strings.EqualFold(req.URL.Host, via[0].URL.Host)) {
 				return fmt.Errorf("refusing cross-origin redirect to %s", req.URL.Redacted())

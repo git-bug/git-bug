@@ -336,12 +336,34 @@ func (ji *todosrhtImporter) ensureIssue(ctx context.Context, repo *cache.RepoCac
 	metadata := map[string]string{metaKeyTodoSourceHutId: fmt.Sprintf("ticket:%d:%d", ticket.Id, editTime)}
 	changeTitle := current.Subject != previous.Subject && current.Subject != "" && current.Subject != local.Subject
 	changeBody := len(snapshot.Comments) > 0 && current.Body != previous.Body && current.Body != local.Body
-	if changeTitle || changeBody {
+	if current.Subject != previous.Subject || current.Body != previous.Body {
 		// SourceHut's ticket snapshot exposes no editor for title/body edits.
 		// Do not misattribute these operations to the original submitter.
 		author, err = ji.ensureSyncPerson(ctx, repo)
 		if err != nil {
 			return nil, false, err
+		}
+	}
+	// Accepted remote edits supersede earlier pending operations for that
+	// field, including whitespace-only edits and local edit/revert pairs.
+	for _, op := range snapshot.Operations {
+		if _, mapped := op.GetMetadata(metaKeyTodoSourceHutId); mapped {
+			continue
+		}
+		if _, superseded := op.GetMetadata(metaKeySuperseded); superseded {
+			continue
+		}
+		superseded := false
+		switch edit := op.(type) {
+		case *bug.SetTitleOperation:
+			superseded = current.Subject != previous.Subject
+		case *bug.EditCommentOperation:
+			superseded = edit.Target == snapshot.Operations[0].Id() && current.Body != previous.Body
+		}
+		if superseded {
+			if _, err := b.SetMetadataRaw(author, editTime, op.Id(), map[string]string{metaKeySuperseded: "true"}); err != nil {
+				return nil, false, err
+			}
 		}
 	}
 	if changeTitle {
@@ -452,6 +474,9 @@ func commentRootsForEvents(events []Event) map[string]string {
 }
 
 func (ji *todosrhtImporter) importEvent(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, event Event, commentRoots map[string]string) error {
+	if _, exported := b.Snapshot().GetCreateMetadata(exportedEventKey(event.Id)); exported {
+		return nil
+	}
 	changes, err := event.GetChanges()
 	if err != nil {
 		return err
@@ -640,7 +665,11 @@ func (ji *todosrhtImporter) importEvent(ctx context.Context, repo *cache.RepoCac
 			if _, ok := b.Snapshot().GetCreateMetadata(marker); ok {
 				continue
 			}
-			_, err := b.SetMetadata(ctx, b.Snapshot().Operations[0].Id(), map[string]string{marker: "true"})
+			author, err := ji.ensureSyncPerson(ctx, repo)
+			if err != nil {
+				return err
+			}
+			_, err = b.SetMetadataRaw(author, event.Created.Unix(), b.Snapshot().Operations[0].Id(), map[string]string{marker: "true"})
 			if err != nil {
 				return err
 			}

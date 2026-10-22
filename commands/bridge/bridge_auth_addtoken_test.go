@@ -71,6 +71,28 @@ func TestAddSourceHutTokenEnablesContributorExport(t *testing.T) {
 	require.Equal(t, "tester", contributor.ImmutableMetadata()["todosrht-login:"+server.URL])
 }
 
+func TestAddSourceHutTokenRejectsDuplicateIdentityMapping(t *testing.T) {
+	env := envtest.NewEnv(t)
+	imported, err := env.Backend.Identities().NewRaw("Imported", "", "tester", "", nil, map[string]string{
+		"todosrht-login:https://todo.sr.ht": "tester",
+	})
+	require.NoError(t, err)
+	local, err := env.Backend.Identities().New("Local", "local@example.org")
+	require.NoError(t, err)
+	opts := bridgeAuthAddTokenOptions{target: "todosrht", login: "tester", user: local.Id().String(), baseURL: "https://todo.sr.ht"}
+	err = runBridgeAuthAddToken(env, opts, []string{"test-token"})
+	require.ErrorContains(t, err, "already mapped")
+	require.Contains(t, err.Error(), imported.Id().Human())
+	local, err = env.Backend.Identities().Resolve(t.Context(), local.Id())
+	require.NoError(t, err)
+	require.Empty(t, local.ImmutableMetadata())
+	creds, err := auth.List(env.Backend, auth.WithTarget("todosrht"))
+	require.NoError(t, err)
+	require.Empty(t, creds)
+	opts.user = imported.Id().String()
+	require.NoError(t, runBridgeAuthAddToken(env, opts, []string{"test-token"}))
+}
+
 func TestAddTokenValidatesScopeBeforeChangingIdentity(t *testing.T) {
 	for _, baseURL := range []string{"", "http://remote.example.org"} {
 		t.Run(baseURL, func(t *testing.T) {
