@@ -98,7 +98,7 @@ func Read(ctx context.Context, repo repository.Repo, id entity.Id) (*Identity, e
 		return nil, fmt.Errorf("invalid id: %w", err)
 	}
 
-	commit, err := repo.ResolveRef(Namespace, id.String())
+	commit, err := repo.ResolveRef(ctx, Namespace, id.String())
 	if errors.Is(err, repository.ErrNotFound) {
 		return nil, entity.NewErrNotFound(Typename)
 	}
@@ -114,7 +114,7 @@ func ReadTracking(ctx context.Context, repo repository.Repo, remote string, id e
 		return nil, fmt.Errorf("invalid id: %w", err)
 	}
 
-	commit, err := repo.ResolveTrackingRef(remote, Namespace, id.String())
+	commit, err := repo.ResolveTrackingRef(ctx, remote, Namespace, id.String())
 	if errors.Is(err, repository.ErrNotFound) {
 		return nil, entity.NewErrNotFound(Typename)
 	}
@@ -142,7 +142,7 @@ func read(ctx context.Context, repo repository.Repo, id entity.Id, lastCommit re
 			return nil, err
 		}
 
-		entries, err := repo.ReadTree(hash)
+		entries, err := repo.ReadTree(ctx, hash)
 		if err != nil {
 			return nil, fmt.Errorf("can't list git tree entries: %w", err)
 		}
@@ -155,7 +155,7 @@ func read(ctx context.Context, repo repository.Repo, id entity.Id, lastCommit re
 			return nil, fmt.Errorf("invalid identity data at hash %s", hash)
 		}
 
-		data, err := repo.ReadData(entry.Hash)
+		data, err := repo.ReadData(ctx, entry.Hash)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read git blob data: %w", err)
 		}
@@ -181,8 +181,8 @@ func read(ctx context.Context, repo repository.Repo, id entity.Id, lastCommit re
 }
 
 // ListLocalIds list all the available local identity ids
-func ListLocalIds(repo repository.Repo) ([]entity.Id, error) {
-	refs, err := repo.ListRefs(Namespace)
+func ListLocalIds(ctx context.Context, repo repository.Repo) ([]entity.Id, error) {
+	refs, err := repo.ListRefs(ctx, Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -201,14 +201,14 @@ func ListLocalIds(repo repository.Repo) ([]entity.Id, error) {
 // ReadAll read and parse all local Identity
 func ReadAll(ctx context.Context, repo repository.Repo) <-chan entity.StreamedEntity[*Identity] {
 	return readAll(ctx, repo, func() (map[string]repository.Hash, error) {
-		return repo.ListRefs(Namespace)
+		return repo.ListRefs(ctx, Namespace)
 	})
 }
 
 // ReadAllTracking read and parse all Identity in the tracking refs of a remote
 func ReadAllTracking(ctx context.Context, repo repository.Repo, remote string) <-chan entity.StreamedEntity[*Identity] {
 	return readAll(ctx, repo, func() (map[string]repository.Hash, error) {
-		return repo.ListTrackingRefs(remote, Namespace)
+		return repo.ListTrackingRefs(ctx, remote, Namespace)
 	})
 }
 
@@ -317,7 +317,7 @@ func (i *Identity) Mutate(repo repository.RepoClock, f func(orig *Mutator)) erro
 // The Git reference is only moved if it still points to the last committed version,
 // otherwise repository.ErrRefChanged is returned. On any error, the new versions
 // are left pending.
-func (i *Identity) Commit(repo repository.Repo) error {
+func (i *Identity) Commit(ctx context.Context, repo repository.Repo) error {
 	if !i.NeedCommit() {
 		return fmt.Errorf("can't commit an identity with no pending version")
 	}
@@ -336,7 +336,7 @@ func (i *Identity) Commit(repo repository.Repo) error {
 			continue
 		}
 
-		blobHash, err := v.Write(repo)
+		blobHash, err := v.Write(ctx, repo)
 		if err != nil {
 			return err
 		}
@@ -346,16 +346,16 @@ func (i *Identity) Commit(repo repository.Repo) error {
 			{ObjectType: repository.Blob, Hash: blobHash, Name: versionEntryName},
 		}
 
-		treeHash, err := repo.StoreTree(tree)
+		treeHash, err := repo.StoreTree(ctx, tree)
 		if err != nil {
 			return err
 		}
 
 		var commitHash repository.Hash
 		if lastCommit != "" {
-			commitHash, err = repo.StoreCommit(treeHash, lastCommit)
+			commitHash, err = repo.StoreCommit(ctx, treeHash, lastCommit)
 		} else {
-			commitHash, err = repo.StoreCommit(treeHash)
+			commitHash, err = repo.StoreCommit(ctx, treeHash)
 		}
 		if err != nil {
 			return err
@@ -365,7 +365,7 @@ func (i *Identity) Commit(repo repository.Repo) error {
 		newCommits[v] = commitHash
 	}
 
-	err := repo.UpdateRef(Namespace, i.Id().String(), oldCommit, lastCommit)
+	err := repo.UpdateRef(ctx, Namespace, i.Id().String(), oldCommit, lastCommit)
 	if err != nil {
 		return err
 	}
@@ -378,11 +378,11 @@ func (i *Identity) Commit(repo repository.Repo) error {
 	return nil
 }
 
-func (i *Identity) CommitAsNeeded(repo repository.Repo) error {
+func (i *Identity) CommitAsNeeded(ctx context.Context, repo repository.Repo) error {
 	if !i.NeedCommit() {
 		return nil
 	}
-	return i.Commit(repo)
+	return i.Commit(ctx, repo)
 }
 
 func (i *Identity) NeedCommit() bool {
@@ -430,7 +430,7 @@ func (i *Identity) LastCommit() repository.Hash {
 // period of time when this would be possible (before the network converge) but I'm not
 // confident enough to implement that. I choose the strict fast-forward only approach,
 // despite its potential problem with two different version as mentioned above.
-func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
+func (i *Identity) Merge(ctx context.Context, repo repository.Repo, other *Identity) (bool, error) {
 	if i.Id() != other.Id() {
 		return false, errors.New("merging unrelated identities is not supported")
 	}
@@ -454,7 +454,7 @@ func (i *Identity) Merge(repo repository.Repo, other *Identity) (bool, error) {
 	}
 
 	if len(newVersions) > 0 {
-		err := repo.UpdateRef(Namespace, i.Id().String(), oldCommit, lastCommit)
+		err := repo.UpdateRef(ctx, Namespace, i.Id().String(), oldCommit, lastCommit)
 		if err != nil {
 			return false, err
 		}

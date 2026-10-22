@@ -36,7 +36,7 @@ type cacheMgmt interface {
 	// Load reads the cache, and brings it up to date with the repository.
 	Load() <-chan BuildEvent
 	SetCacheSize(size int)
-	RemoveAll() error
+	RemoveAll(ctx context.Context) error
 	MergeAll(ctx context.Context, remote string) <-chan entity.MergeResult
 	GetNamespace() string
 	RegisterObserver(repoName string, observer Observer)

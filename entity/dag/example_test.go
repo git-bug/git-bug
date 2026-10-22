@@ -327,8 +327,8 @@ func Example_entity() {
 	// Now we need identities and to propagate them
 	rene, _ := identity.NewIdentity(repoRene, "René Descartes", "rene@descartes.fr")
 	isaac, _ := identity.NewIdentity(repoRene, "Isaac Newton", "isaac@newton.uk")
-	_ = rene.Commit(repoRene)
-	_ = isaac.Commit(repoRene)
+	_ = rene.Commit(context.Background(), repoRene)
+	_ = isaac.Commit(context.Background(), repoRene)
 	_ = identity.Pull(context.Background(), repoIsaac, "origin")
 
 	// create a new entity
@@ -340,7 +340,7 @@ func Example_entity() {
 	confRene.Append(NewSetSignatureRequired(rene, true))
 
 	// Rene commits on its own repo
-	_ = confRene.Commit(repoRene)
+	_ = confRene.Commit(context.Background(), repoRene)
 
 	// Isaac pull and read the config
 	_ = dag.Pull(context.Background(), def, wrapper, repoIsaac, simpleResolvers(repoIsaac), "origin", isaac)
@@ -356,5 +356,5 @@ func Example_entity() {
 	confIsaac.Append(NewSetSignatureRequired(isaac, false))
 	reneFromIsaacRepo, _ := identity.Read(context.Background(), repoIsaac, rene.Id())
 	confIsaac.Append(NewRemoveAdministratorOp(isaac, reneFromIsaacRepo))
-	_ = confIsaac.Commit(repoIsaac)
+	_ = confIsaac.Commit(context.Background(), repoIsaac)
 }

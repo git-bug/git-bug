@@ -108,7 +108,7 @@ func runBridgeAuthAddToken(env *execenv.Env, opts bridgeAuthAddTokenOptions, arg
 		return fmt.Errorf("this user is already tagged with a different %s login", opts.target)
 	default:
 		user.SetMetadata(metaKey, opts.login)
-		err = user.Commit()
+		err = user.Commit(env.Ctx)
 		if err != nil {
 			return err
 		}

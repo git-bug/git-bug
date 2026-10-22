@@ -12,8 +12,8 @@ import (
 )
 
 // ListLocalIds list all the available local Entity's Id
-func ListLocalIds(def Definition, repo repository.RepoData) ([]entity.Id, error) {
-	refs, err := repo.ListRefs(def.Namespace)
+func ListLocalIds(ctx context.Context, def Definition, repo repository.RepoData) ([]entity.Id, error) {
+	refs, err := repo.ListRefs(ctx, def.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func MergeAll[EntityT entity.Interface](ctx context.Context, def Definition, wra
 	go func() {
 		defer close(out)
 
-		remoteRefs, err := repo.ListTrackingRefs(remote, def.Namespace)
+		remoteRefs, err := repo.ListTrackingRefs(ctx, remote, def.Namespace)
 		if err != nil {
 			out <- entity.NewMergeError(err, "")
 			return
@@ -114,7 +114,7 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 		return entity.NewMergeInvalidStatus(id, fmt.Errorf("invalid id: %w", err).Error())
 	}
 
-	localCommit, err := repo.ResolveRef(def.Namespace, id.String())
+	localCommit, err := repo.ResolveRef(ctx, def.Namespace, id.String())
 	localExist := err == nil
 	if err != nil && !errors.Is(err, repository.ErrNotFound) {
 		return entity.NewMergeError(err, id)
@@ -165,7 +165,7 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 
 	if !localExist {
 		// the bug is not local yet, simply create it
-		err := repo.UpdateRef(def.Namespace, id.String(), "", remoteCommit)
+		err := repo.UpdateRef(ctx, def.Namespace, id.String(), "", remoteCommit)
 		if err != nil {
 			return entity.NewMergeError(err, id)
 		}
@@ -186,7 +186,7 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 	fastForwardPossible := slices.Contains(remoteCommits, localCommit)
 
 	if fastForwardPossible {
-		err = repo.UpdateRef(def.Namespace, id.String(), localCommit, remoteCommit)
+		err = repo.UpdateRef(ctx, def.Namespace, id.String(), localCommit, remoteCommit)
 		if err != nil {
 			return entity.NewMergeError(err, id)
 		}
@@ -210,7 +210,7 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 		), id)
 	}
 
-	editTime, err := incrementClock(def, repo, editClockPattern)
+	editTime, err := incrementClock(ctx, def, repo, editClockPattern)
 	if err != nil {
 		return entity.NewMergeError(err, id)
 	}
@@ -222,13 +222,13 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 		EditTime:   editTime,
 	}
 
-	commitHash, err := opp.Write(def, repo, localCommit, remoteCommit)
+	commitHash, err := opp.Write(ctx, def, repo, localCommit, remoteCommit)
 	if err != nil {
 		return entity.NewMergeError(err, id)
 	}
 
 	// finally update the ref
-	err = repo.UpdateRef(def.Namespace, id.String(), localCommit, commitHash)
+	err = repo.UpdateRef(ctx, def.Namespace, id.String(), localCommit, commitHash)
 	if err != nil {
 		return entity.NewMergeError(err, id)
 	}
@@ -238,20 +238,23 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 
 // Remove delete an Entity, as well as its tracking refs for every remote.
 // Remove is idempotent.
-func Remove(def Definition, repo repository.Repo, id entity.Id) error {
+func Remove(ctx context.Context, def Definition, repo repository.Repo, id entity.Id) error {
 	// list the remotes before deleting anything, to not stop halfway on failure
 	remotes, err := repo.GetRemotes()
 	if err != nil {
 		return err
 	}
 
-	err = repo.RemoveRef(def.Namespace, id.String())
+	err = repo.RemoveRef(ctx, def.Namespace, id.String())
 	if err != nil {
 		return err
 	}
 
+	// once the local ref is gone, RemoveAll can't find the entity anymore: its
+	// tracking refs must be removed now, cancelled or not
+	cleanupCtx := context.WithoutCancel(ctx)
 	for remote := range remotes {
-		err = repo.RemoveTrackingRef(remote, def.Namespace, id.String())
+		err = repo.RemoveTrackingRef(cleanupCtx, remote, def.Namespace, id.String())
 		if err != nil {
 			return err
 		}
@@ -262,13 +265,13 @@ func Remove(def Definition, repo repository.Repo, id entity.Id) error {
 
 // RemoveAll delete all Entity matching the Definition.
 // RemoveAll is idempotent.
-func RemoveAll(def Definition, repo repository.Repo) error {
-	localIds, err := ListLocalIds(def, repo)
+func RemoveAll(ctx context.Context, def Definition, repo repository.Repo) error {
+	localIds, err := ListLocalIds(ctx, def, repo)
 	if err != nil {
 		return err
 	}
 	for _, id := range localIds {
-		err = Remove(def, repo, id)
+		err = Remove(ctx, def, repo, id)
 		if err != nil {
 			return err
 		}

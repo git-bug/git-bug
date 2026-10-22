@@ -126,25 +126,25 @@ func RepoDataTest(t *testing.T, repo repository.RepoData) {
 
 	data := randomData()
 
-	blobHash1, err := repo.StoreData(data)
+	blobHash1, err := repo.StoreData(t.Context(), data)
 	require.NoError(t, err)
 	require.True(t, blobHash1.IsValid())
 
-	blob1Reader, err := repo.ReadData(blobHash1)
+	blob1Reader, err := repo.ReadData(t.Context(), blobHash1)
 	require.NoError(t, err)
 	defer func() { require.NoError(t, blob1Reader.Close()) }()
 	blob1Read, err := io.ReadAll(blob1Reader)
 	require.NoError(t, err)
 	require.Equal(t, data, blob1Read)
 
-	_, err = repo.ReadData(randomHash())
+	_, err = repo.ReadData(t.Context(), randomHash())
 	require.ErrorIs(t, err, repository.ErrNotFound)
 
 	// Tree
 
-	blobHash2, err := repo.StoreData(randomData())
+	blobHash2, err := repo.StoreData(t.Context(), randomData())
 	require.NoError(t, err)
-	blobHash3, err := repo.StoreData(randomData())
+	blobHash3, err := repo.StoreData(t.Context(), randomData())
 	require.NoError(t, err)
 
 	tree1 := []repository.TreeEntry{
@@ -160,11 +160,11 @@ func RepoDataTest(t *testing.T, repo repository.RepoData) {
 		},
 	}
 
-	treeHash1, err := repo.StoreTree(tree1)
+	treeHash1, err := repo.StoreTree(t.Context(), tree1)
 	require.NoError(t, err)
 	require.True(t, treeHash1.IsValid())
 
-	tree1Read, err := repo.ReadTree(treeHash1)
+	tree1Read, err := repo.ReadTree(t.Context(), treeHash1)
 	require.NoError(t, err)
 	require.ElementsMatch(t, tree1, tree1Read)
 
@@ -181,39 +181,39 @@ func RepoDataTest(t *testing.T, repo repository.RepoData) {
 		},
 	}
 
-	treeHash2, err := repo.StoreTree(tree2)
+	treeHash2, err := repo.StoreTree(t.Context(), tree2)
 	require.NoError(t, err)
 	require.True(t, treeHash2.IsValid())
 
-	tree2Read, err := repo.ReadTree(treeHash2)
+	tree2Read, err := repo.ReadTree(t.Context(), treeHash2)
 	require.NoError(t, err)
 	require.ElementsMatch(t, tree2, tree2Read)
 
-	_, err = repo.ReadTree(randomHash())
+	_, err = repo.ReadTree(t.Context(), randomHash())
 	require.ErrorIs(t, err, repository.ErrNotFound)
 
 	// Commit
 
-	commit1, err := repo.StoreCommit(treeHash1)
+	commit1, err := repo.StoreCommit(t.Context(), treeHash1)
 	require.NoError(t, err)
 	require.True(t, commit1.IsValid())
 
 	// commit with a parent
-	commit2, err := repo.StoreCommit(treeHash2, commit1)
+	commit2, err := repo.StoreCommit(t.Context(), treeHash2, commit1)
 	require.NoError(t, err)
 	require.True(t, commit2.IsValid())
 
 	// ReadTree should accept tree and commit hashes
-	tree1read, err := repo.ReadTree(commit1)
+	tree1read, err := repo.ReadTree(t.Context(), commit1)
 	require.NoError(t, err)
 	require.Equal(t, tree1read, tree1)
 
-	c2, err := repo.ReadCommit(commit2)
+	c2, err := repo.ReadCommit(t.Context(), commit2)
 	require.NoError(t, err)
 	c2expected := repository.Commit{Hash: commit2, Parents: []repository.Hash{commit1}, TreeHash: treeHash2}
 	require.Equal(t, c2expected, c2)
 
-	_, err = repo.ReadCommit(randomHash())
+	_, err = repo.ReadCommit(t.Context(), randomHash())
 	require.ErrorIs(t, err, repository.ErrNotFound)
 
 	// Refs
@@ -221,36 +221,36 @@ func RepoDataTest(t *testing.T, repo repository.RepoData) {
 	key1 := randomKey()
 	key2 := randomKey()
 
-	_, err = repo.ResolveRef("bugs", key1)
+	_, err = repo.ResolveRef(t.Context(), "bugs", key1)
 	require.ErrorIs(t, err, repository.ErrNotFound)
 
-	err = repo.UpdateRef("bugs", key1, "", commit2)
+	err = repo.UpdateRef(t.Context(), "bugs", key1, "", commit2)
 	require.NoError(t, err)
 
-	h, err := repo.ResolveRef("bugs", key1)
+	h, err := repo.ResolveRef(t.Context(), "bugs", key1)
 	require.NoError(t, err)
 	require.Equal(t, commit2, h)
 
-	err = repo.UpdateRef("bugs", key2, "", commit1)
+	err = repo.UpdateRef(t.Context(), "bugs", key2, "", commit1)
 	require.NoError(t, err)
 
 	// the same key in another namespace is another ref
-	err = repo.UpdateRef("identities", key1, "", commit1)
+	err = repo.UpdateRef(t.Context(), "identities", key1, "", commit1)
 	require.NoError(t, err)
 
-	refs, err := repo.ListRefs("bugs")
+	refs, err := repo.ListRefs(t.Context(), "bugs")
 	require.NoError(t, err)
 	require.Equal(t, map[string]repository.Hash{key1: commit2, key2: commit1}, refs)
 
-	refs, err = repo.ListTrackingRefs("origin", "bugs")
+	refs, err = repo.ListTrackingRefs(t.Context(), "origin", "bugs")
 	require.NoError(t, err)
 	require.Empty(t, refs)
 
-	_, err = repo.ResolveTrackingRef("origin", "bugs", key1)
+	_, err = repo.ResolveTrackingRef(t.Context(), "origin", "bugs", key1)
 	require.ErrorIs(t, err, repository.ErrNotFound)
 
 	// RemoveTrackingRef is idempotent
-	err = repo.RemoveTrackingRef("origin", "bugs", key1)
+	err = repo.RemoveTrackingRef(t.Context(), "origin", "bugs", key1)
 	require.NoError(t, err)
 
 	commits, err := repo.ListCommits(t.Context(), commit2)
@@ -264,18 +264,18 @@ func RepoDataTest(t *testing.T, repo repository.RepoData) {
 
 	// Cleanup
 
-	err = repo.RemoveRef("bugs", key1)
+	err = repo.RemoveRef(t.Context(), "bugs", key1)
 	require.NoError(t, err)
 
-	_, err = repo.ResolveRef("bugs", key1)
+	_, err = repo.ResolveRef(t.Context(), "bugs", key1)
 	require.ErrorIs(t, err, repository.ErrNotFound)
 
 	// RemoveRef is idempotent
-	err = repo.RemoveRef("bugs", key1)
+	err = repo.RemoveRef(t.Context(), "bugs", key1)
 	require.NoError(t, err)
 
-	require.NoError(t, repo.RemoveRef("bugs", key2))
-	require.NoError(t, repo.RemoveRef("identities", key1))
+	require.NoError(t, repo.RemoveRef(t.Context(), "bugs", key2))
+	require.NoError(t, repo.RemoveRef(t.Context(), "identities", key1))
 }
 
 // RepoDataUpdateRefTest checks that UpdateRef only moves a ref from its
@@ -283,50 +283,50 @@ func RepoDataTest(t *testing.T, repo repository.RepoData) {
 func RepoDataUpdateRefTest(t *testing.T, repo repository.RepoData) {
 	const namespace = "update-ref"
 
-	blobHash, err := repo.StoreData(randomData())
+	blobHash, err := repo.StoreData(t.Context(), randomData())
 	require.NoError(t, err)
-	treeHash, err := repo.StoreTree([]repository.TreeEntry{{ObjectType: repository.Blob, Hash: blobHash, Name: "blob"}})
+	treeHash, err := repo.StoreTree(t.Context(), []repository.TreeEntry{{ObjectType: repository.Blob, Hash: blobHash, Name: "blob"}})
 	require.NoError(t, err)
-	commit1, err := repo.StoreCommit(treeHash)
+	commit1, err := repo.StoreCommit(t.Context(), treeHash)
 	require.NoError(t, err)
-	commit2, err := repo.StoreCommit(treeHash, commit1)
+	commit2, err := repo.StoreCommit(t.Context(), treeHash, commit1)
 	require.NoError(t, err)
 
 	requireRef := func(t *testing.T, key string, expected repository.Hash) {
 		t.Helper()
-		h, err := repo.ResolveRef(namespace, key)
+		h, err := repo.ResolveRef(t.Context(), namespace, key)
 		require.NoError(t, err)
 		require.Equal(t, expected, h)
 	}
 
 	t.Run("expected value matches", func(t *testing.T) {
 		key := randomKey()
-		require.NoError(t, repo.UpdateRef(namespace, key, "", commit1))
-		require.NoError(t, repo.UpdateRef(namespace, key, commit1, commit2))
+		require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, "", commit1))
+		require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, commit1, commit2))
 		requireRef(t, key, commit2)
 	})
 
 	t.Run("stale expected value", func(t *testing.T) {
 		key := randomKey()
-		require.NoError(t, repo.UpdateRef(namespace, key, "", commit2))
-		require.ErrorIs(t, repo.UpdateRef(namespace, key, commit1, commit1), repository.ErrRefChanged)
+		require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, "", commit2))
+		require.ErrorIs(t, repo.UpdateRef(t.Context(), namespace, key, commit1, commit1), repository.ErrRefChanged)
 		requireRef(t, key, commit2)
 	})
 
 	t.Run("create an existing ref", func(t *testing.T) {
 		key := randomKey()
-		require.NoError(t, repo.UpdateRef(namespace, key, "", commit1))
-		require.ErrorIs(t, repo.UpdateRef(namespace, key, "", commit2), repository.ErrRefChanged)
+		require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, "", commit1))
+		require.ErrorIs(t, repo.UpdateRef(t.Context(), namespace, key, "", commit2), repository.ErrRefChanged)
 		requireRef(t, key, commit1)
 	})
 
 	t.Run("stale expected value on a missing ref", func(t *testing.T) {
 		key := randomKey()
-		require.ErrorIs(t, repo.UpdateRef(namespace, key, commit1, commit2), repository.ErrRefChanged)
-		_, err := repo.ResolveRef(namespace, key)
+		require.ErrorIs(t, repo.UpdateRef(t.Context(), namespace, key, commit1, commit2), repository.ErrRefChanged)
+		_, err := repo.ResolveRef(t.Context(), namespace, key)
 		require.ErrorIs(t, err, repository.ErrNotFound)
 
-		refs, err := repo.ListRefs(namespace)
+		refs, err := repo.ListRefs(t.Context(), namespace)
 		require.NoError(t, err)
 		require.NotContains(t, refs, key)
 	})
@@ -335,10 +335,10 @@ func RepoDataUpdateRefTest(t *testing.T, repo repository.RepoData) {
 func RepoDataSignatureTest(t *testing.T, repo repository.RepoData) {
 	data := randomData()
 
-	blobHash, err := repo.StoreData(data)
+	blobHash, err := repo.StoreData(t.Context(), data)
 	require.NoError(t, err)
 
-	treeHash, err := repo.StoreTree([]repository.TreeEntry{
+	treeHash, err := repo.StoreTree(t.Context(), []repository.TreeEntry{
 		{
 			ObjectType: repository.Blob,
 			Hash:       blobHash,
@@ -355,10 +355,10 @@ func RepoDataSignatureTest(t *testing.T, repo repository.RepoData) {
 	require.NoError(t, err)
 	keyring2 := openpgp.EntityList{pgpEntity2}
 
-	commitHash1, err := repo.StoreSignedCommit(treeHash, pgpEntity1)
+	commitHash1, err := repo.StoreSignedCommit(t.Context(), treeHash, pgpEntity1)
 	require.NoError(t, err)
 
-	commit1, err := repo.ReadCommit(commitHash1)
+	commit1, err := repo.ReadCommit(t.Context(), commitHash1)
 	require.NoError(t, err)
 
 	_, err = openpgp.CheckDetachedSignature(keyring1, commit1.SignedData, commit1.Signature, nil)
@@ -367,10 +367,10 @@ func RepoDataSignatureTest(t *testing.T, repo repository.RepoData) {
 	_, err = openpgp.CheckDetachedSignature(keyring2, commit1.SignedData, commit1.Signature, nil)
 	require.Error(t, err)
 
-	commitHash2, err := repo.StoreSignedCommit(treeHash, pgpEntity1, commitHash1)
+	commitHash2, err := repo.StoreSignedCommit(t.Context(), treeHash, pgpEntity1, commitHash1)
 	require.NoError(t, err)
 
-	commit2, err := repo.ReadCommit(commitHash2)
+	commit2, err := repo.ReadCommit(t.Context(), commitHash2)
 	require.NoError(t, err)
 
 	_, err = openpgp.CheckDetachedSignature(keyring1, commit2.SignedData, commit2.Signature, nil)
@@ -787,54 +787,54 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 	libV1 := []byte("package lib\n")
 	utilV1 := []byte("package util\n")
 
-	hReadmeV1, err := repo.StoreData(readmeV1)
+	hReadmeV1, err := repo.StoreData(t.Context(), readmeV1)
 	require.NoError(t, err)
-	hReadmeV3, err := repo.StoreData(readmeV3)
+	hReadmeV3, err := repo.StoreData(t.Context(), readmeV3)
 	require.NoError(t, err)
-	hMainV1, err := repo.StoreData(mainV1)
+	hMainV1, err := repo.StoreData(t.Context(), mainV1)
 	require.NoError(t, err)
-	hMainV2, err := repo.StoreData(mainV2)
+	hMainV2, err := repo.StoreData(t.Context(), mainV2)
 	require.NoError(t, err)
-	hLibV1, err := repo.StoreData(libV1)
+	hLibV1, err := repo.StoreData(t.Context(), libV1)
 	require.NoError(t, err)
-	hUtilV1, err := repo.StoreData(utilV1)
+	hUtilV1, err := repo.StoreData(t.Context(), utilV1)
 	require.NoError(t, err)
 
-	srcTreeV1, err := repo.StoreTree([]repository.TreeEntry{
+	srcTreeV1, err := repo.StoreTree(t.Context(), []repository.TreeEntry{
 		{ObjectType: repository.Blob, Hash: hLibV1, Name: "lib.go"},
 	})
 	require.NoError(t, err)
-	rootTreeV1, err := repo.StoreTree([]repository.TreeEntry{
+	rootTreeV1, err := repo.StoreTree(t.Context(), []repository.TreeEntry{
 		{ObjectType: repository.Blob, Hash: hReadmeV1, Name: "README.md"},
 		{ObjectType: repository.Blob, Hash: hMainV1, Name: "main.go"},
 		{ObjectType: repository.Tree, Hash: srcTreeV1, Name: "src"},
 	})
 	require.NoError(t, err)
 
-	srcTreeV2, err := repo.StoreTree([]repository.TreeEntry{
+	srcTreeV2, err := repo.StoreTree(t.Context(), []repository.TreeEntry{
 		{ObjectType: repository.Blob, Hash: hLibV1, Name: "lib.go"},
 		{ObjectType: repository.Blob, Hash: hUtilV1, Name: "util.go"},
 	})
 	require.NoError(t, err)
-	rootTreeV2, err := repo.StoreTree([]repository.TreeEntry{
+	rootTreeV2, err := repo.StoreTree(t.Context(), []repository.TreeEntry{
 		{ObjectType: repository.Blob, Hash: hReadmeV1, Name: "README.md"},
 		{ObjectType: repository.Blob, Hash: hMainV2, Name: "main.go"},
 		{ObjectType: repository.Tree, Hash: srcTreeV2, Name: "src"},
 	})
 	require.NoError(t, err)
 
-	rootTreeV3, err := repo.StoreTree([]repository.TreeEntry{
+	rootTreeV3, err := repo.StoreTree(t.Context(), []repository.TreeEntry{
 		{ObjectType: repository.Blob, Hash: hReadmeV3, Name: "README.md"},
 		{ObjectType: repository.Blob, Hash: hMainV2, Name: "main.go"},
 		{ObjectType: repository.Tree, Hash: srcTreeV2, Name: "src"},
 	})
 	require.NoError(t, err)
 
-	c1, err := repo.StoreCommit(rootTreeV1)
+	c1, err := repo.StoreCommit(t.Context(), rootTreeV1)
 	require.NoError(t, err)
-	c2, err := repo.StoreCommit(rootTreeV2, c1)
+	c2, err := repo.StoreCommit(t.Context(), rootTreeV2, c1)
 	require.NoError(t, err)
-	c3, err := repo.StoreCommit(rootTreeV3, c2)
+	c3, err := repo.StoreCommit(t.Context(), rootTreeV3, c2)
 	require.NoError(t, err)
 
 	require.NoError(t, repo.SetBranch("main", c3))
@@ -1203,13 +1203,13 @@ func RepoRemoteTest(t *testing.T, newRemote func(t testing.TB, repo *GoGitRepo) 
 	repoA, repoB, remote := SetupGoGitReposAndRemote(t)
 	remoteA, remoteB := newRemote(t, repoA), newRemote(t, repoB)
 
-	blobHash, err := repoA.StoreData(randomData())
+	blobHash, err := repoA.StoreData(t.Context(), randomData())
 	require.NoError(t, err)
-	treeHash, err := repoA.StoreTree([]repository.TreeEntry{{ObjectType: repository.Blob, Hash: blobHash, Name: "blob"}})
+	treeHash, err := repoA.StoreTree(t.Context(), []repository.TreeEntry{{ObjectType: repository.Blob, Hash: blobHash, Name: "blob"}})
 	require.NoError(t, err)
-	commit1, err := repoA.StoreCommit(treeHash)
+	commit1, err := repoA.StoreCommit(t.Context(), treeHash)
 	require.NoError(t, err)
-	commit2, err := repoA.StoreCommit(treeHash, commit1)
+	commit2, err := repoA.StoreCommit(t.Context(), treeHash, commit1)
 	require.NoError(t, err)
 
 	key := randomKey()
@@ -1218,25 +1218,25 @@ func RepoRemoteTest(t *testing.T, newRemote func(t testing.TB, repo *GoGitRepo) 
 	roundTrip := func(t *testing.T, old, commit repository.Hash) {
 		t.Helper()
 
-		require.NoError(t, repoA.UpdateRef(namespace, key, old, commit))
+		require.NoError(t, repoA.UpdateRef(t.Context(), namespace, key, old, commit))
 
 		_, err := remoteA.PushRefs(t.Context(), "origin", namespace)
 		require.NoError(t, err)
-		h, err := remote.ResolveRef(namespace, key)
+		h, err := remote.ResolveRef(t.Context(), namespace, key)
 		require.NoError(t, err)
 		require.Equal(t, commit, h)
-		h, err = repoA.ResolveTrackingRef("origin", namespace, key)
+		h, err = repoA.ResolveTrackingRef(t.Context(), "origin", namespace, key)
 		require.NoError(t, err)
 		require.Equal(t, commit, h)
 
 		_, err = remoteB.FetchRefs(t.Context(), "origin", namespace)
 		require.NoError(t, err)
-		h, err = repoB.ResolveTrackingRef("origin", namespace, key)
+		h, err = repoB.ResolveTrackingRef(t.Context(), "origin", namespace, key)
 		require.NoError(t, err)
 		require.Equal(t, commit, h)
-		_, err = repoB.ReadCommit(commit)
+		_, err = repoB.ReadCommit(t.Context(), commit)
 		require.NoError(t, err)
-		_, err = repoB.ResolveRef(namespace, key)
+		_, err = repoB.ResolveRef(t.Context(), namespace, key)
 		require.ErrorIs(t, err, repository.ErrNotFound)
 	}
 

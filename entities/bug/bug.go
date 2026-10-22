@@ -79,14 +79,14 @@ func ReadAllWithResolver(ctx context.Context, repo repository.Repo, resolvers en
 }
 
 // ListLocalIds list all the available local bug ids
-func ListLocalIds(repo repository.Repo) ([]entity.Id, error) {
-	return dag.ListLocalIds(def, repo)
+func ListLocalIds(ctx context.Context, repo repository.Repo) ([]entity.Id, error) {
+	return dag.ListLocalIds(ctx, def, repo)
 }
 
 // EnsureClocks makes sure that the clocks ordering bugs are usable, and rebuilds
 // them from the bugs if not. See dag.EnsureClocks.
-func EnsureClocks(repo repository.Repo) error {
-	return dag.EnsureClocks(def, repo)
+func EnsureClocks(ctx context.Context, repo repository.Repo) error {
+	return dag.EnsureClocks(ctx, def, repo)
 }
 
 // Validate check if the Bug data is valid
@@ -120,7 +120,7 @@ func (bug *Bug) Append(op Operation) {
 }
 
 // CommitOperations writes the given operations, see dag.Entity.CommitOperations
-func (bug *Bug) CommitOperations(repo repository.Repo, ops []Operation) error {
+func (bug *Bug) CommitOperations(ctx context.Context, repo repository.Repo, ops []Operation) error {
 	// Sanity check: the Create op comes first, and only once. Operations committed
 	// here are built by code, not read from elsewhere: breaking that is a misuse.
 	creation := bug.Entity.LastCommit() == ""
@@ -135,7 +135,7 @@ func (bug *Bug) CommitOperations(repo repository.Repo, ops []Operation) error {
 		}
 		converted[i] = op
 	}
-	return bug.Entity.CommitOperations(repo, converted)
+	return bug.Entity.CommitOperations(ctx, repo, converted)
 }
 
 // Operations return the ordered operations

@@ -245,7 +245,11 @@ func (repo *GoGitRepo) PushRefs(ctx context.Context, remote string, namespaces .
 }
 
 // StoreData will store arbitrary data and return the corresponding hash
-func (repo *GoGitRepo) StoreData(data []byte) (Hash, error) {
+func (repo *GoGitRepo) StoreData(ctx context.Context, data []byte) (Hash, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	obj := repo.r.Storer.NewEncodedObject()
 	obj.SetType(plumbing.BlobObject)
 
@@ -268,9 +272,13 @@ func (repo *GoGitRepo) StoreData(data []byte) (Hash, error) {
 }
 
 // ReadData will attempt to read arbitrary data from the given hash
-func (repo *GoGitRepo) ReadData(hash Hash) (io.ReadCloser, error) {
+func (repo *GoGitRepo) ReadData(ctx context.Context, hash Hash) (io.ReadCloser, error) {
 	repo.rMutex.Lock()
 	defer repo.rMutex.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 
 	obj, err := repo.r.BlobObject(plumbing.NewHash(hash.String()))
 	if errors.Is(err, plumbing.ErrObjectNotFound) {
@@ -284,7 +292,11 @@ func (repo *GoGitRepo) ReadData(hash Hash) (io.ReadCloser, error) {
 }
 
 // StoreTree will store a mapping key-->Hash as a Git tree
-func (repo *GoGitRepo) StoreTree(mapping []TreeEntry) (Hash, error) {
+func (repo *GoGitRepo) StoreTree(ctx context.Context, mapping []TreeEntry) (Hash, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	var tree object.Tree
 
 	// TODO: can be removed once https://github.com/go-git/go-git/issues/193 is resolved
@@ -331,9 +343,13 @@ func (repo *GoGitRepo) StoreTree(mapping []TreeEntry) (Hash, error) {
 }
 
 // ReadTree will return the list of entries in a Git tree
-func (repo *GoGitRepo) ReadTree(hash Hash) ([]TreeEntry, error) {
+func (repo *GoGitRepo) ReadTree(ctx context.Context, hash Hash) ([]TreeEntry, error) {
 	repo.rMutex.Lock()
 	defer repo.rMutex.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 
 	h := plumbing.NewHash(hash.String())
 
@@ -382,13 +398,17 @@ func (repo *GoGitRepo) ReadTree(hash Hash) ([]TreeEntry, error) {
 }
 
 // StoreCommit will store a Git commit with the given Git tree
-func (repo *GoGitRepo) StoreCommit(treeHash Hash, parents ...Hash) (Hash, error) {
-	return repo.StoreSignedCommit(treeHash, nil, parents...)
+func (repo *GoGitRepo) StoreCommit(ctx context.Context, treeHash Hash, parents ...Hash) (Hash, error) {
+	return repo.StoreSignedCommit(ctx, treeHash, nil, parents...)
 }
 
 // StoreSignedCommit will store a Git commit with the given Git tree. If signKey is not nil, the commit
 // will be signed accordingly.
-func (repo *GoGitRepo) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error) {
+func (repo *GoGitRepo) StoreSignedCommit(ctx context.Context, treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	cfg, err := repo.r.Config()
 	if err != nil {
 		return "", err
@@ -453,19 +473,28 @@ func (repo *GoGitRepo) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity,
 
 // ResolveRef returns the commit a local ref points to.
 // Returns ErrNotFound if it doesn't exist.
-func (repo *GoGitRepo) ResolveRef(namespace string, key string) (Hash, error) {
+func (repo *GoGitRepo) ResolveRef(ctx context.Context, namespace string, key string) (Hash, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 	return repo.lookupRef(refPrefix(namespace) + key)
 }
 
 // ResolveTrackingRef returns the commit a tracking ref points to.
 // Returns ErrNotFound if it doesn't exist.
-func (repo *GoGitRepo) ResolveTrackingRef(remote string, namespace string, key string) (Hash, error) {
+func (repo *GoGitRepo) ResolveTrackingRef(ctx context.Context, remote string, namespace string, key string) (Hash, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 	return repo.lookupRef(trackingRefPrefix(remote, namespace) + key)
 }
 
 // RemoveTrackingRef deletes a tracking ref.
 // RemoveTrackingRef is idempotent.
-func (repo *GoGitRepo) RemoveTrackingRef(remote string, namespace string, key string) error {
+func (repo *GoGitRepo) RemoveTrackingRef(ctx context.Context, remote string, namespace string, key string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	return repo.r.Storer.RemoveReference(plumbing.ReferenceName(trackingRefPrefix(remote, namespace) + key))
 }
 
@@ -486,9 +515,13 @@ func (repo *GoGitRepo) ListCommits(ctx context.Context, commit Hash) ([]Hash, er
 	return nonNativeListCommits(ctx, repo, commit)
 }
 
-func (repo *GoGitRepo) ReadCommit(hash Hash) (Commit, error) {
+func (repo *GoGitRepo) ReadCommit(ctx context.Context, hash Hash) (Commit, error) {
 	repo.rMutex.Lock()
 	defer repo.rMutex.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return Commit{}, err
+	}
 
 	commit, err := repo.r.CommitObject(plumbing.NewHash(hash.String()))
 	if err == plumbing.ErrObjectNotFound {

@@ -24,10 +24,10 @@ func TestOperationPackReadWrite(t *testing.T) {
 		EditTime:   456,
 	}
 
-	commitHash, err := opp.Write(def, repo)
+	commitHash, err := opp.Write(t.Context(), def, repo)
 	require.NoError(t, err)
 
-	commit, err := repo.ReadCommit(commitHash)
+	commit, err := repo.ReadCommit(t.Context(), commitHash)
 	require.NoError(t, err)
 
 	opp2, err := readOperationPack(t.Context(), def, repo, resolver, commit)
@@ -66,10 +66,10 @@ func TestOperationPackSignedReadWrite(t *testing.T) {
 			EditTime:   456,
 		}
 
-		commitHash, err := opp.Write(def, repo)
+		commitHash, err := opp.Write(t.Context(), def, repo)
 		require.NoError(t, err)
 
-		commit, err := repo.ReadCommit(commitHash)
+		commit, err := repo.ReadCommit(t.Context(), commitHash)
 		require.NoError(t, err)
 
 		opp2, err := readOperationPack(t.Context(), def, repo, resolver, commit)
@@ -86,10 +86,10 @@ func TestOperationPackSignedReadWrite(t *testing.T) {
 func TestOperationPackFiles(t *testing.T) {
 	repo, author, _, resolver, def := makeTestContext()
 
-	blobHash1, err := repo.StoreData(randomData())
+	blobHash1, err := repo.StoreData(t.Context(), randomData())
 	require.NoError(t, err)
 
-	blobHash2, err := repo.StoreData(randomData())
+	blobHash2, err := repo.StoreData(t.Context(), randomData())
 	require.NoError(t, err)
 
 	opp := &operationPack{
@@ -102,10 +102,10 @@ func TestOperationPackFiles(t *testing.T) {
 		EditTime:   456,
 	}
 
-	commitHash, err := opp.Write(def, repo)
+	commitHash, err := opp.Write(t.Context(), def, repo)
 	require.NoError(t, err)
 
-	commit, err := repo.ReadCommit(commitHash)
+	commit, err := repo.ReadCommit(t.Context(), commitHash)
 	require.NoError(t, err)
 
 	opp2, err := readOperationPack(t.Context(), def, repo, resolver, commit)
@@ -125,13 +125,13 @@ func TestOperationPackFiles(t *testing.T) {
 		blobHash2,
 	})
 
-	tree, err := repo.ReadTree(commit.TreeHash)
+	tree, err := repo.ReadTree(t.Context(), commit.TreeHash)
 	require.NoError(t, err)
 
 	extraTreeHash, ok := repository.SearchTreeEntry(tree, extraEntryName)
 	require.True(t, ok)
 
-	extraTree, err := repo.ReadTree(extraTreeHash.Hash)
+	extraTree, err := repo.ReadTree(t.Context(), extraTreeHash.Hash)
 	require.NoError(t, err)
 	require.ElementsMatch(t, extraTree, []repository.TreeEntry{
 		{
