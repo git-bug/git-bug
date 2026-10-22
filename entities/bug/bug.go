@@ -120,8 +120,18 @@ func (bug *Bug) Append(op Operation) {
 
 // CommitOperations writes the given operations, see dag.Entity.CommitOperations
 func (bug *Bug) CommitOperations(repo repository.Repo, ops []Operation) error {
+	// Sanity check: the Create op comes first, and only once. Operations committed
+	// here are built by code, not read from elsewhere: breaking that is a misuse.
+	creation := bug.Entity.LastCommit() == ""
 	converted := make([]dag.Operation, len(ops))
 	for i, op := range ops {
+		isCreate := op.Type() == CreateOp
+		if creation && i == 0 && !isCreate {
+			panic("the first operation of a new bug should be a Create op")
+		}
+		if isCreate && (!creation || i > 0) {
+			panic("only one Create op allowed in a bug")
+		}
 		converted[i] = op
 	}
 	return bug.Entity.CommitOperations(repo, converted)

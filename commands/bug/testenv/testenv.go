@@ -58,6 +58,7 @@ func NewTestEnvAndBug(t *testing.T) (*execenv.Env, entity.Id) {
 
 	b, _, err := testEnv.Backend.Bugs().New(testBugTitle, testBugMessage)
 	require.NoError(t, err)
+	require.NoError(t, b.Commit())
 
 	return testEnv, b.Id()
 }

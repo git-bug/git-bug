@@ -110,6 +110,8 @@ func (uow *unitOfWork) bug(repo *cache.RepoCache, b *cache.BugCache) *cache.BugC
 	return b
 }
 
+// resolveBug finds an existing bug. The bugs created by the request are not
+// among them: their ids can't be known by the request.
 func (uow *unitOfWork) resolveBug(repo *cache.RepoCache, prefix string) (*cache.BugCache, error) {
 	b, err := repo.Bugs().ResolvePrefix(prefix)
 	if err != nil {

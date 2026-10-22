@@ -281,6 +281,30 @@ func TestCommitOperations(t *testing.T) {
 		_, err := Read(def, wrapper, repo, resolver, create.Id())
 		require.True(t, entity.IsErrNotFound(err))
 	})
+
+	t.Run("new entity", func(t *testing.T) {
+		repo, id1, id2, resolver, def := makeTestContext()
+
+		e := wrapper(New(def))
+		require.Equal(t, entity.UnsetId, e.Id())
+
+		// the id is the one of the first operation, known before it's written
+		create := newOp1(id1, "foo")
+		id := create.Id()
+		ops := []Operation{create, newOp2(id1, "bar"), newOp2(id2, "foobar")}
+		require.NoError(t, e.CommitOperations(repo, ops))
+		require.Equal(t, id, e.Id())
+		require.Equal(t, ops, e.Operations())
+
+		// one operation pack per author
+		commits, err := repo.ListCommits(e.LastCommit())
+		require.NoError(t, err)
+		require.Len(t, commits, 2)
+
+		read, err := Read(def, wrapper, repo, resolver, id)
+		require.NoError(t, err)
+		assertEqualEntities(t, e.Entity, read.Entity)
+	})
 }
 
 // Repair reloads the committed state after the ref moved, so that the pending

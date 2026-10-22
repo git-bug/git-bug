@@ -225,6 +225,10 @@ func newBugWithEditor(repo *cache.RepoCache) error {
 		if err != nil {
 			return err
 		}
+		err = b.Commit()
+		if err != nil {
+			return err
+		}
 
 		initGui(func(ui *termUI) error {
 			ui.showBug.SetBug(b)

@@ -149,6 +149,7 @@ func TestSubCacheDerived(t *testing.T) {
 		b, _, err := c.Bugs().NewRaw(rene, time.Now().Unix(), "title", "message", nil,
 			map[string]string{"origin": "test"})
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 		_, _, err = b.AddCommentRaw(other, time.Now().Unix(), "comment", nil, nil)
 		require.NoError(t, err)
 		_, _, err = b.ChangeLabels([]string{"bug", "ui"}, nil)
@@ -199,10 +200,26 @@ func TestSubCacheDerived(t *testing.T) {
 	t.Run("created", func(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
+		obs := &observer{}
+		require.NoError(t, c.registerObserver("repotest", bug.Typename, obs))
 
-		_, _, err := c.Bugs().New("title", "message")
+		created, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		_, _, err = created.AddComment("comment")
+		require.NoError(t, err)
+		require.Empty(t, obs.created)
+
+		// the staged creation and what follows it are announced once
+		require.NoError(t, created.Commit())
+		require.Equal(t, []observerEvent{{bug.Typename, created.Id()}}, obs.created)
+		require.Empty(t, obs.updated)
 		requireDerivedBuiltFromRefs(t, repo, c)
+
+		_, _, err = created.AddComment("another")
+		require.NoError(t, err)
+		require.NoError(t, created.Commit())
+		require.Equal(t, []observerEvent{{bug.Typename, created.Id()}}, obs.created)
+		require.Equal(t, []observerEvent{{bug.Typename, created.Id()}}, obs.updated)
 	})
 
 	t.Run("pending changes are visible only once committed", func(t *testing.T) {
@@ -210,6 +227,7 @@ func TestSubCacheDerived(t *testing.T) {
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 
 		obs := &observer{}
 		require.NoError(t, c.registerObserver("repotest", bug.Typename, obs))
@@ -260,6 +278,7 @@ func TestSubCacheDerived(t *testing.T) {
 		require.NoError(t, c.SetUserIdentity(rene))
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 		_, _, err = b.AddComment("comment")
 		require.NoError(t, err)
 		require.NoError(t, b.Commit())
@@ -278,8 +297,9 @@ func TestSubCacheDerived(t *testing.T) {
 		rene, err := c.Identities().New("René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
 		require.NoError(t, c.SetUserIdentity(rene))
-		_, _, err = c.Bugs().New("title", "message")
+		created, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, created.Commit())
 		require.NoError(t, c.Close())
 
 		// what an index written before it recorded anything, or a lost one,
@@ -316,6 +336,7 @@ func TestSubCacheDerived(t *testing.T) {
 		for i := 0; i < 3; i++ {
 			b, _, err := c.Bugs().New("title", "message")
 			require.NoError(t, err)
+			require.NoError(t, b.Commit())
 			views = append(views, b)
 		}
 		id := views[1].Id()
@@ -349,6 +370,7 @@ func TestSubCacheDerived(t *testing.T) {
 		for i := 0; i < 3; i++ {
 			b, _, err := c.Bugs().New("title", "message")
 			require.NoError(t, err)
+			require.NoError(t, b.Commit())
 			ids = append(ids, b.Id())
 		}
 		c.setCacheSize(0)
@@ -399,6 +421,7 @@ func TestSubCacheDerived(t *testing.T) {
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "markerindexed")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 
 		clearBugIndex(t, repo)
 
@@ -420,6 +443,7 @@ func TestSubCacheDerived(t *testing.T) {
 		c, rene := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 		id := b.Id()
 		// no loaded copy to bring up to date
 		c.setCacheSize(0)
@@ -448,6 +472,7 @@ func TestSubCacheDerived(t *testing.T) {
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 
 		older := c.bugs.excerpts[b.Id()]
 		olderCommit := c.bugs.builtFrom[b.Id()]
@@ -480,6 +505,7 @@ func TestSubCacheDerived(t *testing.T) {
 		cacheA, _ := newTestCacheWithUser(t, repoA)
 		b, _, err := cacheA.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 		_, err = cacheA.Push("origin")
 		require.NoError(t, err)
 
@@ -528,6 +554,7 @@ func TestSubCacheDerived(t *testing.T) {
 		// as new
 		b, _, err := cacheA.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 		_, err = cacheA.Push("origin")
 		require.NoError(t, err)
 		require.NoError(t, cacheB.Pull("origin"))
@@ -549,8 +576,10 @@ func TestSubCacheDerived(t *testing.T) {
 		c, _ := newTestCacheWithUser(t, repo)
 		b1, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
-		_, _, err = c.Bugs().New("title", "message")
+		require.NoError(t, b1.Commit())
+		created, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, created.Commit())
 
 		require.NoError(t, c.Bugs().Remove(b1.Id().String()))
 		requireDerivedBuiltFromRefs(t, repo, c)
@@ -611,8 +640,10 @@ func TestSubCacheDerived(t *testing.T) {
 
 		evicted, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
-		_, _, err = c.Bugs().New("title", "message")
+		require.NoError(t, evicted.Commit())
+		created, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, created.Commit())
 		require.NotContains(t, c.bugs.cached, evicted.Id())
 
 		// a second copy gets loaded, as the evicted one is still in use
@@ -649,6 +680,32 @@ func TestSubCacheDerived(t *testing.T) {
 		requireDerivedBuiltFromRefs(t, repo, c)
 	})
 
+	t.Run("an evicted copy committing with none loaded becomes the loaded one", func(t *testing.T) {
+		repo := repotest.NewGoGitRepo(t, false)
+		c, _ := newTestCacheWithUser(t, repo)
+		c.setCacheSize(1)
+
+		evicted, _, err := c.Bugs().New("title", "message")
+		require.NoError(t, err)
+		require.NoError(t, evicted.Commit())
+		other, _, err := c.Bugs().New("title", "message")
+		require.NoError(t, err)
+		require.NoError(t, other.Commit())
+		require.NotContains(t, c.bugs.cached, evicted.Id())
+
+		_, _, err = evicted.AddComment("comment")
+		require.NoError(t, err)
+		require.NoError(t, evicted.Commit())
+		require.Same(t, evicted.shared, c.bugs.cached[evicted.Id()])
+		// still within the size, the other one going
+		require.NotContains(t, c.bugs.cached, other.Id())
+		requireDerivedBuiltFromRefs(t, repo, c)
+
+		resolved, err := c.Bugs().Resolve(evicted.Id())
+		require.NoError(t, err)
+		require.Same(t, evicted.shared, resolved.shared)
+	})
+
 	t.Run("a new entity evicted right away is still usable", func(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
@@ -656,6 +713,7 @@ func TestSubCacheDerived(t *testing.T) {
 
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 		require.NotContains(t, c.bugs.cached, b.Id())
 		requireDerivedBuiltFromRefs(t, repo, c)
 
@@ -671,6 +729,7 @@ func TestSubCacheDerived(t *testing.T) {
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 		_, _, err = b.AddComment("markerpending")
 		require.NoError(t, err)
 
@@ -692,6 +751,7 @@ func TestSubCacheDerived(t *testing.T) {
 		c, rene := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 		_, _, err = b.AddComment("markerpending")
 		require.NoError(t, err)
 
@@ -702,7 +762,7 @@ func TestSubCacheDerived(t *testing.T) {
 		_, _, err = bug.AddComment(other, rene, time.Now().Unix(), "markercommitted", nil, nil)
 		require.NoError(t, err)
 		require.NoError(t, other.Commit(repo))
-		require.NoError(t, c.bugs.onCommit(b.Id()))
+		require.NoError(t, c.bugs.onCommit(b.shared))
 
 		require.Equal(t, []entity.Id{b.Id()}, searchBugs(t, c, "markercommitted"))
 		require.Empty(t, searchBugs(t, c, "markerpending"))
@@ -723,6 +783,7 @@ func TestSubCacheDerived(t *testing.T) {
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 		_, _, err = b.AddComment("comment")
 		require.NoError(t, err)
 		require.NoError(t, b.Commit())
@@ -730,7 +791,7 @@ func TestSubCacheDerived(t *testing.T) {
 		obs := &observer{}
 		require.NoError(t, c.registerObserver("repotest", bug.Typename, obs))
 
-		require.NoError(t, c.bugs.onCommit(b.Id()))
+		require.NoError(t, c.bugs.onCommit(b.shared))
 		require.Empty(t, obs.updated)
 		require.Equal(t, 2, lenComments(t, c, b.Id()))
 		requireDerivedBuiltFromRefs(t, repo, c)
@@ -741,29 +802,16 @@ func TestSubCacheDerived(t *testing.T) {
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 
 		require.NoError(t, c.Bugs().Remove(b.Id().String()))
-		require.NoError(t, c.bugs.onCommit(b.Id()))
-
-		requireDerivedBuiltFromRefs(t, repo, c)
-	})
-
-	t.Run("an entity removed while being added is not registered", func(t *testing.T) {
-		repo := repotest.NewGoGitRepo(t, false)
-		c, _ := newTestCacheWithUser(t, repo)
-		b, _, err := c.Bugs().New("title", "message")
-		require.NoError(t, err)
-		read, err := bug.Read(repo, b.Id())
-		require.NoError(t, err)
-		require.NoError(t, c.Bugs().Remove(b.Id().String()))
-
 		obs := &observer{}
 		require.NoError(t, c.registerObserver("repotest", bug.Typename, obs))
+		require.NoError(t, c.bugs.onCommit(b.shared))
 
-		_, err = c.bugs.add(newSharedBug(read))
-		require.Error(t, err)
 		require.NotContains(t, c.bugs.cached, b.Id())
 		require.Empty(t, obs.created)
+		require.Empty(t, obs.updated)
 		requireDerivedBuiltFromRefs(t, repo, c)
 	})
 
@@ -772,6 +820,7 @@ func TestSubCacheDerived(t *testing.T) {
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 
 		obs := &observer{}
 		require.NoError(t, c.registerObserver("repotest", bug.Typename, obs))
@@ -806,6 +855,7 @@ func TestSubCacheDerived(t *testing.T) {
 		require.NoError(t, c.SetUserIdentity(rene))
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 		// changed outside the cache, which only notices on a sync
 		read, err := bug.Read(repo, b.Id())
 		require.NoError(t, err)
@@ -824,6 +874,7 @@ func TestSubCacheDerived(t *testing.T) {
 		c, _ := newTestCacheWithUser(t, repo)
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 
 		const count = 10
 		var wg sync.WaitGroup
@@ -1194,6 +1245,7 @@ func TestSubCacheWorker(t *testing.T) {
 			c, rene := open(t, repo, source(repo.GitDir))
 			b, _, err := c.Bugs().New("title", "message")
 			require.NoError(t, err)
+			require.NoError(t, b.Commit())
 
 			other, err := bug.Read(repo, b.Id())
 			require.NoError(t, err)
@@ -1254,6 +1306,7 @@ func TestSubCacheWorker(t *testing.T) {
 		first, _ := open(t, repo, poll(repo.GitDir))
 		inFirst, _, err := first.Bugs().New("title", "message")
 		require.NoError(t, err)
+		require.NoError(t, inFirst.Commit())
 		id := inFirst.Id()
 
 		otherRepo := reopen(t, repo)

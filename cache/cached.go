@@ -54,8 +54,23 @@ type CachedEntityBase[SnapT cloneable[SnapT], OpT dag.OperationWithApply[SnapT]]
 	base repository.Hash
 }
 
+// Id returns the id of the entity, the one of its first operation, which for a
+// new entity is still staged.
 func (e *CachedEntityBase[SnapT, OpT]) Id() entity.Id {
-	return e.shared.Id()
+	if id := e.shared.Id(); id != entity.UnsetId {
+		return id
+	}
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	// a commit may have landed meanwhile: under the lock, the first operation
+	// is either still staged or committed
+	if id := e.shared.Id(); id != entity.UnsetId {
+		return id
+	}
+	if len(e.staged) == 0 {
+		return entity.UnsetId
+	}
+	return e.staged[0].Id()
 }
 
 // Snapshot returns the state of the entity, staged operations included, see Compile.

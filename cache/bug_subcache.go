@@ -236,13 +236,15 @@ func (c *RepoCacheBug) ValidLabels() []common.Label {
 }
 
 // New create a new bug
-// The new bug is written in the repository (commit)
+// The creation is staged, like any operation: Commit writes the new bug in the
+// repository.
 func (c *RepoCacheBug) New(title string, message string) (*BugCache, *bug.CreateOperation, error) {
 	return c.NewWithFiles(title, message, nil)
 }
 
 // NewWithFiles create a new bug with attached files for the message
-// The new bug is written in the repository (commit)
+// The creation is staged, like any operation: Commit writes the new bug in the
+// repository.
 func (c *RepoCacheBug) NewWithFiles(title string, message string, files []repository.Hash) (*BugCache, *bug.CreateOperation, error) {
 	author, err := c.getUserIdentity()
 	if err != nil {
@@ -254,22 +256,18 @@ func (c *RepoCacheBug) NewWithFiles(title string, message string, files []reposi
 
 // NewRaw create a new bug with attached files for the message, as
 // well as metadata for the Create operation.
-// The new bug is written in the repository (commit)
+// The creation is staged, like any operation: Commit writes the new bug in the
+// repository. Until then, the bug is only known to the returned view.
 func (c *RepoCacheBug) NewRaw(author identity.Interface, unixTime int64, title string, message string, files []repository.Hash, metadata map[string]string) (*BugCache, *bug.CreateOperation, error) {
-	b, op, err := bug.Create(author, unixTime, title, message, files, metadata)
-	if err != nil {
+	op := bug.NewCreateOp(author, unixTime, title, message, files)
+	for key, val := range metadata {
+		op.SetMetadata(key, val)
+	}
+	if err := op.Validate(); err != nil {
 		return nil, nil, err
 	}
 
-	err = b.Commit(c.repo)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	cached, err := c.add(newSharedBug(b))
-	if err != nil {
-		return nil, nil, err
-	}
-
+	cached := c.newView(newSharedBug(bug.NewBug()))
+	cached.Append(op)
 	return cached, op, nil
 }

@@ -98,12 +98,14 @@ func TestCache(t *testing.T) {
 	// Create a bug
 	bug1, _, err := cache.Bugs().New("title", "message")
 	require.NoError(t, err)
+	require.NoError(t, bug1.Commit())
 	assertOberserverEvent(obsIdentity, 2, 0, 0)
 	assertOberserverEvent(obsBug, 1, 0, 0)
 
 	// It's possible to create two identical bugs
 	bug2, _, err := cache.Bugs().New("title", "marker")
 	require.NoError(t, err)
+	require.NoError(t, bug2.Commit())
 	assertOberserverEvent(obsIdentity, 2, 0, 0)
 	assertOberserverEvent(obsBug, 2, 0, 0)
 
@@ -217,8 +219,9 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 	assertOberserverEvent(obsIdentity, 3, 0, 1)
 	assertOberserverEvent(obsBug, 2, 1, 1)
-	_, _, err = cache.Bugs().NewRaw(iden2, time.Now().Unix(), "title", "message", nil, nil)
+	created, _, err := cache.Bugs().NewRaw(iden2, time.Now().Unix(), "title", "message", nil, nil)
 	require.NoError(t, err)
+	require.NoError(t, created.Commit())
 	assertOberserverEvent(obsIdentity, 3, 0, 1)
 	assertOberserverEvent(obsBug, 3, 1, 1)
 
@@ -266,6 +269,7 @@ func TestCachePushPull(t *testing.T) {
 	// Create a bug in A
 	bug1A, _, err := cacheA.Bugs().New("bug1", "message")
 	require.NoError(t, err)
+	require.NoError(t, bug1A.Commit())
 
 	// A --> remote --> B
 	_, err = cacheA.Push("origin")
@@ -289,6 +293,7 @@ func TestCachePushPull(t *testing.T) {
 	// B --> remote --> A
 	bug2B, _, err := cacheB.Bugs().New("bug2", "message")
 	require.NoError(t, err)
+	require.NoError(t, bug2B.Commit())
 
 	_, err = cacheB.Push("origin")
 	require.NoError(t, err)
@@ -386,6 +391,7 @@ func TestCacheMerge(t *testing.T) {
 	// A creates a bug holding a unique marker
 	bugA, _, err := cacheA.Bugs().New("title", "markercreate")
 	require.NoError(t, err)
+	require.NoError(t, bugA.Commit())
 
 	_, err = cacheA.Push("origin")
 	require.NoError(t, err)
@@ -486,8 +492,9 @@ func TestCachePullWithoutIdentity(t *testing.T) {
 	err = cacheA.SetUserIdentity(reneA)
 	require.NoError(t, err)
 
-	_, _, err = cacheA.Bugs().New("bug1", "message")
+	created, _, err := cacheA.Bugs().New("bug1", "message")
 	require.NoError(t, err)
+	require.NoError(t, created.Commit())
 
 	_, err = cacheA.Push("origin")
 	require.NoError(t, err)
@@ -561,10 +568,12 @@ func TestRemove(t *testing.T) {
 
 	kept, _, err := repoCache.Bugs().New("title", "message")
 	require.NoError(t, err)
+	require.NoError(t, kept.Commit())
 
 	// and one more for testing
 	b1, _, err := repoCache.Bugs().New("title", "message")
 	require.NoError(t, err)
+	require.NoError(t, b1.Commit())
 
 	_, err = repoCache.Push("remoteA")
 	require.NoError(t, err)
@@ -620,6 +629,7 @@ func TestCacheEviction(t *testing.T) {
 
 	bug1, _, err := repoCache.Bugs().New("title", "message")
 	require.NoError(t, err)
+	require.NoError(t, bug1.Commit())
 
 	checkBugPresence(t, repoCache, bug1, true)
 	require.Len(t, repoCache.bugs.cached, 1)
@@ -627,6 +637,7 @@ func TestCacheEviction(t *testing.T) {
 
 	bug2, _, err := repoCache.Bugs().New("title", "message")
 	require.NoError(t, err)
+	require.NoError(t, bug2.Commit())
 
 	checkBugPresence(t, repoCache, bug1, true)
 	checkBugPresence(t, repoCache, bug2, true)
@@ -636,6 +647,7 @@ func TestCacheEviction(t *testing.T) {
 	// Number of bugs should not exceed max size of lruCache, oldest one should be evicted
 	bug3, _, err := repoCache.Bugs().New("title", "message")
 	require.NoError(t, err)
+	require.NoError(t, bug3.Commit())
 
 	require.Len(t, repoCache.bugs.cached, 2)
 	require.Equal(t, 2, repoCache.bugs.lru.Len())
@@ -652,6 +664,7 @@ func TestCacheEviction(t *testing.T) {
 
 	bug4, _, err := repoCache.Bugs().New("title", "message")
 	require.NoError(t, err)
+	require.NoError(t, bug4.Commit())
 
 	checkBugPresence(t, repoCache, bug1, false)
 	checkBugPresence(t, repoCache, bug2, true)
@@ -698,8 +711,9 @@ func TestLongDescription(t *testing.T) {
 	i, err := backend.Identities().New("René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
-	_, _, err = backend.Bugs().NewRaw(i, time.Now().Unix(), text, text, nil, nil)
+	created, _, err := backend.Bugs().NewRaw(i, time.Now().Unix(), text, text, nil, nil)
 	require.NoError(t, err)
+	require.NoError(t, created.Commit())
 }
 
 func TestResolveOperationWithMetadataFromSetMetadata(t *testing.T) {
@@ -718,6 +732,7 @@ func TestResolveOperationWithMetadataFromSetMetadata(t *testing.T) {
 
 	b, _, err := backend.Bugs().New("title", "message")
 	require.NoError(t, err)
+	require.NoError(t, b.Commit())
 	_, commentOp, err := b.AddComment("comment")
 	require.NoError(t, err)
 	require.NoError(t, b.Commit())
@@ -825,8 +840,9 @@ func TestCacheRebuildsUnusableClocks(t *testing.T) {
 			require.NoError(t, cache.SetUserIdentity(iden))
 
 			for i := 0; i < 3; i++ {
-				_, _, err = cache.Bugs().New("title", "message")
+				created, _, err := cache.Bugs().New("title", "message")
 				require.NoError(t, err)
+				require.NoError(t, created.Commit())
 			}
 
 			// this version records the bug clocks: the next one can't hold less
