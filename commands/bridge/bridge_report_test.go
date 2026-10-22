@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/bridge/core"
-	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/commands/execenv/envtest"
 	"github.com/git-bug/git-bug/entity"
 )
 
@@ -37,8 +37,8 @@ func importEvents(results ...core.ImportResult) <-chan core.ImportResult {
 	return ch
 }
 
-func newOut() *execenv.TestOut {
-	return &execenv.TestOut{Buffer: &bytes.Buffer{}}
+func newOut() *envtest.TestOut {
+	return &envtest.TestOut{Buffer: &bytes.Buffer{}}
 }
 
 func skippedEvents() <-chan core.ExportResult {
