@@ -9,7 +9,8 @@ git-bug push [REMOTE] [flags]
 ### Options
 
 ```
-  -h, --help   help for push
+  -h, --help      help for push
+  -v, --verbose   log each operation to stderr
 ```
 
 ### SEE ALSO
