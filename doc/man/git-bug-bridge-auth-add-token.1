@@ -15,11 +15,15 @@ Store a new token
 
 .SH OPTIONS
 \fB-t\fP, \fB--target\fP=""
-	The target of the bridge. Valid values are [github,gitlab,jira,launchpad-preview]
+	The target of the bridge. Valid values are [gitea,github,gitlab,jira,launchpad-preview]
 
 .PP
 \fB-l\fP, \fB--login\fP=""
 	The login in the remote bug-tracker
+
+.PP
+\fB-b\fP, \fB--base-url\fP=""
+	The base URL of the remote bug-tracker instance (required by self-hosted targets such as gitea or gitlab)
 
 .PP
 \fB-u\fP, \fB--user\fP=""
