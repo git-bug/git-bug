@@ -545,8 +545,8 @@ func deleteRepository(ctx context.Context, project, owner, token string) error {
 }
 
 func TestCacheAllClient_MultipleLogins(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	repo := repotest.NewGoGitRepo(t, false)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	defer backend.Close()
 
@@ -577,6 +577,6 @@ func TestCacheAllClient_MultipleLogins(t *testing.T) {
 		identityClient: make(map[entity.Id]*rateLimitHandlerClient),
 	}
 
-	require.NoError(t, ge.cacheAllClient(backend))
+	require.NoError(t, ge.cacheAllClient(t.Context(), backend))
 	require.Equal(t, "alice-secret-token", ge.defaultToken.Value)
 }

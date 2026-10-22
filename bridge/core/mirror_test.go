@@ -25,7 +25,7 @@ func (fakeBridgeImpl) LoginMetaKey() string               { return "fake-login" 
 func (fakeBridgeImpl) ValidParams() map[string]interface{} {
 	return nil
 }
-func (fakeBridgeImpl) Configure(*cache.RepoCache, BridgeParams, bool) (Configuration, error) {
+func (fakeBridgeImpl) Configure(context.Context, *cache.RepoCache, BridgeParams, bool) (Configuration, error) {
 	return nil, nil
 }
 
@@ -55,36 +55,50 @@ func (e *foreignExporter) Init(ctx context.Context, repo *cache.RepoCache, conf 
 	return e.plainExporter.Init(ctx, repo, conf)
 }
 
-func newFakeBridge(e Exporter) *Bridge {
-	return &Bridge{Name: "test", impl: fakeBridgeImpl{exporter: e}, conf: Configuration{}}
+func newFakeBridge(t *testing.T, e Exporter) *Bridge {
+	t.Helper()
+	repo := repository.NewMockRepo()
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, backend.Close())
+		require.NoError(t, repo.Close())
+	})
+	return &Bridge{Name: "test", repo: backend, impl: fakeBridgeImpl{exporter: e}, conf: Configuration{}}
 }
 
 func TestForeignPushRejectedByUnsupportedBridge(t *testing.T) {
 	e := &plainExporter{}
-	_, err := newFakeBridge(e).ExportAllWithOptions(context.Background(), time.Time{}, ExportOptions{Foreign: true})
+	_, err := newFakeBridge(t, e).ExportAllWithOptions(t.Context(), time.Time{}, ExportOptions{Foreign: true})
 	assert.ErrorContains(t, err, "fake bridge cannot push bugs from other bug trackers")
 	assert.False(t, e.initialized, "the exporter must not start")
 }
 
 func TestForeignPushEnabledBeforeInit(t *testing.T) {
 	e := &foreignExporter{}
-	_, err := newFakeBridge(e).ExportAllWithOptions(context.Background(), time.Time{}, ExportOptions{Foreign: true})
+	events, err := newFakeBridge(t, e).ExportAllWithOptions(t.Context(), time.Time{}, ExportOptions{Foreign: true})
 	require.NoError(t, err)
+	for range events {
+	}
 	assert.True(t, e.foreignAtInit)
 }
 
 func TestPlainPushLeavesForeignDisabled(t *testing.T) {
 	e := &foreignExporter{}
-	_, err := newFakeBridge(e).ExportAll(context.Background(), time.Time{})
+	events, err := newFakeBridge(t, e).ExportAll(t.Context(), time.Time{})
 	require.NoError(t, err)
+	for range events {
+	}
 	assert.False(t, e.foreign)
 }
 
 func TestForeignPushAfterInitRejected(t *testing.T) {
 	e := &foreignExporter{}
-	b := newFakeBridge(e)
-	_, err := b.ExportAll(context.Background(), time.Time{})
+	b := newFakeBridge(t, e)
+	events, err := b.ExportAll(t.Context(), time.Time{})
 	require.NoError(t, err)
+	for range events {
+	}
 	_, err = b.ExportAllWithOptions(context.Background(), time.Time{}, ExportOptions{Foreign: true})
 	assert.Error(t, err)
 	assert.False(t, e.foreign)

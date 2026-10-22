@@ -65,11 +65,11 @@ func (ge *giteaExporter) Init(ctx context.Context, repo *cache.RepoCache, conf c
 	}
 
 	login := conf[confKeyDefaultLogin]
-	ge.exporter, err = repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaScopedLogin, scopedLogin(conf[confKeyBaseURL], login))
+	ge.exporter, err = repo.Identities().ResolveIdentityImmutableMetadata(ctx, metaKeyGiteaScopedLogin, scopedLogin(conf[confKeyBaseURL], login))
 	if entity.IsErrNotFound(err) {
 		// Identities created by bridge configuration or older imports only
 		// carry the unscoped login.
-		ge.exporter, err = repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, login)
+		ge.exporter, err = repo.Identities().ResolveIdentityImmutableMetadata(ctx, metaKeyGiteaLogin, login)
 		if err == nil {
 			if scoped, ok := ge.exporter.ImmutableMetadata()[metaKeyGiteaScopedLogin]; ok && scoped != scopedLogin(conf[confKeyBaseURL], login) {
 				return ErrMissingIdentityToken
@@ -92,7 +92,7 @@ func (ge *giteaExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, s
 			if ctx.Err() != nil {
 				return
 			}
-			b, err := repo.Bugs().Resolve(id)
+			b, err := repo.Bugs().Resolve(ctx, id)
 			if err != nil {
 				send(ctx, out, core.NewExportError(err, id))
 				return
@@ -174,7 +174,7 @@ func (ge *giteaExporter) exportBug(ctx context.Context, b *cache.BugCache, out c
 			return fail(err, "create Gitea issue")
 		}
 		index = issue.Index
-		if err := ge.mark(b, createOp.Id(), map[string]string{
+		if err := ge.mark(ctx, b, createOp.Id(), map[string]string{
 			core.MetaKeyOrigin:  target,
 			metaKeyGiteaID:      strconv.FormatInt(index, 10),
 			metaKeyGiteaOwner:   ge.conf[confKeyOwner],
@@ -259,7 +259,7 @@ func (ge *giteaExporter) exportBug(ctx context.Context, b *cache.BugCache, out c
 		if err != nil {
 			return fail(err, fmt.Sprintf("export %T", op))
 		}
-		if err := ge.mark(b, op.Id(), meta); err != nil {
+		if err := ge.mark(ctx, b, op.Id(), meta); err != nil {
 			if add, ok := op.(*bug.AddCommentOperation); ok && b.NeedCommit() {
 				if id := commentIDs[add.Id()]; id != 0 {
 					if _, deleteErr := ge.client.Issues.DeleteIssueComment(ctx, ge.conf[confKeyOwner], ge.conf[confKeyProject], id); deleteErr != nil {
@@ -304,11 +304,11 @@ func isExportedOrImported(op dag.Operation) bool {
 
 // mark records remote metadata and commits immediately, so a later failure
 // does not make the next push repeat the remote change.
-func (ge *giteaExporter) mark(b *cache.BugCache, target entity.Id, meta map[string]string) error {
+func (ge *giteaExporter) mark(ctx context.Context, b *cache.BugCache, target entity.Id, meta map[string]string) error {
 	if _, err := b.SetMetadataRaw(ge.exporter, time.Now().Unix(), target, meta); err != nil {
 		return err
 	}
-	return b.CommitAsNeeded()
+	return b.CommitAsNeeded(ctx)
 }
 
 func (ge *giteaExporter) createIssue(ctx context.Context, title, body string) (*gitea.Issue, error) {

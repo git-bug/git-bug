@@ -10,11 +10,11 @@ import (
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
-	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 )
 
 func TestFinishConfigDanglingUserIdentity(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	// Point the user identity to an identity that doesn't exist in the repo,
 	// as happens when the identity has been removed or the config copied over.
@@ -23,17 +23,17 @@ func TestFinishConfigDanglingUserIdentity(t *testing.T) {
 		return f.Set("git-bug.identity", dangling.String())
 	}))
 
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	defer backend.Close()
 
 	const metaKey = "test-login"
 
-	err = FinishConfig(backend, metaKey, "jdoe")
+	err = FinishConfig(t.Context(), backend, metaKey, "jdoe")
 	require.NoError(t, err)
 
 	// a new identity tagged with the login must be the current user now
-	user, err := backend.GetUserIdentity()
+	user, err := backend.GetUserIdentity(t.Context())
 	require.NoError(t, err)
 	require.NotEqual(t, dangling, user.Id())
 	require.Equal(t, "jdoe", user.ImmutableMetadata()[metaKey])
@@ -44,9 +44,9 @@ func TestFinishConfigDanglingUserIdentity(t *testing.T) {
 }
 
 func TestFinishConfigDanglingUserIdentityWithExisting(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	defer backend.Close()
 
@@ -64,11 +64,11 @@ func TestFinishConfigDanglingUserIdentityWithExisting(t *testing.T) {
 		return f.Set("git-bug.identity", dangling.String())
 	}))
 
-	err = FinishConfig(backend, metaKey, "jdoe")
+	err = FinishConfig(t.Context(), backend, metaKey, "jdoe")
 	require.NoError(t, err)
 
 	// the existing identity must have replaced the dangling one as the current user
-	user, err := backend.GetUserIdentity()
+	user, err := backend.GetUserIdentity(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, existing.Id(), user.Id())
 

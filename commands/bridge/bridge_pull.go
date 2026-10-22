@@ -2,6 +2,7 @@ package bridgecmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sync"

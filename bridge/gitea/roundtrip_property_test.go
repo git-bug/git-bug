@@ -2,7 +2,6 @@ package gitea
 
 import (
 	"context"
-	"os"
 	"reflect"
 	"sort"
 	"testing"
@@ -16,6 +15,7 @@ import (
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 	"github.com/git-bug/git-bug/util/text"
 )
 
@@ -37,6 +37,7 @@ type normalizedBug struct {
 
 type testLike interface {
 	Helper()
+	Context() context.Context
 	Cleanup(func())
 	Fatalf(format string, args ...any)
 }
@@ -98,27 +99,17 @@ func assertEqual(t testLike, expected, actual any) {
 	}
 }
 
-func newRoundTripRepo(t testLike) (repository.TestedRepo, *cache.RepoCache) {
+func newRoundTripRepo(fixture *testing.T, t testLike) (repository.Repo, *cache.RepoCache) {
 	t.Helper()
-	dir, err := os.MkdirTemp("", "git-bug-gitea-roundtrip-*")
-	requireNoError(t, err)
-	t.Cleanup(func() { _ = os.RemoveAll(dir) })
+	repo := repotest.NewGoGitRepo(fixture, false)
 
-	repo := repository.CreateGoGitTestRepoAtDir(dir, false)
-	t.Cleanup(func() {
-		err := repo.Close()
-		if err != nil {
-			t.Fatalf("close repo: %v", err)
-		}
-	})
-
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	requireNoError(t, err)
 	t.Cleanup(func() { _ = backend.Close() })
 	return repo, backend
 }
 
-func storeRoundTripToken(t testLike, repo repository.TestedRepo, serverURL string) {
+func storeRoundTripToken(t testLike, repo repository.Repo, serverURL string) {
 	t.Helper()
 	token := auth.NewToken(target, "test-token")
 	token.SetMetadata(auth.MetaKeyLogin, "testuser")
@@ -174,14 +165,14 @@ func seedRoundTripBug(t testLike, backend *cache.RepoCache, spec roundTripBug) {
 	}
 	// Cache views do not share pending operations, so commit for the
 	// exporter to see them.
-	requireNoError(t, b.CommitAsNeeded())
+	requireNoError(t, b.CommitAsNeeded(t.Context()))
 }
 
 func normalizeOnlyBug(t testLike, backend *cache.RepoCache) normalizedBug {
 	t.Helper()
 	bugIDs := backend.Bugs().AllIds()
 	requireLen(t, bugIDs, 1)
-	b, err := backend.Bugs().Resolve(bugIDs[0])
+	b, err := backend.Bugs().Resolve(t.Context(), bugIDs[0])
 	requireNoError(t, err)
 
 	snap := b.Snapshot()
@@ -211,21 +202,21 @@ func normalizeOnlyBug(t testLike, backend *cache.RepoCache) normalizedBug {
 
 func runExportAll(t testLike, exporter core.Exporter, backend *cache.RepoCache, conf core.Configuration) {
 	t.Helper()
-	requireNoError(t, exporter.Init(context.Background(), backend, conf))
-	ch, err := exporter.ExportAll(context.Background(), backend, time.Time{})
+	requireNoError(t, exporter.Init(t.Context(), backend, conf))
+	ch, err := exporter.ExportAll(t.Context(), backend, time.Time{})
 	requireNoError(t, err)
 	for result := range ch {
 		requireNoError(t, result.Err)
 	}
 }
 
-func importFromFake(t testLike, serverURL string) *cache.RepoCache {
+func importFromFake(fixture *testing.T, t testLike, serverURL string) *cache.RepoCache {
 	t.Helper()
-	repo, imported := newRoundTripRepo(t)
+	repo, imported := newRoundTripRepo(fixture, t)
 	storeRoundTripToken(t, repo, serverURL)
 	gi := &giteaImporter{}
-	requireNoError(t, gi.Init(context.Background(), imported, roundTripConfig(serverURL)))
-	ch, err := gi.ImportAll(context.Background(), imported, time.Time{})
+	requireNoError(t, gi.Init(t.Context(), imported, roundTripConfig(serverURL)))
+	ch, err := gi.ImportAll(t.Context(), imported, time.Time{})
 	requireNoError(t, err)
 	var results []core.ImportResult
 	for r := range ch {
@@ -256,12 +247,12 @@ func TestGiteaExportImportRoundTripProperty(t *testing.T) {
 	rapid.Check(t, func(rt *rapid.T) {
 		spec := roundTripBugGen().Draw(rt, "bug")
 		fake := (&giteatest.FakeAPI{Owner: "owner", Project: "project"}).NewServerFor(rt)
-		repo, source := newRoundTripRepo(rt)
+		repo, source := newRoundTripRepo(t, rt)
 		storeRoundTripToken(rt, repo, fake.URL)
 		seedRoundTripBug(rt, source, spec)
 
 		runExportAll(rt, exporter, source, roundTripConfig(fake.URL))
-		imported := importFromFake(rt, fake.URL)
+		imported := importFromFake(t, rt, fake.URL)
 
 		assertEqual(rt, normalizeOnlyBug(rt, source), normalizeOnlyBug(rt, imported))
 	})
@@ -276,16 +267,16 @@ func TestGiteaExportImportRoundTripIdempotentProperty(t *testing.T) {
 	rapid.Check(t, func(rt *rapid.T) {
 		spec := roundTripBugGen().Draw(rt, "bug")
 		fake := (&giteatest.FakeAPI{Owner: "owner", Project: "project"}).NewServerFor(rt)
-		repo, source := newRoundTripRepo(rt)
+		repo, source := newRoundTripRepo(t, rt)
 		storeRoundTripToken(rt, repo, fake.URL)
 		seedRoundTripBug(rt, source, spec)
 
 		runExportAll(rt, exporter, source, roundTripConfig(fake.URL))
-		firstImport := importFromFake(rt, fake.URL)
+		firstImport := importFromFake(t, rt, fake.URL)
 		firstState := normalizeOnlyBug(rt, firstImport)
 
 		runExportAll(rt, exporter, source, roundTripConfig(fake.URL))
-		secondImport := importFromFake(rt, fake.URL)
+		secondImport := importFromFake(t, rt, fake.URL)
 		assertEqual(rt, firstState, normalizeOnlyBug(rt, secondImport))
 	})
 }

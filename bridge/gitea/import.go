@@ -82,7 +82,7 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 
 			// Buffer a new issue's history before creation so its first title
 			// comes from the oldest rename, not the current issue listing.
-			_, lookupErr := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
+			_, lookupErr := repo.Bugs().ResolveMatcher(ctx, func(excerpt *cache.BugExcerpt) bool {
 				return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
 					excerpt.CreateMetadata[metaKeyGiteaID] == strconv.FormatInt(issue.Index, 10) &&
 					excerpt.CreateMetadata[metaKeyGiteaBaseURL] == gi.conf[confKeyBaseURL] &&
@@ -140,7 +140,7 @@ func (gi *giteaImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, s
 
 			if !b.NeedCommit() {
 				gi.sendImportResult(ctx, core.NewImportNothing(b.Id(), "no imported operation"))
-			} else if err := b.Commit(); err != nil {
+			} else if err := b.Commit(ctx); err != nil {
 				// commit bug state
 				gi.reportBugError(ctx, err, "bug commit", b.Id())
 				return
@@ -543,7 +543,7 @@ func (gi *giteaImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache,
 	giteaID := strconv.FormatInt(issue.Index, 10)
 
 	// resolve bug
-	b, err := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
+	b, err := repo.Bugs().ResolveMatcher(ctx, func(excerpt *cache.BugExcerpt) bool {
 		return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
 			excerpt.CreateMetadata[metaKeyGiteaID] == giteaID &&
 			excerpt.CreateMetadata[metaKeyGiteaBaseURL] == gi.conf[confKeyBaseURL] &&
@@ -579,6 +579,11 @@ func (gi *giteaImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache,
 		return nil, false, err
 	}
 
+	// Creation is staged like any other operation. Persist it before
+	// reporting success or processing a timeline that may fail later.
+	if err := b.Commit(ctx); err != nil {
+		return nil, false, err
+	}
 	gi.sendImportResult(ctx, core.NewImportBug(b.Id()))
 
 	return b, true, nil
@@ -614,7 +619,7 @@ func (gi *giteaImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache
 	username := poster.UserName
 
 	// Look first in the cache
-	i, err := gi.getCachedIdentity(repo, username)
+	i, err := gi.getCachedIdentity(ctx, repo, username)
 	if i != nil || err != nil {
 		return i, err
 	}
@@ -656,12 +661,12 @@ func scopedLogin(baseURL, login string) string {
 	return baseURL + "\x00" + login
 }
 
-func (gi *giteaImporter) getCachedIdentity(repo *cache.RepoCache, loginName string) (*cache.IdentityCache, error) {
-	i, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaScopedLogin, scopedLogin(gi.conf[confKeyBaseURL], loginName))
+func (gi *giteaImporter) getCachedIdentity(ctx context.Context, repo *cache.RepoCache, loginName string) (*cache.IdentityCache, error) {
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(ctx, metaKeyGiteaScopedLogin, scopedLogin(gi.conf[confKeyBaseURL], loginName))
 	if entity.IsErrNotFound(err) && loginName == gi.conf[confKeyDefaultLogin] {
 		// Bridge configuration tags the local user with the unscoped login.
 		// That login was verified against this instance's token.
-		i, err = repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, loginName)
+		i, err = repo.Identities().ResolveIdentityImmutableMetadata(ctx, metaKeyGiteaLogin, loginName)
 		if err == nil {
 			if scoped, ok := i.ImmutableMetadata()[metaKeyGiteaScopedLogin]; ok && scoped != scopedLogin(gi.conf[confKeyBaseURL], loginName) {
 				return nil, nil
@@ -679,7 +684,7 @@ func (gi *giteaImporter) getCachedIdentity(repo *cache.RepoCache, loginName stri
 }
 
 func (gi *giteaImporter) deletedIdentity(ctx context.Context, repo *cache.RepoCache) (*cache.IdentityCache, error) {
-	i, err := gi.getCachedIdentity(repo, DeletedIdentity)
+	i, err := gi.getCachedIdentity(ctx, repo, DeletedIdentity)
 	if i != nil || err != nil {
 		return i, err
 	}

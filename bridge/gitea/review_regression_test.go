@@ -16,7 +16,7 @@ import (
 )
 
 type failingIndexRepo struct {
-	repository.ClockedRepo
+	repository.Repo
 	fail bool
 }
 
@@ -26,9 +26,9 @@ func TestImportDoesNotReportUncommittedOperations(t *testing.T) {
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project", Issues: []*gitea.Issue{issue}}
 	srv := fa.NewServer(t)
 	baseRepo := repository.NewMockRepo()
-	repo := &failingIndexRepo{ClockedRepo: baseRepo}
+	repo := &failingIndexRepo{Repo: baseRepo}
 	defer repo.Close()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	defer backend.Close()
 	storeRoundTripToken(t, baseRepo, srv.URL)
@@ -44,11 +44,11 @@ func TestImportDoesNotReportUncommittedOperations(t *testing.T) {
 	repo.fail = false
 }
 
-func (r *failingIndexRepo) GetIndex(name string) (repository.Index, error) {
+func (r *failingIndexRepo) GetIndex(name string, version uint) (repository.Index, error) {
 	if r.fail {
 		return nil, fmt.Errorf("index unavailable")
 	}
-	return r.ClockedRepo.GetIndex(name)
+	return r.Repo.GetIndex(name, version)
 }
 
 func TestExportKeepsRemoteContentAfterRefreshFailure(t *testing.T) {
@@ -57,9 +57,9 @@ func TestExportKeepsRemoteContentAfterRefreshFailure(t *testing.T) {
 			fa := &giteatest.FakeAPI{Owner: "owner", Project: "project"}
 			srv := fa.NewServer(t)
 			baseRepo := repository.NewMockRepo()
-			repo := &failingIndexRepo{ClockedRepo: baseRepo}
+			repo := &failingIndexRepo{Repo: baseRepo}
 			defer repo.Close()
-			backend, err := cache.NewRepoCacheNoEvents(repo)
+			backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 			require.NoError(t, err)
 			defer backend.Close()
 			storeRoundTripToken(t, baseRepo, srv.URL)
@@ -75,7 +75,7 @@ func TestExportKeepsRemoteContentAfterRefreshFailure(t *testing.T) {
 				b := onlyBug(t, backend)
 				_, _, err = b.AddCommentRaw(exporter.exporter, time.Now().Unix(), "comment", nil, nil)
 				require.NoError(t, err)
-				require.NoError(t, b.Commit())
+				require.NoError(t, b.Commit(t.Context()))
 			}
 			repo.fail = true
 			results, err := exporter.ExportAll(context.Background(), backend, time.Time{})
@@ -119,7 +119,7 @@ func TestImportStatusReconcilesAfterSupersedingRemoteEvent(t *testing.T) {
 	require.NoError(t, err)
 	_, err = b.OpenRaw(user, issue.Created.Add(2*time.Hour).Unix(), map[string]string{metaKeyGiteaEvent: "reopen:1"})
 	require.NoError(t, err)
-	require.NoError(t, b.Commit())
+	require.NoError(t, b.Commit(t.Context()))
 	issue.State = gitea.StateClosed
 	issue.Updated = issue.Created.Add(3 * time.Hour)
 	require.Empty(t, collectErrors(runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)))
@@ -132,7 +132,7 @@ func TestExportRemovesRenamedImportedLabel(t *testing.T) {
 	issue.Labels = []*gitea.Label{label}
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project", Issues: []*gitea.Issue{issue}, RepoLabels: []*gitea.Label{label}, LabelsByIssue: map[int64][]*gitea.Label{1: {label}}}
 	srv := fa.NewServer(t)
-	repo, backend := newRoundTripRepo(t)
+	repo, backend := newRoundTripRepo(t, t)
 	storeRoundTripToken(t, repo, srv.URL)
 	seedRoundTripBug(t, backend, roundTripBug{Title: "mine", Body: "body"})
 	b := onlyBug(t, backend)
@@ -145,7 +145,7 @@ func TestExportRemovesRenamedImportedLabel(t *testing.T) {
 	require.NoError(t, err)
 	_, _, err = b.ChangeLabelsRaw(user, time.Now().Unix(), nil, []string{"original"}, nil)
 	require.NoError(t, err)
-	require.NoError(t, b.Commit())
+	require.NoError(t, b.Commit(t.Context()))
 	exporter := &giteaExporter{}
 	require.NoError(t, exporter.Init(context.Background(), backend, roundTripConfig(srv.URL)))
 	results, err := exporter.ExportAll(context.Background(), backend, time.Time{})
@@ -163,7 +163,7 @@ func TestExportDoesNotReuseHistoricalLabelID(t *testing.T) {
 	issue.Labels = []*gitea.Label{renamed, local}
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project", Issues: []*gitea.Issue{issue}, RepoLabels: []*gitea.Label{renamed, local}, LabelsByIssue: map[int64][]*gitea.Label{1: {renamed, local}}}
 	srv := fa.NewServer(t)
-	repo, backend := newRoundTripRepo(t)
+	repo, backend := newRoundTripRepo(t, t)
 	storeRoundTripToken(t, repo, srv.URL)
 	seedRoundTripBug(t, backend, roundTripBug{Title: "mine", Body: "body"})
 	b := onlyBug(t, backend)
@@ -180,7 +180,7 @@ func TestExportDoesNotReuseHistoricalLabelID(t *testing.T) {
 	require.NoError(t, err)
 	_, _, err = b.ChangeLabelsRaw(user, time.Now().Unix(), nil, []string{"original"}, nil)
 	require.NoError(t, err)
-	require.NoError(t, b.Commit())
+	require.NoError(t, b.Commit(t.Context()))
 	exporter := &giteaExporter{}
 	require.NoError(t, exporter.Init(context.Background(), backend, roundTripConfig(srv.URL)))
 	results, err := exporter.ExportAll(context.Background(), backend, time.Time{})

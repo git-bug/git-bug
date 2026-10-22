@@ -31,7 +31,7 @@ func (g *Gitea) ValidParams() map[string]interface{} {
 	}
 }
 
-func (g *Gitea) Configure(repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
+func (g *Gitea) Configure(ctx context.Context, repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
 	var err error
 	var urlStr string
 
@@ -88,7 +88,7 @@ func (g *Gitea) Configure(repo *cache.RepoCache, params core.BridgeParams, inter
 		}
 	case params.TokenRaw != "":
 		token := auth.NewToken(target, params.TokenRaw)
-		login, err = getLoginFromToken(baseURL, token)
+		login, err = getLoginFromToken(ctx, baseURL, token)
 		if err != nil {
 			return nil, err
 		}
@@ -108,14 +108,14 @@ func (g *Gitea) Configure(repo *cache.RepoCache, params core.BridgeParams, inter
 			login = params.Login
 		}
 		// validate username
-		_, err = validateUsername(baseURL, login)
+		_, err = validateUsername(ctx, baseURL, login)
 		if err != nil {
 			return nil, errors.Wrap(err, "username validation")
 		}
 		if !interactive {
 			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the access token via the --token option.")
 		}
-		cred, err = promptTokenOptions(repo, login, baseURL)
+		cred, err = promptTokenOptions(ctx, repo, login, baseURL)
 		if err != nil {
 			return nil, err
 		}
@@ -127,9 +127,9 @@ func (g *Gitea) Configure(repo *cache.RepoCache, params core.BridgeParams, inter
 	}
 
 	// verify access to the repository with token
-	_, err = validateProject(baseURL, owner, project, token)
+	_, err = validateProject(ctx, baseURL, owner, project, token)
 	if err != nil && hasAlt && (params.CredPrefix == "" || auth.NormalizeBaseURL(alt.baseURL) == auth.NormalizeBaseURL(baseURL)) {
-		if _, altErr := validateProject(alt.baseURL, alt.owner, alt.project, token); altErr == nil {
+		if _, altErr := validateProject(ctx, alt.baseURL, alt.owner, alt.project, token); altErr == nil {
 			baseURL, owner, project = alt.baseURL, alt.owner, alt.project
 			err = nil
 		}
@@ -166,7 +166,7 @@ func (g *Gitea) Configure(repo *cache.RepoCache, params core.BridgeParams, inter
 		}
 	}
 
-	return conf, core.FinishConfig(repo, metaKeyGiteaLogin, login)
+	return conf, core.FinishConfig(ctx, repo, metaKeyGiteaLogin, login)
 }
 
 func (g *Gitea) ValidateConfig(conf core.Configuration) error {
@@ -191,7 +191,7 @@ func (g *Gitea) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-func promptTokenOptions(repo repository.RepoKeyring, login, baseURL string) (auth.Credential, error) {
+func promptTokenOptions(ctx context.Context, repo repository.RepoKeyring, login, baseURL string) (auth.Credential, error) {
 	creds, err := auth.List(repo,
 		auth.WithTarget(target),
 		auth.WithKind(auth.KindToken),
@@ -211,7 +211,7 @@ func promptTokenOptions(repo repository.RepoKeyring, login, baseURL string) (aut
 	case cred != nil:
 		return cred, nil
 	case index == 0:
-		return promptToken(baseURL)
+		return promptToken(ctx, baseURL)
 	default:
 		panic("missed case")
 	}
@@ -225,14 +225,14 @@ func tokenURL(baseURL string) string {
 	return u
 }
 
-func promptToken(baseURL string) (*auth.Token, error) {
+func promptToken(ctx context.Context, baseURL string) (*auth.Token, error) {
 	fmt.Printf("You can generate a new token by visiting %s.\n", tokenURL(baseURL))
 	fmt.Println()
 
 	var login string
 
 	validator := func(name string, value string) (complaint string, err error) {
-		login, err = getLoginFromToken(baseURL, auth.NewToken(target, value))
+		login, err = getLoginFromToken(ctx, baseURL, auth.NewToken(target, value))
 		if err != nil {
 			return fmt.Sprintf("token is invalid: %v", err), nil
 		}
@@ -251,7 +251,7 @@ func promptToken(baseURL string) (*auth.Token, error) {
 	return token, nil
 }
 
-func promptURL(repo repository.RepoCommon) (string, error) {
+func promptURL(repo repository.RepoConfig) (string, error) {
 	validRemotes, err := getRemoteURLs(repo)
 	if err != nil {
 		return "", err
@@ -381,7 +381,7 @@ func splitURL(rawUrl string) (baseURL, owner, project string, err error) {
 	return primary.baseURL, primary.owner, primary.project, nil
 }
 
-func getRemoteURLs(repo repository.RepoCommon) ([]string, error) {
+func getRemoteURLs(repo repository.RepoConfig) ([]string, error) {
 	remotes, err := repo.GetRemotes()
 	if err != nil {
 		return nil, err
@@ -397,7 +397,7 @@ func getRemoteURLs(repo repository.RepoCommon) ([]string, error) {
 	return urls, nil
 }
 
-func validateUsername(baseURL, username string) (bool, error) {
+func validateUsername(ctx context.Context, baseURL, username string) (bool, error) {
 	/* FIXME: We're directly calling gitea.NewClient here because buildClient
 	 * *requires* a token, which we may not have yet. Ideally the token to
 	 * buildClient should be optional. */
@@ -406,7 +406,7 @@ func validateUsername(baseURL, username string) (bool, error) {
 		return false, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	_, _, err = client.GetUserInfo(ctx, username)
@@ -417,13 +417,13 @@ func validateUsername(baseURL, username string) (bool, error) {
 	return true, nil
 }
 
-func validateProject(baseURL, owner, project string, token *auth.Token) (bool, error) {
+func validateProject(ctx context.Context, baseURL, owner, project string, token *auth.Token) (bool, error) {
 	client, err := buildClient(baseURL, token)
 	if err != nil {
 		return false, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	_, _, err = client.GetRepo(ctx, owner, project)
@@ -437,13 +437,13 @@ func validateProject(baseURL, owner, project string, token *auth.Token) (bool, e
 	return true, nil
 }
 
-func getLoginFromToken(baseURL string, token *auth.Token) (string, error) {
+func getLoginFromToken(ctx context.Context, baseURL string, token *auth.Token) (string, error) {
 	client, err := buildClient(baseURL, token)
 	if err != nil {
 		return "", err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	user, _, err := client.GetMyUserInfo(ctx)

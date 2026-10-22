@@ -13,7 +13,7 @@ import (
 )
 
 func TestConfigureRejectsUnboundCredentialBeforeContactingHost(t *testing.T) {
-	repo, backend := newRoundTripRepo(t)
+	repo, backend := newRoundTripRepo(t, t)
 	for _, tc := range []struct {
 		name, target, baseURL string
 	}{
@@ -28,7 +28,7 @@ func TestConfigureRejectsUnboundCredentialBeforeContactingHost(t *testing.T) {
 				cred.SetMetadata(auth.MetaKeyBaseURL, tc.baseURL)
 			}
 			require.NoError(t, auth.Store(repo, cred))
-			_, err := (&Gitea{}).Configure(backend, core.BridgeParams{
+			_, err := (&Gitea{}).Configure(t.Context(), backend, core.BridgeParams{
 				URL: "https://example.com/owner/repo", CredPrefix: cred.ID().String(),
 			}, false)
 			require.Error(t, err)
@@ -187,7 +187,7 @@ func TestValidateUsername(t *testing.T) {
 				fa.NotFoundUsers = []string{tt.input}
 			}
 			srv := fa.NewServer(t)
-			ok, _ := validateUsername(srv.URL, tt.input)
+			ok, _ := validateUsername(t.Context(), srv.URL, tt.input)
 			assert.Equal(t, tt.ok, ok)
 		})
 	}
@@ -209,7 +209,7 @@ func TestValidateProject(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fa := &giteatest.FakeAPI{Owner: "owner", Project: "repo", RepoNotFound: tt.repoNotFound}
 			srv := fa.NewServer(t)
-			ok, _ := validateProject(srv.URL, fa.Owner, fa.Project, token)
+			ok, _ := validateProject(t.Context(), srv.URL, fa.Owner, fa.Project, token)
 			assert.Equal(t, tt.want, ok)
 		})
 	}
@@ -222,7 +222,7 @@ func TestValidateProjectServerError(t *testing.T) {
 
 	// The current error text is misleading for 5xx responses, so assert only
 	// that the server error is not accepted as a valid project.
-	ok, err := validateProject(srv.URL, fa.Owner, fa.Project, token)
+	ok, err := validateProject(t.Context(), srv.URL, fa.Owner, fa.Project, token)
 	assert.False(t, ok, "a 500 from the repo endpoint must not be reported as a valid project")
 	assert.Error(t, err, "a 500 from the repo endpoint must surface as a non-nil error")
 }

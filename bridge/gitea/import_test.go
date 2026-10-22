@@ -17,7 +17,7 @@ import (
 	"github.com/git-bug/git-bug/cache"
 	bugpkg "github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
-	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/repository/repotest"
 	"github.com/git-bug/git-bug/util/text"
 )
 
@@ -36,7 +36,7 @@ func setupImporterOnExistingBackend(t *testing.T, serverURL string, backend *cac
 
 func setupImporter(t *testing.T, serverURL string) (*giteaImporter, *cache.RepoCache) {
 	t.Helper()
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 
 	token := auth.NewToken(target, "test-token")
 	token.SetMetadata(auth.MetaKeyLogin, "testuser")
@@ -44,7 +44,7 @@ func setupImporter(t *testing.T, serverURL string) (*giteaImporter, *cache.RepoC
 	err := auth.Store(repo, token)
 	require.NoError(t, err)
 
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = backend.Close() })
 
@@ -98,7 +98,7 @@ func onlyBug(t *testing.T, backend *cache.RepoCache) *cache.BugCache {
 	t.Helper()
 	bugIds := backend.Bugs().AllIds()
 	require.Len(t, bugIds, 1)
-	b, err := backend.Bugs().Resolve(bugIds[0])
+	b, err := backend.Bugs().Resolve(t.Context(), bugIds[0])
 	require.NoError(t, err)
 	return b
 }
@@ -107,7 +107,7 @@ func onlyImportedGiteaBug(t *testing.T, backend *cache.RepoCache) *cache.BugCach
 	t.Helper()
 	var matches []*cache.BugCache
 	for _, id := range backend.Bugs().AllIds() {
-		b, err := backend.Bugs().Resolve(id)
+		b, err := backend.Bugs().Resolve(t.Context(), id)
 		require.NoError(t, err)
 		origin, ok := b.Snapshot().GetCreateMetadata(core.MetaKeyOrigin)
 		if ok && origin == target {
@@ -282,7 +282,7 @@ func TestImportBugMetadataKeysExact(t *testing.T) {
 func TestImportThenExportThenImportNoDup(t *testing.T) {
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project"}
 	srv := fa.NewServer(t)
-	repo, backend := newRoundTripRepo(t)
+	repo, backend := newRoundTripRepo(t, t)
 	storeRoundTripToken(t, repo, srv.URL)
 	seedRoundTripBug(t, backend, roundTripBug{
 		Title: "local", Body: "body", Closed: true,
@@ -402,7 +402,7 @@ func TestImportMatchesByAllFiveMetadataKeys(t *testing.T) {
 				map[string]string{metaKeyGiteaLogin: "existing-user"},
 			)
 			require.NoError(t, err)
-			_, _, err = backend.Bugs().NewRaw(
+			existing, _, err := backend.Bugs().NewRaw(
 				author,
 				time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC).Unix(),
 				"existing issue",
@@ -411,6 +411,7 @@ func TestImportMatchesByAllFiveMetadataKeys(t *testing.T) {
 				metadata,
 			)
 			require.NoError(t, err)
+			require.NoError(t, existing.Commit(t.Context()))
 
 			results := runImport(t, gi, backend)
 			require.Empty(t, collectErrors(results))
@@ -434,7 +435,7 @@ func TestImportLabelCaseInsensitive(t *testing.T) {
 	author := b.Snapshot().Author
 	_, _, err := b.ChangeLabelsRaw(author, time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC).Unix(), []string{"bug"}, nil, nil)
 	require.NoError(t, err)
-	require.NoError(t, b.Commit())
+	require.NoError(t, b.Commit(t.Context()))
 
 	fa.Labels = []*gitea.Label{{ID: 1, Name: "Bug"}}
 	_ = runImport(t, setupImporterOnExistingBackend(t, srv.URL, backend), backend)
@@ -804,7 +805,7 @@ func TestImportNilPoster(t *testing.T) {
 
 	results := runImport(t, gi, backend)
 	assert.Empty(t, collectErrors(results), "should resolve to a ghost identity")
-	_, err := backend.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, "@deleted-user")
+	_, err := backend.Identities().ResolveIdentityImmutableMetadata(t.Context(), metaKeyGiteaLogin, "@deleted-user")
 	assert.NoError(t, err, "expected a ghost identity to be created for deleted user")
 }
 
@@ -896,7 +897,7 @@ func TestImportGhostDedup(t *testing.T) {
 	assert.Empty(t, collectErrors(results),
 		"two null-Poster comments should reuse one ghost identity, not error")
 
-	_, err := backend.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, DeletedIdentity)
+	_, err := backend.Identities().ResolveIdentityImmutableMetadata(t.Context(), metaKeyGiteaLogin, DeletedIdentity)
 	assert.NoError(t, err,
 		"a single ghost identity should be resolvable (ErrMultipleMatch indicates duplicates)")
 }
@@ -917,7 +918,7 @@ func TestImportNilIssuePoster(t *testing.T) {
 	assert.Empty(t, collectErrors(results),
 		"null issue Poster should resolve to ghost, not panic or error")
 
-	_, err := backend.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, DeletedIdentity)
+	_, err := backend.Identities().ResolveIdentityImmutableMetadata(t.Context(), metaKeyGiteaLogin, DeletedIdentity)
 	assert.NoError(t, err, "expected a ghost identity for the null-Poster issue")
 }
 
@@ -941,7 +942,7 @@ func TestImportEnsurePersonNotFound(t *testing.T) {
 	assert.Empty(t, collectErrors(results),
 		"a 404 on user lookup should fall back to a placeholder identity, not panic")
 
-	_, err := backend.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, "deleted-user")
+	_, err := backend.Identities().ResolveIdentityImmutableMetadata(t.Context(), metaKeyGiteaLogin, "deleted-user")
 	assert.NoError(t, err,
 		"a placeholder identity tagged with the looked-up login should exist")
 }
@@ -1003,7 +1004,7 @@ func TestImportIdentityReuseAcrossIssues(t *testing.T) {
 	results := runImport(t, gi, backend)
 	require.Empty(t, collectErrors(results))
 
-	_, err := backend.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, "testuser")
+	_, err := backend.Identities().ResolveIdentityImmutableMetadata(t.Context(), metaKeyGiteaLogin, "testuser")
 	assert.NoError(t, err,
 		"the same login across two issues should resolve to a single identity (ErrMultipleMatch indicates dedup broke)")
 
@@ -1032,14 +1033,14 @@ func TestImportSecondRunEmitsNothing(t *testing.T) {
 
 	bugIds := backend.Bugs().AllIds()
 	require.Len(t, bugIds, 1)
-	bug, err := backend.Bugs().Resolve(bugIds[0])
+	bug, err := backend.Bugs().Resolve(t.Context(), bugIds[0])
 	require.NoError(t, err)
 	opsBefore := len(bug.Snapshot().Operations)
 
 	gi2 := setupImporterOnExistingBackend(t, srv.URL, backend)
 	results2 := runImport(t, gi2, backend)
 
-	bug, err = backend.Bugs().Resolve(bugIds[0])
+	bug, err = backend.Bugs().Resolve(t.Context(), bugIds[0])
 	require.NoError(t, err)
 	opsAfter := bug.Snapshot().Operations
 	if len(opsAfter) > opsBefore {
@@ -1076,14 +1077,14 @@ func TestImportNegativeDedupAcrossRepos(t *testing.T) {
 	srvA := (&giteatest.FakeAPI{Owner: "owner-a", Project: "proj1", Issues: []*gitea.Issue{mkIssue("from A")}}).NewServer(t)
 	srvB := (&giteatest.FakeAPI{Owner: "owner-b", Project: "proj2", Issues: []*gitea.Issue{mkIssue("from B")}}).NewServer(t)
 
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 	for _, baseURL := range []string{srvA.URL, srvB.URL} {
 		token := auth.NewToken(target, "test-token")
 		token.SetMetadata(auth.MetaKeyLogin, "testuser")
 		token.SetMetadata(auth.MetaKeyBaseURL, baseURL)
 		require.NoError(t, auth.Store(repo, token))
 	}
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = backend.Close() })
 
@@ -1131,7 +1132,7 @@ func TestImportPropagatesIssueTitleUpdates(t *testing.T) {
 
 	bugIds := backend.Bugs().AllIds()
 	require.Len(t, bugIds, 1)
-	b, err := backend.Bugs().Resolve(bugIds[0])
+	b, err := backend.Bugs().Resolve(t.Context(), bugIds[0])
 	require.NoError(t, err)
 	snap := b.Snapshot()
 
@@ -1162,7 +1163,7 @@ func TestImportPropagatesCommentEdits(t *testing.T) {
 	}
 	bugIds0 := backend.Bugs().AllIds()
 	if len(bugIds0) > 0 {
-		b0, _ := backend.Bugs().Resolve(bugIds0[0])
+		b0, _ := backend.Bugs().Resolve(t.Context(), bugIds0[0])
 		t.Logf("after first import: snapshot has %d comments, %d operations",
 			len(b0.Snapshot().Comments), len(b0.Snapshot().Operations))
 	}
@@ -1176,7 +1177,7 @@ func TestImportPropagatesCommentEdits(t *testing.T) {
 
 	bugIds := backend.Bugs().AllIds()
 	require.Len(t, bugIds, 1)
-	b, err := backend.Bugs().Resolve(bugIds[0])
+	b, err := backend.Bugs().Resolve(t.Context(), bugIds[0])
 	require.NoError(t, err)
 	snap := b.Snapshot()
 
@@ -1217,7 +1218,7 @@ func TestImportPropagatesStatusChanges(t *testing.T) {
 
 	bugIds := backend.Bugs().AllIds()
 	require.Len(t, bugIds, 1)
-	b, err := backend.Bugs().Resolve(bugIds[0])
+	b, err := backend.Bugs().Resolve(t.Context(), bugIds[0])
 	require.NoError(t, err)
 
 	assert.Equal(t, common.ClosedStatus, b.Snapshot().Status,
@@ -1277,7 +1278,7 @@ func TestImportLabels(t *testing.T) {
 
 	bugIds := backend.Bugs().AllIds()
 	require.Len(t, bugIds, 1)
-	b, err := backend.Bugs().Resolve(bugIds[0])
+	b, err := backend.Bugs().Resolve(t.Context(), bugIds[0])
 	require.NoError(t, err)
 
 	labels := b.Snapshot().Labels
@@ -1485,7 +1486,7 @@ func TestImportCommentAttributedToCommentPoster(t *testing.T) {
 
 	bugIds := backend.Bugs().AllIds()
 	require.Len(t, bugIds, 1)
-	b, err := backend.Bugs().Resolve(bugIds[0])
+	b, err := backend.Bugs().Resolve(t.Context(), bugIds[0])
 	require.NoError(t, err)
 	snap := b.Snapshot()
 	require.GreaterOrEqual(t, len(snap.Comments), 2,
@@ -1559,7 +1560,7 @@ func TestImportIdentityCarriesLoginAndProfile(t *testing.T) {
 	results := runImport(t, gi, backend)
 	require.Empty(t, collectErrors(results))
 
-	i, err := backend.Identities().ResolveIdentityImmutableMetadata(metaKeyGiteaLogin, "alice")
+	i, err := backend.Identities().ResolveIdentityImmutableMetadata(t.Context(), metaKeyGiteaLogin, "alice")
 	require.NoError(t, err,
 		"identity should be resolvable by metaKeyGiteaLogin — if the key name drifted, dedup is broken")
 
@@ -1576,8 +1577,8 @@ func TestImportIdentityCarriesLoginAndProfile(t *testing.T) {
 }
 
 func TestImportInitNoToken(t *testing.T) {
-	repo := repository.CreateGoGitTestRepo(t, false)
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	repo := repotest.NewGoGitRepo(t, false)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = backend.Close() })
 
@@ -1599,13 +1600,13 @@ func TestImportRepoNotFound(t *testing.T) {
 		RepoNotFound: true,
 	}).NewServer(t)
 
-	repo := repository.CreateGoGitTestRepo(t, false)
+	repo := repotest.NewGoGitRepo(t, false)
 	token := auth.NewToken(target, "test-token")
 	token.SetMetadata(auth.MetaKeyLogin, "testuser")
 	token.SetMetadata(auth.MetaKeyBaseURL, srv.URL)
 	require.NoError(t, auth.Store(repo, token))
 
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = backend.Close() })
 
@@ -1631,7 +1632,7 @@ func TestBridgeRejectsUnusableIssueTracker(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			fa.Owner, fa.Project = "owner", "project"
 			srv := fa.NewServer(t)
-			repo, backend := newRoundTripRepo(t)
+			repo, backend := newRoundTripRepo(t, t)
 			storeRoundTripToken(t, repo, srv.URL)
 			seedRoundTripBug(t, backend, roundTripBug{Title: "local", Body: "body"})
 			conf := roundTripConfig(srv.URL)
@@ -1950,16 +1951,16 @@ func TestImportDoesNotRevertLocalStatusChange(t *testing.T) {
 	gi, backend := setupImporter(t, srv.URL)
 	user, err := backend.Identities().New("Local User", "local@example.com")
 	require.NoError(t, err)
-	require.NoError(t, backend.SetUserIdentity(user))
+	require.NoError(t, backend.SetUserIdentity(t.Context(), user))
 
 	require.Empty(t, collectErrors(runImport(t, gi, backend)))
 	b := onlyBug(t, backend)
 	require.Equal(t, common.OpenStatus, b.Snapshot().Status)
 
 	// User closes bug locally without exporting
-	_, err = b.Close()
+	_, err = b.Close(t.Context())
 	require.NoError(t, err)
-	require.NoError(t, b.Commit())
+	require.NoError(t, b.Commit(t.Context()))
 	require.Equal(t, common.ClosedStatus, b.Snapshot().Status)
 
 	// Subsequent pull must not reopen the bug
@@ -1999,7 +2000,7 @@ func TestImportDoesNotRevertLocalCommentEdit(t *testing.T) {
 	gi, backend := setupImporter(t, srv.URL)
 	user, err := backend.Identities().New("Local User", "local@example.com")
 	require.NoError(t, err)
-	require.NoError(t, backend.SetUserIdentity(user))
+	require.NoError(t, backend.SetUserIdentity(t.Context(), user))
 
 	require.Empty(t, collectErrors(runImport(t, gi, backend)))
 	b := onlyBug(t, backend)
@@ -2008,9 +2009,9 @@ func TestImportDoesNotRevertLocalCommentEdit(t *testing.T) {
 	require.Equal(t, "original comment", comment.Message)
 
 	// User edits comment locally
-	_, err = b.EditComment(comment.CombinedId(), "locally edited comment")
+	_, err = b.EditComment(t.Context(), comment.CombinedId(), "locally edited comment")
 	require.NoError(t, err)
-	require.NoError(t, b.Commit())
+	require.NoError(t, b.Commit(t.Context()))
 	require.Equal(t, "locally edited comment", b.Snapshot().Comments[1].Message)
 
 	// Pull must not revert the local comment edit
@@ -2106,7 +2107,7 @@ func TestImportLocallyRestoredLabelNotRemoved(t *testing.T) {
 	gi, backend := setupImporter(t, srv.URL)
 	user, err := backend.Identities().New("Local User", "local@example.com")
 	require.NoError(t, err)
-	require.NoError(t, backend.SetUserIdentity(user))
+	require.NoError(t, backend.SetUserIdentity(t.Context(), user))
 
 	require.Empty(t, collectErrors(runImport(t, gi, backend)))
 	b := onlyBug(t, backend)
@@ -2124,9 +2125,9 @@ func TestImportLocallyRestoredLabelNotRemoved(t *testing.T) {
 	require.NotContains(t, b.Snapshot().Labels, common.Label("bug"))
 
 	// User locally re-adds label "bug"
-	_, _, err = b.ChangeLabels([]string{"bug"}, nil)
+	_, _, err = b.ChangeLabels(t.Context(), []string{"bug"}, nil)
 	require.NoError(t, err)
-	require.NoError(t, b.Commit())
+	require.NoError(t, b.Commit(t.Context()))
 	require.Contains(t, b.Snapshot().Labels, common.Label("bug"))
 
 	// Subsequent pull must NOT remove the locally restored label

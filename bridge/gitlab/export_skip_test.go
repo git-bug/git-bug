@@ -15,15 +15,16 @@ import (
 func TestForeignIssueSkipWithoutCredentials(t *testing.T) {
 	repo := repository.NewMockRepo()
 	defer repo.Close()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	defer backend.Close()
 	author, err := backend.Identities().New("Alice", "alice@example.com")
 	require.NoError(t, err)
-	_, _, err = backend.Bugs().NewRaw(author, time.Now().Unix(), "Foreign", "Body", nil, map[string]string{
+	b, _, err := backend.Bugs().NewRaw(author, time.Now().Unix(), "Foreign", "Body", nil, map[string]string{
 		metaKeyGitlabId: "1", metaKeyGitlabBaseUrl: "https://gitlab.com/", metaKeyGitlabProject: "other",
 	})
 	require.NoError(t, err)
+	require.NoError(t, b.Commit(t.Context()))
 	exporter := &gitlabExporter{conf: core.Configuration{confKeyGitlabBaseUrl: "https://gitlab.com/", confKeyProjectID: "current"}}
 	results, err := exporter.ExportAll(context.Background(), backend, time.Time{})
 	require.NoError(t, err)

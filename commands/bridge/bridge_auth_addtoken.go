@@ -78,7 +78,7 @@ func runBridgeAuthAddToken(env *execenv.Env, opts bridgeAuthAddTokenOptions, arg
 	if opts.baseURL != "" {
 		opts.baseURL = auth.NormalizeBaseURL(opts.baseURL)
 		if err := auth.ValidateBaseURL(opts.baseURL); err != nil {
-			return errors.Wrap(err, "invalid --base-url")
+			return fmt.Errorf("invalid --base-url: %w", err)
 		}
 	}
 

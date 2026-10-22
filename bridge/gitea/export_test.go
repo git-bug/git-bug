@@ -16,18 +16,20 @@ import (
 func TestExportReportsSkippedIssues(t *testing.T) {
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project"}
 	srv := fa.NewServer(t)
-	repo, backend := newRoundTripRepo(t)
+	repo, backend := newRoundTripRepo(t, t)
 	storeRoundTripToken(t, repo, srv.URL)
 	seedRoundTripBug(t, backend, roundTripBug{Title: "mine", Body: "body"})
 	other, err := backend.Identities().NewRaw("Other", "", "other", "", nil, nil)
 	require.NoError(t, err)
-	_, _, err = backend.Bugs().NewRaw(other, time.Now().Unix(), "theirs", "body", nil, nil)
+	theirs, _, err := backend.Bugs().NewRaw(other, time.Now().Unix(), "theirs", "body", nil, nil)
 	require.NoError(t, err)
-	_, _, err = backend.Bugs().NewRaw(other, time.Now().Unix(), "elsewhere", "body", nil, map[string]string{
+	require.NoError(t, theirs.Commit(t.Context()))
+	elsewhere, _, err := backend.Bugs().NewRaw(other, time.Now().Unix(), "elsewhere", "body", nil, map[string]string{
 		core.MetaKeyOrigin: target, metaKeyGiteaID: "7", metaKeyGiteaBaseURL: "https://other.example/",
 		metaKeyGiteaOwner: "o", metaKeyGiteaProject: "p",
 	})
 	require.NoError(t, err)
+	require.NoError(t, elsewhere.Commit(t.Context()))
 
 	exporter := (&Gitea{}).NewExporter()
 	require.NoError(t, exporter.Init(context.Background(), backend, roundTripConfig(srv.URL)))
@@ -48,7 +50,7 @@ func TestExportReportsSkippedIssues(t *testing.T) {
 func TestExportReportsSyncedIssuesAsUpToDate(t *testing.T) {
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project"}
 	srv := fa.NewServer(t)
-	repo, backend := newRoundTripRepo(t)
+	repo, backend := newRoundTripRepo(t, t)
 	storeRoundTripToken(t, repo, srv.URL)
 	seedRoundTripBug(t, backend, roundTripBug{Title: "mine", Body: "body"})
 	other, err := backend.Identities().NewRaw("Other", "", "other", "", nil, nil)
@@ -59,7 +61,7 @@ func TestExportReportsSyncedIssuesAsUpToDate(t *testing.T) {
 		metaKeyGiteaOwner: "owner", metaKeyGiteaProject: "project",
 	})
 	require.NoError(t, err)
-	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 
 	exporter := (&Gitea{}).NewExporter()
 	require.NoError(t, exporter.Init(context.Background(), backend, roundTripConfig(srv.URL)))
@@ -79,7 +81,7 @@ func TestExportReportsSyncedIssuesAsUpToDate(t *testing.T) {
 func TestExportDoesNotSelectIdentityFromOtherInstance(t *testing.T) {
 	fa := &giteatest.FakeAPI{Owner: "owner", Project: "project"}
 	srv := fa.NewServer(t)
-	repo, backend := newRoundTripRepo(t)
+	repo, backend := newRoundTripRepo(t, t)
 	storeRoundTripToken(t, repo, srv.URL)
 
 	// Create an identity with matching login "testuser", but scoped to a different instance.
@@ -112,7 +114,7 @@ func TestExportIncrementalLabels(t *testing.T) {
 		RepoLabels: []*gitea.Label{upstreamLabel, localLabel, otherLabel},
 	}
 	srv := fa.NewServer(t)
-	repo, backend := newRoundTripRepo(t)
+	repo, backend := newRoundTripRepo(t, t)
 	storeRoundTripToken(t, repo, srv.URL)
 
 	// User identity for exporter
@@ -154,7 +156,7 @@ func TestExportIncrementalLabels(t *testing.T) {
 	require.NoError(t, err)
 	_, _, err = b.ChangeLabelsRaw(user, now.Add(2*time.Minute).Unix(), []string{"local-label"}, nil, nil)
 	require.NoError(t, err)
-	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 
 	exporter := (&Gitea{}).NewExporter()
 	require.NoError(t, exporter.Init(context.Background(), backend, roundTripConfig(srv.URL)))

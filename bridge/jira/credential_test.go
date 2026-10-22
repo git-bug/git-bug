@@ -30,7 +30,7 @@ func TestTokenCredentials(t *testing.T) {
 	defer server.Close()
 	repo := repository.NewMockRepo()
 	defer repo.Close()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	defer backend.Close()
 	token := auth.NewToken(target, "api-token")
@@ -66,7 +66,7 @@ func TestTokenCredentials(t *testing.T) {
 		{BaseURL: server.URL + "/", Project: "TEST", CredPrefix: token.ID().String()},
 		{BaseURL: server.URL + "/", Project: "TEST", Login: "alice", TokenRaw: "api-token"},
 	} {
-		configured, err := (&Jira{}).Configure(backend, params, false)
+		configured, err := (&Jira{}).Configure(t.Context(), backend, params, false)
 		require.NoError(t, err)
 		require.Equal(t, server.URL+"/", configured[confKeyBaseUrl], "preserve the URL used by existing imported issues")
 		require.Equal(t, "TOKEN", configured[confKeyCredentialType])
@@ -75,7 +75,7 @@ func TestTokenCredentials(t *testing.T) {
 	legacyToken.SetMetadata(auth.MetaKeyLogin, "alice")
 	legacyToken.SetMetadata(auth.MetaKeyBaseURL, server.URL)
 	require.NoError(t, auth.Store(repo, legacyToken))
-	configured, err := (&Jira{}).Configure(backend, core.BridgeParams{BaseURL: server.URL + "/", Project: "TEST", CredPrefix: legacyToken.ID().String()}, false)
+	configured, err := (&Jira{}).Configure(t.Context(), backend, core.BridgeParams{BaseURL: server.URL + "/", Project: "TEST", CredPrefix: legacyToken.ID().String()}, false)
 	require.NoError(t, err)
 	require.Equal(t, "TOKEN", configured[confKeyCredentialType])
 	legacyConf := core.Configuration{confKeyCredentialType: "TOKEN", confKeyCredentialID: password.ID().String()}
@@ -123,7 +123,7 @@ func TestSessionCredentialsIgnoreNewerToken(t *testing.T) {
 	defer server.Close()
 	repo := repository.NewMockRepo()
 	defer repo.Close()
-	backend, err := cache.NewRepoCacheNoEvents(repo)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 	defer backend.Close()
 	password := auth.NewLoginPassword(target, "alice", "password")
@@ -143,10 +143,10 @@ func TestSessionCredentialsIgnoreNewerToken(t *testing.T) {
 	require.NoError(t, exporter.cacheAllClient(context.Background(), backend))
 	_, err = buildClient(context.Background(), server.URL, "SESSION", token)
 	require.ErrorContains(t, err, "requires Jira TOKEN")
-	configured, err := (&Jira{}).Configure(backend, core.BridgeParams{BaseURL: server.URL, Project: "TEST", CredPrefix: password.ID().String(), AuthMode: "SESSION"}, true)
+	configured, err := (&Jira{}).Configure(t.Context(), backend, core.BridgeParams{BaseURL: server.URL, Project: "TEST", CredPrefix: password.ID().String(), AuthMode: "SESSION"}, true)
 	require.NoError(t, err)
 	require.Equal(t, "SESSION", configured[confKeyCredentialType])
-	configured, err = (&Jira{}).Configure(backend, core.BridgeParams{BaseURL: server.URL, Project: "TEST", CredPrefix: password.ID().String()}, false)
+	configured, err = (&Jira{}).Configure(t.Context(), backend, core.BridgeParams{BaseURL: server.URL, Project: "TEST", CredPrefix: password.ID().String()}, false)
 	require.NoError(t, err)
 	require.Equal(t, "SESSION", configured[confKeyCredentialType], "validated mode is retained for later setup")
 }
@@ -156,14 +156,14 @@ func TestConfigureRejectsForeignCredentialBeforeNetworkAccess(t *testing.T) {
 		t.Run(targetName, func(t *testing.T) {
 			repo := repository.NewMockRepo()
 			defer repo.Close()
-			backend, err := cache.NewRepoCacheNoEvents(repo)
+			backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 			require.NoError(t, err)
 			defer backend.Close()
 			token := auth.NewToken(targetName, "secret")
 			token.SetMetadata(auth.MetaKeyLogin, "alice")
 			token.SetMetadata(auth.MetaKeyBaseURL, "https://original.example")
 			require.NoError(t, auth.Store(repo, token))
-			_, err = (&Jira{}).Configure(backend, core.BridgeParams{BaseURL: "https://different.example", Project: "TEST", CredPrefix: token.ID().String()}, false)
+			_, err = (&Jira{}).Configure(t.Context(), backend, core.BridgeParams{BaseURL: "https://different.example", Project: "TEST", CredPrefix: token.ID().String()}, false)
 			require.Error(t, err)
 			if targetName == target {
 				require.ErrorContains(t, err, "not bound")
