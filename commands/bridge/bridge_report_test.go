@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -78,6 +79,13 @@ func TestReportExportResultsFailsOnErrors(t *testing.T) {
 	assert.EqualError(t, err, "2 export error(s) with b bridge")
 	assert.Contains(t, out.String(), "boom")
 	assert.Contains(t, out.String(), "exported 0 issues with b bridge")
+}
+
+func TestReportExportResultsIgnoresWrappedCancellation(t *testing.T) {
+	out := newOut()
+	err := reportExportResults(out, "b", exportEvents(core.NewExportError(fmt.Errorf("request: %w", context.Canceled), bugA)), false)
+	require.NoError(t, err)
+	assert.Equal(t, "exported 0 issues with b bridge\n", out.String())
 }
 
 func TestReportImportResultsFailsOnErrors(t *testing.T) {
