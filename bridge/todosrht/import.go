@@ -98,7 +98,7 @@ func (ji *todosrhtImporter) ImportAll(ctx context.Context, repo *cache.RepoCache
 					continue
 				}
 
-				b, created, err := ji.ensureIssue(repo, ticket)
+				b, created, err := ji.ensureIssue(ctx, repo, ticket)
 				if err != nil {
 					ji.out <- core.NewImportError(fmt.Errorf("failed to ensure issue for ticket %d: %w", ticket.Id, err), "")
 					continue
@@ -136,21 +136,21 @@ func (ji *todosrhtImporter) ImportAll(ctx context.Context, repo *cache.RepoCache
 					allEvents = nil
 				}
 				for _, event := range allEvents {
-					if err := ji.importEvent(repo, b, event, commentRoots); err != nil {
+					if err := ji.importEvent(ctx, repo, b, event, commentRoots); err != nil {
 						ji.out <- core.NewImportError(fmt.Errorf("failed to ensure event %d for ticket %d: %w", event.Id, ticket.Id, err), b.Id())
 						eventsComplete = false
 						break
 					}
 				}
 				if !eventsComplete {
-					if err := b.CommitAsNeeded(); err != nil {
+					if err := b.CommitAsNeeded(ctx); err != nil {
 						ji.out <- core.NewImportError(fmt.Errorf("failed to commit partial import for ticket %d: %w", ticket.Id, err), b.Id())
 					}
 					continue
 				}
 
 				if b.NeedCommit() {
-					if err := b.Commit(); err != nil {
+					if err := b.Commit(ctx); err != nil {
 						ji.out <- core.NewImportError(fmt.Errorf("failed to commit bug for ticket %d: %w", ticket.Id, err), b.Id())
 					} else if created {
 						ji.out <- core.NewImportBug(b.Id())
@@ -173,7 +173,7 @@ func (ji *todosrhtImporter) ImportAll(ctx context.Context, repo *cache.RepoCache
 }
 
 // Create a bug.Person from a TODOSRHT user
-func (ji *todosrhtImporter) ensurePerson(repo *cache.RepoCache, entities Entity) (*cache.IdentityCache, error) {
+func (ji *todosrhtImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache, entities Entity) (*cache.IdentityCache, error) {
 	var canonicalName, username, email, externalId, externalUrl string
 
 	if entities == nil {
@@ -207,7 +207,7 @@ func (ji *todosrhtImporter) ensurePerson(repo *cache.RepoCache, entities Entity)
 	}
 
 	// Look first in the cache
-	i, err := repo.Identities().ResolveMatcher(func(excerpt *cache.IdentityExcerpt) bool {
+	i, err := repo.Identities().ResolveMatcher(ctx, func(excerpt *cache.IdentityExcerpt) bool {
 		return excerpt.ImmutableMetadata[identityLoginKey(ji.conf[confKeyBaseUrl])] == login ||
 			(excerpt.ImmutableMetadata[metaKeyTodoSourceHutBaseUrl] == ji.conf[confKeyBaseUrl] &&
 				excerpt.ImmutableMetadata[metaKeyTodoSourceHutLogin] == login)
@@ -256,17 +256,17 @@ func (ji *todosrhtImporter) ensurePerson(repo *cache.RepoCache, entities Entity)
 }
 
 // Create a bug.Bug based from a TODOSRHT ticket
-func (ji *todosrhtImporter) ensureIssue(repo *cache.RepoCache, ticket Ticket) (*cache.BugCache, bool, error) {
+func (ji *todosrhtImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache, ticket Ticket) (*cache.BugCache, bool, error) {
 	submitter, err := ticket.GetSubmitter()
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to parse submitter for ticket %d: %w", ticket.Id, err)
 	}
-	author, err := ji.ensurePerson(repo, submitter)
+	author, err := ji.ensurePerson(ctx, repo, submitter)
 	if err != nil {
 		return nil, false, err
 	}
 
-	b, err := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
+	b, err := repo.Bugs().ResolveMatcher(ctx, func(excerpt *cache.BugExcerpt) bool {
 		if excerpt.CreateMetadata[metaKeyTodoSourceHutBaseUrl] != ji.conf[confKeyBaseUrl] {
 			return false
 		}
@@ -339,7 +339,7 @@ func (ji *todosrhtImporter) ensureIssue(repo *cache.RepoCache, ticket Ticket) (*
 	if changeTitle || changeBody {
 		// SourceHut's ticket snapshot exposes no editor for title/body edits.
 		// Do not misattribute these operations to the original submitter.
-		author, err = ji.ensureSyncPerson(repo)
+		author, err = ji.ensureSyncPerson(ctx, repo)
 		if err != nil {
 			return nil, false, err
 		}
@@ -370,10 +370,10 @@ func (ji *todosrhtImporter) ensureIssue(repo *cache.RepoCache, ticket Ticket) (*
 	return b, false, nil
 }
 
-func (ji *todosrhtImporter) ensureSyncPerson(repo *cache.RepoCache) (*cache.IdentityCache, error) {
+func (ji *todosrhtImporter) ensureSyncPerson(ctx context.Context, repo *cache.RepoCache) (*cache.IdentityCache, error) {
 	const key = "todosrht-sync-instance"
 	baseURL := ji.conf[confKeyBaseUrl]
-	person, err := repo.Identities().ResolveMatcher(func(excerpt *cache.IdentityExcerpt) bool {
+	person, err := repo.Identities().ResolveMatcher(ctx, func(excerpt *cache.IdentityExcerpt) bool {
 		return excerpt.ImmutableMetadata[key] == baseURL
 	})
 	if err == nil || !entity.IsErrNotFound(err) {
@@ -403,8 +403,8 @@ func hasOperationWithMetadata(b *cache.BugCache, key string, values ...string) b
 }
 
 // ensureEvent processes a SourceHut event and creates corresponding git-bug operations.
-func (ji *todosrhtImporter) ensureEvent(repo *cache.RepoCache, b *cache.BugCache, event Event) error {
-	return ji.importEvent(repo, b, event, make(map[string]string))
+func (ji *todosrhtImporter) ensureEvent(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, event Event) error {
+	return ji.importEvent(ctx, repo, b, event, make(map[string]string))
 }
 
 // commentKey identifies a revision using the fields exposed by SourceHut's
@@ -451,7 +451,7 @@ func commentRootsForEvents(events []Event) map[string]string {
 	return roots
 }
 
-func (ji *todosrhtImporter) importEvent(repo *cache.RepoCache, b *cache.BugCache, event Event, commentRoots map[string]string) error {
+func (ji *todosrhtImporter) importEvent(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, event Event, commentRoots map[string]string) error {
 	changes, err := event.GetChanges()
 	if err != nil {
 		return err
@@ -506,7 +506,7 @@ func (ji *todosrhtImporter) importEvent(repo *cache.RepoCache, b *cache.BugCache
 				// author can be null in some cases, just skip
 				continue
 			}
-			_, err = ji.ensurePerson(repo, authorEntity)
+			_, err = ji.ensurePerson(ctx, repo, authorEntity)
 			if err != nil {
 				return err
 			}
@@ -522,7 +522,7 @@ func (ji *todosrhtImporter) importEvent(repo *cache.RepoCache, b *cache.BugCache
 			if authorEntity == nil {
 				return fmt.Errorf("comment author is nil for event %d", event.Id)
 			}
-			author, err := ji.ensurePerson(repo, authorEntity)
+			author, err := ji.ensurePerson(ctx, repo, authorEntity)
 			if err != nil {
 				return err
 			}
@@ -570,7 +570,7 @@ func (ji *todosrhtImporter) importEvent(repo *cache.RepoCache, b *cache.BugCache
 			if editorEntity == nil {
 				return fmt.Errorf("status change editor is nil for event %d", event.Id)
 			}
-			editor, err := ji.ensurePerson(repo, editorEntity)
+			editor, err := ji.ensurePerson(ctx, repo, editorEntity)
 			if err != nil {
 				return err
 			}
@@ -607,7 +607,7 @@ func (ji *todosrhtImporter) importEvent(repo *cache.RepoCache, b *cache.BugCache
 			if labelerEntity == nil {
 				return fmt.Errorf("labeler is nil for event %d", event.Id)
 			}
-			labeler, err := ji.ensurePerson(repo, labelerEntity)
+			labeler, err := ji.ensurePerson(ctx, repo, labelerEntity)
 			if err != nil {
 				return err
 			}
@@ -640,7 +640,7 @@ func (ji *todosrhtImporter) importEvent(repo *cache.RepoCache, b *cache.BugCache
 			if _, ok := b.Snapshot().GetCreateMetadata(marker); ok {
 				continue
 			}
-			_, err := b.SetMetadata(b.Snapshot().Operations[0].Id(), map[string]string{marker: "true"})
+			_, err := b.SetMetadata(ctx, b.Snapshot().Operations[0].Id(), map[string]string{marker: "true"})
 			if err != nil {
 				return err
 			}

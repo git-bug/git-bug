@@ -34,7 +34,7 @@ func reviewBackend(t *testing.T) (*cache.RepoCache, *cache.IdentityCache) {
 	t.Cleanup(func() { require.NoError(t, backend.Close()) })
 	user, err := backend.Identities().New("Tester", "tester@example.org")
 	require.NoError(t, err)
-	require.NoError(t, backend.SetUserIdentity(user))
+	require.NoError(t, backend.SetUserIdentity(t.Context(), user))
 	return backend, user
 }
 
@@ -97,7 +97,7 @@ func TestConfigureQualifiesBareTrackerNames(t *testing.T) {
 	}))
 	defer server.Close()
 	bridge := &TodoSourceHut{}
-	conf, err := bridge.Configure(backend, core.BridgeParams{BaseURL: server.URL, Project: "issues", Login: "alice", TokenRaw: "test-token"}, false)
+	conf, err := bridge.Configure(t.Context(), backend, core.BridgeParams{BaseURL: server.URL, Project: "issues", Login: "alice", TokenRaw: "test-token"}, false)
 	require.NoError(t, err)
 	require.Equal(t, "~alice/issues", conf[confKeyTrackerName])
 }
@@ -127,7 +127,7 @@ func TestImporterSeparatesTrackerOwners(t *testing.T) {
 	}
 	require.Len(t, backend.Bugs().AllIds(), 2)
 	for _, id := range backend.Bugs().AllIds() {
-		b, err := backend.Bugs().Resolve(id)
+		b, err := backend.Bugs().Resolve(t.Context(), id)
 		require.NoError(t, err)
 		ref, _ := b.Snapshot().GetCreateMetadata(metaKeyTodoSourceHutTracker)
 		require.Equal(t, "~"+b.Snapshot().Title+"/issues", ref)
@@ -147,20 +147,20 @@ func TestPullPreservesPendingLocalEdits(t *testing.T) {
 					metaKeyTodoSourceHutId: "1", metaKeyTodoSourceHutTracker: "~tester/issues", metaKeyTodoSourceHutBaseUrl: "https://todo.sr.ht",
 				})
 			} else {
-				b, _, err = importer.ensureIssue(backend, ticket)
+				b, _, err = importer.ensureIssue(t.Context(), backend, ticket)
 			}
 			require.NoError(t, err)
-			_, err = b.SetTitle("Local title")
+			_, err = b.SetTitle(t.Context(), "Local title")
 			require.NoError(t, err)
-			_, _, err = b.EditCreateComment("Local body")
+			_, _, err = b.EditCreateComment(t.Context(), "Local body")
 			require.NoError(t, err)
-			require.NoError(t, b.CommitAsNeeded())
-			b, _, err = importer.ensureIssue(backend, ticket)
+			require.NoError(t, b.CommitAsNeeded(t.Context()))
+			b, _, err = importer.ensureIssue(t.Context(), backend, ticket)
 			require.NoError(t, err)
 			require.Equal(t, "Local title", b.Snapshot().Title)
 			require.Equal(t, "Local body", b.Snapshot().Comments[0].Message)
 			ticket.Subject = "Conflicting remote title"
-			_, _, err = importer.ensureIssue(backend, ticket)
+			_, _, err = importer.ensureIssue(t.Context(), backend, ticket)
 			require.ErrorContains(t, err, "conflicting local and remote title")
 			require.Equal(t, "Local title", b.Snapshot().Title)
 		})
@@ -171,11 +171,12 @@ func TestRemoteEditsDoNotCreditSubmitter(t *testing.T) {
 	backend, _ := reviewBackend(t)
 	importer := reviewImporter("tester")
 	ticket := reviewTicket()
-	b, _, err := importer.ensureIssue(backend, ticket)
+	b, _, err := importer.ensureIssue(t.Context(), backend, ticket)
 	require.NoError(t, err)
 	submitter := b.Snapshot().Author.Id()
+	require.NoError(t, b.Commit(t.Context()))
 	ticket.Subject, ticket.Body = "Remote title", "Remote body"
-	b, _, err = importer.ensureIssue(backend, ticket)
+	b, _, err = importer.ensureIssue(t.Context(), backend, ticket)
 	require.NoError(t, err)
 	edits := 0
 	for _, op := range b.Snapshot().Operations {
@@ -196,7 +197,7 @@ func TestConfigureRejectsCredentialsForOtherServers(t *testing.T) {
 		token.SetMetadata(auth.MetaKeyLogin, "tester")
 		token.SetMetadata(auth.MetaKeyBaseURL, "https://instance-a.sr.ht")
 		require.NoError(t, auth.Store(backend, token))
-		_, err := (&TodoSourceHut{}).Configure(backend, core.BridgeParams{
+		_, err := (&TodoSourceHut{}).Configure(t.Context(), backend, core.BridgeParams{
 			BaseURL: "https://instance-b.sr.ht", Project: "issues", CredPrefix: token.ID().String(),
 		}, false)
 		if targetName == target {
@@ -211,13 +212,13 @@ func TestExportAdvancesRemoteBaseline(t *testing.T) {
 	backend, user := reviewBackend(t)
 	importer := reviewImporter("tester")
 	ticket := reviewTicket()
-	b, _, err := importer.ensureIssue(backend, ticket)
+	b, _, err := importer.ensureIssue(t.Context(), backend, ticket)
 	require.NoError(t, err)
-	_, err = b.SetTitle("Exported title")
+	_, err = b.SetTitle(t.Context(), "Exported title")
 	require.NoError(t, err)
-	_, _, err = b.EditCreateComment("Exported body")
+	_, _, err = b.EditCreateComment(t.Context(), "Exported body")
 	require.NoError(t, err)
-	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 	client := &MockClient{MockUpdateTicket: func(_ context.Context, tracker, id int, input UpdateTicketInput) (*Ticket, error) {
 		if input.Subject != "" {
 			ticket.Subject = input.Subject
@@ -234,14 +235,14 @@ func TestExportAdvancesRemoteBaseline(t *testing.T) {
 	state, err := lastRemoteState(b.Snapshot())
 	require.NoError(t, err)
 	require.Equal(t, remoteState{Subject: "Exported title", Body: "Exported body"}, state)
-	_, err = b.SetTitle("Another pending title")
+	_, err = b.SetTitle(t.Context(), "Another pending title")
 	require.NoError(t, err)
-	require.NoError(t, b.CommitAsNeeded())
-	b, _, err = importer.ensureIssue(backend, ticket)
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
+	b, _, err = importer.ensureIssue(t.Context(), backend, ticket)
 	require.NoError(t, err)
 	require.Equal(t, "Another pending title", b.Snapshot().Title)
 	ticket.Body = "Remote body edit"
-	b, _, err = importer.ensureIssue(backend, ticket)
+	b, _, err = importer.ensureIssue(t.Context(), backend, ticket)
 	require.NoError(t, err)
 	require.Equal(t, "Another pending title", b.Snapshot().Title)
 	require.Equal(t, "Remote body edit", b.Snapshot().Comments[0].Message)
@@ -255,17 +256,17 @@ func TestRemoteCheckpointsSurviveReload(t *testing.T) {
 	t.Cleanup(func() { require.NoError(t, backend.Close()) })
 	user, err := backend.Identities().New("Tester", "tester@example.org")
 	require.NoError(t, err)
-	require.NoError(t, backend.SetUserIdentity(user))
+	require.NoError(t, backend.SetUserIdentity(t.Context(), user))
 	b, _, err := backend.Bugs().NewRaw(user, 1000, "Original", "Body", nil, map[string]string{
 		metaKeyRemoteState: encodeRemoteState(remoteState{Subject: "Original", Body: "Body"}),
 	})
 	require.NoError(t, err)
 	for _, title := range []string{"First", "Second"} {
-		_, err := b.SetTitle(title)
+		_, err := b.SetTitle(t.Context(), title)
 		require.NoError(t, err)
-		require.NoError(t, recordExportedField(b, "subject", title))
-		require.NoError(t, b.CommitAsNeeded())
-		loaded, err := bug.Read(repo, b.Id())
+		require.NoError(t, recordExportedField(t.Context(), b, "subject", title))
+		require.NoError(t, b.CommitAsNeeded(t.Context()))
+		loaded, err := bug.Read(t.Context(), repo, b.Id())
 		require.NoError(t, err)
 		state, err := lastRemoteState(loaded.Compile())
 		require.NoError(t, err)
@@ -305,7 +306,7 @@ func TestImportStopsAtFailedEvent(t *testing.T) {
 				errors++
 			}
 		}
-		b, err := backend.Bugs().Resolve(backend.Bugs().AllIds()[0])
+		b, err := backend.Bugs().Resolve(t.Context(), backend.Bugs().AllIds()[0])
 		require.NoError(t, err)
 		if pass == 0 {
 			require.Equal(t, 1, errors)
@@ -322,13 +323,13 @@ func TestImportStopsAtFailedEvent(t *testing.T) {
 
 func mappedReviewBug(t *testing.T, backend *cache.RepoCache) *cache.BugCache {
 	t.Helper()
-	b, _, err := backend.Bugs().New("Ticket", "Body")
+	b, _, err := backend.Bugs().New(t.Context(), "Ticket", "Body")
 	require.NoError(t, err)
-	_, err = b.SetMetadata(b.Snapshot().Operations[0].Id(), map[string]string{
+	_, err = b.SetMetadata(t.Context(), b.Snapshot().Operations[0].Id(), map[string]string{
 		metaKeyTodoSourceHutId: "1", metaKeyTodoSourceHutTracker: "~tester/issues", metaKeyTodoSourceHutBaseUrl: "https://todo.sr.ht",
 	})
 	require.NoError(t, err)
-	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 	return b
 }
 
@@ -341,7 +342,7 @@ func TestExportStopsAtMissingCredentials(t *testing.T) {
 	require.NoError(t, err)
 	_, err = b.OpenRaw(user, 1002, nil)
 	require.NoError(t, err)
-	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 	var statuses []TicketStatus
 	makeClient := func(want TicketStatus) *MockClient {
 		return &MockClient{MockUpdateTicketStatus: func(_ context.Context, tracker, ticket int, input UpdateStatusInput) (*Event, error) {
@@ -371,12 +372,12 @@ func TestLabelReconciliationUsesIDs(t *testing.T) {
 			b := mappedReviewBug(t, backend)
 			var err error
 			if remove {
-				_, err = b.ForceChangeLabels(nil, []string{"Bug"})
+				_, err = b.ForceChangeLabels(t.Context(), nil, []string{"Bug"})
 			} else {
-				_, err = b.ForceChangeLabels([]string{"Bug"}, nil)
+				_, err = b.ForceChangeLabels(t.Context(), []string{"Bug"}, nil)
 			}
 			require.NoError(t, err)
-			require.NoError(t, b.CommitAsNeeded())
+			require.NoError(t, b.CommitAsNeeded(t.Context()))
 			var removals int
 			client := &MockClient{
 				MockGetTicket: func(_ context.Context, tracker string, id int) (*Ticket, error) {
@@ -409,7 +410,7 @@ func TestLabelReconciliationUsesIDs(t *testing.T) {
 func TestIdenticalCommentsAreNotLostAsRevisions(t *testing.T) {
 	backend, _ := reviewBackend(t)
 	importer := reviewImporter("tester")
-	b, _, err := importer.ensureIssue(backend, reviewTicket())
+	b, _, err := importer.ensureIssue(t.Context(), backend, reviewTicket())
 	require.NoError(t, err)
 	user := json.RawMessage(`{"__typename":"User","canonicalName":"~tester","username":"tester"}`)
 	var events []Event
@@ -428,9 +429,9 @@ func TestIdenticalCommentsAreNotLostAsRevisions(t *testing.T) {
 	for pass := 0; pass < 2; pass++ {
 		roots := commentRootsForEvents(events)
 		for _, event := range events {
-			require.NoError(t, importer.importEvent(backend, b, event, roots))
+			require.NoError(t, importer.importEvent(t.Context(), backend, b, event, roots))
 		}
-		require.NoError(t, b.CommitAsNeeded())
+		require.NoError(t, b.CommitAsNeeded(t.Context()))
 		var fixed int
 		for _, comment := range b.Snapshot().Comments {
 			if comment.Message == "fixed" {

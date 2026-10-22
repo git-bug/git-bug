@@ -116,7 +116,7 @@ func (je *todosrhtExporter) cacheAllClient(ctx context.Context, repo *cache.Repo
 			je.defaultClient = NewTodoSClient(ctx, je.conf[confKeyBaseUrl], tokenCred.Value)
 		}
 
-		user, err := repo.Identities().ResolveMatcher(func(excerpt *cache.IdentityExcerpt) bool {
+		user, err := repo.Identities().ResolveMatcher(ctx, func(excerpt *cache.IdentityExcerpt) bool {
 			return excerpt.ImmutableMetadata[identityLoginKey(je.conf[confKeyBaseUrl])] == login ||
 				(excerpt.ImmutableMetadata[metaKeyTodoSourceHutBaseUrl] == je.conf[confKeyBaseUrl] &&
 					excerpt.ImmutableMetadata[metaKeyTodoSourceHutLogin] == login)
@@ -168,7 +168,7 @@ func (je *todosrhtExporter) ExportAll(ctx context.Context, repo *cache.RepoCache
 		allBugsIds := repo.Bugs().AllIds()
 
 		for _, id := range allBugsIds {
-			b, err := repo.Bugs().Resolve(id)
+			b, err := repo.Bugs().Resolve(ctx, id)
 			if err != nil {
 				out <- core.NewExportError(errors.Wrap(err, "can't load bug"), id)
 				return
@@ -279,10 +279,10 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 		bugTodoSourceHutID = ticket.Id
 		out <- core.NewExportBug(b.Id())
 		// mark bug creation operation as exported
-		err = markOperationAsExported(
+		err = markOperationAsExported(ctx,
 			b, createOp.Id(), fmt.Sprintf("%d", ticket.Id), je.conf[confKeyTrackerName], ticket.Created.Unix())
 		if err == nil {
-			_, err = b.SetMetadata(createOp.Id(), map[string]string{
+			_, err = b.SetMetadata(ctx, createOp.Id(), map[string]string{
 				metaKeyTodoSourceHutBaseUrl: je.conf[confKeyBaseUrl],
 				metaKeyRemoteState:          encodeRemoteState(remoteState{Subject: createOp.Title, Body: createOp.Message}),
 			})
@@ -294,7 +294,7 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 		}
 
 		// commit operation to avoid creating multiple issues with multiple pushes
-		err = b.CommitAsNeeded()
+		err = b.CommitAsNeeded(ctx)
 		if err != nil {
 			err := errors.Wrap(err, "bug commit")
 			out <- core.NewExportError(err, b.Id())
@@ -364,7 +364,7 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 			todosrhtOpID = fmt.Sprintf("%d", ticket.Id)
 			exportTime = ticket.Updated.Unix()
 			out <- core.NewExportCommentEdition(b.Id())
-			if err := recordExportedField(b, "body", opr.Message); err != nil {
+			if err := recordExportedField(ctx, b, "body", opr.Message); err != nil {
 				return err
 			}
 
@@ -396,7 +396,7 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 			todosrhtOpID = fmt.Sprintf("%d", ticket.Id)
 			exportTime = ticket.Updated.Unix()
 			out <- core.NewExportTitleEdition(b.Id())
-			if err := recordExportedField(b, "subject", opr.Title); err != nil {
+			if err := recordExportedField(ctx, b, "subject", opr.Title); err != nil {
 				return err
 			}
 
@@ -489,7 +489,7 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 			panic("unhandled operation type case")
 		}
 		// mark operation as exported
-		err = markOperationAsExported(
+		err = markOperationAsExported(ctx,
 			b, op.Id(), todosrhtOpID, je.conf[confKeyTrackerName], exportTime)
 		if err != nil {
 			err := errors.Wrap(err, "marking operation as exported")
@@ -499,7 +499,7 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 
 		// commit at each operation export to avoid exporting same events multiple
 		// times
-		err = b.CommitAsNeeded()
+		err = b.CommitAsNeeded(ctx)
 		if err != nil {
 			err := errors.Wrap(err, "bug commit")
 			out <- core.NewExportError(err, b.Id())
@@ -511,7 +511,7 @@ func (je *todosrhtExporter) exportBug(ctx context.Context, b *cache.BugCache, ou
 }
 
 // markOperationAsExported adapted for SourceHut metadata
-func markOperationAsExported(b *cache.BugCache, targetOpID entity.Id, todosrhtID string, todosrhtTrackerName string, exportTime int64) error {
+func markOperationAsExported(ctx context.Context, b *cache.BugCache, targetOpID entity.Id, todosrhtID string, todosrhtTrackerName string, exportTime int64) error {
 	newMetadata := map[string]string{
 		metaKeyTodoSourceHutId:      todosrhtID,
 		metaKeyTodoSourceHutTracker: todosrhtTrackerName,
@@ -520,7 +520,7 @@ func markOperationAsExported(b *cache.BugCache, targetOpID entity.Id, todosrhtID
 		newMetadata[metaKeyTodoSourceHutExportTime] = time.Unix(exportTime, 0).Format(time.RFC3339)
 	}
 
-	_, err := b.SetMetadata(targetOpID, newMetadata)
+	_, err := b.SetMetadata(ctx, targetOpID, newMetadata)
 	return err
 }
 

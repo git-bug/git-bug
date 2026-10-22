@@ -35,7 +35,7 @@ func TestImporter(t *testing.T) {
 	userIdentity.SetMetadata(metaKeyTodoSourceHutBaseUrl, conf[confKeyBaseUrl])
 	err = userIdentity.Commit()
 	require.NoError(t, err)
-	err = backend.SetUserIdentity(userIdentity)
+	err = backend.SetUserIdentity(t.Context(), userIdentity)
 	require.NoError(t, err)
 
 	submitterIdentity, err := backend.Identities().New("Submitter", "submitter@example.com")
@@ -187,7 +187,7 @@ func TestImporter(t *testing.T) {
 		assert.Equal(t, 1, newIssues)
 
 		// Verify bug creation
-		importedBug, err := backend.Bugs().ResolveBugCreateMetadata(metaKeyTodoSourceHutId, "101")
+		importedBug, err := backend.Bugs().ResolveBugCreateMetadata(t.Context(), metaKeyTodoSourceHutId, "101")
 		require.NoError(t, err)
 		assert.Equal(t, "Test Ticket Subject", importedBug.Snapshot().Title)
 		assert.Len(t, importedBug.Snapshot().Comments, 2)
@@ -320,7 +320,7 @@ func TestImporter(t *testing.T) {
 		}
 
 		// Verify label changes
-		importedBug, err := backend.Bugs().ResolveBugCreateMetadata(metaKeyTodoSourceHutId, "102")
+		importedBug, err := backend.Bugs().ResolveBugCreateMetadata(t.Context(), metaKeyTodoSourceHutId, "102")
 		require.NoError(t, err)
 		assert.Len(t, importedBug.Snapshot().Labels, 0) // Labels are added and removed
 	})

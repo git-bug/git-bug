@@ -1,6 +1,7 @@
 package todosrht
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -67,7 +68,7 @@ func remoteStateCheckpoint(snapshot *bug.Snapshot) (string, bool) {
 	return latest, found
 }
 
-func recordExportedField(b *cache.BugCache, field, value string) error {
+func recordExportedField(ctx context.Context, b *cache.BugCache, field, value string) error {
 	state, err := lastRemoteState(b.Snapshot())
 	if err != nil {
 		return err
@@ -83,7 +84,7 @@ func recordExportedField(b *cache.BugCache, field, value string) error {
 	// Metadata is immutable per operation. Attach each checkpoint to the
 	// latest operation instead of trying to overwrite the creation metadata.
 	operations := b.Snapshot().Operations
-	_, err = b.SetMetadata(operations[len(operations)-1].Id(), map[string]string{
+	_, err = b.SetMetadata(ctx, operations[len(operations)-1].Id(), map[string]string{
 		metaKeyRemoteState: encodeRemoteState(state),
 	})
 	return err

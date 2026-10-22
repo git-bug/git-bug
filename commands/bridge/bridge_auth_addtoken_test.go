@@ -41,15 +41,16 @@ func TestAddSourceHutTokenEnablesContributorExport(t *testing.T) {
 	defer server.Close()
 	options := bridgeAuthAddTokenOptions{target: "todosrht", login: "tester", user: contributor.Id().String(), baseURL: server.URL + "/"}
 	require.NoError(t, runBridgeAuthAddToken(env, options, []string{"test-token"}))
-	contributor, err = env.Backend.Identities().Resolve(contributor.Id())
+	contributor, err = env.Backend.Identities().Resolve(t.Context(), contributor.Id())
 	require.NoError(t, err)
 	require.Equal(t, "tester", contributor.ImmutableMetadata()["todosrht-login:"+server.URL])
 	creds, err := auth.List(env.Backend, auth.WithTarget("todosrht"), auth.WithMeta(auth.MetaKeyBaseURL, server.URL))
 	require.NoError(t, err)
 	require.Len(t, creds, 1)
-	require.NoError(t, env.Backend.SetUserIdentity(contributor))
-	_, _, err = env.Backend.Bugs().New("Contributor's bug", "Body")
+	require.NoError(t, env.Backend.SetUserIdentity(t.Context(), contributor))
+	b, _, err := env.Backend.Bugs().New(t.Context(), "Contributor's bug", "Body")
 	require.NoError(t, err)
+	require.NoError(t, b.Commit(t.Context()))
 	exporter := (&todosrht.TodoSourceHut{}).NewExporter()
 	require.NoError(t, exporter.Init(t.Context(), env.Backend, core.Configuration{
 		"base-url": server.URL, "tracker-name": "issues", "default-login": "tester",
@@ -64,7 +65,7 @@ func TestAddSourceHutTokenEnablesContributorExport(t *testing.T) {
 	// One local identity can represent different logins on different instances.
 	options.baseURL, options.login = "https://another.sr.ht", "another-login"
 	require.NoError(t, runBridgeAuthAddToken(env, options, []string{"another-token"}))
-	contributor, err = env.Backend.Identities().Resolve(contributor.Id())
+	contributor, err = env.Backend.Identities().Resolve(t.Context(), contributor.Id())
 	require.NoError(t, err)
 	require.Equal(t, "another-login", contributor.ImmutableMetadata()["todosrht-login:https://another.sr.ht"])
 	require.Equal(t, "tester", contributor.ImmutableMetadata()["todosrht-login:"+server.URL])
@@ -76,7 +77,7 @@ func TestAddTokenValidatesScopeBeforeChangingIdentity(t *testing.T) {
 			env := envtest.NewEnv(t)
 			user, err := env.Backend.Identities().New("Tester", "tester@example.org")
 			require.NoError(t, err)
-			require.NoError(t, env.Backend.SetUserIdentity(user))
+			require.NoError(t, env.Backend.SetUserIdentity(t.Context(), user))
 			before := user.ImmutableMetadata()
 			require.Error(t, runBridgeAuthAddToken(env, bridgeAuthAddTokenOptions{target: "todosrht", login: "tester", baseURL: baseURL}, []string{"test-token"}))
 			require.Equal(t, before, user.ImmutableMetadata())
@@ -91,10 +92,10 @@ func TestAddTokenPreservesOtherBridges(t *testing.T) {
 	env := envtest.NewEnv(t)
 	user, err := env.Backend.Identities().New("Tester", "tester@example.org")
 	require.NoError(t, err)
-	require.NoError(t, env.Backend.SetUserIdentity(user))
+	require.NoError(t, env.Backend.SetUserIdentity(t.Context(), user))
 	options := bridgeAuthAddTokenOptions{target: "github", login: "tester"}
 	require.NoError(t, runBridgeAuthAddToken(env, options, []string{"test-token"}))
-	user, err = env.Backend.Identities().Resolve(user.Id())
+	user, err = env.Backend.Identities().Resolve(t.Context(), user.Id())
 	require.NoError(t, err)
 	require.Equal(t, "tester", user.ImmutableMetadata()["github-login"])
 	// Replacing a credential for the same login must not require an identity edit.

@@ -28,16 +28,16 @@ func TestImporterReusesExportedBug(t *testing.T) {
 	author.SetMetadata(metaKeyTodoSourceHutLogin, "mcepl")
 	author.SetMetadata(metaKeyTodoSourceHutBaseUrl, "https://todo.sr.ht")
 	require.NoError(t, author.Commit())
-	require.NoError(t, backend.SetUserIdentity(author))
-	b, _, err := backend.Bugs().New("Local issue", "Body")
+	require.NoError(t, backend.SetUserIdentity(t.Context(), author))
+	b, _, err := backend.Bugs().New(t.Context(), "Local issue", "Body")
 	require.NoError(t, err)
-	_, err = b.SetMetadata(b.Snapshot().Operations[0].Id(), map[string]string{
+	_, err = b.SetMetadata(t.Context(), b.Snapshot().Operations[0].Id(), map[string]string{
 		metaKeyTodoSourceHutId:      "1",
 		metaKeyTodoSourceHutTracker: "~mcepl/test",
 		metaKeyTodoSourceHutBaseUrl: "https://todo.sr.ht",
 	})
 	require.NoError(t, err)
-	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 	submitter, err := json.Marshal(map[string]string{
 		"__typename": "User", "canonicalName": "~mcepl", "username": "mcepl", "email": "tester@example.com",
 	})
@@ -47,7 +47,7 @@ func TestImporterReusesExportedBug(t *testing.T) {
 		conf: core.Configuration{confKeyTrackerName: "~mcepl/test", confKeyBaseUrl: "https://todo.sr.ht"},
 		out:  make(chan core.ImportResult, 8),
 	}
-	got, created, err := importer.ensureIssue(backend, Ticket{Id: 1, Created: Time(time.Now()), Submitter: &raw})
+	got, created, err := importer.ensureIssue(t.Context(), backend, Ticket{Id: 1, Created: Time(time.Now()), Submitter: &raw})
 	require.NoError(t, err)
 	require.False(t, created)
 	require.Equal(t, b.Id(), got.Id())
@@ -63,7 +63,7 @@ func TestExportRejectsUnverifiedTicketID(t *testing.T) {
 	require.NoError(t, err)
 	author.SetMetadata(metaKeyTodoSourceHutLogin, "tester")
 	require.NoError(t, author.Commit())
-	require.NoError(t, backend.SetUserIdentity(author))
+	require.NoError(t, backend.SetUserIdentity(t.Context(), author))
 
 	mockClient := &MockClient{}
 	exporter := &todosrhtExporter{
@@ -77,13 +77,13 @@ func TestExportRejectsUnverifiedTicketID(t *testing.T) {
 	}
 
 	t.Run("ticket ID without tracker metadata is rejected", func(t *testing.T) {
-		b, _, err := backend.Bugs().New("Unverified Bug", "Body")
+		b, _, err := backend.Bugs().New(t.Context(), "Unverified Bug", "Body")
 		require.NoError(t, err)
-		_, err = b.SetMetadata(b.Snapshot().Operations[0].Id(), map[string]string{
+		_, err = b.SetMetadata(t.Context(), b.Snapshot().Operations[0].Id(), map[string]string{
 			metaKeyTodoSourceHutId: "42",
 		})
 		require.NoError(t, err)
-		require.NoError(t, b.CommitAsNeeded())
+		require.NoError(t, b.CommitAsNeeded(t.Context()))
 
 		out := make(chan core.ExportResult, 4)
 		err = exporter.exportBug(context.Background(), b, out)
@@ -96,15 +96,15 @@ func TestExportRejectsUnverifiedTicketID(t *testing.T) {
 	})
 
 	t.Run("ticket ID with mismatched tracker is rejected", func(t *testing.T) {
-		b, _, err := backend.Bugs().New("Mismatched Bug", "Body")
+		b, _, err := backend.Bugs().New(t.Context(), "Mismatched Bug", "Body")
 		require.NoError(t, err)
-		_, err = b.SetMetadata(b.Snapshot().Operations[0].Id(), map[string]string{
+		_, err = b.SetMetadata(t.Context(), b.Snapshot().Operations[0].Id(), map[string]string{
 			metaKeyTodoSourceHutId:      "42",
 			metaKeyTodoSourceHutTracker: "~other/tracker",
 			metaKeyTodoSourceHutBaseUrl: "https://todo.sr.ht",
 		})
 		require.NoError(t, err)
-		require.NoError(t, b.CommitAsNeeded())
+		require.NoError(t, b.CommitAsNeeded(t.Context()))
 
 		out := make(chan core.ExportResult, 4)
 		err = exporter.exportBug(context.Background(), b, out)
@@ -117,15 +117,15 @@ func TestExportRejectsUnverifiedTicketID(t *testing.T) {
 	})
 
 	t.Run("ticket ID without instance metadata is rejected", func(t *testing.T) {
-		b, _, err := backend.Bugs().New("Unscoped Bug", "Body")
+		b, _, err := backend.Bugs().New(t.Context(), "Unscoped Bug", "Body")
 		require.NoError(t, err)
-		_, err = b.SetMetadata(b.Snapshot().Operations[0].Id(), map[string]string{
+		_, err = b.SetMetadata(t.Context(), b.Snapshot().Operations[0].Id(), map[string]string{
 			metaKeyTodoSourceHutId: "42", metaKeyTodoSourceHutTracker: "~tester/mytracker",
 		})
 		require.NoError(t, err)
-		_, _, err = b.AddComment("Do not publish this")
+		_, _, err = b.AddComment(t.Context(), "Do not publish this")
 		require.NoError(t, err)
-		require.NoError(t, b.CommitAsNeeded())
+		require.NoError(t, b.CommitAsNeeded(t.Context()))
 		out := make(chan core.ExportResult, 4)
 		require.NoError(t, exporter.exportBug(context.Background(), b, out))
 		assert.Equal(t, core.ExportEventNothing, (<-out).Event)
@@ -141,17 +141,17 @@ func TestImportReconcilesRemoteEdits(t *testing.T) {
 	require.NoError(t, err)
 	author.SetMetadata(metaKeyTodoSourceHutLogin, "tester")
 	require.NoError(t, author.Commit())
-	require.NoError(t, backend.SetUserIdentity(author))
+	require.NoError(t, backend.SetUserIdentity(t.Context(), author))
 
-	b, _, err := backend.Bugs().New("Old Subject", "Old Body")
+	b, _, err := backend.Bugs().New(t.Context(), "Old Subject", "Old Body")
 	require.NoError(t, err)
-	_, err = b.SetMetadata(b.Snapshot().Operations[0].Id(), map[string]string{
+	_, err = b.SetMetadata(t.Context(), b.Snapshot().Operations[0].Id(), map[string]string{
 		metaKeyTodoSourceHutId:      "100",
 		metaKeyTodoSourceHutTracker: "~tester/proj",
 		metaKeyTodoSourceHutBaseUrl: "https://todo.sr.ht",
 	})
 	require.NoError(t, err)
-	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 
 	submitterBytes, err := json.Marshal(map[string]string{
 		"__typename": "User", "canonicalName": "~tester", "username": "tester", "email": "tester@example.com",
@@ -178,10 +178,10 @@ func TestImportReconcilesRemoteEdits(t *testing.T) {
 		Submitter: &raw,
 	}
 
-	got, created, err := importer.ensureIssue(backend, ticket)
+	got, created, err := importer.ensureIssue(t.Context(), backend, ticket)
 	require.NoError(t, err)
 	require.False(t, created)
-	require.NoError(t, got.CommitAsNeeded())
+	require.NoError(t, got.CommitAsNeeded(t.Context()))
 
 	// Verify title and body were updated
 	snapshot := got.Snapshot()
@@ -206,10 +206,10 @@ func TestImportReconcilesRemoteEdits(t *testing.T) {
 	// carry mapping metadata so a subsequent push does not replay them.
 	importer.out = make(chan core.ImportResult, 8)
 	ticket.Body = ""
-	got, created, err = importer.ensureIssue(backend, ticket)
+	got, created, err = importer.ensureIssue(t.Context(), backend, ticket)
 	require.NoError(t, err)
 	require.False(t, created)
-	require.NoError(t, got.CommitAsNeeded())
+	require.NoError(t, got.CommitAsNeeded(t.Context()))
 	assert.Empty(t, got.Snapshot().Comments[0].Message)
 	for _, op := range got.Snapshot().Operations {
 		if _, ok := op.(*bug.SetTitleOperation); ok {
@@ -222,7 +222,7 @@ func TestImportReconcilesRemoteEdits(t *testing.T) {
 		}
 	}
 	count := len(got.Snapshot().Operations)
-	_, _, err = importer.ensureIssue(backend, ticket)
+	_, _, err = importer.ensureIssue(t.Context(), backend, ticket)
 	require.NoError(t, err)
 	assert.Len(t, got.Snapshot().Operations, count)
 }
@@ -232,10 +232,10 @@ func TestImportCommentRevisions(t *testing.T) {
 	require.NoError(t, err)
 	author, err := backend.Identities().New("Tester", "tester@example.com")
 	require.NoError(t, err)
-	require.NoError(t, backend.SetUserIdentity(author))
-	b, _, err := backend.Bugs().New("Ticket", "Body")
+	require.NoError(t, backend.SetUserIdentity(t.Context(), author))
+	b, _, err := backend.Bugs().New(t.Context(), "Ticket", "Body")
 	require.NoError(t, err)
-	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 
 	user := json.RawMessage(`{"__typename":"User","canonicalName":"~tester","username":"tester"}`)
 	makeEvent := func(id int, message string, next *Comment) Event {
@@ -253,16 +253,16 @@ func TestImportCommentRevisions(t *testing.T) {
 		conf: core.Configuration{confKeyBaseUrl: "https://todo.sr.ht"},
 		out:  make(chan core.ImportResult, 16),
 	}
-	require.NoError(t, importer.ensureEvent(backend, b, first))
-	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, importer.ensureEvent(t.Context(), backend, b, first))
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 	first = makeEvent(1, "Original", &Comment{Text: "Edited", Author: &user})
 	second = makeEvent(2, "Edited", &Comment{Text: "Edited again", Author: &user})
 	for pass := 0; pass < 2; pass++ {
 		roots := make(map[string]string)
 		for _, event := range []Event{first, second, third} {
-			require.NoError(t, importer.importEvent(backend, b, event, roots))
+			require.NoError(t, importer.importEvent(t.Context(), backend, b, event, roots))
 		}
-		require.NoError(t, b.CommitAsNeeded())
+		require.NoError(t, b.CommitAsNeeded(t.Context()))
 		require.Len(t, b.Snapshot().Comments, 2)
 		assert.Equal(t, "Edited again", b.Snapshot().Comments[1].Message)
 	}
@@ -277,11 +277,11 @@ func TestImportMultiChangeEvents(t *testing.T) {
 	require.NoError(t, err)
 	author.SetMetadata(metaKeyTodoSourceHutLogin, "tester")
 	require.NoError(t, author.Commit())
-	require.NoError(t, backend.SetUserIdentity(author))
+	require.NoError(t, backend.SetUserIdentity(t.Context(), author))
 
-	b, _, err := backend.Bugs().New("Bug", "Initial message")
+	b, _, err := backend.Bugs().New(t.Context(), "Bug", "Initial message")
 	require.NoError(t, err)
-	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 
 	userBytes, err := json.Marshal(map[string]string{
 		"__typename": "User", "canonicalName": "~tester", "username": "tester", "email": "tester@example.com",
@@ -323,15 +323,15 @@ func TestImportMultiChangeEvents(t *testing.T) {
 	}
 
 	// First pass: imports both changes
-	err = importer.ensureEvent(backend, b, event)
+	err = importer.ensureEvent(t.Context(), backend, b, event)
 	require.NoError(t, err)
-	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 
 	assert.Len(t, b.Snapshot().Comments, 2)
 	assert.Equal(t, common.ClosedStatus, b.Snapshot().Status)
 
 	// Second pass (repeat pull): must succeed without ErrMultipleMatch
-	err = importer.ensureEvent(backend, b, event)
+	err = importer.ensureEvent(t.Context(), backend, b, event)
 	require.NoError(t, err)
 
 	// Ensure no duplicate operations
@@ -341,11 +341,11 @@ func TestImportMultiChangeEvents(t *testing.T) {
 	// that progress, then retry the event with a valid editor.
 	event.Id = 556
 	event.Changes[1] = json.RawMessage(`{"__typename":"StatusChange","newStatus":"RESOLVED","editor":null}`)
-	require.Error(t, importer.ensureEvent(backend, b, event))
-	require.NoError(t, b.CommitAsNeeded())
+	require.Error(t, importer.ensureEvent(t.Context(), backend, b, event))
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 	event.Changes[1] = statusChange
-	require.NoError(t, importer.ensureEvent(backend, b, event))
-	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, importer.ensureEvent(t.Context(), backend, b, event))
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 	assert.Len(t, b.Snapshot().Comments, 3)
 	assert.Equal(t, common.ClosedStatus, b.Snapshot().Status)
 }
@@ -359,11 +359,11 @@ func TestExportLabelIdempotency(t *testing.T) {
 	require.NoError(t, err)
 	author.SetMetadata(metaKeyTodoSourceHutLogin, "tester")
 	require.NoError(t, author.Commit())
-	require.NoError(t, backend.SetUserIdentity(author))
+	require.NoError(t, backend.SetUserIdentity(t.Context(), author))
 
-	b, _, err := backend.Bugs().New("Bug with labels", "Desc")
+	b, _, err := backend.Bugs().New(t.Context(), "Bug with labels", "Desc")
 	require.NoError(t, err)
-	_, err = b.SetMetadata(b.Snapshot().Operations[0].Id(), map[string]string{
+	_, err = b.SetMetadata(t.Context(), b.Snapshot().Operations[0].Id(), map[string]string{
 		metaKeyTodoSourceHutId:      "10",
 		metaKeyTodoSourceHutTracker: "~tester/proj",
 		metaKeyTodoSourceHutBaseUrl: "https://todo.sr.ht",
@@ -371,9 +371,9 @@ func TestExportLabelIdempotency(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add a label change op in git-bug
-	_, err = b.ForceChangeLabels([]string{"existing-label"}, nil)
+	_, err = b.ForceChangeLabels(t.Context(), []string{"existing-label"}, nil)
 	require.NoError(t, err)
-	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 
 	addLabelCalled := false
 	mockClient := &MockClient{
@@ -414,9 +414,9 @@ func TestExportLabelIdempotency(t *testing.T) {
 	assert.False(t, addLabelCalled, "AddLabel should not be called for already-present label")
 
 	// Fail after one of two labels is added. Retry must not reapply it.
-	_, err = b.ForceChangeLabels([]string{"first", "second"}, nil)
+	_, err = b.ForceChangeLabels(t.Context(), []string{"first", "second"}, nil)
 	require.NoError(t, err)
-	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 	remote := &Ticket{Id: 10}
 	mockClient.MockGetTicket = func(context.Context, string, int) (*Ticket, error) { return remote, nil }
 	mockClient.MockGetLabels = func(context.Context, string, *string) (*LabelCursor, error) {
@@ -441,9 +441,9 @@ func TestExportLabelIdempotency(t *testing.T) {
 	assert.Equal(t, 1, firstCalls)
 	assert.Equal(t, 2, secondCalls)
 
-	_, err = b.ForceChangeLabels([]string{"third"}, nil)
+	_, err = b.ForceChangeLabels(t.Context(), []string{"third"}, nil)
 	require.NoError(t, err)
-	require.NoError(t, b.CommitAsNeeded())
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
 	mockClient.MockGetTicket = func(context.Context, string, int) (*Ticket, error) {
 		return nil, fmt.Errorf("lookup failed")
 	}
@@ -508,7 +508,7 @@ func TestIdentitiesSeparatedByBaseURL(t *testing.T) {
 	}
 
 	userEntity := &User{CanonicalName: "~alice", Username: "alice"}
-	matchedA, err := importerA.ensurePerson(backend, userEntity)
+	matchedA, err := importerA.ensurePerson(t.Context(), backend, userEntity)
 	require.NoError(t, err)
 	assert.Equal(t, userA.Id(), matchedA.Id(), "should match identity for instance A")
 
@@ -518,7 +518,7 @@ func TestIdentitiesSeparatedByBaseURL(t *testing.T) {
 		},
 		out: make(chan core.ImportResult, 8),
 	}
-	matchedB, err := importerB.ensurePerson(backend, userEntity)
+	matchedB, err := importerB.ensurePerson(t.Context(), backend, userEntity)
 	require.NoError(t, err)
 	assert.Equal(t, userB.Id(), matchedB.Id(), "should match identity for instance B")
 
@@ -528,7 +528,7 @@ func TestIdentitiesSeparatedByBaseURL(t *testing.T) {
 		map[string]string{metaKeyTodoSourceHutLogin: "alice"})
 	require.NoError(t, err)
 	importerB.conf[confKeyBaseUrl] = "https://instance-c.sr.ht"
-	matchedC, err := importerB.ensurePerson(backend, userEntity)
+	matchedC, err := importerB.ensurePerson(t.Context(), backend, userEntity)
 	require.NoError(t, err)
 	assert.NotEqual(t, legacy.Id(), matchedC.Id())
 }
@@ -538,15 +538,15 @@ func TestUnsupportedEventWarnsOnce(t *testing.T) {
 	require.NoError(t, err)
 	author, err := backend.Identities().New("Tester", "tester@example.com")
 	require.NoError(t, err)
-	require.NoError(t, backend.SetUserIdentity(author))
-	b, _, err := backend.Bugs().New("Ticket", "Body")
+	require.NoError(t, backend.SetUserIdentity(t.Context(), author))
+	b, _, err := backend.Bugs().New(t.Context(), "Ticket", "Body")
 	require.NoError(t, err)
 	out := make(chan core.ImportResult, 4)
 	importer := &todosrhtImporter{out: out}
 	event := Event{Id: 123, Changes: []json.RawMessage{json.RawMessage(`{"__typename":"Assignment","eventType":"ASSIGNED"}`)}}
-	require.NoError(t, importer.ensureEvent(backend, b, event))
-	require.NoError(t, b.CommitAsNeeded())
-	require.NoError(t, importer.ensureEvent(backend, b, event))
+	require.NoError(t, importer.ensureEvent(t.Context(), backend, b, event))
+	require.NoError(t, b.CommitAsNeeded(t.Context()))
+	require.NoError(t, importer.ensureEvent(t.Context(), backend, b, event))
 	assert.Len(t, out, 1)
 	assert.Equal(t, core.ImportEventWarning, (<-out).Event)
 }
@@ -586,7 +586,7 @@ func TestImportOrdersEventsAcrossPages(t *testing.T) {
 		for result := range results {
 			require.NoError(t, result.Err)
 		}
-		b, err := backend.Bugs().ResolveBugCreateMetadata(metaKeyTodoSourceHutId, "1")
+		b, err := backend.Bugs().ResolveBugCreateMetadata(t.Context(), metaKeyTodoSourceHutId, "1")
 		require.NoError(t, err)
 		assert.Equal(t, common.OpenStatus, b.Snapshot().Status)
 	}

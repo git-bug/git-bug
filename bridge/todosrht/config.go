@@ -113,7 +113,7 @@ func (*TodoSourceHut) ValidParams() map[string]interface{} {
 }
 
 // Configure sets up the bridge configuration
-func (j *TodoSourceHut) Configure(repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
+func (j *TodoSourceHut) Configure(ctx context.Context, repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
 	var err error
 
 	var baseURL, trackerName string
@@ -226,12 +226,12 @@ func (j *TodoSourceHut) Configure(repo *cache.RepoCache, params core.BridgeParam
 	}
 
 	fmt.Printf("Attempting to verify credentials...\n")
-	client := NewTodoSClient(context.TODO(), baseURL, tokenCred.Value)
+	client := NewTodoSClient(ctx, baseURL, tokenCred.Value)
 
 	// Verify access with the supplied credentials; public GraphQL access may
 	// not have the PROFILE and TRACKERS scopes needed for tracker lookup.
 	fmt.Printf("Verifying authentication credentials ...\n")
-	tracker, err := client.GetTracker(context.TODO(), trackerName)
+	tracker, err := client.GetTracker(ctx, trackerName)
 	if err == nil && tracker == nil {
 		err = fmt.Errorf("tracker not found")
 	}
@@ -253,7 +253,7 @@ func (j *TodoSourceHut) Configure(repo *cache.RepoCache, params core.BridgeParam
 		return nil, err
 	}
 
-	err = core.FinishConfig(repo, identityLoginKey(baseURL), login)
+	err = core.FinishConfig(ctx, repo, identityLoginKey(baseURL), login)
 	if err != nil {
 		return nil, err
 	}

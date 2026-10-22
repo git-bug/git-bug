@@ -46,7 +46,7 @@ func TestExporter(t *testing.T) {
 	require.NoError(t, err)
 
 	// Set the user identity in the backend
-	err = backend.SetUserIdentity(author)
+	err = backend.SetUserIdentity(t.Context(), author)
 	require.NoError(t, err)
 
 	mockClient := &MockClient{
@@ -96,7 +96,7 @@ func TestExporter(t *testing.T) {
 	}
 
 	t.Run("Create and export a simple bug", func(t *testing.T) {
-		_, _, err := backend.Bugs().New("Simple Bug", "Description of simple bug")
+		_, _, err := backend.Bugs().New(t.Context(), "Simple Bug", "Description of simple bug")
 		require.NoError(t, err)
 
 		events, err := exporter.ExportAll(context.Background(), backend, time.Time{})
@@ -108,11 +108,11 @@ func TestExporter(t *testing.T) {
 	})
 
 	t.Run("Export an operation on a bug created before since", func(t *testing.T) {
-		bugCache, _, err := backend.Bugs().New("Older bug", "Description")
+		bugCache, _, err := backend.Bugs().New(t.Context(), "Older bug", "Description")
 		require.NoError(t, err)
-		_, _, err = bugCache.AddComment("New comment")
+		_, _, err = bugCache.AddComment(t.Context(), "New comment")
 		require.NoError(t, err)
-		require.NoError(t, bugCache.Commit())
+		require.NoError(t, bugCache.Commit(t.Context()))
 
 		events, err := exporter.ExportAll(context.Background(), backend, time.Now().Add(time.Hour))
 		require.NoError(t, err)
@@ -127,12 +127,12 @@ func TestExporter(t *testing.T) {
 	})
 
 	t.Run("Add a comment to an existing bug", func(t *testing.T) {
-		bugCache, _, err := backend.Bugs().New("Bug with comment", "Description")
+		bugCache, _, err := backend.Bugs().New(t.Context(), "Bug with comment", "Description")
 		require.NoError(t, err)
 
-		_, _, err = bugCache.AddComment("A first comment")
+		_, _, err = bugCache.AddComment(t.Context(), "A first comment")
 		require.NoError(t, err)
-		require.NoError(t, bugCache.Commit())
+		require.NoError(t, bugCache.Commit(t.Context()))
 
 		events, err := exporter.ExportAll(context.Background(), backend, time.Time{})
 		require.NoError(t, err)
@@ -143,12 +143,12 @@ func TestExporter(t *testing.T) {
 	})
 
 	t.Run("Change bug status", func(t *testing.T) {
-		bugCache, _, err := backend.Bugs().New("Bug to close", "Description")
+		bugCache, _, err := backend.Bugs().New(t.Context(), "Bug to close", "Description")
 		require.NoError(t, err)
 
-		_, err = bugCache.Close()
+		_, err = bugCache.Close(t.Context())
 		require.NoError(t, err)
-		require.NoError(t, bugCache.Commit())
+		require.NoError(t, bugCache.Commit(t.Context()))
 
 		events, err := exporter.ExportAll(context.Background(), backend, time.Time{})
 		require.NoError(t, err)
@@ -159,14 +159,14 @@ func TestExporter(t *testing.T) {
 	})
 
 	t.Run("Add and remove labels", func(t *testing.T) {
-		bugCache, _, err := backend.Bugs().New("Bug with labels", "Description")
+		bugCache, _, err := backend.Bugs().New(t.Context(), "Bug with labels", "Description")
 		require.NoError(t, err)
 
-		_, _, err = bugCache.ChangeLabels([]string{"bug"}, nil)
+		_, _, err = bugCache.ChangeLabels(t.Context(), []string{"bug"}, nil)
 		require.NoError(t, err)
-		_, _, err = bugCache.ChangeLabels(nil, []string{"bug"})
+		_, _, err = bugCache.ChangeLabels(t.Context(), nil, []string{"bug"})
 		require.NoError(t, err)
-		require.NoError(t, bugCache.Commit())
+		require.NoError(t, bugCache.Commit(t.Context()))
 
 		events, err := exporter.ExportAll(context.Background(), backend, time.Time{})
 		require.NoError(t, err)
