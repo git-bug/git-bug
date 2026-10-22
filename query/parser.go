@@ -31,6 +31,11 @@ func Parse(query string) (*Query, error) {
 
 		case tokenKindKV:
 			switch t.qualifier {
+			case "id":
+				if t.value == "" {
+					return nil, fmt.Errorf("empty ID prefix")
+				}
+				q.Id = append(q.Id, t.value)
 			case "status", "state":
 				status, err := common.StatusFromString(t.value)
 				if err != nil {
