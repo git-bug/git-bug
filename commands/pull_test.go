@@ -17,14 +17,14 @@ func TestPullSuccess(t *testing.T) {
 	// Create user identity in envA and push to origin
 	userA, err := envA.Backend.Identities().New("User A", "a@example.com")
 	require.NoError(t, err)
-	err = envA.Backend.SetUserIdentity(userA)
+	err = envA.Backend.SetUserIdentity(t.Context(), userA)
 	require.NoError(t, err)
 
-	_, err = envA.Backend.Push("origin")
+	_, err = envA.Backend.Push(t.Context(), "origin")
 	require.NoError(t, err)
 
 	// Non-verbose pull in envB
-	err = runPull(envB, []string{"origin"}, false)
+	err = runPull(t.Context(), envB, []string{"origin"}, false)
 	require.NoError(t, err)
 
 	stdout := envB.Out.String()
@@ -40,7 +40,7 @@ func TestPullSuccess(t *testing.T) {
 	envB.Out.Reset()
 	envB.Err.Reset()
 
-	err = runPull(envB, []string{"origin"}, false)
+	err = runPull(t.Context(), envB, []string{"origin"}, false)
 	require.NoError(t, err)
 
 	stdout = envB.Out.String()
@@ -49,16 +49,17 @@ func TestPullSuccess(t *testing.T) {
 	require.Empty(t, stderr)
 
 	// Create a new bug in envA and push
-	bugA, _, err := envA.Backend.Bugs().New("Pull Bug", "Pull Message")
+	bugA, _, err := envA.Backend.Bugs().New(t.Context(), "Pull Bug", "Pull Message")
 	require.NoError(t, err)
-	_, err = envA.Backend.Push("origin")
+	require.NoError(t, bugA.Commit(t.Context()))
+	_, err = envA.Backend.Push(t.Context(), "origin")
 	require.NoError(t, err)
 
 	// Verbose pull in envB
 	envB.Out.Reset()
 	envB.Err.Reset()
 
-	err = runPull(envB, []string{"origin"}, true)
+	err = runPull(t.Context(), envB, []string{"origin"}, true)
 	require.NoError(t, err)
 
 	stdout = envB.Out.String()
@@ -78,36 +79,37 @@ func TestPullFailedMerge(t *testing.T) {
 
 	userA, err := envA.Backend.Identities().New("User A", "a@example.com")
 	require.NoError(t, err)
-	err = envA.Backend.SetUserIdentity(userA)
+	err = envA.Backend.SetUserIdentity(t.Context(), userA)
 	require.NoError(t, err)
 
-	bugA, _, err := envA.Backend.Bugs().New("Bug Title", "Bug Message")
+	bugA, _, err := envA.Backend.Bugs().New(t.Context(), "Bug Title", "Bug Message")
 	require.NoError(t, err)
-	_, err = envA.Backend.Push("origin")
+	require.NoError(t, bugA.Commit(t.Context()))
+	_, err = envA.Backend.Push(t.Context(), "origin")
 	require.NoError(t, err)
 
 	userB, err := envB.Backend.Identities().New("User B", "b@example.com")
 	require.NoError(t, err)
-	err = envB.Backend.SetUserIdentity(userB)
+	err = envB.Backend.SetUserIdentity(t.Context(), userB)
 	require.NoError(t, err)
 
-	err = runPull(envB, []string{"origin"}, false)
+	err = runPull(t.Context(), envB, []string{"origin"}, false)
 	require.NoError(t, err)
 
 	// Concurrently modify bug on both sides
-	bugAResolved, err := envA.Backend.Bugs().Resolve(bugA.Id())
+	bugAResolved, err := envA.Backend.Bugs().Resolve(t.Context(), bugA.Id())
 	require.NoError(t, err)
-	_, _, err = bugAResolved.AddComment("comment from A")
+	_, _, err = bugAResolved.AddComment(t.Context(), "comment from A")
 	require.NoError(t, err)
-	require.NoError(t, bugAResolved.Commit())
-	_, err = envA.Backend.Push("origin")
+	require.NoError(t, bugAResolved.Commit(t.Context()))
+	_, err = envA.Backend.Push(t.Context(), "origin")
 	require.NoError(t, err)
 
-	bugBResolved, err := envB.Backend.Bugs().Resolve(bugA.Id())
+	bugBResolved, err := envB.Backend.Bugs().Resolve(t.Context(), bugA.Id())
 	require.NoError(t, err)
-	_, _, err = bugBResolved.AddComment("comment from B")
+	_, _, err = bugBResolved.AddComment(t.Context(), "comment from B")
 	require.NoError(t, err)
-	require.NoError(t, bugBResolved.Commit())
+	require.NoError(t, bugBResolved.Commit(t.Context()))
 
 	// Clear identity on B so 3-way merge cannot create merge commit
 	err = envB.Backend.ClearUserIdentity()
@@ -116,7 +118,7 @@ func TestPullFailedMerge(t *testing.T) {
 	envB.Out.Reset()
 	envB.Err.Reset()
 
-	err = runPull(envB, []string{"origin"}, false)
+	err = runPull(t.Context(), envB, []string{"origin"}, false)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "1 entity failed to merge")
 
@@ -131,7 +133,7 @@ func TestPullVerbose(t *testing.T) {
 	env := envtest.NewEnv(t)
 
 	// Test without verbose with no remotes (should fail with some kind of error)
-	err := runPull(env, []string{"nonexistent"}, false)
+	err := runPull(t.Context(), env, []string{"nonexistent"}, false)
 	require.Error(t, err)
 	stdout := env.Out.String()
 	stderr := env.Err.String()
@@ -146,7 +148,7 @@ func TestPullVerbose(t *testing.T) {
 	env.Err.Reset()
 
 	// Test with verbose with same error
-	err = runPull(env, []string{"nonexistent"}, true)
+	err = runPull(t.Context(), env, []string{"nonexistent"}, true)
 	require.Error(t, err)
 
 	stdout = env.Out.String()
@@ -163,7 +165,7 @@ func TestPullOutputModes(t *testing.T) {
 	env := envtest.NewEnv(t)
 
 	// Test default to origin when no remote specified (non-verbose)
-	err := runPull(env, []string{}, false)
+	err := runPull(t.Context(), env, []string{}, false)
 	require.Error(t, err) // Should fail since no origin remote exists
 
 	stdout := env.Out.String()
@@ -178,7 +180,7 @@ func TestPullOutputModes(t *testing.T) {
 	env.Err.Reset()
 
 	// Test with verbose flag
-	err = runPull(env, []string{}, true)
+	err = runPull(t.Context(), env, []string{}, true)
 	require.Error(t, err)
 
 	stdout = env.Out.String()
@@ -194,7 +196,7 @@ func TestPullTooManyRemotes(t *testing.T) {
 	env := envtest.NewEnv(t)
 
 	// Test with too many remotes
-	err := runPull(env, []string{"remote1", "remote2"}, false)
+	err := runPull(t.Context(), env, []string{"remote1", "remote2"}, false)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "Only pulling from one remote at a time is supported")
 }

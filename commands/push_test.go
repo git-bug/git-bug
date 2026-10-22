@@ -16,11 +16,11 @@ func TestPushSuccess(t *testing.T) {
 	// Create and set user identity in repoA
 	user, err := envA.Backend.Identities().New("Test User", "test@example.com")
 	require.NoError(t, err)
-	err = envA.Backend.SetUserIdentity(user)
+	err = envA.Backend.SetUserIdentity(t.Context(), user)
 	require.NoError(t, err)
 
 	// Non-verbose push
-	err = runPush(envA, []string{"origin"}, false)
+	err = runPush(t.Context(), envA, []string{"origin"}, false)
 	require.NoError(t, err)
 
 	stdout := envA.Out.String()
@@ -31,11 +31,12 @@ func TestPushSuccess(t *testing.T) {
 	envA.Out.Reset()
 	envA.Err.Reset()
 
-	_, _, err = envA.Backend.Bugs().New("Push Test Bug", "Push Test Message")
+	b, _, err := envA.Backend.Bugs().New(t.Context(), "Push Test Bug", "Push Test Message")
 	require.NoError(t, err)
+	require.NoError(t, b.Commit(t.Context()))
 
 	// Verbose push
-	err = runPush(envA, []string{"origin"}, true)
+	err = runPush(t.Context(), envA, []string{"origin"}, true)
 	require.NoError(t, err)
 
 	stdout = envA.Out.String()
@@ -51,7 +52,7 @@ func TestPushVerbose(t *testing.T) {
 	// (they return early on error)
 
 	// Test without verbose with no remotes (should fail with some kind of error)
-	err := runPush(env, []string{"nonexistent"}, false)
+	err := runPush(t.Context(), env, []string{"nonexistent"}, false)
 	require.Error(t, err)
 
 	// Non-verbose should fail early without output
@@ -65,7 +66,7 @@ func TestPushVerbose(t *testing.T) {
 	env.Err.Reset()
 
 	// Test with verbose with same error
-	err = runPush(env, []string{"nonexistent"}, true)
+	err = runPush(t.Context(), env, []string{"nonexistent"}, true)
 	require.Error(t, err)
 
 	// Verbose mode logs target remote to stderr before attempting push
@@ -79,7 +80,7 @@ func TestPushDefaultRemote(t *testing.T) {
 	env := envtest.NewEnv(t)
 
 	// Test default to origin when no remote specified
-	err := runPush(env, []string{}, false)
+	err := runPush(t.Context(), env, []string{}, false)
 	require.Error(t, err) // Should fail since no origin remote exists
 }
 
@@ -87,7 +88,7 @@ func TestPushTooManyRemotes(t *testing.T) {
 	env := envtest.NewEnv(t)
 
 	// Test with too many remotes
-	err := runPush(env, []string{"remote1", "remote2"}, false)
+	err := runPush(t.Context(), env, []string{"remote1", "remote2"}, false)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "Only pushing to one remote at a time is supported")
 }
