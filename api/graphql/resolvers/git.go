@@ -24,9 +24,9 @@ func (r gitCommitResolver) ShortHash(_ context.Context, obj *models.GitCommitMet
 	return s, nil
 }
 
-func (r gitCommitResolver) FullMessage(_ context.Context, obj *models.GitCommitMeta) (string, error) {
+func (r gitCommitResolver) FullMessage(ctx context.Context, obj *models.GitCommitMeta) (string, error) {
 	repo := obj.Repo.BrowseRepo()
-	detail, err := repo.CommitDetail(obj.Hash)
+	detail, err := repo.CommitDetail(ctx, obj.Hash)
 	if err != nil {
 		return "", err
 	}
@@ -41,9 +41,9 @@ func (r gitCommitResolver) Parents(_ context.Context, obj *models.GitCommitMeta)
 	return out, nil
 }
 
-func (r gitCommitResolver) Files(_ context.Context, obj *models.GitCommitMeta, after *string, before *string, first *int, last *int) (*models.GitChangedFileConnection, error) {
+func (r gitCommitResolver) Files(ctx context.Context, obj *models.GitCommitMeta, after *string, before *string, first *int, last *int) (*models.GitChangedFileConnection, error) {
 	repo := obj.Repo.BrowseRepo()
-	detail, err := repo.CommitDetail(obj.Hash)
+	detail, err := repo.CommitDetail(ctx, obj.Hash)
 	if err != nil {
 		return nil, err
 	}
@@ -62,9 +62,9 @@ func (r gitCommitResolver) Files(_ context.Context, obj *models.GitCommitMeta, a
 	return connections.Connection(detail.Files, edger, conMaker, input)
 }
 
-func (r gitCommitResolver) Diff(_ context.Context, obj *models.GitCommitMeta, path string) (*repository.FileDiff, error) {
+func (r gitCommitResolver) Diff(ctx context.Context, obj *models.GitCommitMeta, path string) (*repository.FileDiff, error) {
 	repo := obj.Repo.BrowseRepo()
-	fd, err := repo.CommitFileDiff(obj.Hash, path)
+	fd, err := repo.CommitFileDiff(ctx, obj.Hash, path)
 	if err != nil {
 		return nil, err
 	}
@@ -75,13 +75,13 @@ var _ graph.GitTreeEntryResolver = &gitTreeEntryResolver{}
 
 type gitTreeEntryResolver struct{}
 
-func (r gitTreeEntryResolver) LastCommit(_ context.Context, obj *models.GitTreeEntry) (*models.GitCommitMeta, error) {
+func (r gitTreeEntryResolver) LastCommit(ctx context.Context, obj *models.GitTreeEntry) (*models.GitCommitMeta, error) {
 	repo := obj.Repo.BrowseRepo()
 	// Pass all sibling names so the history walk covers the whole directory,
 	// which is nearly the same cost as walking for a single entry.
 	// Concurrent calls for the same directory are deduplicated by a singleflight
 	// inside LastCommitForEntries; subsequent calls hit the LRU cache.
-	commits, err := repo.LastCommitForEntries(obj.Ref, obj.Path, obj.SiblingNames)
+	commits, err := repo.LastCommitForEntries(ctx, obj.Ref, obj.Path, obj.SiblingNames)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ type gitRefResolver struct{}
 
 func (g gitRefResolver) Commit(ctx context.Context, obj *models.GitRef) (*models.GitCommitMeta, error) {
 	repo := obj.Repo.BrowseRepo()
-	detail, err := repo.CommitDetail(repository.Hash(obj.Hash))
+	detail, err := repo.CommitDetail(ctx, repository.Hash(obj.Hash))
 	if errors.Is(err, repository.ErrNotFound) {
 		return nil, nil
 	}

@@ -908,7 +908,7 @@ func TestMutations(t *testing.T) {
 		b, err := rc.Bugs().Resolve(entity.Id(data.BugCreate.Bug.Id))
 		require.NoError(t, err)
 		require.Equal(t, "created", b.Snapshot().Title)
-		commits, err := repo.ListCommits(b.LastCommit())
+		commits, err := repo.ListCommits(t.Context(), b.LastCommit())
 		require.NoError(t, err)
 		require.Len(t, commits, 1)
 	})

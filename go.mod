@@ -38,6 +38,7 @@ require (
 	golang.org/x/term v0.46.0
 	golang.org/x/text v0.42.0
 	modernc.org/sqlite v1.60.1
+	resenje.org/singleflight v0.4.3
 )
 
 tool (

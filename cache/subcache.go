@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"maps"
@@ -11,6 +12,7 @@ import (
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"resenje.org/singleflight"
 )
 
 type Excerpt interface {
@@ -83,6 +85,9 @@ type SubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved] struct {
 	// working with the copy it holds.
 	cached map[entity.Id]SharedT
 	lru    lruIdCache
+	// loading deduplicates the concurrent reads of an entity missing from
+	// cached, see Resolve.
+	loading singleflight.Group[entity.Id, SharedT]
 
 	muObservers sync.RWMutex
 	observers   map[Observer]string // observer --> repo name
@@ -181,7 +186,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) read() error {
 	if err != nil {
 		return err
 	}
-	builtFrom, raws, err := index.Excerpts()
+	builtFrom, raws, err := index.Excerpts(context.TODO())
 	if err != nil {
 		return err
 	}
@@ -216,7 +221,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) decodeExcerpt(id entity.Id, raw []
 // it was built from ref. It returns false if the document is gone, was replaced
 // by another process since it was listed, or can't be decoded.
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) excerptFromIndex(index repository.Index, id entity.Id, ref repository.Hash) (*derived[ExcerptT], bool) {
-	commit, raw, err := index.Excerpt(id.String())
+	commit, raw, err := index.Excerpt(context.TODO(), id.String())
 	if err != nil || commit != ref {
 		return nil, false
 	}
@@ -291,18 +296,30 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) Resolve(id entity.Id) (ViewT, erro
 	}
 	sc.muMaps.RUnlock()
 
-	shared, err := sc.actions.ReadWithResolver(sc.repo, sc.resolvers(), id)
+	shared, _, err := sc.loading.Do(context.TODO(), id, func(context.Context) (SharedT, error) {
+		return sc.load(id)
+	})
 	if err != nil {
 		return *new(ViewT), err
+	}
+	return sc.newView(shared), nil
+}
+
+// load reads an entity from the repository and keeps it as its loaded copy,
+// unless there is one already.
+func (sc *SubCache[SharedT, ExcerptT, ViewT]) load(id entity.Id) (SharedT, error) {
+	shared, err := sc.actions.ReadWithResolver(sc.repo, sc.resolvers(), id)
+	if err != nil {
+		return *new(SharedT), err
 	}
 
 	sc.muMaps.Lock()
 	if existing, ok := sc.cached[id]; ok {
-		// loaded concurrently in the meantime, keep a single copy in memory
-		// and mark it as recently used
+		// loaded in the meantime, keep a single copy in memory and mark it as
+		// recently used
 		sc.lru.Get(id)
 		sc.muMaps.Unlock()
-		return sc.newView(existing), nil
+		return existing, nil
 	}
 	// This copy can already be stale: if the reference moves while it's read,
 	// a sync running meanwhile doesn't see it, as it's not loaded yet. The next
@@ -315,7 +332,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) Resolve(id entity.Id) (ViewT, erro
 
 	sc.evictIfNeeded()
 
-	return sc.newView(shared), nil
+	return shared, nil
 }
 
 // ResolvePrefix retrieve an entity matching an id prefix. It fails if multiple
@@ -744,7 +761,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncIdsLocked(ids []entity.Id) (ma
 		case !errors.Is(err, repository.ErrNotFound):
 			return nil, err
 		}
-		commit, err := index.BuiltFrom(id.String())
+		commit, err := index.BuiltFrom(context.TODO(), id.String())
 		switch {
 		case err == nil:
 			indexBuiltFrom[id.String()] = commit
@@ -770,7 +787,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncAllLocked(progress func(BuildE
 	if err != nil {
 		return nil, err
 	}
-	indexBuiltFrom, err := index.AllBuiltFrom()
+	indexBuiltFrom, err := index.AllBuiltFrom(context.TODO())
 	if err != nil {
 		return nil, err
 	}
@@ -862,7 +879,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncEntitiesLocked(index repositor
 	// the excerpts of a batch are published once the batch is in the index
 	endBatch := func() error {
 		if batchIndexed > 0 {
-			err := batch.Apply()
+			err := batch.Apply(context.TODO())
 			if err != nil {
 				return err
 			}

@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"errors"
 	"sort"
 	"time"
@@ -147,7 +148,7 @@ func (c *RepoCacheBug) Query(q *query.Query) ([]entity.Id, error) {
 			return nil, err
 		}
 
-		res, err := index.Search(q.Search)
+		res, err := index.Search(context.TODO(), q.Search)
 		if err != nil {
 			return nil, err
 		}

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -213,9 +214,9 @@ func (i *sqliteIndex) NewBatch() IndexBatch {
 	return &sqliteBatch{index: i, changes: make(map[string]*sqliteDoc)}
 }
 
-func (i *sqliteIndex) AllBuiltFrom() (_ map[string]Hash, err error) {
+func (i *sqliteIndex) AllBuiltFrom(ctx context.Context) (_ map[string]Hash, err error) {
 	defer func() { err = brokenSqliteError(i.path, err) }()
-	rows, err := i.db.Query(`
+	rows, err := i.db.QueryContext(ctx, `
 		SELECT id, built_from
 		FROM docs
 		WHERE space = (SELECT num FROM namespaces WHERE ns = ? AND version = ?)`,
@@ -238,10 +239,10 @@ func (i *sqliteIndex) AllBuiltFrom() (_ map[string]Hash, err error) {
 	return builtFrom, rows.Err()
 }
 
-func (i *sqliteIndex) BuiltFrom(id string) (_ Hash, err error) {
+func (i *sqliteIndex) BuiltFrom(ctx context.Context, id string) (_ Hash, err error) {
 	defer func() { err = brokenSqliteError(i.path, err) }()
 	var commit Hash
-	err = i.db.QueryRow(`
+	err = i.db.QueryRowContext(ctx, `
 		SELECT built_from
 		FROM docs
 		WHERE space = (SELECT num FROM namespaces WHERE ns = ? AND version = ?)
@@ -253,11 +254,11 @@ func (i *sqliteIndex) BuiltFrom(id string) (_ Hash, err error) {
 	return commit, err
 }
 
-func (i *sqliteIndex) Excerpt(id string) (_ Hash, _ []byte, err error) {
+func (i *sqliteIndex) Excerpt(ctx context.Context, id string) (_ Hash, _ []byte, err error) {
 	defer func() { err = brokenSqliteError(i.path, err) }()
 	var commit Hash
 	var excerpt []byte
-	err = i.db.QueryRow(`
+	err = i.db.QueryRowContext(ctx, `
 		SELECT built_from, json(excerpt)
 		FROM docs
 		WHERE space = (SELECT num FROM namespaces WHERE ns = ? AND version = ?)
@@ -269,9 +270,9 @@ func (i *sqliteIndex) Excerpt(id string) (_ Hash, _ []byte, err error) {
 	return commit, excerpt, err
 }
 
-func (i *sqliteIndex) Excerpts() (_ map[string]Hash, _ map[string][]byte, err error) {
+func (i *sqliteIndex) Excerpts(ctx context.Context) (_ map[string]Hash, _ map[string][]byte, err error) {
 	defer func() { err = brokenSqliteError(i.path, err) }()
-	rows, err := i.db.Query(`
+	rows, err := i.db.QueryContext(ctx, `
 		SELECT id, built_from, json(excerpt)
 		FROM docs
 		WHERE space = (SELECT num FROM namespaces WHERE ns = ? AND version = ?)`,
@@ -301,7 +302,7 @@ func (i *sqliteIndex) Excerpts() (_ map[string]Hash, _ map[string][]byte, err er
 	return builtFrom, excerpts, nil
 }
 
-func (i *sqliteIndex) Search(phrases []string) (_ []string, err error) {
+func (i *sqliteIndex) Search(ctx context.Context, phrases []string) (_ []string, err error) {
 	defer func() { err = brokenSqliteError(i.path, err) }()
 	// Each phrase is a string for FTS5, quoted, so never a query syntax. Its
 	// tokens can't hold a quote.
@@ -316,7 +317,7 @@ func (i *sqliteIndex) Search(phrases []string) (_ []string, err error) {
 		return nil, nil
 	}
 
-	rows, err := i.db.Query(`
+	rows, err := i.db.QueryContext(ctx, `
 		SELECT docs.id
 		FROM fts
 		JOIN docs ON docs.num = fts.rowid
@@ -378,16 +379,16 @@ func (b *sqliteBatch) Remove(id string) {
 	b.changes[id] = nil
 }
 
-func (b *sqliteBatch) Apply() (err error) {
+func (b *sqliteBatch) Apply(ctx context.Context) (err error) {
 	defer func() { err = brokenSqliteError(b.index.path, err) }()
-	tx, err := b.index.db.Begin()
+	tx, err := b.index.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
 	// made by the first write of a version, unless another process did already
-	_, err = tx.Exec(`
+	_, err = tx.ExecContext(ctx, `
 		INSERT OR IGNORE INTO namespaces (ns, version)
 		VALUES (?, ?)`,
 		b.index.ns, b.index.version)
@@ -395,7 +396,7 @@ func (b *sqliteBatch) Apply() (err error) {
 		return err
 	}
 	var space int64
-	err = tx.QueryRow(`
+	err = tx.QueryRowContext(ctx, `
 		SELECT num
 		FROM namespaces
 		WHERE ns = ? AND version = ?`,
@@ -406,7 +407,7 @@ func (b *sqliteBatch) Apply() (err error) {
 
 	for id, doc := range b.changes {
 		if doc == nil {
-			_, err = tx.Exec("DELETE FROM docs WHERE space = ? AND id = ?", space, id)
+			_, err = tx.ExecContext(ctx, "DELETE FROM docs WHERE space = ? AND id = ?", space, id)
 			if err != nil {
 				return err
 			}
@@ -414,7 +415,7 @@ func (b *sqliteBatch) Apply() (err error) {
 		}
 
 		var num int64
-		err = tx.QueryRow(`
+		err = tx.QueryRowContext(ctx, `
 			INSERT INTO docs (space, id, built_from, excerpt)
 			VALUES (?, ?, ?, jsonb(?))
 			ON CONFLICT (space, id) DO UPDATE
@@ -426,7 +427,7 @@ func (b *sqliteBatch) Apply() (err error) {
 			return err
 		}
 		if doc.tokens != "" {
-			_, err = tx.Exec("INSERT INTO fts (rowid, tokens) VALUES (?, ?)", num, doc.tokens)
+			_, err = tx.ExecContext(ctx, "INSERT INTO fts (rowid, tokens) VALUES (?, ?)", num, doc.tokens)
 			if err != nil {
 				return err
 			}

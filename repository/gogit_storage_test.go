@@ -238,7 +238,7 @@ func TestGoGitStorage(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, map[string]Hash{"b1": head}, refs)
 
-			log, err := repo.CommitLog("refs/remotes/src/bugs/b1", "", 0, "", nil, nil)
+			log, err := repo.CommitLog(t.Context(), "refs/remotes/src/bugs/b1", "", 0, "", nil, nil)
 			require.NoError(t, err)
 			require.Len(t, log, 3)
 		})
@@ -288,7 +288,7 @@ func TestGoGitStorage(t *testing.T) {
 		t.Run("CommitLog", func(t *testing.T) {
 			repo := setup(t)
 
-			log, err := repo.CommitLog("main", "", 0, "", nil, nil)
+			log, err := repo.CommitLog(t.Context(), "main", "", 0, "", nil, nil)
 			require.NoError(t, err)
 			require.Len(t, log, 3)
 		})
@@ -296,7 +296,7 @@ func TestGoGitStorage(t *testing.T) {
 		t.Run("LastCommitForEntries", func(t *testing.T) {
 			repo := setup(t)
 
-			last, err := repo.LastCommitForEntries("main", "a", []string{"x", "y", "z"})
+			last, err := repo.LastCommitForEntries(t.Context(), "main", "a", []string{"x", "y", "z"})
 			require.NoError(t, err)
 			require.Equal(t, "add x", last["x"].Message)
 			require.Equal(t, "add y", last["y"].Message)

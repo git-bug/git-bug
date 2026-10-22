@@ -84,7 +84,7 @@ func (gfh *gitFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	for i := len(segments) - 1; i >= 1; i-- {
 		ref := strings.Join(segments[:i], "/")
 		path := strings.Join(segments[i:], "/")
-		rc, size, hash, err := repo.BrowseRepo().BlobAtPath(ref, path)
+		rc, size, hash, err := repo.BrowseRepo().BlobAtPath(r.Context(), ref, path)
 		if errors.Is(err, repository.ErrNotFound) {
 			continue
 		}
