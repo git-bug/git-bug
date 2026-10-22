@@ -97,14 +97,6 @@ func newMockRepoDataBrowse() *mockRepoDataBrowse {
 	}
 }
 
-func (r *mockRepoDataBrowse) FetchRefs(remote string, namespaces ...string) (string, error) {
-	panic("implement me")
-}
-
-func (r *mockRepoDataBrowse) PushRefs(remote string, namespaces ...string) (string, error) {
-	panic("implement me")
-}
-
 func (r *mockRepoDataBrowse) StoreData(data []byte) (Hash, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

@@ -3,10 +3,12 @@
 package repotest
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -1130,5 +1132,81 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 		// unknown hash
 		_, err = repo.CommitFileDiff(randomHash(), "main.go")
 		require.ErrorIs(t, err, repository.ErrNotFound)
+	})
+}
+
+// RepoRemoteTest checks the remote operations of a RepoRemote implementation,
+// between two repositories and a bare remote, each RepoRemote given by
+// newRemote for its repository.
+func RepoRemoteTest(t *testing.T, newRemote func(t testing.TB, repo *GoGitRepo) repository.RepoRemote) {
+	const namespace = "bugs"
+
+	repoA, repoB, remote := SetupGoGitReposAndRemote(t)
+	remoteA, remoteB := newRemote(t, repoA), newRemote(t, repoB)
+
+	blobHash, err := repoA.StoreData(randomData())
+	require.NoError(t, err)
+	treeHash, err := repoA.StoreTree([]repository.TreeEntry{{ObjectType: repository.Blob, Hash: blobHash, Name: "blob"}})
+	require.NoError(t, err)
+	commit1, err := repoA.StoreCommit(treeHash)
+	require.NoError(t, err)
+	commit2, err := repoA.StoreCommit(treeHash, commit1)
+	require.NoError(t, err)
+
+	key := randomKey()
+
+	// push and fetch commit, as the ref moved from old in repoA
+	roundTrip := func(t *testing.T, old, commit repository.Hash) {
+		t.Helper()
+
+		require.NoError(t, repoA.UpdateRef(namespace, key, old, commit))
+
+		_, err := remoteA.PushRefs(t.Context(), "origin", namespace)
+		require.NoError(t, err)
+		h, err := remote.ResolveRef(namespace, key)
+		require.NoError(t, err)
+		require.Equal(t, commit, h)
+		h, err = repoA.ResolveTrackingRef("origin", namespace, key)
+		require.NoError(t, err)
+		require.Equal(t, commit, h)
+
+		_, err = remoteB.FetchRefs(t.Context(), "origin", namespace)
+		require.NoError(t, err)
+		h, err = repoB.ResolveTrackingRef("origin", namespace, key)
+		require.NoError(t, err)
+		require.Equal(t, commit, h)
+		_, err = repoB.ReadCommit(commit)
+		require.NoError(t, err)
+		_, err = repoB.ResolveRef(namespace, key)
+		require.ErrorIs(t, err, repository.ErrNotFound)
+	}
+
+	t.Run("first round", func(t *testing.T) {
+		roundTrip(t, "", commit1)
+	})
+
+	t.Run("second round", func(t *testing.T) {
+		roundTrip(t, commit1, commit2)
+	})
+
+	t.Run("unknown remote", func(t *testing.T) {
+		// a path is not a configured remote, even if it is a repository
+		_, err := remoteA.PushRefs(t.Context(), remote.GitDir, namespace)
+		require.Error(t, err)
+		_, err = remoteB.FetchRefs(t.Context(), remote.GitDir, namespace)
+		require.Error(t, err)
+
+		// nor is something looking like an option
+		marker := filepath.Join(t.TempDir(), "marker")
+		_, err = remoteB.FetchRefs(t.Context(), "--upload-pack=touch "+marker, namespace)
+		require.Error(t, err)
+		require.NoFileExists(t, marker)
+	})
+
+	t.Run("canceled context", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+		_, err := remoteB.FetchRefs(ctx, "origin", namespace)
+		require.Error(t, err)
 	})
 }

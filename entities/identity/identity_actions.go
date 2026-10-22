@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/git-bug/git-bug/entity"
@@ -9,19 +10,19 @@ import (
 
 // Fetch retrieve updates from a remote
 // This does not change the local identities state
-func Fetch(repo repository.Repo, remote string) (string, error) {
-	return repo.FetchRefs(remote, Namespace)
+func Fetch(ctx context.Context, repo repository.Repo, remote string) (string, error) {
+	return repo.FetchRefs(ctx, remote, Namespace)
 }
 
 // Push update a remote with the local changes
-func Push(repo repository.Repo, remote string) (string, error) {
-	return repo.PushRefs(remote, Namespace)
+func Push(ctx context.Context, repo repository.Repo, remote string) (string, error) {
+	return repo.PushRefs(ctx, remote, Namespace)
 }
 
 // Pull will do a Fetch + MergeAll
 // This function will return an error if a merge fail
-func Pull(repo repository.Repo, remote string) error {
-	_, err := Fetch(repo, remote)
+func Pull(ctx context.Context, repo repository.Repo, remote string) error {
+	_, err := Fetch(ctx, repo, remote)
 	if err != nil {
 		return err
 	}

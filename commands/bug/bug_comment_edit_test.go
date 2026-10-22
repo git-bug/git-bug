@@ -16,7 +16,7 @@ func TestBugCommentEdit(t *testing.T) {
 	opts := bugCommentEditOptions{
 		message: "this is an altered bug comment",
 	}
-	require.NoError(t, runBugCommentEdit(env, opts, []string{commentID.Human()}))
+	require.NoError(t, runBugCommentEdit(env, opts, []string{commentID.String()}))
 
 	require.NoError(t, runBugComment(env, []string{bugID.Human()}))
 	requireCommentsEqual(t, golden, env)

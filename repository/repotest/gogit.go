@@ -54,6 +54,8 @@ func NewGoGitRepo(t testing.TB, bare bool) *GoGitRepo {
 			// start a maintenance in the background, still writing to the
 			// repository when the test removes it
 			f.Set("receive.autogc", "false"),
+			// same for a fetch from this repository with the git binary
+			f.Set("maintenance.auto", "false"),
 		)
 	})
 	require.NoError(t, err)
@@ -66,6 +68,7 @@ func NewGoGitRepo(t testing.TB, bare bool) *GoGitRepo {
 		RepoStorage: repository.NewRepoStorage(storage),
 		RepoIndex:   repository.NewSqliteIndex(filepath.Join(storage.Root(), "index.db")),
 		RepoData:    git,
+		RepoRemote:  git,
 		RepoBrowse:  git,
 		RepoClock:   repository.NewPersistedClocks(storage),
 	}

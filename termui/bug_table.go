@@ -464,7 +464,7 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 	ui.msgPopup.Activate("Pull from remote "+defaultRemote, "...")
 
 	go func() {
-		stdout, err := bt.repo.Fetch(defaultRemote)
+		stdout, err := bt.repo.Fetch(ui.ctx, defaultRemote)
 
 		if err != nil {
 			g.Update(func(gui *gocui.Gui) error {
@@ -529,7 +529,7 @@ func (bt *bugTable) push(g *gocui.Gui, v *gocui.View) error {
 
 	go func() {
 		// TODO: make the remote configurable
-		stdout, err := bt.repo.Push(defaultRemote)
+		stdout, err := bt.repo.Push(ui.ctx, defaultRemote)
 
 		if err != nil {
 			g.Update(func(gui *gocui.Gui) error {

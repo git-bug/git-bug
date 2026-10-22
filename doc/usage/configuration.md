@@ -49,6 +49,7 @@ every layer.
 | `git-bug.remote`           | local, then global |
 | `git-bug.webui.open`       | local, then global |
 | `git-bug.changes.notifier` | local, then global |
+| `git-bug.git-transport`    | local, then global |
 | `git-bug.identity`         | local only         |
 | `git-bug.bridge.*`         | local only         |
 
@@ -89,6 +90,28 @@ With any value but `none`, every change is also caught by a full check made
 once a minute, so a wrong choice only delays the update, it never leaves
 anything stale. Other commands don't need any of this: they check the
 repository when they start.
+
+### Talking to remotes<a name="talking-to-remotes"></a>
+
+[`git bug pull`][doc/cli/pull] and [`git bug push`][doc/cli/push], and the
+termui's pull and push, talk to the remote in one of two ways, chosen by
+`git-bug.git-transport`:
+
+| Value    | Behavior                                                                                                                                                                                                         |
+|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `go-git` | The default: through the [go-git][go-git] library, inside `git-bug`. It works for most setups, but doesn't implement the whole of git's configuration, see the note [below](#git-options-read-by-git-bug).        |
+| `git`    | By running the `git` binary found on your `PATH`, with your git and SSH configuration. `git-bug` fails to start if there is none.                                                                                  |
+
+With `git`, neither git nor SSH ever asks you anything: a password, a key's
+passphrase, or whether to trust a host SSH doesn't know yet fails the pull or
+push instead, as with `go-git`. Credentials must come from an SSH agent, a key
+without a passphrase, or a credential helper. If you set your own SSH command
+(`core.sshCommand`, `GIT_SSH_COMMAND` or `GIT_SSH`), it is used as is. Only a
+remote configured with `git remote add` can be used, never a URL.
+
+> [!WARNING]
+> If you set your own SSH command, make sure it doesn't prompt or otherwise
+> interact with the terminal.
 
 ## Identity<a name="identity"></a>
 
@@ -180,14 +203,14 @@ then `VISUAL`, then `EDITOR`, then the first of `editor`, `nano`, `vim`, `vi`
 and `emacs` found on your `PATH`, and finally `ed`.
 
 > [!NOTE]
-> `git-bug` talks to remotes through the [go-git][go-git] library rather than by
-> running the `git` binary, and go-git does not implement the whole of git's
-> configuration. In particular, parts of your SSH setup (`~/.ssh/config`
-> options such as `Port`, some `known_hosts` formats), http credential helpers,
-> and `remote.<name>.pushurl` may not be honoured by `git bug pull` and
-> `git bug push`. Because `git-bug` stores its data as ordinary git objects, you
-> can always move them with plain `git` as a workaround -- see
-> [discussion #1332][discuss/1332].
+> By default, `git-bug` talks to remotes through the [go-git][go-git] library
+> rather than by running the `git` binary. go-git does not implement the whole
+> of git's configuration: in particular, parts of your SSH setup
+> (`~/.ssh/config` options such as `Port`, some `known_hosts` formats), http
+> credential helpers, and `remote.<name>.pushurl` may not be honoured by
+> `git bug pull` and `git bug push`. Setting `git-bug.git-transport` to `git`
+> runs the `git` binary instead, see
+> [Talking to remotes](#talking-to-remotes).
 
 ## Related reading<a name="related-reading"></a>
 
@@ -196,7 +219,6 @@ and `emacs` found on your `PATH`, and finally `ed`.
 - [Understanding the workflow models][docs/usage/workflows]
 - :house: [Documentation home][docs/home]
 
-[discuss/1332]: https://github.com/git-bug/git-bug/discussions/1332
 [doc/cli/bridge]: ../md/git-bug_bridge_new.md
 [doc/cli/bridge-auth]: ../md/git-bug_bridge_auth.md
 [doc/cli/pull]: ../md/git-bug_pull.md

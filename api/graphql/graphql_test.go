@@ -862,9 +862,9 @@ func TestMutations(t *testing.T) {
 		require.NoError(t, b.Commit())
 		before := b.LastCommit()
 
-		_, err = rcA.Push("origin")
+		_, err = rcA.Push(t.Context(), "origin")
 		require.NoError(t, err)
-		require.NoError(t, rcB.Pull("origin"))
+		require.NoError(t, rcB.Pull(t.Context(), "origin"))
 
 		c := client.New(auth.Middleware(rene.Id())(NewHandler(mrc, nil, false)))
 		var data map[string]any

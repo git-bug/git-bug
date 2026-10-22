@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -34,6 +35,7 @@ const lastCommitDepthLimit = 1000
 const lastCommitCacheSize = 256
 
 var _ RepoData = &GoGitRepo{}
+var _ RepoRemote = &GoGitRepo{}
 var _ RepoBrowse = &GoGitRepo{}
 
 // GoGitRepo is the git data of a Repo, in a git directory on disk, with go-git.
@@ -115,7 +117,7 @@ func newGoGitRepo(gitDir string) (*GoGitRepo, error) {
 // point to) from a remote, and stores them as that remote's tracking refs.
 // Local refs are left untouched.
 // The equivalent git refspec for namespace="foo" is "refs/foo/*:refs/remotes/<remote>/foo/*"
-func (repo *GoGitRepo) FetchRefs(remote string, namespaces ...string) (string, error) {
+func (repo *GoGitRepo) FetchRefs(ctx context.Context, remote string, namespaces ...string) (string, error) {
 	refSpecs := make([]config.RefSpec, len(namespaces))
 
 	for i, namespace := range namespaces {
@@ -129,7 +131,7 @@ func (repo *GoGitRepo) FetchRefs(remote string, namespaces ...string) (string, e
 		return "", err
 	}
 
-	err = repo.r.Fetch(&gogit.FetchOptions{
+	err = repo.r.FetchContext(ctx, &gogit.FetchOptions{
 		RemoteName: remote,
 		RemoteURL:  remoteUrl,
 		RefSpecs:   refSpecs,
@@ -139,7 +141,8 @@ func (repo *GoGitRepo) FetchRefs(remote string, namespaces ...string) (string, e
 		return "already up-to-date", nil
 	}
 	if err != nil {
-		return "", err
+		// might be one of go-git's shortcomings
+		return "", fmt.Errorf("%w\nif git itself can reach this remote, setting %s=git uses it instead of go-git", err, gitTransportConfigKey)
 	}
 
 	return buf.String(), nil
@@ -187,7 +190,7 @@ func (repo *GoGitRepo) resolveRemote(remote string, fetch bool) (string, error) 
 // PushRefs sends the local refs of the given namespaces (and the data they
 // point to) to a remote, and updates that remote's tracking refs to match.
 // The equivalent git refspec for namespace="foo" is "refs/foo/*:refs/foo/*"
-func (repo *GoGitRepo) PushRefs(remote string, namespaces ...string) (string, error) {
+func (repo *GoGitRepo) PushRefs(ctx context.Context, remote string, namespaces ...string) (string, error) {
 	remo, err := repo.r.Remote(remote)
 	if err != nil {
 		return "", err
@@ -224,7 +227,7 @@ func (repo *GoGitRepo) PushRefs(remote string, namespaces ...string) (string, er
 		return "", err
 	}
 
-	err = remo.Push(&gogit.PushOptions{
+	err = remo.PushContext(ctx, &gogit.PushOptions{
 		RemoteName: remote,
 		RemoteURL:  remoteUrl,
 		RefSpecs:   refSpecs,
@@ -234,7 +237,8 @@ func (repo *GoGitRepo) PushRefs(remote string, namespaces ...string) (string, er
 		return "already up-to-date", nil
 	}
 	if err != nil {
-		return "", err
+		// might be one of go-git's shortcomings
+		return "", fmt.Errorf("%w\nif git itself can reach this remote, setting %s=git uses it instead of go-git", err, gitTransportConfigKey)
 	}
 
 	return buf.String(), nil
