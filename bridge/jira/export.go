@@ -100,7 +100,7 @@ func (je *jiraExporter) cacheAllClient(ctx context.Context, repo *cache.RepoCach
 			continue
 		}
 
-		user, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyJiraLogin, login)
+		user, err := repo.Identities().ResolveIdentityImmutableMetadata(ctx, metaKeyJiraLogin, login)
 		if entity.IsErrNotFound(err) {
 			continue
 		}
@@ -147,7 +147,7 @@ func (je *jiraExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, si
 		allBugsIds := repo.Bugs().AllIds()
 
 		for _, id := range allBugsIds {
-			b, err := repo.Bugs().Resolve(id)
+			b, err := repo.Bugs().Resolve(ctx, id)
 			if err != nil {
 				out <- core.NewExportError(fmt.Errorf("can't load bug: %w", err), id)
 				return

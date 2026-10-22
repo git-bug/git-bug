@@ -22,7 +22,7 @@ import (
 // outside the cache.
 func commentsInGit(t *testing.T, repo repository.Repo, id entity.Id) []string {
 	t.Helper()
-	b, err := bug.Read(repo, id)
+	b, err := bug.Read(t.Context(), repo, id)
 	require.NoError(t, err)
 	return commentMessages(b.Compile())
 }
@@ -38,7 +38,7 @@ func commentMessages(snap *bug.Snapshot) []string {
 // changeOutside adds a comment to a bug without the cache knowing
 func changeOutside(t *testing.T, repo repository.Repo, author identity.Interface, id entity.Id, message string) {
 	t.Helper()
-	b, err := bug.Read(repo, id)
+	b, err := bug.Read(t.Context(), repo, id)
 	require.NoError(t, err)
 	_, _, err = bug.AddComment(b, author, time.Now().Unix(), message, nil, nil)
 	require.NoError(t, err)
@@ -53,9 +53,9 @@ func TestViews(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, created.Commit())
 
-		a, err := c.Bugs().Resolve(created.Id())
+		a, err := c.Bugs().Resolve(t.Context(), created.Id())
 		require.NoError(t, err)
-		b, err := c.Bugs().Resolve(created.Id())
+		b, err := c.Bugs().Resolve(t.Context(), created.Id())
 		require.NoError(t, err)
 		require.NotSame(t, a, b)
 		require.Same(t, a.shared, b.shared)
@@ -98,9 +98,9 @@ func TestViews(t *testing.T) {
 		require.NoError(t, created.Commit())
 		target := created.Snapshot().Operations[0].Id()
 
-		a, err := c.Bugs().Resolve(created.Id())
+		a, err := c.Bugs().Resolve(t.Context(), created.Id())
 		require.NoError(t, err)
-		b, err := c.Bugs().Resolve(created.Id())
+		b, err := c.Bugs().Resolve(t.Context(), created.Id())
 		require.NoError(t, err)
 
 		_, err = a.SetMetadata(target, map[string]string{"key": "from a"})
@@ -124,7 +124,7 @@ func TestViews(t *testing.T) {
 			val, _ = snap.GetCreateMetadata("key")
 			require.Equal(t, "from b", val)
 		}
-		inGit, err := bug.Read(repo, created.Id())
+		inGit, err := bug.Read(t.Context(), repo, created.Id())
 		require.NoError(t, err)
 		val, _ = inGit.Compile().GetCreateMetadata("key")
 		require.Equal(t, "from b", val)
@@ -145,7 +145,7 @@ func TestViews(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				v, err := c.Bugs().Resolve(created.Id())
+				v, err := c.Bugs().Resolve(t.Context(), created.Id())
 				if err != nil {
 					errs <- err
 					return
@@ -208,7 +208,7 @@ func TestViews(t *testing.T) {
 		require.Equal(t, []string{"message", "comment"}, commentMessages(b.Snapshot()))
 
 		// only the view knows the bug
-		_, err = c.Bugs().Resolve(id)
+		_, err = c.Bugs().Resolve(t.Context(), id)
 		require.True(t, entity.IsErrNotFound(err))
 		require.Empty(t, c.Bugs().AllIds())
 		_, err = repo.ResolveRef(bug.Namespace, id.String())
@@ -223,7 +223,7 @@ func TestViews(t *testing.T) {
 		requireDerivedBuiltFromRefs(t, repo, c)
 
 		// the copy of the view is the loaded one
-		resolved, err := c.Bugs().Resolve(id)
+		resolved, err := c.Bugs().Resolve(t.Context(), id)
 		require.NoError(t, err)
 		require.Same(t, b.shared, resolved.shared)
 	})
@@ -281,7 +281,7 @@ func TestViews(t *testing.T) {
 		require.Equal(t, []string{"message", "first"}, commentsInGit(t, repo, b.Id()))
 
 		// other views are not affected, and a new view starts without them
-		other, err := c.Bugs().Resolve(b.Id())
+		other, err := c.Bugs().Resolve(t.Context(), b.Id())
 		require.NoError(t, err)
 		require.False(t, other.NeedCommit())
 		_, _, err = other.AddComment("other")
@@ -322,7 +322,7 @@ func TestViews(t *testing.T) {
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
 		require.NoError(t, b.Commit())
-		other, err := c.Bugs().Resolve(b.Id())
+		other, err := c.Bugs().Resolve(t.Context(), b.Id())
 		require.NoError(t, err)
 
 		changeOutside(t, repo, rene, b.Id(), "markeroutside")
@@ -350,7 +350,7 @@ func TestViews(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				v, err := c.Bugs().Resolve(created.Id())
+				v, err := c.Bugs().Resolve(t.Context(), created.Id())
 				if err != nil {
 					errs <- err
 					return
@@ -380,7 +380,7 @@ func TestViews(t *testing.T) {
 	t.Run("identity views stage their own versions", func(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, rene := newTestCacheWithUser(t, repo)
-		other, err := c.Identities().Resolve(rene.Id())
+		other, err := c.Identities().Resolve(t.Context(), rene.Id())
 		require.NoError(t, err)
 
 		require.NoError(t, rene.Mutate(repo, func(m *identity.Mutator) { m.Name = "René Descartes, renamed" }))
@@ -397,7 +397,7 @@ func TestViews(t *testing.T) {
 		excerpt, err = c.Identities().ResolveExcerpt(rene.Id())
 		require.NoError(t, err)
 		require.Equal(t, "René Descartes, renamed", excerpt.Name)
-		resolved, err := c.Identities().Resolve(rene.Id())
+		resolved, err := c.Identities().Resolve(t.Context(), rene.Id())
 		require.NoError(t, err)
 		require.Equal(t, "René Descartes, renamed", resolved.Name())
 		// a view resolved before keeps its copy
@@ -409,7 +409,7 @@ func TestViews(t *testing.T) {
 		c, rene := newTestCacheWithUser(t, repo)
 
 		// changed outside the cache
-		read, err := identity.Read(repo, rene.Id())
+		read, err := identity.Read(t.Context(), repo, rene.Id())
 		require.NoError(t, err)
 		require.NoError(t, read.Mutate(repo, func(m *identity.Mutator) { m.Name = "René Descartes, renamed" }))
 		require.NoError(t, read.Commit(repo))
@@ -418,7 +418,7 @@ func TestViews(t *testing.T) {
 		excerpt, err := c.Identities().ResolveExcerpt(rene.Id())
 		require.NoError(t, err)
 		require.Equal(t, "René Descartes, renamed", excerpt.Name)
-		resolved, err := c.Identities().Resolve(rene.Id())
+		resolved, err := c.Identities().Resolve(t.Context(), rene.Id())
 		require.NoError(t, err)
 		require.Equal(t, "René Descartes, renamed", resolved.Name())
 		// a view resolved before keeps the previous copy
@@ -437,7 +437,7 @@ func TestViews(t *testing.T) {
 		require.NoError(t, rene.Mutate(repo, func(m *identity.Mutator) { m.Name = "René Descartes, renamed" }))
 		require.NoError(t, rene.Commit())
 
-		resolved, err := c.Identities().Resolve(rene.Id())
+		resolved, err := c.Identities().Resolve(t.Context(), rene.Id())
 		require.NoError(t, err)
 		require.Equal(t, "René Descartes, renamed", resolved.Name())
 		requireDerivedBuiltFromRefs(t, repo, c)

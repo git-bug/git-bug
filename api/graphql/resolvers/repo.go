@@ -24,7 +24,7 @@ var _ graph.RepositoryResolver = &repoResolver{}
 
 type repoResolver struct{}
 
-func (repoResolver) AllBugs(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, queryStr *string) (*models.BugConnection, error) {
+func (repoResolver) AllBugs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, queryStr *string) (*models.BugConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -44,7 +44,7 @@ func (repoResolver) AllBugs(_ context.Context, obj *models.Repository, after *st
 	}
 
 	// Simply pass a []string with the ids to the pagination algorithm
-	source, err := obj.Repo.Bugs().Query(q)
+	source, err := obj.Repo.Bugs().Query(ctx, q)
 	if err != nil {
 		return nil, err
 	}

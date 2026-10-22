@@ -1,6 +1,7 @@
 package dag
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -205,7 +206,7 @@ func (opp *operationPack) makeExtraTree() []repository.TreeEntry {
 // readOperationPack read the operationPack encoded in git at the given Tree hash.
 //
 // Validity of the Lamport clocks is left for the caller to decide.
-func readOperationPack(def Definition, repo repository.RepoData, resolvers entity.Resolvers, commit repository.Commit) (*operationPack, error) {
+func readOperationPack(ctx context.Context, def Definition, repo repository.RepoData, resolvers entity.Resolvers, commit repository.Commit) (*operationPack, error) {
 	entries, err := repo.ReadTree(commit.TreeHash)
 	if err != nil {
 		return nil, err
@@ -251,7 +252,7 @@ func readOperationPack(def Definition, repo repository.RepoData, resolvers entit
 			if err != nil {
 				return nil, fmt.Errorf("failed to read git blob data: %w", err)
 			}
-			ops, author, err = unmarshallPack(def, resolvers, data)
+			ops, author, err = unmarshallPack(ctx, def, resolvers, data)
 			if err != nil {
 				return nil, err
 			}
@@ -332,7 +333,7 @@ func readOperationPackClock(repo repository.RepoData, commit repository.Commit) 
 // unmarshallPack delegate the unmarshalling of the Operation's JSON to the decoding
 // function provided by the concrete entity. This gives access to the concrete type of each
 // Operation.
-func unmarshallPack(def Definition, resolvers entity.Resolvers, data []byte) ([]Operation, identity.Interface, error) {
+func unmarshallPack(ctx context.Context, def Definition, resolvers entity.Resolvers, data []byte) ([]Operation, identity.Interface, error) {
 	aux := struct {
 		Author     identity.IdentityStub `json:"author"`
 		Operations []json.RawMessage     `json:"ops"`
@@ -346,7 +347,7 @@ func unmarshallPack(def Definition, resolvers entity.Resolvers, data []byte) ([]
 		return nil, nil, fmt.Errorf("missing author")
 	}
 
-	author, err := entity.Resolve[identity.Interface](resolvers, aux.Author.Id())
+	author, err := entity.Resolve[identity.Interface](ctx, resolvers, aux.Author.Id())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -355,7 +356,7 @@ func unmarshallPack(def Definition, resolvers entity.Resolvers, data []byte) ([]
 
 	for _, raw := range aux.Operations {
 		// delegate to specialized unmarshal function
-		op, err := def.OperationUnmarshaler(raw, resolvers)
+		op, err := def.OperationUnmarshaler(ctx, raw, resolvers)
 		if err != nil {
 			return nil, nil, err
 		}

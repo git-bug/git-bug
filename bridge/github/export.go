@@ -64,14 +64,14 @@ type githubExporter struct {
 }
 
 // Init .
-func (ge *githubExporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
+func (ge *githubExporter) Init(ctx context.Context, repo *cache.RepoCache, conf core.Configuration) error {
 	ge.conf = conf
 	ge.identityClient = make(map[entity.Id]*rateLimitHandlerClient)
 	ge.cachedOperationIDs = make(map[entity.Id]string)
 	ge.cachedLabels = make(map[string]string)
 
 	// preload all clients
-	err := ge.cacheAllClient(repo)
+	err := ge.cacheAllClient(ctx, repo)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (ge *githubExporter) Init(_ context.Context, repo *cache.RepoCache, conf co
 	return nil
 }
 
-func (ge *githubExporter) cacheAllClient(repo *cache.RepoCache) error {
+func (ge *githubExporter) cacheAllClient(ctx context.Context, repo *cache.RepoCache) error {
 	creds, err := auth.List(repo, auth.WithTarget(target), auth.WithKind(auth.KindToken))
 	if err != nil {
 		return err
@@ -92,7 +92,7 @@ func (ge *githubExporter) cacheAllClient(repo *cache.RepoCache) error {
 			continue
 		}
 
-		user, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKeyGithubLogin, login)
+		user, err := repo.Identities().ResolveIdentityImmutableMetadata(ctx, metaKeyGithubLogin, login)
 		if entity.IsErrNotFound(err) {
 			continue
 		}
@@ -166,7 +166,7 @@ func (ge *githubExporter) ExportAll(ctx context.Context, repo *cache.RepoCache, 
 		allBugsIds := repo.Bugs().AllIds()
 
 		for _, id := range allBugsIds {
-			b, err := repo.Bugs().Resolve(id)
+			b, err := repo.Bugs().Resolve(ctx, id)
 			if err != nil {
 				out <- core.NewExportError(fmt.Errorf("can't load bug: %w", err), id)
 				return

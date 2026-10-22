@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/git-bug/git-bug/cache"
@@ -8,9 +9,9 @@ import (
 	"github.com/git-bug/git-bug/entity"
 )
 
-func FinishConfig(repo *cache.RepoCache, metaKey string, login string) error {
+func FinishConfig(ctx context.Context, repo *cache.RepoCache, metaKey string, login string) error {
 	// if no user exist with the given login metadata
-	_, err := repo.Identities().ResolveIdentityImmutableMetadata(metaKey, login)
+	_, err := repo.Identities().ResolveIdentityImmutableMetadata(ctx, metaKey, login)
 	if err != nil && !entity.IsErrNotFound(err) {
 		// real error
 		return err
@@ -21,7 +22,7 @@ func FinishConfig(repo *cache.RepoCache, metaKey string, login string) error {
 	}
 
 	// if a default user exist, tag it with the login
-	user, err := repo.GetUserIdentity()
+	user, err := repo.GetUserIdentity(ctx)
 	if err != nil && err != identity.ErrNoIdentitySet {
 		// real error
 		return err

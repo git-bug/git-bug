@@ -1,6 +1,7 @@
 package _select
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -29,8 +30,8 @@ func IsErrNoValidId(err error) bool {
 }
 
 type Resolver[CacheT entity.Resolved] interface {
-	Resolve(id entity.Id) (CacheT, error)
-	ResolvePrefix(prefix string) (CacheT, error)
+	Resolve(ctx context.Context, id entity.Id) (CacheT, error)
+	ResolvePrefix(ctx context.Context, prefix string) (CacheT, error)
 }
 
 // Resolve first try to resolve an entity using the first argument of the command
@@ -41,12 +42,12 @@ type Resolver[CacheT entity.Resolved] interface {
 //   - the new list of command line arguments with the entity prefix removed if it
 //     has been used
 //   - an error if the process failed
-func Resolve[CacheT entity.Resolved](repo *cache.RepoCache,
+func Resolve[CacheT entity.Resolved](ctx context.Context, repo *cache.RepoCache,
 	typename string, namespace string, resolver Resolver[CacheT],
 	args []string) (CacheT, []string, error) {
 	// At first, try to use the first argument as an entity prefix
 	if len(args) > 0 {
-		cached, err := resolver.ResolvePrefix(args[0])
+		cached, err := resolver.ResolvePrefix(ctx, args[0])
 
 		if err == nil {
 			return cached, args[1:], nil
@@ -59,7 +60,7 @@ func Resolve[CacheT entity.Resolved](repo *cache.RepoCache,
 
 	// first arg is not a valid entity prefix, we can safely use the preselected entity if any
 
-	cached, err := selected(repo, resolver, namespace)
+	cached, err := selected(ctx, repo, resolver, namespace)
 
 	// selected entity is invalid
 	if entity.IsErrNotFound(err) {
@@ -112,7 +113,7 @@ func Clear(repo *cache.RepoCache, namespace string) error {
 	return repo.LocalStorage().Remove(filename)
 }
 
-func selected[CacheT entity.Resolved](repo *cache.RepoCache, resolver Resolver[CacheT], namespace string) (*CacheT, error) {
+func selected[CacheT entity.Resolved](ctx context.Context, repo *cache.RepoCache, resolver Resolver[CacheT], namespace string) (*CacheT, error) {
 	filename := selectFileName(namespace)
 	f, err := repo.LocalStorage().Open(filename)
 	if err != nil {
@@ -148,7 +149,7 @@ func selected[CacheT entity.Resolved](repo *cache.RepoCache, resolver Resolver[C
 		return nil, fmt.Errorf("select file in invalid, removing it")
 	}
 
-	cached, err := resolver.Resolve(id)
+	cached, err := resolver.Resolve(ctx, id)
 	if err != nil {
 		return nil, err
 	}

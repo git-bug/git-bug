@@ -1,6 +1,7 @@
 package bugcmd
 
 import (
+	"context"
 	"errors"
 
 	"github.com/spf13/cobra"
@@ -11,8 +12,8 @@ import (
 	"github.com/git-bug/git-bug/entities/bug"
 )
 
-func ResolveSelected(repo *cache.RepoCache, args []string) (*cache.BugCache, []string, error) {
-	return _select.Resolve[*cache.BugCache](repo, bug.Typename, bug.Namespace, repo.Bugs(), args)
+func ResolveSelected(ctx context.Context, repo *cache.RepoCache, args []string) (*cache.BugCache, []string, error) {
+	return _select.Resolve[*cache.BugCache](ctx, repo, bug.Typename, bug.Namespace, repo.Bugs(), args)
 }
 
 func newBugSelectCommand(env *execenv.Env) *cobra.Command {
@@ -49,7 +50,7 @@ func runBugSelect(env *execenv.Env, args []string) error {
 
 	prefix := args[0]
 
-	b, err := env.Backend.Bugs().ResolvePrefix(prefix)
+	b, err := env.Backend.Bugs().ResolvePrefix(env.Ctx, prefix)
 	if err != nil {
 		return err
 	}

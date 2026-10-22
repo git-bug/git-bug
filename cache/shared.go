@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"sync"
 
 	"github.com/git-bug/git-bug/entity"
@@ -66,9 +67,9 @@ func (s *sharedEntity[SnapT, OpT]) CommitOperations(repo repository.Repo, ops []
 
 // Repair reloads the committed state from the repository, see dag.Tracked. The
 // memoized snapshot is rebuilt on the next read.
-func (s *sharedEntity[SnapT, OpT]) Repair(repo repository.Repo, resolvers entity.Resolvers) error {
+func (s *sharedEntity[SnapT, OpT]) Repair(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.snap = nil
-	return s.Tracked.Repair(repo, resolvers)
+	return s.Tracked.Repair(ctx, repo, resolvers)
 }

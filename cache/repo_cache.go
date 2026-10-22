@@ -37,7 +37,7 @@ type cacheMgmt interface {
 	Load() <-chan BuildEvent
 	SetCacheSize(size int)
 	RemoveAll() error
-	MergeAll(remote string) <-chan entity.MergeResult
+	MergeAll(ctx context.Context, remote string) <-chan entity.MergeResult
 	GetNamespace() string
 	RegisterObserver(repoName string, observer Observer)
 	UnregisterObserver(observer Observer)
@@ -105,10 +105,14 @@ func NewRepoCache(r repository.Repo, changes repository.ChangeSource) (*RepoCach
 	c.subcaches = append(c.subcaches, c.bugs)
 
 	c.resolvers = entity.Resolvers{
-		&IdentityCache{}:   entity.ResolverFunc[*IdentityCache](c.identities.Resolve),
-		&IdentityExcerpt{}: entity.ResolverFunc[*IdentityExcerpt](c.identities.ResolveExcerpt),
-		&BugCache{}:        entity.ResolverFunc[*BugCache](c.bugs.Resolve),
-		&BugExcerpt{}:      entity.ResolverFunc[*BugExcerpt](c.bugs.ResolveExcerpt),
+		&IdentityCache{}: entity.ResolverFunc[*IdentityCache](c.identities.Resolve),
+		&IdentityExcerpt{}: entity.ResolverFunc[*IdentityExcerpt](func(_ context.Context, id entity.Id) (*IdentityExcerpt, error) {
+			return c.identities.ResolveExcerpt(id)
+		}),
+		&BugCache{}: entity.ResolverFunc[*BugCache](c.bugs.Resolve),
+		&BugExcerpt{}: entity.ResolverFunc[*BugExcerpt](func(_ context.Context, id entity.Id) (*BugExcerpt, error) {
+			return c.bugs.ResolveExcerpt(id)
+		}),
 	}
 
 	// small buffer so that the functions below can emit an event without blocking

@@ -289,7 +289,7 @@ func TestGithubPushPull(t *testing.T) {
 			require.True(t, ok)
 
 			// retrieve bug from backendTwo
-			importedBug, err := backendTwo.Bugs().ResolveBugCreateMetadata(metaKeyGithubId, bugGithubID)
+			importedBug, err := backendTwo.Bugs().ResolveBugCreateMetadata(t.Context(), metaKeyGithubId, bugGithubID)
 			require.NoError(t, err)
 
 			// verify bug have same number of original operations

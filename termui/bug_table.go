@@ -239,7 +239,7 @@ func (bt *bugTable) disable(g *gocui.Gui) error {
 
 func (bt *bugTable) paginate(max int) error {
 	var err error
-	bt.allIds, err = bt.repo.Bugs().Query(bt.query)
+	bt.allIds, err = bt.repo.Bugs().Query(ui.ctx, bt.query)
 	if err != nil {
 		return err
 	}
@@ -452,7 +452,7 @@ func (bt *bugTable) openBug(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 	id := bt.excerpts[bt.selectCursor].Id()
-	b, err := bt.repo.Bugs().Resolve(id)
+	b, err := bt.repo.Bugs().Resolve(ui.ctx, id)
 	if err != nil {
 		return err
 	}
@@ -482,7 +482,7 @@ func (bt *bugTable) pull(g *gocui.Gui, v *gocui.View) error {
 		var buffer bytes.Buffer
 		beginLine := ""
 
-		for result := range bt.repo.MergeAll(defaultRemote) {
+		for result := range bt.repo.MergeAll(ui.ctx, defaultRemote) {
 			if result.Status == entity.MergeStatusNothing {
 				continue
 			}

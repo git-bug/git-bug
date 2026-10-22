@@ -112,16 +112,16 @@ func (uow *unitOfWork) bug(repo *cache.RepoCache, b *cache.BugCache) *cache.BugC
 
 // resolveBug finds an existing bug. The bugs created by the request are not
 // among them: their ids can't be known by the request.
-func (uow *unitOfWork) resolveBug(repo *cache.RepoCache, prefix string) (*cache.BugCache, error) {
-	b, err := repo.Bugs().ResolvePrefix(prefix)
+func (uow *unitOfWork) resolveBug(ctx context.Context, repo *cache.RepoCache, prefix string) (*cache.BugCache, error) {
+	b, err := repo.Bugs().ResolvePrefix(ctx, prefix)
 	if err != nil {
 		return nil, err
 	}
 	return uow.bug(repo, b), nil
 }
 
-func (uow *unitOfWork) resolveBugComment(repo *cache.RepoCache, prefix string) (*cache.BugCache, entity.CombinedId, error) {
-	b, id, err := repo.Bugs().ResolveComment(prefix)
+func (uow *unitOfWork) resolveBugComment(ctx context.Context, repo *cache.RepoCache, prefix string) (*cache.BugCache, entity.CombinedId, error) {
+	b, id, err := repo.Bugs().ResolveComment(ctx, prefix)
 	if err != nil {
 		return nil, id, err
 	}

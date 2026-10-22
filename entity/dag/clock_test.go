@@ -40,7 +40,7 @@ func TestUnusableClockRebuiltOnIncrement(t *testing.T) {
 			damage(t, repo, editClock)
 
 			// reading e1 alone doesn't touch the clock
-			e1, err := Read(def, wrapper, repo, resolver, e1.Id())
+			e1, err := Read(t.Context(), def, wrapper, repo, resolver, e1.Id())
 			require.NoError(t, err)
 			requireClockUnusable(t, repo, editClock)
 

@@ -157,7 +157,7 @@ func LoadBackend(env *Env, opts ...LoadOption) func(*cobra.Command, []string) er
 		}
 
 		if o.ensureUser {
-			_, err = identity.GetUserIdentity(env.Repo)
+			_, err = identity.GetUserIdentity(env.Ctx, env.Repo)
 			return err
 		}
 		return nil

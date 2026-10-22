@@ -21,7 +21,7 @@ func newBugStatusCloseCommand(env *execenv.Env) *cobra.Command {
 }
 
 func runBugStatusClose(env *execenv.Env, args []string) error {
-	b, _, err := ResolveSelected(env.Backend, args)
+	b, _, err := ResolveSelected(env.Ctx, env.Backend, args)
 	if err != nil {
 		return err
 	}

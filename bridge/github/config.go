@@ -157,7 +157,7 @@ func (g *Github) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 		}
 	}
 
-	return conf, core.FinishConfig(repo, metaKeyGithubLogin, login)
+	return conf, core.FinishConfig(context.TODO(), repo, metaKeyGithubLogin, login)
 }
 
 func (*Github) ValidateConfig(conf core.Configuration) error {

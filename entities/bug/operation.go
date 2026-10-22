@@ -1,6 +1,7 @@
 package bug
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/git-bug/git-bug/entity"
@@ -27,7 +28,7 @@ var _ Operation = &dag.NoOpOperation[*Snapshot]{}
 var _ Operation = &dag.SetMetadataOperation[*Snapshot]{}
 var _ Operation = &dag.UnknownOperation[*Snapshot]{}
 
-func operationUnmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (dag.Operation, error) {
+func operationUnmarshaler(_ context.Context, raw json.RawMessage, resolvers entity.Resolvers) (dag.Operation, error) {
 	var t struct {
 		OperationType dag.OperationType `json:"type"`
 	}

@@ -94,7 +94,7 @@ func TestUnknownOpUnmarshaler(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	op, err := operationUnmarshaler(raw, nil)
+	op, err := operationUnmarshaler(t.Context(), raw, nil)
 	require.NoError(t, err)
 
 	unknown, ok := op.(*dag.UnknownOperation[*Snapshot])
@@ -118,7 +118,7 @@ func TestUnknownOpMarshalRoundTrip(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	op, err := operationUnmarshaler(raw, nil)
+	op, err := operationUnmarshaler(t.Context(), raw, nil)
 	require.NoError(t, err)
 
 	marshaled, err := json.Marshal(op)
@@ -170,7 +170,7 @@ func TestID(t *testing.T) {
 		require.NoError(t, id2.Validate())
 		require.Equal(t, id1, id2)
 
-		b2, err := Read(repo, b.Id())
+		b2, err := Read(t.Context(), repo, b.Id())
 		require.NoError(t, err)
 
 		op3 := b2.FirstOp()

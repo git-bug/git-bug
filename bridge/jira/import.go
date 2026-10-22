@@ -104,7 +104,7 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 		for searchIter =
 			ji.client.IterSearch(jql, defaultPageSize); searchIter.HasNext(); {
 			issue := searchIter.Next()
-			b, err := ji.ensureIssue(repo, *issue)
+			b, err := ji.ensureIssue(ctx, repo, *issue)
 			if err != nil {
 				err := fmt.Errorf("issue creation: %v", err)
 				out <- core.NewImportError(err, "")
@@ -115,7 +115,7 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 			for commentIter =
 				ji.client.IterComments(issue.ID, defaultPageSize); commentIter.HasNext(); {
 				comment := commentIter.Next()
-				err := ji.ensureComment(repo, b, *comment)
+				err := ji.ensureComment(ctx, repo, b, *comment)
 				if err != nil {
 					out <- core.NewImportError(err, "")
 				}
@@ -152,9 +152,9 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 					}
 				}
 				if opIdx < len(snapshot.Operations) {
-					err = ji.ensureChange(repo, b, *changelogEntry, snapshot.Operations[opIdx])
+					err = ji.ensureChange(ctx, repo, b, *changelogEntry, snapshot.Operations[opIdx])
 				} else {
-					err = ji.ensureChange(repo, b, *changelogEntry, nil)
+					err = ji.ensureChange(ctx, repo, b, *changelogEntry, nil)
 				}
 				if err != nil {
 					out <- core.NewImportError(err, "")
@@ -182,9 +182,9 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 }
 
 // Create a bug.Person from a JIRA user
-func (ji *jiraImporter) ensurePerson(repo *cache.RepoCache, user User) (*cache.IdentityCache, error) {
+func (ji *jiraImporter) ensurePerson(ctx context.Context, repo *cache.RepoCache, user User) (*cache.IdentityCache, error) {
 	// Look first in the cache
-	i, err := repo.Identities().ResolveIdentityImmutableMetadata(
+	i, err := repo.Identities().ResolveIdentityImmutableMetadata(ctx,
 		metaKeyJiraUser, string(user.Key))
 	if err == nil {
 		return i, nil
@@ -213,13 +213,13 @@ func (ji *jiraImporter) ensurePerson(repo *cache.RepoCache, user User) (*cache.I
 }
 
 // Create a bug.Bug based from a JIRA issue
-func (ji *jiraImporter) ensureIssue(repo *cache.RepoCache, issue Issue) (*cache.BugCache, error) {
-	author, err := ji.ensurePerson(repo, issue.Fields.Creator)
+func (ji *jiraImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache, issue Issue) (*cache.BugCache, error) {
+	author, err := ji.ensurePerson(ctx, repo, issue.Fields.Creator)
 	if err != nil {
 		return nil, err
 	}
 
-	b, err := repo.Bugs().ResolveMatcher(func(excerpt *cache.BugExcerpt) bool {
+	b, err := repo.Bugs().ResolveMatcher(ctx, func(excerpt *cache.BugExcerpt) bool {
 		if _, ok := excerpt.CreateMetadata[metaKeyJiraBaseUrl]; ok &&
 			excerpt.CreateMetadata[metaKeyJiraBaseUrl] != ji.conf[confKeyBaseUrl] {
 			return false
@@ -263,9 +263,9 @@ func getTimeDerivedID(jiraID string, timestamp Time) string {
 }
 
 // Create a bug.Comment from a JIRA comment
-func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, item Comment) error {
+func (ji *jiraImporter) ensureComment(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, item Comment) error {
 	// ensure person
-	author, err := ji.ensurePerson(repo, item.Author)
+	author, err := ji.ensurePerson(ctx, repo, item.Author)
 	if err != nil {
 		return err
 	}
@@ -324,7 +324,7 @@ func (ji *jiraImporter) ensureComment(repo *cache.RepoCache, b *cache.BugCache, 
 	}
 
 	// ensure editor identity
-	editor, err := ji.ensurePerson(repo, item.UpdateAuthor)
+	editor, err := ji.ensurePerson(ctx, repo, item.UpdateAuthor)
 	if err != nil {
 		return err
 	}
@@ -380,7 +380,7 @@ func labelSetsMatch(jiraSet []string, gitbugSet []common.Label) bool {
 
 // Create a bug.Operation (or a series of operations) from a JIRA changelog
 // entry
-func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, entry ChangeLogEntry, potentialOp dag.Operation) error {
+func (ji *jiraImporter) ensureChange(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, entry ChangeLogEntry, potentialOp dag.Operation) error {
 
 	// If we have an operation which is already mapped to the entire changelog
 	// entry then that means this changelog entry was induced by an export
@@ -398,7 +398,7 @@ func (ji *jiraImporter) ensureChange(repo *cache.RepoCache, b *cache.BugCache, e
 	// I don't thing git-bug has a single operation to modify an arbitrary
 	// number of fields in one go, so we break up the single JIRA changelog
 	// entry into individual field updates.
-	author, err := ji.ensurePerson(repo, entry.Author)
+	author, err := ji.ensurePerson(ctx, repo, entry.Author)
 	if err != nil {
 		return err
 	}

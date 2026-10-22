@@ -50,7 +50,7 @@ func BugAndLabelsCompletion(env *execenv.Env, addOrRemove bool) completion.Valid
 			_ = env.Backend.Close()
 		}()
 
-		b, cleanArgs, err := ResolveSelected(env.Backend, args)
+		b, cleanArgs, err := ResolveSelected(env.Ctx, env.Backend, args)
 		if _select.IsErrNoValidId(err) {
 			// we need a bug first to complete labels
 			return bugWithBackend(env.Backend, toComplete)

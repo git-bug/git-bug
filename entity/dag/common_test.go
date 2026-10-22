@@ -1,6 +1,7 @@
 package dag
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -60,7 +61,7 @@ func (op *op2) Id() entity.Id {
 
 func (op *op2) Validate() error { return nil }
 
-func unmarshaler(raw json.RawMessage, resolvers entity.Resolvers) (Operation, error) {
+func unmarshaler(_ context.Context, raw json.RawMessage, resolvers entity.Resolvers) (Operation, error) {
 	var t struct {
 		OperationType OperationType `json:"type"`
 	}

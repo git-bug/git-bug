@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"context"
 	"fmt"
 	"sync"
 )
@@ -14,19 +15,19 @@ type Resolved interface {
 
 // Resolver is an interface to find an Entity from its Id
 type Resolver interface {
-	Resolve(id Id) (Resolved, error)
+	Resolve(ctx context.Context, id Id) (Resolved, error)
 }
 
 // Resolvers is a collection of Resolver, for different type of Entity
 type Resolvers map[Resolved]Resolver
 
 // Resolve use the appropriate sub-resolver for the given type and find the Entity matching the Id.
-func Resolve[T Resolved](rs Resolvers, id Id) (T, error) {
+func Resolve[T Resolved](ctx context.Context, rs Resolvers, id Id) (T, error) {
 	var zero T
 	for t, resolver := range rs {
 		switch t.(type) {
 		case T:
-			val, err := resolver.(Resolver).Resolve(id)
+			val, err := resolver.(Resolver).Resolve(ctx, id)
 			if err != nil {
 				return zero, err
 			}
@@ -52,7 +53,7 @@ func NewCachedResolver(resolver Resolver) *CachedResolver {
 	}
 }
 
-func (c *CachedResolver) Resolve(id Id) (Resolved, error) {
+func (c *CachedResolver) Resolve(ctx context.Context, id Id) (Resolved, error) {
 	c.mu.RLock()
 	if i, ok := c.entities[id]; ok {
 		c.mu.RUnlock()
@@ -63,7 +64,7 @@ func (c *CachedResolver) Resolve(id Id) (Resolved, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	i, err := c.resolver.Resolve(id)
+	i, err := c.resolver.Resolve(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -74,15 +75,15 @@ func (c *CachedResolver) Resolve(id Id) (Resolved, error) {
 var _ Resolver = ResolverFunc[Resolved](nil)
 
 // ResolverFunc is a helper to morph a function resolver into a Resolver
-type ResolverFunc[EntityT Resolved] func(id Id) (EntityT, error)
+type ResolverFunc[EntityT Resolved] func(ctx context.Context, id Id) (EntityT, error)
 
-func (fn ResolverFunc[EntityT]) Resolve(id Id) (Resolved, error) {
-	return fn(id)
+func (fn ResolverFunc[EntityT]) Resolve(ctx context.Context, id Id) (Resolved, error) {
+	return fn(ctx, id)
 }
 
 // MakeResolver create a resolver able to return the given entities.
 func MakeResolver(entities ...Resolved) Resolver {
-	return ResolverFunc[Resolved](func(id Id) (Resolved, error) {
+	return ResolverFunc[Resolved](func(_ context.Context, id Id) (Resolved, error) {
 		for _, entity := range entities {
 			if entity.Id() == id {
 				return entity, nil

@@ -93,7 +93,7 @@ func (i *Identity) UnmarshalJSON(data []byte) error {
 }
 
 // Read load a local Identity from the identities data available in git
-func Read(repo repository.Repo, id entity.Id) (*Identity, error) {
+func Read(ctx context.Context, repo repository.Repo, id entity.Id) (*Identity, error) {
 	if err := id.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid id: %w", err)
 	}
@@ -105,11 +105,11 @@ func Read(repo repository.Repo, id entity.Id) (*Identity, error) {
 	if err != nil {
 		return nil, err
 	}
-	return read(repo, id, commit)
+	return read(ctx, repo, id, commit)
 }
 
 // ReadTracking load an Identity from the tracking refs of a remote
-func ReadTracking(repo repository.Repo, remote string, id entity.Id) (*Identity, error) {
+func ReadTracking(ctx context.Context, repo repository.Repo, remote string, id entity.Id) (*Identity, error) {
 	if err := id.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid id: %w", err)
 	}
@@ -121,13 +121,13 @@ func ReadTracking(repo repository.Repo, remote string, id entity.Id) (*Identity,
 	if err != nil {
 		return nil, err
 	}
-	return read(repo, id, commit)
+	return read(ctx, repo, id, commit)
 }
 
 // read will load and parse an identity from git, from its last commit, and make
 // sure that it is the identity with the given id.
-func read(repo repository.Repo, id entity.Id, lastCommit repository.Hash) (*Identity, error) {
-	hashes, err := repo.ListCommits(context.TODO(), lastCommit)
+func read(ctx context.Context, repo repository.Repo, id entity.Id, lastCommit repository.Hash) (*Identity, error) {
+	hashes, err := repo.ListCommits(ctx, lastCommit)
 	if err != nil {
 		return nil, err
 	}
@@ -138,6 +138,10 @@ func read(repo repository.Repo, id entity.Id, lastCommit repository.Hash) (*Iden
 	i := &Identity{}
 
 	for _, hash := range hashes {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
 		entries, err := repo.ReadTree(hash)
 		if err != nil {
 			return nil, fmt.Errorf("can't list git tree entries: %w", err)
@@ -195,21 +199,21 @@ func ListLocalIds(repo repository.Repo) ([]entity.Id, error) {
 }
 
 // ReadAll read and parse all local Identity
-func ReadAll(repo repository.Repo) <-chan entity.StreamedEntity[*Identity] {
-	return readAll(repo, func() (map[string]repository.Hash, error) {
+func ReadAll(ctx context.Context, repo repository.Repo) <-chan entity.StreamedEntity[*Identity] {
+	return readAll(ctx, repo, func() (map[string]repository.Hash, error) {
 		return repo.ListRefs(Namespace)
 	})
 }
 
 // ReadAllTracking read and parse all Identity in the tracking refs of a remote
-func ReadAllTracking(repo repository.Repo, remote string) <-chan entity.StreamedEntity[*Identity] {
-	return readAll(repo, func() (map[string]repository.Hash, error) {
+func ReadAllTracking(ctx context.Context, repo repository.Repo, remote string) <-chan entity.StreamedEntity[*Identity] {
+	return readAll(ctx, repo, func() (map[string]repository.Hash, error) {
 		return repo.ListTrackingRefs(remote, Namespace)
 	})
 }
 
 // readAll read and parse all the identities listed by listRefs
-func readAll(repo repository.Repo, listRefs func() (map[string]repository.Hash, error)) <-chan entity.StreamedEntity[*Identity] {
+func readAll(ctx context.Context, repo repository.Repo, listRefs func() (map[string]repository.Hash, error)) <-chan entity.StreamedEntity[*Identity] {
 	out := make(chan entity.StreamedEntity[*Identity])
 
 	go func() {
@@ -225,7 +229,7 @@ func readAll(repo repository.Repo, listRefs func() (map[string]repository.Hash, 
 		current := int64(1)
 
 		for key, commit := range refs {
-			i, err := read(repo, entity.Id(key), commit)
+			i, err := read(ctx, repo, entity.Id(key), commit)
 
 			if err != nil {
 				out <- entity.StreamedEntity[*Identity]{Err: err}

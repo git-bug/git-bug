@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -145,7 +146,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 		}
 	}
 
-	return conf, core.FinishConfig(repo, metaKeyGitlabLogin, login)
+	return conf, core.FinishConfig(context.TODO(), repo, metaKeyGitlabLogin, login)
 }
 
 func (g *Gitlab) ValidateConfig(conf core.Configuration) error {
