@@ -110,6 +110,10 @@ const ReasonNothingExported = "nothing has been exported"
 // an identity that has a token for the bridge, so nothing can be pushed.
 const ReasonNoTokenActor = "no changes by an identity with a token for this bridge"
 
+// ReasonPendingNoTokenActor also covers issues partially exported by another
+// author. It must not imply that the whole issue had no credentialed actors.
+const ReasonPendingNoTokenActor = "some changes remain unpushed because their authors have no token for this bridge"
+
 // SkipReasonNoTokenActor returns the reason for an issue that push leaves
 // alone because no identity with a token changed it. An issue whose
 // operations all carry idKey is already in sync with the remote, so it is

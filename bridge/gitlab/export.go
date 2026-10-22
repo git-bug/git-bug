@@ -423,7 +423,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 	}
 
 	if missingToken {
-		out <- core.NewExportNothing(b.Id(), core.ReasonNoTokenActor)
+		out <- core.NewExportNothing(b.Id(), core.ReasonPendingNoTokenActor)
 	} else if !bugUpdated {
 		out <- core.NewExportNothing(b.Id(), core.ReasonNothingExported)
 	}
