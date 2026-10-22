@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/git-bug/git-bug/bridge/github/mocks"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/bridge/core"
@@ -34,5 +36,22 @@ func TestPendingChangeWithoutTokenIsReported(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, b.Commit(t.Context()))
 	exporter.exportBug(t.Context(), b, results)
-	require.Equal(t, core.ReasonNoTokenActor, (<-results).Reason)
+	require.Equal(t, core.ReasonPendingNoTokenActor, (<-results).Reason)
+
+	// The credentialed author can still export a body edit while the
+	// other author's comment remains pending. Do not call the whole issue
+	// unchanged or claim that no credentialed actor changed it.
+	require.NoError(t, backend.SetUserIdentity(t.Context(), author))
+	_, _, err = b.EditCreateCommentRaw(author, time.Now().Unix(), "New body", nil)
+	require.NoError(t, err)
+	require.NoError(t, b.Commit(t.Context()))
+	client := &mocks.Client{}
+	client.On("Mutate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	exporter.identityClient[author.Id()] = &rateLimitHandlerClient{sc: client}
+	exporter.exportBug(t.Context(), b, results)
+	updated := <-results
+	require.NoError(t, updated.Err)
+	require.Equal(t, core.ExportEventCommentEdition, updated.Event)
+	require.Equal(t, core.ReasonPendingNoTokenActor, (<-results).Reason)
+	client.AssertExpectations(t)
 }

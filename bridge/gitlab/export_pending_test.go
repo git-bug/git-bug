@@ -1,6 +1,8 @@
 package gitlab
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -35,5 +37,27 @@ func TestPendingChangeWithoutTokenIsReported(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, b.Commit(t.Context()))
 	exporter.exportBug(t.Context(), b, results)
-	require.Equal(t, core.ReasonNoTokenActor, (<-results).Reason)
+	require.Equal(t, core.ReasonPendingNoTokenActor, (<-results).Reason)
+
+	require.NoError(t, backend.SetUserIdentity(t.Context(), author))
+	_, _, err = b.EditCreateCommentRaw(author, time.Now().Unix(), "New body", nil)
+	require.NoError(t, err)
+	require.NoError(t, b.Commit(t.Context()))
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":1,"iid":1}`))
+	}))
+	defer server.Close()
+	client, err := gitlab.NewClient("token", gitlab.WithBaseURL(server.URL))
+	require.NoError(t, err)
+	exporter.identityClient[author.Id()] = client
+	exporter.repositoryID = "123"
+	exporter.exportBug(t.Context(), b, results)
+	updated := <-results
+	require.NoError(t, updated.Err)
+	require.Equal(t, core.ExportEventCommentEdition, updated.Event)
+	require.Equal(t, core.ReasonPendingNoTokenActor, (<-results).Reason)
+	require.Equal(t, 1, requests)
 }
