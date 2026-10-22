@@ -166,10 +166,10 @@ func TestGithubPushPull(t *testing.T) {
 
 	// set author identity
 	login := "identity-test"
-	author, err := backend.Identities().New("test identity", "test@test.org")
+	author, err := backend.Identities().New(t.Context(), "test identity", "test@test.org")
 	require.NoError(t, err)
 	author.SetMetadata(metaKeyGithubLogin, login)
-	err = author.Commit()
+	err = author.Commit(t.Context())
 	require.NoError(t, err)
 
 	err = backend.SetUserIdentity(t.Context(), author)

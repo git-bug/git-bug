@@ -27,13 +27,13 @@ func TestUnusableClockRebuiltOnIncrement(t *testing.T) {
 
 			e1 := wrapper(New(def))
 			e1.Append(newOp1(id1, "foo"))
-			require.NoError(t, e1.Commit(repo))
+			require.NoError(t, e1.Commit(t.Context(), repo))
 
 			// e2 holds the highest edit time
 			e2 := wrapper(New(def))
 			for i := 0; i < 5; i++ {
 				e2.Append(newOp1(id1, "bar"))
-				require.NoError(t, e2.Commit(repo))
+				require.NoError(t, e2.Commit(t.Context(), repo))
 			}
 
 			editClock := fmt.Sprintf(editClockPattern, def.Namespace)
@@ -45,7 +45,7 @@ func TestUnusableClockRebuiltOnIncrement(t *testing.T) {
 			requireClockUnusable(t, repo, editClock)
 
 			e1.Append(newOp1(id1, "foobar"))
-			require.NoError(t, e1.Commit(repo))
+			require.NoError(t, e1.Commit(t.Context(), repo))
 			require.Greater(t, e1.EditLamportTime(), e2.EditLamportTime())
 			requireClockTime(t, repo, editClock, e1.EditLamportTime())
 		})
@@ -61,7 +61,7 @@ func TestUnusableClockRebuiltWithoutEntities(t *testing.T) {
 
 	e := wrapper(New(def))
 	e.Append(newOp1(id1, "foo"))
-	require.NoError(t, e.Commit(repo))
+	require.NoError(t, e.Commit(t.Context(), repo))
 	require.Equal(t, lamport.Time(2), e.CreateLamportTime())
 }
 
@@ -72,27 +72,27 @@ func TestEnsureClocks(t *testing.T) {
 	editClock := fmt.Sprintf(editClockPattern, def.Namespace)
 
 	// no entity yet: the clocks start from the beginning
-	require.NoError(t, EnsureClocks(def, repo))
+	require.NoError(t, EnsureClocks(t.Context(), def, repo))
 	requireClockTime(t, repo, createClock, 1)
 	requireClockTime(t, repo, editClock, 1)
 
 	e := wrapper(New(def))
 	for i := 0; i < 3; i++ {
 		e.Append(newOp1(id1, "foo"))
-		require.NoError(t, e.Commit(repo))
+		require.NoError(t, e.Commit(t.Context(), repo))
 	}
 	createTime, editTime := e.CreateLamportTime(), e.EditLamportTime()
 
 	// usable clocks are left alone, even above the entities
 	require.NoError(t, repo.Witness(editClock, editTime+10))
-	require.NoError(t, EnsureClocks(def, repo))
+	require.NoError(t, EnsureClocks(t.Context(), def, repo))
 	requireClockTime(t, repo, createClock, createTime)
 	requireClockTime(t, repo, editClock, editTime+10)
 
 	// a missing clock and a corrupted one come back from the entities
 	removeClock(t, repo, createClock)
 	corruptClock(t, repo, editClock)
-	require.NoError(t, EnsureClocks(def, repo))
+	require.NoError(t, EnsureClocks(t.Context(), def, repo))
 	requireClockTime(t, repo, createClock, createTime)
 	requireClockTime(t, repo, editClock, editTime)
 }

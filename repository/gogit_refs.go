@@ -32,6 +32,7 @@ package repository
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -57,7 +58,7 @@ var refLockTimeout = time.Second
 // UpdateRef points a local ref to commit, only if it currently points to old.
 // An empty old means that the ref must not exist yet.
 // Returns ErrRefChanged otherwise, and the ref is left unchanged.
-func (repo *GoGitRepo) UpdateRef(namespace string, key string, old Hash, commit Hash) error {
+func (repo *GoGitRepo) UpdateRef(ctx context.Context, namespace string, key string, old Hash, commit Hash) error {
 	name, err := refName(namespace, key)
 	if err != nil {
 		return err
@@ -66,7 +67,7 @@ func (repo *GoGitRepo) UpdateRef(namespace string, key string, old Hash, commit 
 
 	// the lock already holds the new value: it only has to be renamed if the
 	// comparison succeeds
-	lockPath, err := repo.lockRef(path, []byte(commit.String()+"\n"))
+	lockPath, err := repo.lockRef(ctx, path, []byte(commit.String()+"\n"))
 	if err != nil {
 		return fmt.Errorf("can't update %s: %w", name, err)
 	}
@@ -98,7 +99,7 @@ func (repo *GoGitRepo) UpdateRef(namespace string, key string, old Hash, commit 
 
 // RemoveRef deletes a local ref.
 // RemoveRef is idempotent.
-func (repo *GoGitRepo) RemoveRef(namespace string, key string) error {
+func (repo *GoGitRepo) RemoveRef(ctx context.Context, namespace string, key string) error {
 	name, err := refName(namespace, key)
 	if err != nil {
 		return err
@@ -108,7 +109,7 @@ func (repo *GoGitRepo) RemoveRef(namespace string, key string) error {
 	// holding the lock orders the removal with the updates: one comparing
 	// before it can't then recreate the ref. The lock is never renamed, so its
 	// content doesn't matter, but it must not be empty (see lockRef).
-	lockPath, err := repo.lockRef(path, []byte(plumbing.ZeroHash.String()+"\n"))
+	lockPath, err := repo.lockRef(ctx, path, []byte(plumbing.ZeroHash.String()+"\n"))
 	if err != nil {
 		return fmt.Errorf("can't remove %s: %w", name, err)
 	}
@@ -118,7 +119,8 @@ func (repo *GoGitRepo) RemoveRef(namespace string, key string) error {
 }
 
 // lockRef creates the lock file of the ref at path, holding content, and
-// returns its path. It waits for a concurrent writer to release the lock.
+// returns its path. It waits for a concurrent writer to release the lock, or
+// for ctx to be done.
 //
 // The lock file never exists empty: go-git lists refs by reading every file
 // under refs/, lock files included, and an empty one makes the whole listing
@@ -126,7 +128,11 @@ func (repo *GoGitRepo) RemoveRef(namespace string, key string) error {
 // hard-linked as the lock, which fails if the lock exists, like an exclusive
 // create. On a filesystem without hard links, the lock is created exclusively
 // then written, and the empty window comes back.
-func (repo *GoGitRepo) lockRef(path string, content []byte) (string, error) {
+func (repo *GoGitRepo) lockRef(ctx context.Context, path string, content []byte) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	lockPath := path + refLockSuffix
 
 	tmpPath, err := writeTempFile(repo.path, content)
@@ -169,7 +175,11 @@ func (repo *GoGitRepo) lockRef(path string, content []byte) (string, error) {
 		if time.Now().After(deadline) {
 			return "", fmt.Errorf("%s exists: another process is updating the ref, or crashed doing so; if no git or git-bug process is running, remove it", lockPath)
 		}
-		time.Sleep(wait)
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		case <-time.After(wait):
+		}
 		wait = min(2*wait, 50*time.Millisecond)
 	}
 }
@@ -231,14 +241,14 @@ func refName(namespace string, key string) (string, error) {
 }
 
 // ListRefs returns every local ref of a namespace, by key.
-func (repo *GoGitRepo) ListRefs(namespace string) (map[string]Hash, error) {
-	return repo.listRefs(refPrefix(namespace))
+func (repo *GoGitRepo) ListRefs(ctx context.Context, namespace string) (map[string]Hash, error) {
+	return repo.listRefs(ctx, refPrefix(namespace))
 }
 
 // ListTrackingRefs returns every tracking ref of a namespace for a remote,
 // by key.
-func (repo *GoGitRepo) ListTrackingRefs(remote string, namespace string) (map[string]Hash, error) {
-	return repo.listRefs(trackingRefPrefix(remote, namespace))
+func (repo *GoGitRepo) ListTrackingRefs(ctx context.Context, remote string, namespace string) (map[string]Hash, error) {
+	return repo.listRefs(ctx, trackingRefPrefix(remote, namespace))
 }
 
 // TODO: replace listRefs and listPackedRefs with IterReferences, see the top of
@@ -251,7 +261,7 @@ func (repo *GoGitRepo) ListTrackingRefs(remote string, namespace string) (map[st
 // new packed-refs, then deletes the loose refs it packed. In this order, a ref
 // is either still loose when read, or already in the packed-refs read after.
 // The other order can miss it, or return its outdated packed value.
-func (repo *GoGitRepo) listRefs(prefix string) (map[string]Hash, error) {
+func (repo *GoGitRepo) listRefs(ctx context.Context, prefix string) (map[string]Hash, error) {
 	// the prefix comes from a namespace, and a remote name: check it like a
 	// ref name before walking it as a path
 	if err := plumbing.ReferenceName(strings.TrimSuffix(prefix, "/")).Validate(); err != nil {
@@ -261,6 +271,9 @@ func (repo *GoGitRepo) listRefs(prefix string) (map[string]Hash, error) {
 	root := filepath.Join(repo.path, filepath.FromSlash(prefix))
 	var paths []string
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
 		if err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
 				// no loose ref at all, or removed while walking
@@ -286,6 +299,9 @@ func (repo *GoGitRepo) listRefs(prefix string) (map[string]Hash, error) {
 	for w := range workers {
 		g.Go(func() error {
 			for i := w; i < len(paths); i += workers {
+				if err := ctx.Err(); err != nil {
+					return err
+				}
 				content, err := os.ReadFile(paths[i])
 				if errors.Is(err, fs.ErrNotExist) {
 					// removed while walking
@@ -319,7 +335,7 @@ func (repo *GoGitRepo) listRefs(prefix string) (map[string]Hash, error) {
 		loose[filepath.ToSlash(rel)] = Hash(value)
 	}
 
-	refs, err := repo.listPackedRefs(prefix)
+	refs, err := repo.listPackedRefs(ctx, prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +346,7 @@ func (repo *GoGitRepo) listRefs(prefix string) (map[string]Hash, error) {
 
 // listPackedRefs returns the refs of packed-refs under prefix, by the rest of
 // their name.
-func (repo *GoGitRepo) listPackedRefs(prefix string) (map[string]Hash, error) {
+func (repo *GoGitRepo) listPackedRefs(ctx context.Context, prefix string) (map[string]Hash, error) {
 	refs := make(map[string]Hash)
 
 	f, err := os.Open(filepath.Join(repo.path, "packed-refs"))
@@ -346,6 +362,9 @@ func (repo *GoGitRepo) listPackedRefs(prefix string) (map[string]Hash, error) {
 	// lines peeling the annotated tag above them
 	s := bufio.NewScanner(f)
 	for s.Scan() {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		line := s.Text()
 		if line == "" || line[0] == '#' || line[0] == '^' {
 			continue

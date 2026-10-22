@@ -70,7 +70,7 @@ func TestCache(t *testing.T) {
 	require.NoError(t, cache.registerObserver("repotest", bug.Typename, &obsBug))
 
 	// Create, set and get user identity
-	iden1, err := cache.Identities().New("René Descartes", "rene@descartes.fr")
+	iden1, err := cache.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 	assertOberserverEvent(obsIdentity, 1, 0, 0)
 	assertOberserverEvent(obsBug, 0, 0, 0)
@@ -81,7 +81,7 @@ func TestCache(t *testing.T) {
 	require.Equal(t, iden1.Id(), userIden.Id())
 
 	// it's possible to create two identical identities
-	iden2, err := cache.Identities().New("René Descartes", "rene@descartes.fr")
+	iden2, err := cache.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 	assertOberserverEvent(obsIdentity, 2, 0, 0)
 	assertOberserverEvent(obsBug, 0, 0, 0)
@@ -201,11 +201,11 @@ func TestCache(t *testing.T) {
 	require.Equal(t, uint64(2), indexCount(t, bug.Namespace))
 
 	// Remove + RemoveAll
-	err = cache.Identities().Remove(iden1.Id().String()[:10])
+	err = cache.Identities().Remove(t.Context(), iden1.Id().String()[:10])
 	require.NoError(t, err)
 	assertOberserverEvent(obsIdentity, 2, 0, 1)
 	assertOberserverEvent(obsBug, 2, 1, 0)
-	err = cache.Bugs().Remove(bug1.Id().String()[:10])
+	err = cache.Bugs().Remove(t.Context(), bug1.Id().String()[:10])
 	require.NoError(t, err)
 	assertOberserverEvent(obsIdentity, 2, 0, 1)
 	assertOberserverEvent(obsBug, 2, 1, 1)
@@ -216,7 +216,7 @@ func TestCache(t *testing.T) {
 	require.Equal(t, uint64(1), indexCount(t, identity.Namespace))
 	require.Equal(t, uint64(1), indexCount(t, bug.Namespace))
 
-	_, err = cache.Identities().New("René Descartes", "rene@descartes.fr")
+	_, err = cache.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 	assertOberserverEvent(obsIdentity, 3, 0, 1)
 	assertOberserverEvent(obsBug, 2, 1, 1)
@@ -226,7 +226,7 @@ func TestCache(t *testing.T) {
 	assertOberserverEvent(obsIdentity, 3, 0, 1)
 	assertOberserverEvent(obsBug, 3, 1, 1)
 
-	err = cache.RemoveAll()
+	err = cache.RemoveAll(t.Context())
 	require.NoError(t, err)
 	assertOberserverEvent(obsIdentity, 3, 0, 3)
 	assertOberserverEvent(obsBug, 3, 1, 3)
@@ -252,11 +252,11 @@ func TestCachePushPull(t *testing.T) {
 	cacheB := createTestRepoCacheNoEvents(t, repoB)
 
 	// Create, set and get user identity
-	reneA, err := cacheA.Identities().New("René Descartes", "rene@descartes.fr")
+	reneA, err := cacheA.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 	err = cacheA.SetUserIdentity(t.Context(), reneA)
 	require.NoError(t, err)
-	isaacB, err := cacheB.Identities().New("Isaac Newton", "isaac@newton.uk")
+	isaacB, err := cacheB.Identities().New(t.Context(), "Isaac Newton", "isaac@newton.uk")
 	require.NoError(t, err)
 	err = cacheB.SetUserIdentity(t.Context(), isaacB)
 	require.NoError(t, err)
@@ -372,7 +372,7 @@ func TestCacheMerge(t *testing.T) {
 	cacheA := createTestRepoCacheNoEvents(t, repoA)
 	cacheB := createTestRepoCacheNoEvents(t, repoB)
 
-	reneA, err := cacheA.Identities().New("René Descartes", "rene@descartes.fr")
+	reneA, err := cacheA.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 	err = cacheA.SetUserIdentity(t.Context(), reneA)
 	require.NoError(t, err)
@@ -488,7 +488,7 @@ func TestCachePullWithoutIdentity(t *testing.T) {
 	cacheA := createTestRepoCacheNoEvents(t, repoA)
 	cacheB := createTestRepoCacheNoEvents(t, repoB)
 
-	reneA, err := cacheA.Identities().New("René Descartes", "rene@descartes.fr")
+	reneA, err := cacheA.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 	err = cacheA.SetUserIdentity(t.Context(), reneA)
 	require.NoError(t, err)
@@ -561,7 +561,7 @@ func TestRemove(t *testing.T) {
 
 	repoCache := createTestRepoCacheNoEvents(t, repo)
 
-	rene, err := repoCache.Identities().New("René Descartes", "rene@descartes.fr")
+	rene, err := repoCache.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
 	err = repoCache.SetUserIdentity(t.Context(), rene)
@@ -589,11 +589,11 @@ func TestRemove(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, remote := range []string{"remoteA", "remoteB"} {
-		_, err = repo.ResolveTrackingRef(remote, bug.Namespace, b1.Id().String())
+		_, err = repo.ResolveTrackingRef(t.Context(), remote, bug.Namespace, b1.Id().String())
 		require.NoError(t, err)
 	}
 
-	err = repoCache.Bugs().Remove(b1.Id().String())
+	err = repoCache.Bugs().Remove(t.Context(), b1.Id().String())
 	require.NoError(t, err)
 	require.Len(t, repoCache.bugs.cached, 1)
 	require.Len(t, repoCache.bugs.excerpts, 1)
@@ -603,12 +603,12 @@ func TestRemove(t *testing.T) {
 
 	// the local reference is removed, and so are the tracking ones on every
 	// remote, leaving the other bug alone
-	_, err = repo.ResolveRef(bug.Namespace, b1.Id().String())
+	_, err = repo.ResolveRef(t.Context(), bug.Namespace, b1.Id().String())
 	require.ErrorIs(t, err, repository.ErrNotFound)
 	for _, remote := range []string{"remoteA", "remoteB"} {
-		_, err = repo.ResolveTrackingRef(remote, bug.Namespace, b1.Id().String())
+		_, err = repo.ResolveTrackingRef(t.Context(), remote, bug.Namespace, b1.Id().String())
 		require.ErrorIs(t, err, repository.ErrNotFound)
-		_, err = repo.ResolveTrackingRef(remote, bug.Namespace, kept.Id().String())
+		_, err = repo.ResolveTrackingRef(t.Context(), remote, bug.Namespace, kept.Id().String())
 		require.NoError(t, err)
 	}
 }
@@ -623,7 +623,7 @@ func TestCacheEviction(t *testing.T) {
 	require.Equal(t, repoCache.bugs.lru.Len(), 0)
 
 	// Generating some bugs
-	rene, err := repoCache.Identities().New("René Descartes", "rene@descartes.fr")
+	rene, err := repoCache.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 	err = repoCache.SetUserIdentity(t.Context(), rene)
 	require.NoError(t, err)
@@ -681,7 +681,7 @@ func TestBuildConcurrentResolve(t *testing.T) {
 	// resolves their authors through the identities subcache.
 
 	repo := repotest.NewGoGitRepo(t, false)
-	random_bugs.FillRepoWithSeed(repo, 20, 42)
+	random_bugs.FillRepoWithSeed(t.Context(), repo, 20, 42)
 
 	repoCache := createTestRepoCacheNoEvents(t, repo)
 
@@ -709,7 +709,7 @@ func TestLongDescription(t *testing.T) {
 
 	backend := createTestRepoCacheNoEvents(t, repo)
 
-	i, err := backend.Identities().New("René Descartes", "rene@descartes.fr")
+	i, err := backend.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
 	created, _, err := backend.Bugs().NewRaw(i, time.Now().Unix(), text, text, nil, nil)
@@ -727,7 +727,7 @@ func TestResolveOperationWithMetadataFromSetMetadata(t *testing.T) {
 
 	backend := openTestRepoCache(t, repo)
 
-	i, err := backend.Identities().New("René Descartes", "rene@descartes.fr")
+	i, err := backend.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 	require.NoError(t, backend.SetUserIdentity(t.Context(), i))
 
@@ -836,7 +836,7 @@ func TestCacheRebuildsUnusableClocks(t *testing.T) {
 
 			cache := openTestRepoCache(t, repo)
 
-			iden, err := cache.Identities().New("René Descartes", "rene@descartes.fr")
+			iden, err := cache.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
 			require.NoError(t, err)
 			require.NoError(t, cache.SetUserIdentity(t.Context(), iden))
 
@@ -848,7 +848,7 @@ func TestCacheRebuildsUnusableClocks(t *testing.T) {
 
 			// this version records the bug clocks: the next one can't hold less
 			require.NoError(t, iden.Mutate(repo, func(m *identity.Mutator) { m.Name = "Descartes" }))
-			require.NoError(t, iden.Commit())
+			require.NoError(t, iden.Commit(t.Context()))
 
 			before := clockTimes(t, repo)
 			require.NoError(t, cache.Close())
@@ -865,7 +865,7 @@ func TestCacheRebuildsUnusableClocks(t *testing.T) {
 			iden, err = cache.Identities().Resolve(t.Context(), iden.Id())
 			require.NoError(t, err)
 			require.NoError(t, iden.Mutate(repo, func(m *identity.Mutator) { m.Name = "René" }))
-			require.NoError(t, iden.Commit())
+			require.NoError(t, iden.Commit(t.Context()))
 			require.Equal(t, before, iden.LastModificationLamports())
 			require.NoError(t, cache.Close())
 

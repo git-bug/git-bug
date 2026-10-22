@@ -98,9 +98,13 @@ func newMockRepoDataBrowse() *mockRepoDataBrowse {
 	}
 }
 
-func (r *mockRepoDataBrowse) StoreData(data []byte) (Hash, error) {
+func (r *mockRepoDataBrowse) StoreData(ctx context.Context, data []byte) (Hash, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 
 	rawHash := sha1.Sum(data)
 	hash := Hash(fmt.Sprintf("%x", rawHash))
@@ -108,9 +112,13 @@ func (r *mockRepoDataBrowse) StoreData(data []byte) (Hash, error) {
 	return hash, nil
 }
 
-func (r *mockRepoDataBrowse) ReadData(hash Hash) (io.ReadCloser, error) {
+func (r *mockRepoDataBrowse) ReadData(ctx context.Context, hash Hash) (io.ReadCloser, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 
 	data, ok := r.blobs[hash]
 	if !ok {
@@ -120,9 +128,13 @@ func (r *mockRepoDataBrowse) ReadData(hash Hash) (io.ReadCloser, error) {
 	return io.NopCloser(bytes.NewReader(data)), nil
 }
 
-func (r *mockRepoDataBrowse) StoreTree(entries []TreeEntry) (Hash, error) {
+func (r *mockRepoDataBrowse) StoreTree(ctx context.Context, entries []TreeEntry) (Hash, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 
 	buffer := prepareTreeEntries(entries)
 	rawHash := sha1.Sum(buffer.Bytes())
@@ -132,9 +144,13 @@ func (r *mockRepoDataBrowse) StoreTree(entries []TreeEntry) (Hash, error) {
 	return hash, nil
 }
 
-func (r *mockRepoDataBrowse) ReadTree(hash Hash) ([]TreeEntry, error) {
+func (r *mockRepoDataBrowse) ReadTree(ctx context.Context, hash Hash) ([]TreeEntry, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 
 	var data string
 
@@ -158,13 +174,17 @@ func (r *mockRepoDataBrowse) ReadTree(hash Hash) ([]TreeEntry, error) {
 	return readTreeEntries(data)
 }
 
-func (r *mockRepoDataBrowse) StoreCommit(treeHash Hash, parents ...Hash) (Hash, error) {
-	return r.StoreSignedCommit(treeHash, nil, parents...)
+func (r *mockRepoDataBrowse) StoreCommit(ctx context.Context, treeHash Hash, parents ...Hash) (Hash, error) {
+	return r.StoreSignedCommit(ctx, treeHash, nil, parents...)
 }
 
-func (r *mockRepoDataBrowse) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error) {
+func (r *mockRepoDataBrowse) StoreSignedCommit(ctx context.Context, treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 
 	hasher := sha1.New()
 	hasher.Write([]byte(treeHash))
@@ -190,9 +210,13 @@ func (r *mockRepoDataBrowse) StoreSignedCommit(treeHash Hash, signKey *openpgp.E
 	return hash, nil
 }
 
-func (r *mockRepoDataBrowse) ReadCommit(hash Hash) (Commit, error) {
+func (r *mockRepoDataBrowse) ReadCommit(ctx context.Context, hash Hash) (Commit, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return Commit{}, err
+	}
 
 	c, ok := r.commits[hash]
 	if !ok {
@@ -215,23 +239,35 @@ func (r *mockRepoDataBrowse) ReadCommit(hash Hash) (Commit, error) {
 	return result, nil
 }
 
-func (r *mockRepoDataBrowse) ListRefs(namespace string) (map[string]Hash, error) {
+func (r *mockRepoDataBrowse) ListRefs(ctx context.Context, namespace string) (map[string]Hash, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 
 	return r.listRefs(refPrefix(namespace)), nil
 }
 
-func (r *mockRepoDataBrowse) ResolveRef(namespace string, key string) (Hash, error) {
+func (r *mockRepoDataBrowse) ResolveRef(ctx context.Context, namespace string, key string) (Hash, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 
 	return r.lookupRef(refPrefix(namespace) + key)
 }
 
-func (r *mockRepoDataBrowse) UpdateRef(namespace string, key string, old Hash, commit Hash) error {
+func (r *mockRepoDataBrowse) UpdateRef(ctx context.Context, namespace string, key string, old Hash, commit Hash) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 
 	ref := refPrefix(namespace) + key
 	if r.refs[ref] != old {
@@ -241,31 +277,47 @@ func (r *mockRepoDataBrowse) UpdateRef(namespace string, key string, old Hash, c
 	return nil
 }
 
-func (r *mockRepoDataBrowse) RemoveRef(namespace string, key string) error {
+func (r *mockRepoDataBrowse) RemoveRef(ctx context.Context, namespace string, key string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 
 	delete(r.refs, refPrefix(namespace)+key)
 	return nil
 }
 
-func (r *mockRepoDataBrowse) ListTrackingRefs(remote string, namespace string) (map[string]Hash, error) {
+func (r *mockRepoDataBrowse) ListTrackingRefs(ctx context.Context, remote string, namespace string) (map[string]Hash, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 
 	return r.listRefs(trackingRefPrefix(remote, namespace)), nil
 }
 
-func (r *mockRepoDataBrowse) ResolveTrackingRef(remote string, namespace string, key string) (Hash, error) {
+func (r *mockRepoDataBrowse) ResolveTrackingRef(ctx context.Context, remote string, namespace string, key string) (Hash, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 
 	return r.lookupRef(trackingRefPrefix(remote, namespace) + key)
 }
 
-func (r *mockRepoDataBrowse) RemoveTrackingRef(remote string, namespace string, key string) error {
+func (r *mockRepoDataBrowse) RemoveTrackingRef(ctx context.Context, remote string, namespace string, key string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 
 	delete(r.refs, trackingRefPrefix(remote, namespace)+key)
 	return nil

@@ -204,14 +204,14 @@ func TestGoGitRepo_Specifics(t *testing.T) {
 		requireGitBinary(t)
 
 		repo := newTestGoGitRepo(t, false)
-		blob, err := repo.StoreData([]byte("content"))
+		blob, err := repo.StoreData(t.Context(), []byte("content"))
 		require.NoError(t, err)
-		sub, err := repo.StoreTree([]TreeEntry{{ObjectType: Blob, Hash: blob, Name: "x"}})
+		sub, err := repo.StoreTree(t.Context(), []TreeEntry{{ObjectType: Blob, Hash: blob, Name: "x"}})
 		require.NoError(t, err)
 
 		// git compares a directory's name as if it ended with a slash: "a" goes
 		// after "a-c" and "a.b", not before
-		tree, err := repo.StoreTree([]TreeEntry{
+		tree, err := repo.StoreTree(t.Context(), []TreeEntry{
 			{ObjectType: Tree, Hash: sub, Name: "a"},
 			{ObjectType: Blob, Hash: blob, Name: "a.b"},
 			{ObjectType: Blob, Hash: blob, Name: "a-c"},
@@ -219,7 +219,7 @@ func TestGoGitRepo_Specifics(t *testing.T) {
 		require.NoError(t, err)
 
 		// git fsck rejects a tree out of git's order
-		commit, err := repo.StoreCommit(tree)
+		commit, err := repo.StoreCommit(t.Context(), tree)
 		require.NoError(t, err)
 		dir := filepath.Dir(repo.path)
 		runGit(t, dir, "update-ref", "refs/test/tree", string(commit))

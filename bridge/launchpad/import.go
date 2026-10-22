@@ -31,6 +31,7 @@ func (li *launchpadImporter) ensurePerson(ctx context.Context, repo *cache.RepoC
 	}
 
 	return repo.Identities().NewRaw(
+		ctx,
 		owner.Name,
 		"",
 		owner.Login,

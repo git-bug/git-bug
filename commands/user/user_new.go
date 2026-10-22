@@ -67,12 +67,12 @@ func runUserNew(env *execenv.Env, opts userNewOptions) error {
 		}
 	}
 
-	id, err := env.Backend.Identities().NewRaw(opts.name, opts.email, "", opts.avatarURL, nil, nil)
+	id, err := env.Backend.Identities().NewRaw(env.Ctx, opts.name, opts.email, "", opts.avatarURL, nil, nil)
 	if err != nil {
 		return err
 	}
 
-	err = id.CommitAsNeeded()
+	err = id.CommitAsNeeded(env.Ctx)
 	if err != nil {
 		return err
 	}

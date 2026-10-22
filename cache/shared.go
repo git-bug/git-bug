@@ -55,10 +55,10 @@ func (s *sharedEntity[SnapT, OpT]) state() (SnapT, repository.Hash) {
 // landed on the base a view compiled against, that view's snapshot is the new
 // committed state and could be taken as is; otherwise, the previous snapshot could
 // be cloned and the new operations applied to it. Same for Repair's incremental path.
-func (s *sharedEntity[SnapT, OpT]) CommitOperations(repo repository.Repo, ops []OpT) error {
+func (s *sharedEntity[SnapT, OpT]) CommitOperations(ctx context.Context, repo repository.Repo, ops []OpT) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	err := s.Tracked.CommitOperations(repo, ops)
+	err := s.Tracked.CommitOperations(ctx, repo, ops)
 	if err == nil {
 		s.snap = nil
 	}

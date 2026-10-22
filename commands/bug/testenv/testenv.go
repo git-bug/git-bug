@@ -37,7 +37,7 @@ func NewTestEnvAndUser(t *testing.T) (*execenv.Env, entity.Id) {
 
 	testEnv := envtest.NewEnv(t)
 
-	i, err := testEnv.Backend.Identities().New(testUserName, testUserEmail)
+	i, err := testEnv.Backend.Identities().New(t.Context(), testUserName, testUserEmail)
 	require.NoError(t, err)
 
 	err = testEnv.Backend.SetUserIdentity(t.Context(), i)

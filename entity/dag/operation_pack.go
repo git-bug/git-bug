@@ -84,7 +84,7 @@ func (opp *operationPack) Validate() error {
 // Write writes the OperationPack in git, with zero, one or more parent commits.
 // If the repository has a key pair able to sign (that is, with a private key), the resulting commit is signed with that key.
 // Return the hash of the created commit.
-func (opp *operationPack) Write(def Definition, repo repository.Repo, parentCommit ...repository.Hash) (repository.Hash, error) {
+func (opp *operationPack) Write(ctx context.Context, def Definition, repo repository.Repo, parentCommit ...repository.Hash) (repository.Hash, error) {
 	if err := opp.Validate(); err != nil {
 		return "", err
 	}
@@ -95,7 +95,7 @@ func (opp *operationPack) Write(def Definition, repo repository.Repo, parentComm
 	// we are storing something directly in the tree already so why not.
 	//
 	// To have a valid Tree, we point the "fake" entries to always the same value, the empty blob.
-	emptyBlobHash, err := repo.StoreData([]byte{})
+	emptyBlobHash, err := repo.StoreData(ctx, []byte{})
 	if err != nil {
 		return "", err
 	}
@@ -109,7 +109,7 @@ func (opp *operationPack) Write(def Definition, repo repository.Repo, parentComm
 	// compute the Id while we have the serialized data
 	opp.id = entity.DeriveId(data)
 
-	hash, err := repo.StoreData(data)
+	hash, err := repo.StoreData(ctx, data)
 	if err != nil {
 		return "", err
 	}
@@ -134,7 +134,7 @@ func (opp *operationPack) Write(def Definition, repo repository.Repo, parentComm
 		})
 	}
 	if extraTree := opp.makeExtraTree(); len(extraTree) > 0 {
-		extraTreeHash, err := repo.StoreTree(extraTree)
+		extraTreeHash, err := repo.StoreTree(ctx, extraTree)
 		if err != nil {
 			return "", err
 		}
@@ -146,7 +146,7 @@ func (opp *operationPack) Write(def Definition, repo repository.Repo, parentComm
 	}
 
 	// Store the tree
-	treeHash, err := repo.StoreTree(tree)
+	treeHash, err := repo.StoreTree(ctx, tree)
 	if err != nil {
 		return "", err
 	}
@@ -162,9 +162,9 @@ func (opp *operationPack) Write(def Definition, repo repository.Repo, parentComm
 	}
 
 	if signingKey != nil {
-		commitHash, err = repo.StoreSignedCommit(treeHash, signingKey.PGPEntity(), parentCommit...)
+		commitHash, err = repo.StoreSignedCommit(ctx, treeHash, signingKey.PGPEntity(), parentCommit...)
 	} else {
-		commitHash, err = repo.StoreCommit(treeHash, parentCommit...)
+		commitHash, err = repo.StoreCommit(ctx, treeHash, parentCommit...)
 	}
 
 	if err != nil {
@@ -207,7 +207,7 @@ func (opp *operationPack) makeExtraTree() []repository.TreeEntry {
 //
 // Validity of the Lamport clocks is left for the caller to decide.
 func readOperationPack(ctx context.Context, def Definition, repo repository.RepoData, resolvers entity.Resolvers, commit repository.Commit) (*operationPack, error) {
-	entries, err := repo.ReadTree(commit.TreeHash)
+	entries, err := repo.ReadTree(ctx, commit.TreeHash)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +243,7 @@ func readOperationPack(ctx context.Context, def Definition, repo repository.Repo
 	for _, entry := range entries {
 		switch {
 		case entry.Name == opsEntryName:
-			r, err := repo.ReadData(entry.Hash)
+			r, err := repo.ReadData(ctx, entry.Hash)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read git blob data: %w", err)
 			}
@@ -300,8 +300,8 @@ func readOperationPack(ctx context.Context, def Definition, repo repository.Repo
 
 // readOperationPackClock is similar to readOperationPack but only read and decode the Lamport clocks.
 // Validity of those is left for the caller to decide.
-func readOperationPackClock(repo repository.RepoData, commit repository.Commit) (lamport.Time, lamport.Time, error) {
-	entries, err := repo.ReadTree(commit.TreeHash)
+func readOperationPackClock(ctx context.Context, repo repository.RepoData, commit repository.Commit) (lamport.Time, lamport.Time, error) {
+	entries, err := repo.ReadTree(ctx, commit.TreeHash)
 	if err != nil {
 		return 0, 0, err
 	}

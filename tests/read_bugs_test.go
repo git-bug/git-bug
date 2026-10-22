@@ -11,7 +11,7 @@ import (
 func TestReadBugs(t *testing.T) {
 	repo := repotest.NewGoGitRepo(t, false)
 
-	random_bugs.FillRepoWithSeed(repo, 15, 42)
+	random_bugs.FillRepoWithSeed(t.Context(), repo, 15, 42)
 
 	bugs := bug.ReadAll(t.Context(), repo)
 	for b := range bugs {
@@ -24,7 +24,7 @@ func TestReadBugs(t *testing.T) {
 func benchmarkReadBugs(bugNumber int, t *testing.B) {
 	repo := repotest.NewGoGitRepo(t, false)
 
-	random_bugs.FillRepoWithSeed(repo, bugNumber, 42)
+	random_bugs.FillRepoWithSeed(t.Context(), repo, bugNumber, 42)
 	t.ResetTimer()
 
 	for n := 0; n < t.N; n++ {

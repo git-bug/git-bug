@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -225,7 +226,7 @@ func (v *version) Validate() error {
 
 // Write will serialize and store the version as a git blob and return
 // its hash
-func (v *version) Write(repo repository.Repo) (repository.Hash, error) {
+func (v *version) Write(ctx context.Context, repo repository.Repo) (repository.Hash, error) {
 	// make sure we don't write invalid data
 	err := v.Validate()
 	if err != nil {
@@ -237,7 +238,7 @@ func (v *version) Write(repo repository.Repo) (repository.Hash, error) {
 		return "", err
 	}
 
-	hash, err := repo.StoreData(data)
+	hash, err := repo.StoreData(ctx, data)
 	if err != nil {
 		return "", err
 	}

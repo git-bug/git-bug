@@ -1,6 +1,7 @@
 package dag
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -26,14 +27,14 @@ import (
 // for callers that need all the clocks right before anything is written: a
 // fresh clone has none, and an identity records every clock in each of its
 // versions.
-func EnsureClocks(def Definition, repo repository.Repo) error {
+func EnsureClocks(ctx context.Context, def Definition, repo repository.Repo) error {
 	for _, pattern := range []string{creationClockPattern, editClockPattern} {
 		usable, err := clockUsable(repo, fmt.Sprintf(pattern, def.Namespace))
 		if err != nil {
 			return err
 		}
 		if !usable {
-			return rebuildClocks(def, repo)
+			return rebuildClocks(ctx, def, repo)
 		}
 	}
 	return nil
@@ -79,7 +80,7 @@ func witnessClock(repo repository.Repo, name string, time lamport.Time) error {
 
 // incrementClock returns the next time of a clock, rebuilding it first if it
 // isn't usable.
-func incrementClock(def Definition, repo repository.Repo, pattern string) (lamport.Time, error) {
+func incrementClock(ctx context.Context, def Definition, repo repository.Repo, pattern string) (lamport.Time, error) {
 	name := fmt.Sprintf(pattern, def.Namespace)
 
 	time, err := repo.Increment(name)
@@ -87,7 +88,7 @@ func incrementClock(def Definition, repo repository.Repo, pattern string) (lampo
 		return time, err
 	}
 
-	err = rebuildClocks(def, repo)
+	err = rebuildClocks(ctx, def, repo)
 	if err != nil {
 		return 0, err
 	}
@@ -98,8 +99,8 @@ func incrementClock(def Definition, repo repository.Repo, pattern string) (lampo
 // rebuildClocks creates the clocks of a definition again, from every entity of
 // its namespace. The entities are only scanned, not checked: see
 // readClockNoCheck.
-func rebuildClocks(def Definition, repo repository.Repo) error {
-	createTime, editTime, err := readAllClocksNoCheck(def, repo)
+func rebuildClocks(ctx context.Context, def Definition, repo repository.Repo) error {
+	createTime, editTime, err := readAllClocksNoCheck(ctx, def, repo)
 	if err != nil {
 		return err
 	}

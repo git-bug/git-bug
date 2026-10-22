@@ -23,7 +23,7 @@ func TestNoopSerialize(t *testing.T) {
 
 	e := New(def)
 	e.Append(before)
-	require.NoError(t, e.Commit(repo))
+	require.NoError(t, e.Commit(t.Context(), repo))
 
 	after, err := Read(t.Context(), def, wrapper, repo, resolvers, e.Id())
 	require.NoError(t, err)

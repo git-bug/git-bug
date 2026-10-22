@@ -36,7 +36,7 @@ func TestSelect(t *testing.T) {
 
 	// generate a bunch of bugs
 
-	rene, err := backend.Identities().New("René Descartes", "rene@descartes.fr")
+	rene, err := backend.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
 	for i := 0; i < 10; i++ {

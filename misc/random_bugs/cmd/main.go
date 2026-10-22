@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	rb "github.com/git-bug/git-bug/misc/random_bugs"
@@ -28,5 +29,5 @@ func main() {
 	}
 	defer repo.Close()
 
-	rb.CommitRandomBugs(repo, rb.DefaultOptions())
+	rb.CommitRandomBugs(context.Background(), repo, rb.DefaultOptions())
 }

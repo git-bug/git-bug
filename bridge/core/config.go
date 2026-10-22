@@ -31,11 +31,11 @@ func FinishConfig(ctx context.Context, repo *cache.RepoCache, metaKey string, lo
 		fmt.Printf("Current identity %v tagged with login %v\n", user.Id().Human(), login)
 		// found one
 		user.SetMetadata(metaKey, login)
-		return user.CommitAsNeeded()
+		return user.CommitAsNeeded(ctx)
 	}
 
 	// otherwise create a user with that metadata
-	i, err := repo.Identities().NewFromGitUserRaw(map[string]string{
+	i, err := repo.Identities().NewFromGitUserRaw(ctx, map[string]string{
 		metaKey: login,
 	})
 	if err != nil {
