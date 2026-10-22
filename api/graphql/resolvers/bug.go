@@ -18,7 +18,7 @@ func (bugResolver) HumanID(_ context.Context, obj models.BugWrapper) (string, er
 	return obj.Id().Human(), nil
 }
 
-func (bugResolver) Comments(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.BugCommentConnection, error) {
+func (bugResolver) Comments(ctx context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.BugCommentConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -46,7 +46,7 @@ func (bugResolver) Comments(_ context.Context, obj models.BugWrapper, after *str
 		}, nil
 	}
 
-	comments, err := obj.Comments()
+	comments, err := obj.Comments(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (bugResolver) Comments(_ context.Context, obj models.BugWrapper, after *str
 	return connections.Connection(comments, edger, conMaker, input)
 }
 
-func (bugResolver) Operations(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.OperationConnection, error) {
+func (bugResolver) Operations(ctx context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.OperationConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -78,7 +78,7 @@ func (bugResolver) Operations(_ context.Context, obj models.BugWrapper, after *s
 		}, nil
 	}
 
-	ops, err := obj.Operations()
+	ops, err := obj.Operations(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (bugResolver) Operations(_ context.Context, obj models.BugWrapper, after *s
 	return connections.Connection(ops, edger, conMaker, input)
 }
 
-func (bugResolver) Timeline(_ context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.BugTimelineItemConnection, error) {
+func (bugResolver) Timeline(ctx context.Context, obj models.BugWrapper, after *string, before *string, first *int, last *int) (*models.BugTimelineItemConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -110,7 +110,7 @@ func (bugResolver) Timeline(_ context.Context, obj models.BugWrapper, after *str
 		}, nil
 	}
 
-	timeline, err := obj.Timeline()
+	timeline, err := obj.Timeline(ctx)
 	if err != nil {
 		return nil, err
 	}

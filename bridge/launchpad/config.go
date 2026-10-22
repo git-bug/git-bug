@@ -1,6 +1,7 @@
 package launchpad
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -20,7 +21,7 @@ func (Launchpad) ValidParams() map[string]interface{} {
 	}
 }
 
-func (l *Launchpad) Configure(repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
+func (l *Launchpad) Configure(ctx context.Context, repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
 	var err error
 	var project string
 
@@ -43,7 +44,7 @@ func (l *Launchpad) Configure(repo *cache.RepoCache, params core.BridgeParams, i
 	}
 
 	// verify project
-	ok, err := validateProject(project)
+	ok, err := validateProject(ctx, project)
 	if err != nil {
 		return nil, err
 	}
@@ -76,14 +77,19 @@ func (*Launchpad) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-func validateProject(project string) (bool, error) {
+func validateProject(ctx context.Context, project string) (bool, error) {
 	url := fmt.Sprintf("%s/%s", apiRoot, project)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return false, err
+	}
 
 	client := &http.Client{
 		Timeout: defaultTimeout,
 	}
 
-	resp, err := client.Get(url)
+	resp, err := client.Do(req)
 	if err != nil {
 		return false, err
 	}

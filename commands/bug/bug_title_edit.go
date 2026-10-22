@@ -64,10 +64,10 @@ func runBugTitleEdit(env *execenv.Env, opts bugTitleEditOptions, args []string) 
 		env.Err.Println("No change, aborting.")
 	}
 
-	_, err = b.SetTitle(text.CleanupOneLine(opts.title))
+	_, err = b.SetTitle(env.Ctx, text.CleanupOneLine(opts.title))
 	if err != nil {
 		return err
 	}
 
-	return b.Commit()
+	return b.Commit(env.Ctx)
 }

@@ -309,7 +309,7 @@ func (ls *labelSelect) saveAndReturn(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 
-	if _, _, err := ls.bug.ChangeLabels(newLabels, rmLabels); err != nil {
+	if _, _, err := ls.bug.ChangeLabels(ui.ctx, newLabels, rmLabels); err != nil {
 		ui.msgPopup.Activate(msgPopupErrorTitle, err.Error())
 	}
 

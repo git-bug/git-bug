@@ -207,6 +207,10 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 	var bugGithubID string
 	var bugGithubURL string
 
+	// Once a change is made on Github, saving its ID locally must not be
+	// interrupted, or the next export would make the same change again.
+	saveCtx := context.WithoutCancel(ctx)
+
 	// Special case:
 	// if a user try to export a bug that is not already exported to Github (or imported
 	// from Github) and we do not have the token of the bug author, there is nothing we can do.
@@ -272,14 +276,14 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		out <- core.NewExportBug(b.Id())
 
 		// mark bug creation operation as exported
-		if err := markOperationAsExported(b, createOp.Id(), id, url); err != nil {
+		if err := markOperationAsExported(saveCtx, b, createOp.Id(), id, url); err != nil {
 			err := fmt.Errorf("marking operation as exported: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return
 		}
 
 		// commit operation to avoid creating multiple issues with multiple pushes
-		if err := b.CommitAsNeeded(); err != nil {
+		if err := b.CommitAsNeeded(saveCtx); err != nil {
 			err := fmt.Errorf("bug commit: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return
@@ -409,14 +413,14 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		}
 
 		// mark operation as exported
-		if err := markOperationAsExported(b, op.Id(), id, url); err != nil {
+		if err := markOperationAsExported(saveCtx, b, op.Id(), id, url); err != nil {
 			err := fmt.Errorf("marking operation as exported: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return
 		}
 
 		// commit at each operation export to avoid exporting same events multiple times
-		if err := b.CommitAsNeeded(); err != nil {
+		if err := b.CommitAsNeeded(saveCtx); err != nil {
 			err := fmt.Errorf("bug commit: %w", err)
 			out <- core.NewExportError(err, b.Id())
 			return
@@ -474,8 +478,9 @@ func getRepositoryNodeID(ctx context.Context, token *auth.Token, owner, project 
 	return aux.NodeID, nil
 }
 
-func markOperationAsExported(b *cache.BugCache, target entity.Id, githubID, githubURL string) error {
+func markOperationAsExported(ctx context.Context, b *cache.BugCache, target entity.Id, githubID, githubURL string) error {
 	_, err := b.SetMetadata(
+		ctx,
 		target,
 		map[string]string{
 			metaKeyGithubId:  githubID,

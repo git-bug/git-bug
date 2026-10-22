@@ -452,7 +452,7 @@ func (sb *showBug) renderSidebar(g *gocui.Gui, sideView *gocui.View) error {
 }
 
 func (sb *showBug) saveAndBack(g *gocui.Gui, v *gocui.View) error {
-	err := sb.bug.CommitAsNeeded()
+	err := sb.bug.CommitAsNeeded(ui.ctx)
 	if err != nil {
 		return err
 	}
@@ -626,10 +626,10 @@ func (sb *showBug) setTitle(g *gocui.Gui, v *gocui.View) error {
 func (sb *showBug) toggleOpenClose(g *gocui.Gui, v *gocui.View) error {
 	switch sb.bug.Snapshot().Status {
 	case common.OpenStatus:
-		_, err := sb.bug.Close()
+		_, err := sb.bug.Close(ui.ctx)
 		return err
 	case common.ClosedStatus:
-		_, err := sb.bug.Open()
+		_, err := sb.bug.Open(ui.ctx)
 		return err
 	default:
 		return nil

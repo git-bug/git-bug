@@ -149,7 +149,7 @@ func (li *launchpadImporter) ImportAll(ctx context.Context, repo *cache.RepoCach
 
 				if !b.NeedCommit() {
 					out <- core.NewImportNothing(b.Id(), "no imported operation")
-				} else if err := b.Commit(); err != nil {
+				} else if err := b.Commit(ctx); err != nil {
 					out <- core.NewImportError(err, "")
 					return
 				}

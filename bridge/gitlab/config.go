@@ -32,7 +32,7 @@ func (g *Gitlab) ValidParams() map[string]interface{} {
 	}
 }
 
-func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
+func (g *Gitlab) Configure(ctx context.Context, repo *cache.RepoCache, params core.BridgeParams, interactive bool) (core.Configuration, error) {
 	var err error
 	var baseUrl string
 
@@ -86,7 +86,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 		login = l
 	case params.TokenRaw != "":
 		token := auth.NewToken(target, params.TokenRaw)
-		login, err = getLoginFromToken(baseUrl, token)
+		login, err = getLoginFromToken(ctx, baseUrl, token)
 		if err != nil {
 			return nil, err
 		}
@@ -110,7 +110,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 		if !interactive {
 			return nil, fmt.Errorf("Non-interactive-mode is active. Please specify the access token via the --token option.")
 		}
-		cred, err = promptTokenOptions(repo, login, baseUrl)
+		cred, err = promptTokenOptions(ctx, repo, login, baseUrl)
 		if err != nil {
 			return nil, err
 		}
@@ -122,7 +122,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 	}
 
 	// validate project url and get its ID
-	id, err := validateProjectURL(baseUrl, projectURL, token)
+	id, err := validateProjectURL(ctx, baseUrl, projectURL, token)
 	if err != nil {
 		return nil, fmt.Errorf("project validation: %w", err)
 	}
@@ -146,7 +146,7 @@ func (g *Gitlab) Configure(repo *cache.RepoCache, params core.BridgeParams, inte
 		}
 	}
 
-	return conf, core.FinishConfig(context.TODO(), repo, metaKeyGitlabLogin, login)
+	return conf, core.FinishConfig(ctx, repo, metaKeyGitlabLogin, login)
 }
 
 func (g *Gitlab) ValidateConfig(conf core.Configuration) error {
@@ -168,7 +168,7 @@ func (g *Gitlab) ValidateConfig(conf core.Configuration) error {
 	return nil
 }
 
-func promptTokenOptions(repo repository.RepoKeyring, login, baseUrl string) (auth.Credential, error) {
+func promptTokenOptions(ctx context.Context, repo repository.RepoKeyring, login, baseUrl string) (auth.Credential, error) {
 	creds, err := auth.List(repo,
 		auth.WithTarget(target),
 		auth.WithKind(auth.KindToken),
@@ -188,13 +188,13 @@ func promptTokenOptions(repo repository.RepoKeyring, login, baseUrl string) (aut
 	case cred != nil:
 		return cred, nil
 	case index == 0:
-		return promptToken(baseUrl)
+		return promptToken(ctx, baseUrl)
 	default:
 		panic("missed case")
 	}
 }
 
-func promptToken(baseUrl string) (*auth.Token, error) {
+func promptToken(ctx context.Context, baseUrl string) (*auth.Token, error) {
 	fmt.Printf("You can generate a new token by visiting %s.\n", strings.TrimSuffix(baseUrl, "/")+"/-/user_settings/personal_access_tokens")
 	fmt.Println("Choose 'Create personal access token' and set the necessary access scope for your repository.")
 	fmt.Println()
@@ -209,7 +209,10 @@ func promptToken(baseUrl string) (*auth.Token, error) {
 		if !re.MatchString(value) {
 			return "token has incorrect format", nil
 		}
-		login, err = getLoginFromToken(baseUrl, auth.NewToken(target, value))
+		login, err = getLoginFromToken(ctx, baseUrl, auth.NewToken(target, value))
+		if ctx.Err() != nil {
+			return "", ctx.Err()
+		}
 		if err != nil {
 			return fmt.Sprintf("token is invalid: %v", err), nil
 		}
@@ -275,7 +278,7 @@ func getValidGitlabRemoteURLs(repo repository.RepoConfig, baseUrl string) ([]str
 	return urls, nil
 }
 
-func validateProjectURL(baseUrl, url string, token *auth.Token) (int64, error) {
+func validateProjectURL(ctx context.Context, baseUrl, url string, token *auth.Token) (int64, error) {
 	projectPath, err := getProjectPath(baseUrl, url)
 	if err != nil {
 		return 0, err
@@ -286,7 +289,7 @@ func validateProjectURL(baseUrl, url string, token *auth.Token) (int64, error) {
 		return 0, err
 	}
 
-	project, _, err := client.Projects.GetProject(projectPath, &gitlab.GetProjectOptions{})
+	project, _, err := client.Projects.GetProject(projectPath, &gitlab.GetProjectOptions{}, gitlab.WithContext(ctx))
 	if err != nil {
 		return 0, fmt.Errorf("wrong token scope ou non-existent project: %w", err)
 	}
@@ -294,13 +297,13 @@ func validateProjectURL(baseUrl, url string, token *auth.Token) (int64, error) {
 	return project.ID, nil
 }
 
-func getLoginFromToken(baseUrl string, token *auth.Token) (string, error) {
+func getLoginFromToken(ctx context.Context, baseUrl string, token *auth.Token) (string, error) {
 	client, err := buildClient(baseUrl, token)
 	if err != nil {
 		return "", err
 	}
 
-	user, _, err := client.Users.CurrentUser()
+	user, _, err := client.Users.CurrentUser(gitlab.WithContext(ctx))
 	if err != nil {
 		return "", err
 	}

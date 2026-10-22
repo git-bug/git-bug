@@ -152,13 +152,16 @@ func (c *RepoCache) Pull(ctx context.Context, remote string) error {
 	return firstErr
 }
 
-func (c *RepoCache) SetUserIdentity(i *IdentityCache) error {
+func (c *RepoCache) SetUserIdentity(ctx context.Context, i *IdentityCache) error {
 	c.muUserIdentity.RLock()
 	defer c.muUserIdentity.RUnlock()
 
 	// Make sure that everything is fine
-	if _, err := c.identities.Resolve(context.TODO(), i.Id()); err != nil {
-		panic("SetUserIdentity while the identity is not from the cache, something is wrong")
+	if _, err := c.identities.Resolve(ctx, i.Id()); err != nil {
+		if entity.IsErrNotFound(err) {
+			panic("SetUserIdentity while the identity is not from the cache, something is wrong")
+		}
+		return err
 	}
 
 	err := identity.SetUserIdentity(c.repo, i.Identity)

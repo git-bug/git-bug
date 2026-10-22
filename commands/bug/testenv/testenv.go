@@ -40,7 +40,7 @@ func NewTestEnvAndUser(t *testing.T) (*execenv.Env, entity.Id) {
 	i, err := testEnv.Backend.Identities().New(testUserName, testUserEmail)
 	require.NoError(t, err)
 
-	err = testEnv.Backend.SetUserIdentity(i)
+	err = testEnv.Backend.SetUserIdentity(t.Context(), i)
 	require.NoError(t, err)
 
 	return testEnv, i.Id()
@@ -56,9 +56,9 @@ func NewTestEnvAndBug(t *testing.T) (*execenv.Env, entity.Id) {
 
 	testEnv, _ := NewTestEnvAndUser(t)
 
-	b, _, err := testEnv.Backend.Bugs().New(testBugTitle, testBugMessage)
+	b, _, err := testEnv.Backend.Bugs().New(t.Context(), testBugTitle, testBugMessage)
 	require.NoError(t, err)
-	require.NoError(t, b.Commit())
+	require.NoError(t, b.Commit(t.Context()))
 
 	return testEnv, b.Id()
 }
@@ -75,9 +75,9 @@ func NewTestEnvAndBugWithComment(t *testing.T) (*execenv.Env, entity.Id, entity.
 	b, err := env.Backend.Bugs().Resolve(t.Context(), bugID)
 	require.NoError(t, err)
 
-	commentId, _, err := b.AddComment(testCommentMessage)
+	commentId, _, err := b.AddComment(t.Context(), testCommentMessage)
 	require.NoError(t, err)
-	require.NoError(t, b.Commit())
+	require.NoError(t, b.Commit(t.Context()))
 
 	return env, bugID, commentId
 }

@@ -29,7 +29,7 @@ func runBugLabelNew(env *execenv.Env, args []string) error {
 
 	added := cleanArgs
 
-	changes, _, err := b.ChangeLabels(text.CleanupOneLineArray(added), nil)
+	changes, _, err := b.ChangeLabels(env.Ctx, text.CleanupOneLineArray(added), nil)
 
 	for _, change := range changes {
 		env.Out.Println(change)
@@ -39,5 +39,5 @@ func runBugLabelNew(env *execenv.Env, args []string) error {
 		return err
 	}
 
-	return b.Commit()
+	return b.Commit(env.Ctx)
 }

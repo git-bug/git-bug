@@ -26,10 +26,10 @@ func runBugStatusClose(env *execenv.Env, args []string) error {
 		return err
 	}
 
-	_, err = b.Close()
+	_, err = b.Close(env.Ctx)
 	if err != nil {
 		return err
 	}
 
-	return b.Commit()
+	return b.Commit(env.Ctx)
 }

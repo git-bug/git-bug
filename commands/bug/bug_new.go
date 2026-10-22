@@ -65,13 +65,14 @@ func runBugNew(env *execenv.Env, opts bugNewOptions) error {
 	}
 
 	b, _, err := env.Backend.Bugs().New(
+		env.Ctx,
 		text.CleanupOneLine(opts.title),
 		text.Cleanup(opts.message),
 	)
 	if err != nil {
 		return err
 	}
-	err = b.Commit()
+	err = b.Commit(env.Ctx)
 	if err != nil {
 		return err
 	}

@@ -39,76 +39,76 @@ type testCase struct {
 
 func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	// simple bug
-	simpleBug, _, err := repo.Bugs().New("simple bug", "new bug")
+	simpleBug, _, err := repo.Bugs().New(t.Context(), "simple bug", "new bug")
 	require.NoError(t, err)
-	require.NoError(t, simpleBug.Commit())
+	require.NoError(t, simpleBug.Commit(t.Context()))
 
 	// bug with comments
-	bugWithComments, _, err := repo.Bugs().New("bug with comments", "new bug")
+	bugWithComments, _, err := repo.Bugs().New(t.Context(), "bug with comments", "new bug")
 	require.NoError(t, err)
-	require.NoError(t, bugWithComments.Commit())
+	require.NoError(t, bugWithComments.Commit(t.Context()))
 
-	_, _, err = bugWithComments.AddComment("new comment")
+	_, _, err = bugWithComments.AddComment(t.Context(), "new comment")
 	require.NoError(t, err)
-	require.NoError(t, bugWithComments.Commit())
+	require.NoError(t, bugWithComments.Commit(t.Context()))
 
 	// bug with label changes
-	bugLabelChange, _, err := repo.Bugs().New("bug label change", "new bug")
+	bugLabelChange, _, err := repo.Bugs().New(t.Context(), "bug label change", "new bug")
 	require.NoError(t, err)
-	require.NoError(t, bugLabelChange.Commit())
+	require.NoError(t, bugLabelChange.Commit(t.Context()))
 
-	_, _, err = bugLabelChange.ChangeLabels([]string{"bug"}, nil)
-	require.NoError(t, err)
-
-	_, _, err = bugLabelChange.ChangeLabels([]string{"core"}, nil)
+	_, _, err = bugLabelChange.ChangeLabels(t.Context(), []string{"bug"}, nil)
 	require.NoError(t, err)
 
-	_, _, err = bugLabelChange.ChangeLabels(nil, []string{"bug"})
+	_, _, err = bugLabelChange.ChangeLabels(t.Context(), []string{"core"}, nil)
 	require.NoError(t, err)
 
-	_, _, err = bugLabelChange.ChangeLabels([]string{"InVaLiD"}, nil)
+	_, _, err = bugLabelChange.ChangeLabels(t.Context(), nil, []string{"bug"})
 	require.NoError(t, err)
 
-	_, _, err = bugLabelChange.ChangeLabels([]string{"bUG"}, nil)
+	_, _, err = bugLabelChange.ChangeLabels(t.Context(), []string{"InVaLiD"}, nil)
 	require.NoError(t, err)
-	require.NoError(t, bugLabelChange.Commit())
+
+	_, _, err = bugLabelChange.ChangeLabels(t.Context(), []string{"bUG"}, nil)
+	require.NoError(t, err)
+	require.NoError(t, bugLabelChange.Commit(t.Context()))
 
 	// bug with comments editions
-	bugWithCommentEditions, createOp, err := repo.Bugs().New("bug with comments editions", "new bug")
+	bugWithCommentEditions, createOp, err := repo.Bugs().New(t.Context(), "bug with comments editions", "new bug")
 	require.NoError(t, err)
-	require.NoError(t, bugWithCommentEditions.Commit())
+	require.NoError(t, bugWithCommentEditions.Commit(t.Context()))
 
 	_, err = bugWithCommentEditions.EditComment(
-		entity.CombineIds(bugWithCommentEditions.Id(), createOp.Id()), "first comment edited")
+		t.Context(), entity.CombineIds(bugWithCommentEditions.Id(), createOp.Id()), "first comment edited")
 	require.NoError(t, err)
 
-	commentId, _, err := bugWithCommentEditions.AddComment("first comment")
+	commentId, _, err := bugWithCommentEditions.AddComment(t.Context(), "first comment")
 	require.NoError(t, err)
 
-	_, err = bugWithCommentEditions.EditComment(commentId, "first comment edited")
+	_, err = bugWithCommentEditions.EditComment(t.Context(), commentId, "first comment edited")
 	require.NoError(t, err)
-	require.NoError(t, bugWithCommentEditions.Commit())
+	require.NoError(t, bugWithCommentEditions.Commit(t.Context()))
 
 	// bug status changed
-	bugStatusChanged, _, err := repo.Bugs().New("bug status changed", "new bug")
+	bugStatusChanged, _, err := repo.Bugs().New(t.Context(), "bug status changed", "new bug")
 	require.NoError(t, err)
-	require.NoError(t, bugStatusChanged.Commit())
+	require.NoError(t, bugStatusChanged.Commit(t.Context()))
 
-	_, err = bugStatusChanged.Close()
+	_, err = bugStatusChanged.Close(t.Context())
 	require.NoError(t, err)
 
-	_, err = bugStatusChanged.Open()
+	_, err = bugStatusChanged.Open(t.Context())
 	require.NoError(t, err)
-	require.NoError(t, bugStatusChanged.Commit())
+	require.NoError(t, bugStatusChanged.Commit(t.Context()))
 
 	// bug title changed
-	bugTitleEdited, _, err := repo.Bugs().New("bug title edited", "new bug")
+	bugTitleEdited, _, err := repo.Bugs().New(t.Context(), "bug title edited", "new bug")
 	require.NoError(t, err)
-	require.NoError(t, bugTitleEdited.Commit())
+	require.NoError(t, bugTitleEdited.Commit(t.Context()))
 
-	_, err = bugTitleEdited.SetTitle("bug title edited again")
+	_, err = bugTitleEdited.SetTitle(t.Context(), "bug title edited again")
 	require.NoError(t, err)
-	require.NoError(t, bugTitleEdited.Commit())
+	require.NoError(t, bugTitleEdited.Commit(t.Context()))
 
 	return []*testCase{
 		{
@@ -172,7 +172,7 @@ func TestGithubPushPull(t *testing.T) {
 	err = author.Commit()
 	require.NoError(t, err)
 
-	err = backend.SetUserIdentity(author)
+	err = backend.SetUserIdentity(t.Context(), author)
 	require.NoError(t, err)
 
 	// Setup token + cleanup

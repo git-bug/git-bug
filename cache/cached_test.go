@@ -49,9 +49,9 @@ func TestViews(t *testing.T) {
 	t.Run("each caller gets its own view, sharing the committed state", func(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
-		created, _, err := c.Bugs().New("title", "message")
+		created, _, err := c.Bugs().New(t.Context(), "title", "message")
 		require.NoError(t, err)
-		require.NoError(t, created.Commit())
+		require.NoError(t, created.Commit(t.Context()))
 
 		a, err := c.Bugs().Resolve(t.Context(), created.Id())
 		require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestViews(t *testing.T) {
 		require.Same(t, a.shared, b.shared)
 
 		// what a view stages is its own
-		_, _, err = a.AddComment("from a")
+		_, _, err = a.AddComment(t.Context(), "from a")
 		require.NoError(t, err)
 		require.True(t, a.NeedCommit())
 		require.False(t, b.NeedCommit())
@@ -70,13 +70,13 @@ func TestViews(t *testing.T) {
 		require.Equal(t, []string{"message"}, commentMessages(created.Snapshot()))
 		require.Equal(t, 1, lenComments(t, c, created.Id()))
 
-		_, _, err = b.AddComment("from b")
+		_, _, err = b.AddComment(t.Context(), "from b")
 		require.NoError(t, err)
 		require.Equal(t, []string{"message", "from b"}, commentMessages(b.Snapshot()))
 
 		// a commit writes the operations of that view only, and every view sees it,
 		// the ones with staged operations showing them after the committed state
-		require.NoError(t, a.Commit())
+		require.NoError(t, a.Commit(t.Context()))
 		require.False(t, a.NeedCommit())
 		require.Equal(t, []string{"message", "from a"}, commentsInGit(t, repo, created.Id()))
 		require.Equal(t, 2, lenComments(t, c, created.Id()))
@@ -84,7 +84,7 @@ func TestViews(t *testing.T) {
 		require.True(t, b.NeedCommit())
 		require.Equal(t, []string{"message", "from a", "from b"}, commentMessages(b.Snapshot()))
 
-		require.NoError(t, b.Commit())
+		require.NoError(t, b.Commit(t.Context()))
 		require.Equal(t, []string{"message", "from a", "from b"}, commentsInGit(t, repo, created.Id()))
 		require.Equal(t, 3, lenComments(t, c, created.Id()))
 		requireDerivedBuiltFromRefs(t, repo, c)
@@ -93,9 +93,9 @@ func TestViews(t *testing.T) {
 	t.Run("staged metadata is the view's own", func(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
-		created, _, err := c.Bugs().New("title", "message")
+		created, _, err := c.Bugs().New(t.Context(), "title", "message")
 		require.NoError(t, err)
-		require.NoError(t, created.Commit())
+		require.NoError(t, created.Commit(t.Context()))
 		target := created.Snapshot().Operations[0].Id()
 
 		a, err := c.Bugs().Resolve(t.Context(), created.Id())
@@ -103,7 +103,7 @@ func TestViews(t *testing.T) {
 		b, err := c.Bugs().Resolve(t.Context(), created.Id())
 		require.NoError(t, err)
 
-		_, err = a.SetMetadata(target, map[string]string{"key": "from a"})
+		_, err = a.SetMetadata(t.Context(), target, map[string]string{"key": "from a"})
 		require.NoError(t, err)
 		val, ok := a.Snapshot().GetCreateMetadata("key")
 		require.True(t, ok)
@@ -116,10 +116,10 @@ func TestViews(t *testing.T) {
 		require.ErrorIs(t, err, ErrNoMatchingOp)
 
 		// the first value committed wins, in memory as in git
-		_, err = b.SetMetadata(target, map[string]string{"key": "from b"})
+		_, err = b.SetMetadata(t.Context(), target, map[string]string{"key": "from b"})
 		require.NoError(t, err)
-		require.NoError(t, b.Commit())
-		require.NoError(t, a.Commit())
+		require.NoError(t, b.Commit(t.Context()))
+		require.NoError(t, a.Commit(t.Context()))
 		for _, snap := range []*bug.Snapshot{a.Snapshot(), b.Snapshot(), created.Snapshot()} {
 			val, _ = snap.GetCreateMetadata("key")
 			require.Equal(t, "from b", val)
@@ -133,9 +133,9 @@ func TestViews(t *testing.T) {
 	t.Run("concurrent views stage metadata independently", func(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
-		created, _, err := c.Bugs().New("title", "message")
+		created, _, err := c.Bugs().New(t.Context(), "title", "message")
 		require.NoError(t, err)
-		require.NoError(t, created.Commit())
+		require.NoError(t, created.Commit(t.Context()))
 		target := created.Snapshot().Operations[0].Id()
 
 		const count = 10
@@ -151,7 +151,7 @@ func TestViews(t *testing.T) {
 					return
 				}
 				key := fmt.Sprintf("key%d", i)
-				if _, err := v.SetMetadata(target, map[string]string{key: "value"}); err != nil {
+				if _, err := v.SetMetadata(t.Context(), target, map[string]string{key: "value"}); err != nil {
 					errs <- err
 					return
 				}
@@ -175,17 +175,17 @@ func TestViews(t *testing.T) {
 	t.Run("staged operations are committed as one", func(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
-		b, _, err := c.Bugs().New("title", "message")
+		b, _, err := c.Bugs().New(t.Context(), "title", "message")
 		require.NoError(t, err)
-		require.NoError(t, b.Commit())
+		require.NoError(t, b.Commit(t.Context()))
 		before, err := repo.ListCommits(t.Context(), b.LastCommit())
 		require.NoError(t, err)
 
-		_, _, err = b.AddComment("comment")
+		_, _, err = b.AddComment(t.Context(), "comment")
 		require.NoError(t, err)
-		_, err = b.Close()
+		_, err = b.Close(t.Context())
 		require.NoError(t, err)
-		require.NoError(t, b.Commit())
+		require.NoError(t, b.Commit(t.Context()))
 
 		after, err := repo.ListCommits(t.Context(), b.LastCommit())
 		require.NoError(t, err)
@@ -197,12 +197,12 @@ func TestViews(t *testing.T) {
 	t.Run("a creation is staged with what follows, until committed", func(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
-		b, _, err := c.Bugs().New("title", "message")
+		b, _, err := c.Bugs().New(t.Context(), "title", "message")
 		require.NoError(t, err)
 		id := b.Id()
 		require.NotEqual(t, entity.UnsetId, id)
 
-		_, _, err = b.AddComment("comment")
+		_, _, err = b.AddComment(t.Context(), "comment")
 		require.NoError(t, err)
 		require.True(t, b.NeedCommit())
 		require.Equal(t, []string{"message", "comment"}, commentMessages(b.Snapshot()))
@@ -214,7 +214,7 @@ func TestViews(t *testing.T) {
 		_, err = repo.ResolveRef(bug.Namespace, id.String())
 		require.ErrorIs(t, err, repository.ErrNotFound)
 
-		require.NoError(t, b.Commit())
+		require.NoError(t, b.Commit(t.Context()))
 		require.Equal(t, id, b.Id())
 		commits, err := repo.ListCommits(t.Context(), b.LastCommit())
 		require.NoError(t, err)
@@ -231,10 +231,10 @@ func TestViews(t *testing.T) {
 	t.Run("a commit on a reference moved outside is redone on the new state", func(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, rene := newTestCacheWithUser(t, repo)
-		b, _, err := c.Bugs().New("title", "message")
+		b, _, err := c.Bugs().New(t.Context(), "title", "message")
 		require.NoError(t, err)
-		require.NoError(t, b.Commit())
-		_, _, err = b.AddComment("markerview")
+		require.NoError(t, b.Commit(t.Context()))
+		_, _, err = b.AddComment(t.Context(), "markerview")
 		require.NoError(t, err)
 
 		// moved after the view staged its operation
@@ -243,7 +243,7 @@ func TestViews(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEqual(t, ref, b.LastCommit())
 
-		require.NoError(t, b.Commit())
+		require.NoError(t, b.Commit(t.Context()))
 		require.Equal(t, []string{"message", "markeroutside", "markerview"}, commentsInGit(t, repo, b.Id()))
 		require.Equal(t, []string{"message", "markeroutside", "markerview"}, commentMessages(b.Snapshot()))
 		ref, err = repo.ResolveRef(bug.Namespace, b.Id().String())
@@ -258,25 +258,25 @@ func TestViews(t *testing.T) {
 	t.Run("a failed commit keeps the staged operations", func(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
-		b, _, err := c.Bugs().New("title", "message")
+		b, _, err := c.Bugs().New(t.Context(), "title", "message")
 		require.NoError(t, err)
-		require.NoError(t, b.Commit())
-		_, committed, err := b.AddComment("first")
+		require.NoError(t, b.Commit(t.Context()))
+		_, committed, err := b.AddComment(t.Context(), "first")
 		require.NoError(t, err)
-		require.NoError(t, b.Commit())
+		require.NoError(t, b.Commit(t.Context()))
 
 		// an operation already committed can't be committed again
-		_, _, err = b.AddComment("staged")
+		_, _, err = b.AddComment(t.Context(), "staged")
 		require.NoError(t, err)
 		b.Append(committed)
-		require.Error(t, b.Commit())
+		require.Error(t, b.Commit(t.Context()))
 		require.True(t, b.NeedCommit())
 		require.Len(t, b.Snapshot().Operations, 4)
 		require.Equal(t, []string{"message", "first"}, commentsInGit(t, repo, b.Id()))
 		requireDerivedBuiltFromRefs(t, repo, c)
 
 		// committing again fails the same way, and nothing gets saved
-		require.Error(t, b.CommitAsNeeded())
+		require.Error(t, b.CommitAsNeeded(t.Context()))
 		require.True(t, b.NeedCommit())
 		require.Equal(t, []string{"message", "first"}, commentsInGit(t, repo, b.Id()))
 
@@ -284,9 +284,9 @@ func TestViews(t *testing.T) {
 		other, err := c.Bugs().Resolve(t.Context(), b.Id())
 		require.NoError(t, err)
 		require.False(t, other.NeedCommit())
-		_, _, err = other.AddComment("other")
+		_, _, err = other.AddComment(t.Context(), "other")
 		require.NoError(t, err)
-		require.NoError(t, other.Commit())
+		require.NoError(t, other.Commit(t.Context()))
 		require.Equal(t, []string{"message", "first", "other"}, commentsInGit(t, repo, b.Id()))
 		requireDerivedBuiltFromRefs(t, repo, c)
 	})
@@ -294,22 +294,22 @@ func TestViews(t *testing.T) {
 	t.Run("a commit failed on a transient error succeeds once retried", func(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
-		b, _, err := c.Bugs().New("title", "message")
+		b, _, err := c.Bugs().New(t.Context(), "title", "message")
 		require.NoError(t, err)
-		require.NoError(t, b.Commit())
+		require.NoError(t, b.Commit(t.Context()))
 
-		_, _, err = b.AddComment("retried")
+		_, _, err = b.AddComment(t.Context(), "retried")
 		require.NoError(t, err)
 
 		// a lock held by someone else on the reference fails the commit
 		lockPath := filepath.Join(repo.GitDir, "refs", bug.Namespace, b.Id().String()+".lock")
 		require.NoError(t, os.WriteFile(lockPath, []byte("held"), 0666))
-		require.Error(t, b.Commit())
+		require.Error(t, b.Commit(t.Context()))
 		require.True(t, b.NeedCommit())
 		require.Equal(t, []string{"message"}, commentsInGit(t, repo, b.Id()))
 
 		require.NoError(t, os.Remove(lockPath))
-		require.NoError(t, b.Commit())
+		require.NoError(t, b.Commit(t.Context()))
 		require.False(t, b.NeedCommit())
 		require.Equal(t, []string{"message", "retried"}, commentsInGit(t, repo, b.Id()))
 		require.Equal(t, []string{"message", "retried"}, commentMessages(b.Snapshot()))
@@ -319,9 +319,9 @@ func TestViews(t *testing.T) {
 	t.Run("a loaded copy follows a reference moved outside on sync", func(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, rene := newTestCacheWithUser(t, repo)
-		b, _, err := c.Bugs().New("title", "message")
+		b, _, err := c.Bugs().New(t.Context(), "title", "message")
 		require.NoError(t, err)
-		require.NoError(t, b.Commit())
+		require.NoError(t, b.Commit(t.Context()))
 		other, err := c.Bugs().Resolve(t.Context(), b.Id())
 		require.NoError(t, err)
 
@@ -339,9 +339,9 @@ func TestViews(t *testing.T) {
 	t.Run("concurrent views commit independently", func(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
-		created, _, err := c.Bugs().New("title", "message")
+		created, _, err := c.Bugs().New(t.Context(), "title", "message")
 		require.NoError(t, err)
-		require.NoError(t, created.Commit())
+		require.NoError(t, created.Commit(t.Context()))
 
 		const count = 10
 		var wg sync.WaitGroup
@@ -355,11 +355,11 @@ func TestViews(t *testing.T) {
 					errs <- err
 					return
 				}
-				if _, _, err := v.AddComment(fmt.Sprintf("marker%d", i)); err != nil {
+				if _, _, err := v.AddComment(t.Context(), fmt.Sprintf("marker%d", i)); err != nil {
 					errs <- err
 					return
 				}
-				errs <- v.Commit()
+				errs <- v.Commit(t.Context())
 			}()
 		}
 		wg.Wait()
@@ -446,7 +446,7 @@ func TestViews(t *testing.T) {
 	t.Run("the id of a new bug holds while it's committed", func(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
-		b, _, err := c.Bugs().New("title", "message")
+		b, _, err := c.Bugs().New(t.Context(), "title", "message")
 		require.NoError(t, err)
 		id := b.Id()
 
@@ -457,7 +457,7 @@ func TestViews(t *testing.T) {
 		go func() { got <- b.Id() }()
 		// give it time to read the copy and wait on the view
 		time.Sleep(50 * time.Millisecond)
-		require.NoError(t, b.commitLocked())
+		require.NoError(t, b.commitLocked(t.Context()))
 		b.mu.Unlock()
 
 		require.Equal(t, id, <-got)

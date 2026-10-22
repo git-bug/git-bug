@@ -86,7 +86,7 @@ func TestValidateProject(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ok, _ := validateProject(tt.args.project)
+			ok, _ := validateProject(t.Context(), tt.args.project)
 			assert.Equal(t, tt.want, ok)
 		})
 	}

@@ -94,7 +94,7 @@ func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 
 			if !b.NeedCommit() {
 				out <- core.NewImportNothing(b.Id(), "no imported operation")
-			} else if err := b.Commit(); err != nil {
+			} else if err := b.Commit(ctx); err != nil {
 				// commit bug state
 				err := fmt.Errorf("bug commit: %v", err)
 				out <- core.NewImportError(err, "")

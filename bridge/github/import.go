@@ -87,7 +87,7 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 				out <- core.NewImportRateLimiting(event.msg)
 			case IssueEvent:
 				// first: commit what is being held in currBug
-				if err = gi.commit(currBug, out); err != nil {
+				if err = gi.commit(ctx, currBug, out); err != nil {
 					out <- core.NewImportError(err, "")
 					return
 				}
@@ -137,7 +137,7 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 			}
 		}
 		// commit what is being held in currBug before returning
-		if err = gi.commit(currBug, out); err != nil {
+		if err = gi.commit(ctx, currBug, out); err != nil {
 			out <- core.NewImportError(err, "")
 		}
 		if err = gi.mediator.Error(); err != nil {
@@ -161,14 +161,14 @@ func (gi *githubImporter) getEventHandleMsgs() ImportEvent {
 	}
 }
 
-func (gi *githubImporter) commit(b *cache.BugCache, out chan<- core.ImportResult) error {
+func (gi *githubImporter) commit(ctx context.Context, b *cache.BugCache, out chan<- core.ImportResult) error {
 	if b == nil {
 		return nil
 	}
 	if !b.NeedCommit() {
 		out <- core.NewImportNothing(b.Id(), "no imported operation")
 		return nil
-	} else if err := b.Commit(); err != nil {
+	} else if err := b.Commit(ctx); err != nil {
 		// commit bug state
 		return fmt.Errorf("bug commit: %v", err)
 	}

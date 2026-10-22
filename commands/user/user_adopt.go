@@ -30,7 +30,7 @@ func runUserAdopt(env *execenv.Env, args []string) error {
 		return err
 	}
 
-	err = env.Backend.SetUserIdentity(i)
+	err = env.Backend.SetUserIdentity(env.Ctx, i)
 	if err != nil {
 		return err
 	}

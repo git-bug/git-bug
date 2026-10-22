@@ -144,7 +144,7 @@ func TestValidateUsername(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ok, fixed, err := validateUsername(tt.input)
+			ok, fixed, err := validateUsername(t.Context(), tt.input)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.ok, ok)
 			assert.Equal(t, tt.fixed, fixed)
@@ -216,7 +216,7 @@ func TestValidateProject(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ok, _ := validateProject(tt.args.owner, tt.args.project, tt.args.token)
+			ok, _ := validateProject(t.Context(), tt.args.owner, tt.args.project, tt.args.token)
 			assert.Equal(t, tt.want, ok)
 		})
 	}

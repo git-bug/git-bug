@@ -50,7 +50,7 @@ func (CommitMutations) InterceptResponse(ctx context.Context, next graphql.Respo
 	}
 
 	if len(resp.Errors) == 0 {
-		err := uow.commit()
+		err := uow.commit(ctx)
 		if err != nil {
 			resp.Errors = append(resp.Errors, gqlerror.Errorf("%s", err))
 		}
@@ -85,10 +85,10 @@ func unitOfWorkFromCtx(ctx context.Context) *unitOfWork {
 }
 
 // commit commits the entities, stopping at the first failure.
-func (uow *unitOfWork) commit() error {
+func (uow *unitOfWork) commit(ctx context.Context) error {
 	for _, bugs := range uow.bugs {
 		for id, b := range bugs {
-			err := b.CommitAsNeeded()
+			err := b.CommitAsNeeded(ctx)
 			if err != nil {
 				return fmt.Errorf("can't commit bug %s: %w", id.Human(), err)
 			}

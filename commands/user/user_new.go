@@ -83,7 +83,7 @@ func runUserNew(env *execenv.Env, opts userNewOptions) error {
 	}
 
 	if !set {
-		err = env.Backend.SetUserIdentity(id)
+		err = env.Backend.SetUserIdentity(env.Ctx, id)
 		if err != nil {
 			return err
 		}

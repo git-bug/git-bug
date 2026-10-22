@@ -73,10 +73,10 @@ func runBugCommentEdit(env *execenv.Env, opts bugCommentEditOptions, args []stri
 		}
 	}
 
-	_, err = b.EditComment(commentId, opts.message)
+	_, err = b.EditComment(env.Ctx, commentId, opts.message)
 	if err != nil {
 		return err
 	}
 
-	return b.Commit()
+	return b.Commit(env.Ctx)
 }

@@ -44,8 +44,7 @@ func runBridgePush(env *execenv.Env, args []string) error {
 		return err
 	}
 
-	parentCtx := context.Background()
-	ctx, cancel := context.WithCancel(parentCtx)
+	ctx, cancel := context.WithCancel(env.Ctx)
 	defer cancel()
 
 	done := make(chan struct{}, 1)
