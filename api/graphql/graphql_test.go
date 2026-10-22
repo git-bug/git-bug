@@ -638,8 +638,10 @@ func TestSubscriptions(t *testing.T) {
 
 	b, _, err := rc.Bugs().New("subscribed", "body")
 	require.NoError(t, err)
+	require.NoError(t, b.Commit())
 	other, _, err := rc.Bugs().New("not subscribed", "body")
 	require.NoError(t, err)
+	require.NoError(t, other.Commit())
 
 	type entityChange struct {
 		Event string
@@ -672,8 +674,12 @@ func TestSubscriptions(t *testing.T) {
 		created := make(map[string]bool)
 		var mu sync.Mutex
 		stop := keepDoing(t, func() {
+			// committed with its creation, the comment brings no update of its own
 			b, _, err := rc.Bugs().New("new bug", "body")
 			assert.NoError(t, err)
+			_, _, err = b.AddComment("comment")
+			assert.NoError(t, err)
+			assert.NoError(t, b.Commit())
 			mu.Lock()
 			created[b.Id().String()] = true
 			mu.Unlock()
@@ -756,6 +762,7 @@ func TestMutations(t *testing.T) {
 	t.Run("mutations on the same bug are committed together", func(t *testing.T) {
 		b, _, err := rc.Bugs().New("title", "body")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 		before := b.LastCommit()
 
 		var data struct {
@@ -788,6 +795,7 @@ func TestMutations(t *testing.T) {
 	t.Run("a single mutation is committed", func(t *testing.T) {
 		b, _, err := rc.Bugs().New("title", "body")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 		before := b.LastCommit()
 
 		mutate(fmt.Sprintf(`mutation {
@@ -801,6 +809,7 @@ func TestMutations(t *testing.T) {
 	t.Run("a bug found through a comment shares the view", func(t *testing.T) {
 		b, _, err := rc.Bugs().New("title", "body")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 		before := b.LastCommit()
 		comment := b.Snapshot().Comments[0].CombinedId()
 
@@ -817,9 +826,11 @@ func TestMutations(t *testing.T) {
 	t.Run("mutations on several bugs are all committed", func(t *testing.T) {
 		b1, _, err := rc.Bugs().New("title 1", "body")
 		require.NoError(t, err)
+		require.NoError(t, b1.Commit())
 		before1 := b1.LastCommit()
 		b2, _, err := rc.Bugs().New("title 2", "body")
 		require.NoError(t, err)
+		require.NoError(t, b2.Commit())
 		before2 := b2.LastCommit()
 
 		mutate(fmt.Sprintf(`mutation {
@@ -848,6 +859,7 @@ func TestMutations(t *testing.T) {
 		require.NoError(t, rcA.SetUserIdentity(rene))
 		b, _, err := rcA.Bugs().New("title", "body")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 		before := b.LastCommit()
 
 		_, err = rcA.Push("origin")
@@ -868,6 +880,7 @@ func TestMutations(t *testing.T) {
 	t.Run("a failing mutation commits nothing", func(t *testing.T) {
 		b, _, err := rc.Bugs().New("title", "body")
 		require.NoError(t, err)
+		require.NoError(t, b.Commit())
 		before := b.LastCommit()
 
 		resp, err := c.RawPost(fmt.Sprintf(`mutation {
@@ -882,6 +895,39 @@ func TestMutations(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, before, b.LastCommit())
 		require.Equal(t, "title", b.Snapshot().Title)
+	})
+
+	t.Run("a creation is committed", func(t *testing.T) {
+		var data struct {
+			BugCreate struct{ Bug struct{ Id string } }
+		}
+		c.MustPost(`mutation {
+			bugCreate(input: {title: "created", message: "body"}) { bug { id } }
+		}`, &data)
+
+		b, err := rc.Bugs().Resolve(entity.Id(data.BugCreate.Bug.Id))
+		require.NoError(t, err)
+		require.Equal(t, "created", b.Snapshot().Title)
+		commits, err := repo.ListCommits(b.LastCommit())
+		require.NoError(t, err)
+		require.Len(t, commits, 1)
+	})
+
+	t.Run("a failing mutation discards a creation", func(t *testing.T) {
+		before := rc.Bugs().AllIds()
+
+		resp, err := c.RawPost(fmt.Sprintf(`mutation {
+			bugCreate(input: {title: "discarded", message: "body"}) { bug { id } }
+			bugEditComment(input: {targetPrefix: "%s", message: "edit"}) { operation { id } }
+		}`, "0000000"))
+		require.NoError(t, err)
+		require.NotEmpty(t, resp.Errors)
+		require.Nil(t, resp.Data)
+
+		require.ElementsMatch(t, before, rc.Bugs().AllIds())
+		refs, err := repo.ListRefs(bug.Namespace)
+		require.NoError(t, err)
+		require.Len(t, refs, len(before))
 	})
 }
 

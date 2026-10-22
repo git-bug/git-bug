@@ -460,12 +460,16 @@ func readAllClocksNoCheck(def Definition, repo repository.Repo) (createTime, edi
 	return createTime, editTime, nil
 }
 
-// Id return the Entity identifier
+// Id return the Entity identifier, the id of its first operation. It is
+// entity.UnsetId for an Entity without any operation.
 func (e *Entity) Id() entity.Id {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
-	// id is the id of the first operation
-	return e.firstOpLocked().Id()
+	first := e.firstOpLocked()
+	if first == nil {
+		return entity.UnsetId
+	}
+	return first.Id()
 }
 
 // Validate check if the Entity data is valid

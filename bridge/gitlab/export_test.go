@@ -40,10 +40,12 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	// simple bug
 	simpleBug, _, err := repo.Bugs().New("simple bug", "new bug")
 	require.NoError(t, err)
+	require.NoError(t, simpleBug.Commit())
 
 	// bug with comments
 	bugWithComments, _, err := repo.Bugs().New("bug with comments", "new bug")
 	require.NoError(t, err)
+	require.NoError(t, bugWithComments.Commit())
 
 	_, _, err = bugWithComments.AddComment("new comment")
 	require.NoError(t, err)
@@ -52,6 +54,7 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	// bug with label changes
 	bugLabelChange, _, err := repo.Bugs().New("bug label change", "new bug")
 	require.NoError(t, err)
+	require.NoError(t, bugLabelChange.Commit())
 
 	_, _, err = bugLabelChange.ChangeLabels([]string{"bug"}, nil)
 	require.NoError(t, err)
@@ -66,6 +69,7 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	// bug with comments editions
 	bugWithCommentEditions, createOp, err := repo.Bugs().New("bug with comments editions", "new bug")
 	require.NoError(t, err)
+	require.NoError(t, bugWithCommentEditions.Commit())
 
 	_, err = bugWithCommentEditions.EditComment(
 		entity.CombineIds(bugWithCommentEditions.Id(), createOp.Id()), "first comment edited")
@@ -81,6 +85,7 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	// bug status changed
 	bugStatusChanged, _, err := repo.Bugs().New("bug status changed", "new bug")
 	require.NoError(t, err)
+	require.NoError(t, bugStatusChanged.Commit())
 
 	_, err = bugStatusChanged.Close()
 	require.NoError(t, err)
@@ -92,6 +97,7 @@ func testCases(t *testing.T, repo *cache.RepoCache) []*testCase {
 	// bug title changed
 	bugTitleEdited, _, err := repo.Bugs().New("bug title edited", "new bug")
 	require.NoError(t, err)
+	require.NoError(t, bugTitleEdited.Commit())
 
 	_, err = bugTitleEdited.SetTitle("bug title edited again")
 	require.NoError(t, err)

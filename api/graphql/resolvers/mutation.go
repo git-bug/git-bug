@@ -60,6 +60,8 @@ func (r mutationResolver) BugCreate(ctx context.Context, input models.BugCreateI
 	if err != nil {
 		return nil, err
 	}
+	// insert into the unit of work
+	unitOfWorkFromCtx(ctx).bug(repo, b)
 
 	return &models.BugCreatePayload{
 		ClientMutationID: input.ClientMutationID,

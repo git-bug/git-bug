@@ -71,6 +71,10 @@ func runBugNew(env *execenv.Env, opts bugNewOptions) error {
 	if err != nil {
 		return err
 	}
+	err = b.Commit()
+	if err != nil {
+		return err
+	}
 
 	env.Out.Printf("%s created\n", b.Id().Human())
 

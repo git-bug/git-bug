@@ -3,7 +3,6 @@ package cache
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"maps"
 	"slices"
 	"sync"
@@ -389,47 +388,6 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) resolveMatcher(f func(ExcerptT) bo
 	return matching[0], nil
 }
 
-// add registers a freshly committed entity, and returns a view of it.
-func (sc *SubCache[SharedT, ExcerptT, ViewT]) add(shared SharedT) (ViewT, error) {
-	id := shared.Id()
-
-	// Under muDerived until the copy is registered, so that a concurrent
-	// removal comes either before, and the entity is not added, or after.
-	changes, err := func() (map[entity.Id]EntityEventType, error) {
-		sc.muDerived.Lock()
-		defer sc.muDerived.Unlock()
-
-		sc.muMaps.RLock()
-		_, has := sc.cached[id]
-		sc.muMaps.RUnlock()
-		if has {
-			return nil, fmt.Errorf("entity %s already exist in the cache", id)
-		}
-
-		changes, err := sc.syncIdsLocked([]entity.Id{id})
-		if err != nil {
-			return changes, err
-		}
-		if _, ok := sc.builtFrom[id]; !ok {
-			return changes, fmt.Errorf("%s %s got removed, or the cache closed", sc.typename, id)
-		}
-
-		sc.muMaps.Lock()
-		sc.cached[id] = shared
-		sc.lru.Add(id)
-		sc.muMaps.Unlock()
-		return changes, nil
-	}()
-	sc.notifyChanges(changes)
-	if err != nil {
-		return *new(ViewT), err
-	}
-
-	sc.evictIfNeeded()
-
-	return sc.newView(shared), nil
-}
-
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) Remove(prefix string) error {
 	id, err := sc.resolveMatcher(func(excerpt ExcerptT) bool {
 		return excerpt.Id().HasPrefix(prefix)
@@ -497,16 +455,52 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) GetNamespace() string {
 	return sc.namespace
 }
 
-// newView wraps the loaded copy of an entity for a caller, and has its commits
-// refresh the derived state.
+// newView wraps a copy of an entity for a caller, and has its commits go through
+// onCommit.
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) newView(shared SharedT) ViewT {
-	id := shared.Id()
-	return sc.makeView(shared, func() error { return sc.onCommit(id) })
+	return sc.makeView(shared, func() error { return sc.onCommit(shared) })
 }
 
-// onCommit refreshes the derived state after an entity has been committed.
-func (sc *SubCache[SharedT, ExcerptT, ViewT]) onCommit(id entity.Id) error {
-	return sc.sync(id)
+// onCommit refreshes the derived state after an entity has been committed from
+// the given copy. With no copy of it loaded, as for a new entity or an evicted
+// one, that copy becomes the loaded one if it holds what was synced.
+func (sc *SubCache[SharedT, ExcerptT, ViewT]) onCommit(shared SharedT) error {
+	// the id is only read now: the copy of a new entity has none before its
+	// first commit
+	id := shared.Id()
+
+	// Under muDerived until the copy is registered, so that a concurrent
+	// removal comes either before, and the copy is not loaded, or after.
+	changes, err := func() (map[entity.Id]EntityEventType, error) {
+		sc.muDerived.Lock()
+		defer sc.muDerived.Unlock()
+
+		changes, err := sc.syncIdsLocked([]entity.Id{id})
+		if err != nil {
+			return changes, err
+		}
+		// The copy can be behind what was synced: another writer moved the
+		// reference since, or the view committed a copy of its own, as an
+		// identity view does. The next Resolve reads it again then.
+		if built, ok := sc.builtFrom[id]; !ok || shared.LastCommit() != built {
+			return changes, nil
+		}
+
+		sc.muMaps.Lock()
+		if _, has := sc.cached[id]; !has {
+			sc.cached[id] = shared
+			sc.lru.Add(id)
+		}
+		sc.muMaps.Unlock()
+		return changes, nil
+	}()
+	sc.notifyChanges(changes)
+	if err != nil {
+		return err
+	}
+
+	sc.evictIfNeeded()
+	return nil
 }
 
 // notifyObservers notifies all the observers when something happening for an entity

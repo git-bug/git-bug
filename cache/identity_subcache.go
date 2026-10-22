@@ -112,10 +112,10 @@ func (c *RepoCacheIdentity) finishIdentity(i *identity.Identity, metadata map[st
 		return nil, err
 	}
 
-	cached, err := c.add(i)
+	err = c.onCommit(i)
 	if err != nil {
 		return nil, err
 	}
 
-	return cached, nil
+	return c.newView(i), nil
 }
