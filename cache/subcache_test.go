@@ -45,7 +45,7 @@ func requireDerivedBuiltFromRefs(t *testing.T, repo repository.Repo, c *RepoCach
 
 		index, err := repo.GetIndex(namespace, formatVersion)
 		require.NoError(t, err)
-		indexBuiltFrom, err := index.AllBuiltFrom()
+		indexBuiltFrom, err := index.AllBuiltFrom(t.Context())
 		require.NoError(t, err)
 		require.Equal(t, refs, indexBuiltFrom)
 	}
@@ -69,13 +69,13 @@ func clearBugIndex(t *testing.T, repo repository.Repo) {
 	t.Helper()
 	index, err := repo.GetIndex(bug.Namespace, formatVersion)
 	require.NoError(t, err)
-	builtFrom, err := index.AllBuiltFrom()
+	builtFrom, err := index.AllBuiltFrom(t.Context())
 	require.NoError(t, err)
 	batch := index.NewBatch()
 	for id := range builtFrom {
 		batch.Remove(id)
 	}
-	require.NoError(t, batch.Apply())
+	require.NoError(t, batch.Apply(t.Context()))
 }
 
 func searchBugs(t *testing.T, c *RepoCache, term string) []entity.Id {
@@ -132,9 +132,9 @@ type countingBatch struct {
 	repo *countingRepo
 }
 
-func (b countingBatch) Apply() error {
+func (b countingBatch) Apply(ctx context.Context) error {
 	b.repo.batches++
-	return b.IndexBatch.Apply()
+	return b.IndexBatch.Apply(ctx)
 }
 
 func TestSubCacheDerived(t *testing.T) {
@@ -633,6 +633,50 @@ func TestSubCacheDerived(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("concurrent resolves of an entity not loaded read it once", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo := repotest.NewGoGitRepo(t, false)
+			c, _ := newTestCacheWithUser(t, repo)
+			c.setCacheSize(1)
+
+			evicted, _, err := c.Bugs().New("title", "message")
+			require.NoError(t, err)
+			require.NoError(t, evicted.Commit())
+			created, _, err := c.Bugs().New("title", "message")
+			require.NoError(t, err)
+			require.NoError(t, created.Commit())
+			require.NotContains(t, c.bugs.cached, evicted.Id())
+
+			var reads atomic.Int32
+			release := make(chan struct{})
+			read := c.bugs.actions.ReadWithResolver
+			c.bugs.actions.ReadWithResolver = func(repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (*sharedBug, error) {
+				reads.Add(1)
+				<-release
+				return read(repo, resolvers, id)
+			}
+
+			const callers = 5
+			views := make([]*BugCache, callers)
+			var wg sync.WaitGroup
+			for i := range callers {
+				wg.Go(func() {
+					b, err := c.Bugs().Resolve(evicted.Id())
+					require.NoError(t, err)
+					views[i] = b
+				})
+			}
+			synctest.Wait()
+			require.Equal(t, int32(1), reads.Load())
+
+			close(release)
+			wg.Wait()
+			for _, b := range views {
+				require.Same(t, views[0].shared, b.shared)
+			}
+		})
+	})
+
 	t.Run("an evicted copy keeps working, and the loaded one follows its commits", func(t *testing.T) {
 		repo := repotest.NewGoGitRepo(t, false)
 		c, _ := newTestCacheWithUser(t, repo)
@@ -842,7 +886,7 @@ func TestSubCacheDerived(t *testing.T) {
 		require.NoError(t, err)
 		batch := index.NewBatch()
 		require.NoError(t, batch.Set("notyetpublished", "1111111111111111111111111111111111111111", []byte(`{}`), []string{"markerahead"}))
-		require.NoError(t, batch.Apply())
+		require.NoError(t, batch.Apply(t.Context()))
 
 		require.Empty(t, searchBugs(t, c, "markerahead"))
 	})

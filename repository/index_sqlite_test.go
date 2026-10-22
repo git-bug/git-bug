@@ -34,7 +34,7 @@ func TestSqliteIndex(t *testing.T) {
 		require.NoError(t, b.Set("id5", testCommit, excerpt, []string{"数据库连接失败"}))
 		require.NoError(t, b.Set("id6", testCommit, excerpt, []string{"库存数据"}))
 		require.NoError(t, b.Set("id7", testCommit, excerpt, []string{"first text ends with words", "_ second starts"}))
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 
 		tests := []struct {
 			name     string
@@ -65,7 +65,7 @@ func TestSqliteIndex(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				res, err := idx.Search(tt.phrases)
+				res, err := idx.Search(t.Context(), tt.phrases)
 				require.NoError(t, err)
 				require.ElementsMatch(t, tt.expected, res)
 			})
@@ -79,19 +79,19 @@ func TestSqliteIndex(t *testing.T) {
 		require.NoError(t, err)
 		b := idx.NewBatch()
 		require.NoError(t, b.Set("id1", testCommit, []byte(`{"n":1}`), []string{"marker"}))
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 		require.NoError(t, repoIndex.Close())
 
 		idx, err = repoIndex.GetIndex("a", 1)
 		require.NoError(t, err)
-		builtFrom, err := idx.AllBuiltFrom()
+		builtFrom, err := idx.AllBuiltFrom(t.Context())
 		require.NoError(t, err)
 		require.Equal(t, map[string]Hash{"id1": testCommit}, builtFrom)
-		commit, got, err := idx.Excerpt("id1")
+		commit, got, err := idx.Excerpt(t.Context(), "id1")
 		require.NoError(t, err)
 		require.Equal(t, testCommit, commit)
 		require.JSONEq(t, `{"n":1}`, string(got))
-		res, err := idx.Search([]string{"marker"})
+		res, err := idx.Search(t.Context(), []string{"marker"})
 		require.NoError(t, err)
 		require.Equal(t, []string{"id1"}, res)
 	})
@@ -115,7 +115,7 @@ func TestSqliteIndex(t *testing.T) {
 		require.NoError(t, err)
 		b := idx.NewBatch()
 		require.NoError(t, b.Set("id1", testCommit, excerpt, []string{"marker"}))
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 
 		_, err = idx.(*sqliteIndex).db.Exec("DELETE FROM docs WHERE id = 'id1'")
 		require.NoError(t, err)
@@ -123,8 +123,8 @@ func TestSqliteIndex(t *testing.T) {
 		// the next document gets the num of the deleted one, not its tokens
 		b = idx.NewBatch()
 		require.NoError(t, b.Set("id2", testCommit, excerpt, nil))
-		require.NoError(t, b.Apply())
-		res, err := idx.Search([]string{"marker"})
+		require.NoError(t, b.Apply(t.Context()))
+		res, err := idx.Search(t.Context(), []string{"marker"})
 		require.NoError(t, err)
 		require.Empty(t, res)
 	})
@@ -140,7 +140,7 @@ func TestSqliteIndex(t *testing.T) {
 		require.NoError(t, err)
 		b := idx.NewBatch()
 		require.NoError(t, b.Set("id1", testCommit, excerpt, nil))
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 		require.FileExists(t, path)
 	})
 
@@ -151,14 +151,14 @@ func TestSqliteIndex(t *testing.T) {
 			b := idx.NewBatch()
 			require.NoError(t, b.Set("valid", testCommit, excerpt, []string{"marker"}))
 			require.NoError(t, b.Set("id1", testCommit, []byte(invalid), nil))
-			require.Error(t, b.Apply(), invalid)
+			require.Error(t, b.Apply(t.Context()), invalid)
 		}
 
 		// nothing of the batches landed
-		builtFrom, err := idx.AllBuiltFrom()
+		builtFrom, err := idx.AllBuiltFrom(t.Context())
 		require.NoError(t, err)
 		require.Empty(t, builtFrom)
-		res, err := idx.Search([]string{"marker"})
+		res, err := idx.Search(t.Context(), []string{"marker"})
 		require.NoError(t, err)
 		require.Empty(t, res)
 	})
@@ -172,11 +172,11 @@ func TestSqliteIndex(t *testing.T) {
 		require.NoError(t, b.Set("id1", testCommit, excerpt, []string{"marker"}))
 		// the database is closed underneath the batch
 		require.NoError(t, repoIndex.Close())
-		require.Error(t, b.Apply())
+		require.Error(t, b.Apply(t.Context()))
 
 		idx, err = repoIndex.GetIndex("a", 1)
 		require.NoError(t, err)
-		builtFrom, err := idx.AllBuiltFrom()
+		builtFrom, err := idx.AllBuiltFrom(t.Context())
 		require.NoError(t, err)
 		require.Empty(t, builtFrom)
 	})
@@ -194,7 +194,7 @@ func TestSqliteIndex(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				err = b.Apply()
+				err = b.Apply(t.Context())
 				if err != nil {
 					return err
 				}
@@ -226,10 +226,10 @@ func TestSqliteIndex(t *testing.T) {
 		for _, repoIndex := range []RepoIndex{first, second} {
 			idx, err := repoIndex.GetIndex("a", 1)
 			require.NoError(t, err)
-			res, err := idx.Search([]string{"marker"})
+			res, err := idx.Search(t.Context(), []string{"marker"})
 			require.NoError(t, err)
 			require.Len(t, res, 2*docs)
-			builtFrom, err := idx.AllBuiltFrom()
+			builtFrom, err := idx.AllBuiltFrom(t.Context())
 			require.NoError(t, err)
 			require.Len(t, builtFrom, 2*docs)
 		}

@@ -253,9 +253,14 @@ func RepoDataTest(t *testing.T, repo repository.RepoData) {
 	err = repo.RemoveTrackingRef("origin", "bugs", key1)
 	require.NoError(t, err)
 
-	commits, err := repo.ListCommits(commit2)
+	commits, err := repo.ListCommits(t.Context(), commit2)
 	require.NoError(t, err)
 	require.Equal(t, []repository.Hash{commit1, commit2}, commits)
+
+	canceled, cancel := context.WithCancel(t.Context())
+	cancel()
+	_, err = repo.ListCommits(canceled, commit2)
+	require.ErrorIs(t, err, context.Canceled)
 
 	// Cleanup
 
@@ -386,22 +391,22 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 
 	requireBuiltFrom := func(t *testing.T, idx repository.Index, expected map[string]repository.Hash) {
 		t.Helper()
-		builtFrom, err := idx.AllBuiltFrom()
+		builtFrom, err := idx.AllBuiltFrom(t.Context())
 		require.NoError(t, err)
 		require.Equal(t, expected, builtFrom)
 
 		for id, commit := range expected {
-			got, err := idx.BuiltFrom(id)
+			got, err := idx.BuiltFrom(t.Context(), id)
 			require.NoError(t, err)
 			require.Equal(t, commit, got)
 		}
-		_, err = idx.BuiltFrom("unknown")
+		_, err = idx.BuiltFrom(t.Context(), "unknown")
 		require.ErrorIs(t, err, repository.ErrNotFound)
 	}
 
 	requireSearch := func(t *testing.T, idx repository.Index, term string, expected ...string) {
 		t.Helper()
-		res, err := idx.Search([]string{term})
+		res, err := idx.Search(t.Context(), []string{term})
 		require.NoError(t, err)
 		require.ElementsMatch(t, expected, res)
 	}
@@ -414,26 +419,26 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 		require.NoError(t, b.Set("id1", commit1, excerpt, []string{"foo", "bar", "foobar barfoo"}))
 		require.NoError(t, b.Set("id2", commit1, excerpt, []string{"hello", "foo bar"}))
 		require.NoError(t, b.Set("id3", commit1, excerpt, []string{"Hola", "Esta bien"}))
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 
 		requireSearch(t, idx, "foobar", "id1")
 		requireSearch(t, idx, "foo", "id1", "id2")
 
 		// a document matches with any of the terms
-		res, err := idx.Search([]string{"hello", "bien"})
+		res, err := idx.Search(t.Context(), []string{"hello", "bien"})
 		require.NoError(t, err)
 		require.ElementsMatch(t, []string{"id2", "id3"}, res)
 
 		// re-indexing an item replace previous versions
 		b = idx.NewBatch()
 		require.NoError(t, b.Set("id2", commit2, excerpt, []string{"hello"}))
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 		requireSearch(t, idx, "foo", "id1")
 		requireSearch(t, idx, "hello", "id2")
 
 		b = idx.NewBatch()
 		b.Remove("id1")
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 		requireSearch(t, idx, "foo")
 		requireSearch(t, idx, "hello", "id2")
 	})
@@ -450,7 +455,7 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 			ids = append(ids, id)
 			require.NoError(t, b.Set(id, commit1, excerpt, []string{"marker"}))
 		}
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 
 		requireSearch(t, idx, "marker", ids...)
 	})
@@ -461,7 +466,7 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 
 		b := idx.NewBatch()
 		require.NoError(t, b.Set("gone", commit1, excerpt, []string{"marker"}))
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 
 		b = idx.NewBatch()
 		require.NoError(t, b.Set("id1", commit1, excerpt, []string{"marker"}))
@@ -472,7 +477,7 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 		requireSearch(t, idx, "marker", "gone")
 		requireBuiltFrom(t, idx, map[string]repository.Hash{"gone": commit1})
 
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 		requireSearch(t, idx, "marker", "id1", entityId)
 		requireBuiltFrom(t, idx, map[string]repository.Hash{"id1": commit1, entityId: commit2})
 	})
@@ -489,7 +494,7 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 		require.NoError(t, b.Set(entityId, commit1, excerpt, []string{"b"}))
 		// a document with no text is still a document
 		require.NoError(t, b.Set("empty", commit1, excerpt, nil))
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 		requireBuiltFrom(t, idx, map[string]repository.Hash{"id1": commit1, entityId: commit1, "empty": commit1})
 
 		// the latest change of a document in a batch wins
@@ -498,13 +503,13 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 		b.Remove(entityId)
 		require.NoError(t, b.Set(entityId, commit2, excerpt, []string{"b"}))
 		b.Remove("empty")
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 		requireBuiltFrom(t, idx, map[string]repository.Hash{"id1": commit2, entityId: commit2})
 
 		// removing a document that doesn't exist changes nothing
 		b = idx.NewBatch()
 		b.Remove("unknown")
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 		requireBuiltFrom(t, idx, map[string]repository.Hash{"id1": commit2, entityId: commit2})
 	})
 
@@ -515,7 +520,7 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 		texts := []string{"some  spaced   text", strings.Repeat("x", 200)}
 		b := idx.NewBatch()
 		require.NoError(t, b.Set("id1", commit1, excerpt, texts))
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 
 		require.Equal(t, []string{"some  spaced   text", strings.Repeat("x", 200)}, texts)
 	})
@@ -541,7 +546,7 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 					errs <- err
 					return
 				}
-				errs <- b.Apply()
+				errs <- b.Apply(t.Context())
 			}()
 		}
 		wg.Wait()
@@ -558,9 +563,9 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 		idx, err := repo.GetIndex("excerpts", 1)
 		require.NoError(t, err)
 
-		_, _, err = idx.Excerpt("id1")
+		_, _, err = idx.Excerpt(t.Context(), "id1")
 		require.ErrorIs(t, err, repository.ErrNotFound)
-		builtFrom, excerpts, err := idx.Excerpts()
+		builtFrom, excerpts, err := idx.Excerpts(t.Context())
 		require.NoError(t, err)
 		require.Empty(t, builtFrom)
 		require.Empty(t, excerpts)
@@ -568,9 +573,9 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 		b := idx.NewBatch()
 		require.NoError(t, b.Set("id1", commit1, []byte(`{"title": "first", "labels": ["a", "b"]}`), nil))
 		require.NoError(t, b.Set("id2", commit1, []byte(`{"title": "second"}`), nil))
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 
-		commit, got, err := idx.Excerpt("id1")
+		commit, got, err := idx.Excerpt(t.Context(), "id1")
 		require.NoError(t, err)
 		require.Equal(t, commit1, commit)
 		require.JSONEq(t, `{"title": "first", "labels": ["a", "b"]}`, string(got))
@@ -579,14 +584,14 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 		b = idx.NewBatch()
 		require.NoError(t, b.Set("id1", commit2, []byte(`{"title": "first, edited"}`), nil))
 		b.Remove("id2")
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 
-		builtFrom, excerpts, err = idx.Excerpts()
+		builtFrom, excerpts, err = idx.Excerpts(t.Context())
 		require.NoError(t, err)
 		require.Equal(t, map[string]repository.Hash{"id1": commit2}, builtFrom)
 		require.Len(t, excerpts, 1)
 		require.JSONEq(t, `{"title": "first, edited"}`, string(excerpts["id1"]))
-		_, _, err = idx.Excerpt("id2")
+		_, _, err = idx.Excerpt(t.Context(), "id2")
 		require.ErrorIs(t, err, repository.ErrNotFound)
 	})
 
@@ -598,10 +603,10 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 
 		b := idxA.NewBatch()
 		require.NoError(t, b.Set("id1", commit1, excerpt, []string{"marker"}))
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 		b = idxB.NewBatch()
 		require.NoError(t, b.Set("id1", commit2, excerpt, []string{"other"}))
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 
 		requireSearch(t, idxA, "marker", "id1")
 		requireSearch(t, idxB, "marker")
@@ -610,7 +615,7 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 		// the same id, removed from one namespace only
 		b = idxB.NewBatch()
 		b.Remove("id1")
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 		requireSearch(t, idxA, "marker", "id1")
 		requireBuiltFrom(t, idxA, map[string]repository.Hash{"id1": commit1})
 	})
@@ -620,7 +625,7 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 		require.NoError(t, err)
 		b := v1.NewBatch()
 		require.NoError(t, b.Set("id1", commit1, excerpt, []string{"marker"}))
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 
 		// the same version keeps the documents
 		v1, err = repo.GetIndex("versioned", 1)
@@ -632,12 +637,12 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 		require.NoError(t, err)
 		requireBuiltFrom(t, v2, map[string]repository.Hash{})
 		requireSearch(t, v2, "marker")
-		_, _, err = v2.Excerpt("id1")
+		_, _, err = v2.Excerpt(t.Context(), "id1")
 		require.ErrorIs(t, err, repository.ErrNotFound)
 
 		b = v2.NewBatch()
 		require.NoError(t, b.Set("id1", commit2, excerpt, []string{"other"}))
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 
 		// and both are kept
 		v1, err = repo.GetIndex("versioned", 1)
@@ -656,15 +661,35 @@ func RepoIndexTest(t *testing.T, repo repository.RepoIndex) {
 		b := idx.NewBatch()
 		require.Error(t, b.Set("id1", "", excerpt, []string{"marker"}))
 		require.Error(t, b.Set("id1", "nothex", excerpt, []string{"marker"}))
-		require.NoError(t, b.Apply())
+		require.NoError(t, b.Apply(t.Context()))
 
 		// an invalid excerpt fails the whole batch
 		for _, invalid := range [][]byte{nil, []byte(`{"unfinished": `)} {
 			b = idx.NewBatch()
 			require.NoError(t, b.Set("valid", commit1, excerpt, []string{"marker"}))
 			require.NoError(t, b.Set("id1", commit1, invalid, []string{"marker"}))
-			require.Error(t, b.Apply())
+			require.Error(t, b.Apply(t.Context()))
 		}
+
+		requireSearch(t, idx, "marker")
+		requireBuiltFrom(t, idx, map[string]repository.Hash{})
+	})
+
+	t.Run("canceled context", func(t *testing.T) {
+		idx, err := repo.GetIndex("canceled", 1)
+		require.NoError(t, err)
+
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		b := idx.NewBatch()
+		require.NoError(t, b.Set("id1", commit1, excerpt, []string{"marker"}))
+		require.ErrorIs(t, b.Apply(ctx), context.Canceled)
+
+		_, err = idx.Search(ctx, []string{"marker"})
+		require.ErrorIs(t, err, context.Canceled)
+		_, err = idx.AllBuiltFrom(ctx)
+		require.ErrorIs(t, err, context.Canceled)
 
 		requireSearch(t, idx, "marker")
 		requireBuiltFrom(t, idx, map[string]repository.Hash{})
@@ -819,7 +844,7 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 	// ── Branches ──────────────────────────────────────────────────────────────
 
 	t.Run("Branches", func(t *testing.T) {
-		branches, err := repo.Branches()
+		branches, err := repo.Branches(t.Context())
 		require.NoError(t, err)
 		require.Len(t, branches, 2)
 
@@ -835,7 +860,7 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 	// ── Tags ──────────────────────────────────────────────────────────────────
 
 	t.Run("Tags", func(t *testing.T) {
-		tags, err := repo.Tags()
+		tags, err := repo.Tags(t.Context())
 		require.NoError(t, err)
 		require.Len(t, tags, 1)
 		require.Equal(t, "v1.0", tags[0].Name)
@@ -845,7 +870,7 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 	// ── TreeAtPath ────────────────────────────────────────────────────────────
 
 	t.Run("TreeAtPath", func(t *testing.T) {
-		entries, err := repo.TreeAtPath("main", "")
+		entries, err := repo.TreeAtPath(t.Context(), "main", "")
 		require.NoError(t, err)
 		byName := make(map[string]repository.TreeEntry)
 		for _, e := range entries {
@@ -856,7 +881,7 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 		require.Equal(t, repository.Tree, byName["src"].ObjectType)
 
 		// subdirectory
-		srcEntries, err := repo.TreeAtPath("main", "src")
+		srcEntries, err := repo.TreeAtPath(t.Context(), "main", "src")
 		require.NoError(t, err)
 		srcByName := make(map[string]repository.TreeEntry)
 		for _, e := range srcEntries {
@@ -866,24 +891,24 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 		require.Equal(t, repository.Blob, srcByName["util.go"].ObjectType)
 
 		// v1.0 tag (at c1) predates util.go — src only has lib.go
-		v1Src, err := repo.TreeAtPath("v1.0", "src")
+		v1Src, err := repo.TreeAtPath(t.Context(), "v1.0", "src")
 		require.NoError(t, err)
 		require.Len(t, v1Src, 1)
 		require.Equal(t, "lib.go", v1Src[0].Name)
 
 		// unknown ref
-		_, err = repo.TreeAtPath("nonexistent-ref", "")
+		_, err = repo.TreeAtPath(t.Context(), "nonexistent-ref", "")
 		require.ErrorIs(t, err, repository.ErrNotFound)
 
 		// path resolves to a blob, not a tree
-		_, err = repo.TreeAtPath("main", "README.md")
+		_, err = repo.TreeAtPath(t.Context(), "main", "README.md")
 		require.Error(t, err)
 	})
 
 	// ── BlobAtPath ────────────────────────────────────────────────────────────
 
 	t.Run("BlobAtPath", func(t *testing.T) {
-		rc, size, hash, err := repo.BlobAtPath("main", "README.md")
+		rc, size, hash, err := repo.BlobAtPath(t.Context(), "main", "README.md")
 		require.NoError(t, err)
 		defer rc.Close()
 		data, err := io.ReadAll(rc)
@@ -893,7 +918,7 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 		require.Equal(t, hReadmeV3, hash)
 
 		// feature branch still has readmeV1
-		rc2, _, _, err := repo.BlobAtPath("feature", "README.md")
+		rc2, _, _, err := repo.BlobAtPath(t.Context(), "feature", "README.md")
 		require.NoError(t, err)
 		data2, err := io.ReadAll(rc2)
 		rc2.Close()
@@ -901,7 +926,7 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 		require.Equal(t, readmeV1, data2)
 
 		// file in subdirectory
-		rc3, _, _, err := repo.BlobAtPath("main", "src/lib.go")
+		rc3, _, _, err := repo.BlobAtPath(t.Context(), "main", "src/lib.go")
 		require.NoError(t, err)
 		data3, err := io.ReadAll(rc3)
 		rc3.Close()
@@ -909,17 +934,17 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 		require.Equal(t, libV1, data3)
 
 		// path not found
-		_, _, _, err = repo.BlobAtPath("main", "nonexistent.go")
+		_, _, _, err = repo.BlobAtPath(t.Context(), "main", "nonexistent.go")
 		require.ErrorIs(t, err, repository.ErrNotFound)
 
 		// hash is stable across calls for the same content
-		rc4, _, hash2, err := repo.BlobAtPath("main", "README.md")
+		rc4, _, hash2, err := repo.BlobAtPath(t.Context(), "main", "README.md")
 		require.NoError(t, err)
 		rc4.Close()
 		require.Equal(t, hash, hash2, "blob hash should be stable across calls")
 
 		// different content → different hash
-		rc5, _, hashLib, err := repo.BlobAtPath("main", "src/lib.go")
+		rc5, _, hashLib, err := repo.BlobAtPath(t.Context(), "main", "src/lib.go")
 		require.NoError(t, err)
 		rc5.Close()
 		require.NotEqual(t, hash, hashLib, "different files should have different hashes")
@@ -929,7 +954,7 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 
 	t.Run("CommitLog", func(t *testing.T) {
 		// all commits, newest first
-		commits, err := repo.CommitLog("main", "", 10, "", nil, nil)
+		commits, err := repo.CommitLog(t.Context(), "main", "", 10, "", nil, nil)
 		require.NoError(t, err)
 		require.Len(t, commits, 3)
 		require.Equal(t, c3, commits[0].Hash)
@@ -937,28 +962,28 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 		require.Equal(t, c1, commits[2].Hash)
 
 		// limit
-		limited, err := repo.CommitLog("main", "", 2, "", nil, nil)
+		limited, err := repo.CommitLog(t.Context(), "main", "", 2, "", nil, nil)
 		require.NoError(t, err)
 		require.Len(t, limited, 2)
 		require.Equal(t, c3, limited[0].Hash)
 		require.Equal(t, c2, limited[1].Hash)
 
 		// after cursor (exclusive): start after c3 → get c2, c1
-		after, err := repo.CommitLog("main", "", 10, c3, nil, nil)
+		after, err := repo.CommitLog(t.Context(), "main", "", 10, c3, nil, nil)
 		require.NoError(t, err)
 		require.Len(t, after, 2)
 		require.Equal(t, c2, after[0].Hash)
 		require.Equal(t, c1, after[1].Hash)
 
 		// feature branch only has c1, c2
-		featureLog, err := repo.CommitLog("feature", "", 10, "", nil, nil)
+		featureLog, err := repo.CommitLog(t.Context(), "feature", "", 10, "", nil, nil)
 		require.NoError(t, err)
 		require.Len(t, featureLog, 2)
 		require.Equal(t, c2, featureLog[0].Hash)
 
 		// path filtering: only commits that touched the given path
 		// README.md was created in c1 and updated in c3
-		readmeLog, err := repo.CommitLog("main", "README.md", 10, "", nil, nil)
+		readmeLog, err := repo.CommitLog(t.Context(), "main", "README.md", 10, "", nil, nil)
 		require.NoError(t, err)
 		require.Len(t, readmeLog, 2)
 		require.Equal(t, c3, readmeLog[0].Hash)
@@ -968,24 +993,24 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 	t.Run("CommitLog_since-until", func(t *testing.T) {
 		// since = far future → no commits
 		future := time.Now().Add(24 * time.Hour)
-		none, err := repo.CommitLog("main", "", 10, "", &future, nil)
+		none, err := repo.CommitLog(t.Context(), "main", "", 10, "", &future, nil)
 		require.NoError(t, err)
 		require.Empty(t, none, "since=future should return no commits")
 
 		// until = zero time (long before any real commit) → no commits
 		zero := time.Time{}
-		none2, err := repo.CommitLog("main", "", 10, "", nil, &zero)
+		none2, err := repo.CommitLog(t.Context(), "main", "", 10, "", nil, &zero)
 		require.NoError(t, err)
 		require.Empty(t, none2, "until=zero should return no commits")
 
 		// Both bounds open → all commits returned (filtering is a no-op)
-		all, err := repo.CommitLog("main", "", 10, "", nil, nil)
+		all, err := repo.CommitLog(t.Context(), "main", "", 10, "", nil, nil)
 		require.NoError(t, err)
 		require.Len(t, all, 3, "nil since/until should return all commits")
 
 		// since = far past and until = far future → all commits still returned
 		past := time.Unix(0, 0)
-		all2, err := repo.CommitLog("main", "", 10, "", &past, &future)
+		all2, err := repo.CommitLog(t.Context(), "main", "", 10, "", &past, &future)
 		require.NoError(t, err)
 		require.Len(t, all2, 3, "wide since/until bounds should return all commits")
 	})
@@ -993,7 +1018,7 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 	// ── LastCommitForEntries ──────────────────────────────────────────────────
 
 	t.Run("LastCommitForEntries", func(t *testing.T) {
-		result, err := repo.LastCommitForEntries("main", "", []string{"README.md", "main.go", "src"})
+		result, err := repo.LastCommitForEntries(t.Context(), "main", "", []string{"README.md", "main.go", "src"})
 		require.NoError(t, err)
 
 		// README.md was last changed in c3
@@ -1004,7 +1029,7 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 		require.Equal(t, c2, result["src"].Hash)
 
 		// subdirectory: last commits for entries in src/
-		srcResult, err := repo.LastCommitForEntries("main", "src", []string{"lib.go", "util.go"})
+		srcResult, err := repo.LastCommitForEntries(t.Context(), "main", "src", []string{"lib.go", "util.go"})
 		require.NoError(t, err)
 		// lib.go was added in c1 and never changed
 		require.Equal(t, c1, srcResult["lib.go"].Hash)
@@ -1012,7 +1037,7 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 		require.Equal(t, c2, srcResult["util.go"].Hash)
 
 		// requesting a name that doesn't exist returns no entry for it
-		partial, err := repo.LastCommitForEntries("main", "", []string{"README.md", "ghost.txt"})
+		partial, err := repo.LastCommitForEntries(t.Context(), "main", "", []string{"README.md", "ghost.txt"})
 		require.NoError(t, err)
 		require.Contains(t, partial, "README.md")
 		require.NotContains(t, partial, "ghost.txt")
@@ -1021,7 +1046,7 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 	t.Run("LastCommitForEntries_cache-subset", func(t *testing.T) {
 		// The root tree at v1.0 is queried by no other subtest, so the cache is
 		// cold for it: the first call below is the one that fills the cache.
-		r1, err := repo.LastCommitForEntries("v1.0", "", []string{"README.md"})
+		r1, err := repo.LastCommitForEntries(t.Context(), "v1.0", "", []string{"README.md"})
 		require.NoError(t, err)
 		require.Contains(t, r1, "README.md")
 		require.Equal(t, c1, r1["README.md"].Hash)
@@ -1029,13 +1054,13 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 		// Second call for the same directory but a different name.
 		// A buggy implementation that caches only the requested subset would
 		// return an empty map here (cache hit, but "main.go" was never stored).
-		r2, err := repo.LastCommitForEntries("v1.0", "", []string{"main.go"})
+		r2, err := repo.LastCommitForEntries(t.Context(), "v1.0", "", []string{"main.go"})
 		require.NoError(t, err)
 		require.Contains(t, r2, "main.go", "second call with different name should hit correct result, not empty cache")
 		require.Equal(t, c1, r2["main.go"].Hash)
 
 		// Third call requesting both names should also work.
-		r3, err := repo.LastCommitForEntries("v1.0", "", []string{"README.md", "main.go"})
+		r3, err := repo.LastCommitForEntries(t.Context(), "v1.0", "", []string{"README.md", "main.go"})
 		require.NoError(t, err)
 		require.Equal(t, c1, r3["README.md"].Hash)
 		require.Equal(t, c1, r3["main.go"].Hash)
@@ -1056,7 +1081,7 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 		for i := range workers {
 			go func() {
 				defer wg.Done()
-				m, err := repo.LastCommitForEntries("feature", "", []string{"README.md", "main.go", "src"})
+				m, err := repo.LastCommitForEntries(t.Context(), "feature", "", []string{"README.md", "main.go", "src"})
 				results[i] = result{m, err}
 			}()
 		}
@@ -1072,7 +1097,7 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 	// ── CommitDetail ──────────────────────────────────────────────────────────
 
 	t.Run("CommitDetail", func(t *testing.T) {
-		detail, err := repo.CommitDetail(c2)
+		detail, err := repo.CommitDetail(t.Context(), c2)
 		require.NoError(t, err)
 		require.Equal(t, c2, detail.Hash)
 		require.Equal(t, []repository.Hash{c1}, detail.Parents)
@@ -1084,7 +1109,7 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 		}, detail.Files)
 
 		// initial commit: diffs against empty tree, everything is "added"
-		initDetail, err := repo.CommitDetail(c1)
+		initDetail, err := repo.CommitDetail(t.Context(), c1)
 		require.NoError(t, err)
 		require.ElementsMatch(t, []repository.ChangedFile{
 			{Path: "README.md", Status: repository.ChangeStatusAdded},
@@ -1093,14 +1118,14 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 		}, initDetail.Files)
 
 		// unknown hash
-		_, err = repo.CommitDetail(randomHash())
+		_, err = repo.CommitDetail(t.Context(), randomHash())
 		require.ErrorIs(t, err, repository.ErrNotFound)
 	})
 
 	// ── CommitFileDiff ────────────────────────────────────────────────────────
 
 	t.Run("CommitFileDiff", func(t *testing.T) {
-		fd, err := repo.CommitFileDiff(c2, "main.go")
+		fd, err := repo.CommitFileDiff(t.Context(), c2, "main.go")
 		require.NoError(t, err)
 		require.Equal(t, "main.go", fd.Path)
 		require.False(t, fd.IsBinary)
@@ -1120,18 +1145,52 @@ func RepoBrowseTest(t *testing.T, repo Repo) {
 		require.Contains(t, addedContent, "// updated")
 
 		// new file in initial commit
-		initFD, err := repo.CommitFileDiff(c1, "main.go")
+		initFD, err := repo.CommitFileDiff(t.Context(), c1, "main.go")
 		require.NoError(t, err)
 		require.True(t, initFD.IsNew)
 		require.Equal(t, "main.go", initFD.Path)
 
 		// file not in this commit's diff
-		_, err = repo.CommitFileDiff(c3, "main.go")
+		_, err = repo.CommitFileDiff(t.Context(), c3, "main.go")
 		require.ErrorIs(t, err, repository.ErrNotFound)
 
 		// unknown hash
-		_, err = repo.CommitFileDiff(randomHash(), "main.go")
+		_, err = repo.CommitFileDiff(t.Context(), randomHash(), "main.go")
 		require.ErrorIs(t, err, repository.ErrNotFound)
+	})
+
+	t.Run("canceled context", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		_, err := repo.Branches(ctx)
+		require.ErrorIs(t, err, context.Canceled)
+
+		_, err = repo.Tags(ctx)
+		require.ErrorIs(t, err, context.Canceled)
+
+		_, err = repo.CommitLog(ctx, "main", "", 10, "", nil, nil)
+		require.ErrorIs(t, err, context.Canceled)
+
+		// a directory no other test walked, for the walk not to come from the cache
+		_, err = repo.LastCommitForEntries(ctx, "v1.0", "src", []string{"lib.go"})
+		require.ErrorIs(t, err, context.Canceled)
+
+		_, err = repo.CommitDetail(ctx, c2)
+		require.ErrorIs(t, err, context.Canceled)
+
+		_, err = repo.CommitFileDiff(ctx, c2, "main.go")
+		require.ErrorIs(t, err, context.Canceled)
+
+		// a canceled call doesn't fail a concurrent one on the same directory
+		var wg sync.WaitGroup
+		wg.Go(func() {
+			_, _ = repo.LastCommitForEntries(ctx, "v1.0", "src", []string{"lib.go"})
+		})
+		live, err := repo.LastCommitForEntries(t.Context(), "v1.0", "src", []string{"lib.go"})
+		wg.Wait()
+		require.NoError(t, err)
+		require.Equal(t, c1, live["lib.go"].Hash)
 	})
 }
 

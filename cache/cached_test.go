@@ -178,7 +178,7 @@ func TestViews(t *testing.T) {
 		b, _, err := c.Bugs().New("title", "message")
 		require.NoError(t, err)
 		require.NoError(t, b.Commit())
-		before, err := repo.ListCommits(b.LastCommit())
+		before, err := repo.ListCommits(t.Context(), b.LastCommit())
 		require.NoError(t, err)
 
 		_, _, err = b.AddComment("comment")
@@ -187,7 +187,7 @@ func TestViews(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, b.Commit())
 
-		after, err := repo.ListCommits(b.LastCommit())
+		after, err := repo.ListCommits(t.Context(), b.LastCommit())
 		require.NoError(t, err)
 		require.Len(t, after, len(before)+1)
 		require.Equal(t, common.ClosedStatus, b.Snapshot().Status)
@@ -216,7 +216,7 @@ func TestViews(t *testing.T) {
 
 		require.NoError(t, b.Commit())
 		require.Equal(t, id, b.Id())
-		commits, err := repo.ListCommits(b.LastCommit())
+		commits, err := repo.ListCommits(t.Context(), b.LastCommit())
 		require.NoError(t, err)
 		require.Len(t, commits, 1)
 		require.Equal(t, []string{"message", "comment"}, commentsInGit(t, repo, id))

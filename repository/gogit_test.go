@@ -187,14 +187,14 @@ func TestGoGitRepo_Head(t *testing.T) {
 	repo := newTestGoGitRepo(t, false)
 
 	// a new repository's HEAD points to refs/heads/master, which doesn't exist yet
-	_, err := repo.Head()
+	_, err := repo.Head(t.Context())
 	require.ErrorIs(t, err, ErrNotFound)
 
 	commit := storeTestCommits(t, repo, 1)[0]
 	require.NoError(t, repo.r.Storer.SetReference(plumbing.NewHashReference(
 		plumbing.NewBranchReferenceName("master"), plumbing.NewHash(commit.String()))))
 
-	meta, err := repo.Head()
+	meta, err := repo.Head(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, RefMeta{
 		Name:      "refs/heads/master",

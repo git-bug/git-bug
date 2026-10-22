@@ -199,7 +199,7 @@ func (repoResolver) ValidLabels(_ context.Context, obj *models.Repository, after
 	return connections.Connection(obj.Repo.Bugs().ValidLabels(), edger, conMaker, input)
 }
 
-func (repoResolver) Refs(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, typeArg *repository.GitRefType) (*models.GitRefConnection, error) {
+func (repoResolver) Refs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, typeArg *repository.GitRefType) (*models.GitRefConnection, error) {
 	repo := obj.Repo.BrowseRepo()
 
 	var refs []*models.GitRef
@@ -209,7 +209,7 @@ func (repoResolver) Refs(_ context.Context, obj *models.Repository, after *strin
 	}
 
 	if typeArg == nil || *typeArg == repository.GitRefTypeBranch {
-		branches, err := repo.Branches()
+		branches, err := repo.Branches(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -227,7 +227,7 @@ func (repoResolver) Refs(_ context.Context, obj *models.Repository, after *strin
 	}
 
 	if typeArg == nil || *typeArg == repository.GitRefTypeTag {
-		tags, err := repo.Tags()
+		tags, err := repo.Tags(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -262,13 +262,13 @@ func (repoResolver) Refs(_ context.Context, obj *models.Repository, after *strin
 	return connections.Connection(refs, edger, conMaker, input)
 }
 
-func (repoResolver) Tree(_ context.Context, obj *models.Repository, ref string, path *string) ([]*models.GitTreeEntry, error) {
+func (repoResolver) Tree(ctx context.Context, obj *models.Repository, ref string, path *string) ([]*models.GitTreeEntry, error) {
 	repo := obj.Repo.BrowseRepo()
 	p := ""
 	if path != nil {
 		p = *path
 	}
-	entries, err := repo.TreeAtPath(ref, p)
+	entries, err := repo.TreeAtPath(ctx, ref, p)
 	if err != nil {
 		return nil, err
 	}
@@ -283,9 +283,9 @@ func (repoResolver) Tree(_ context.Context, obj *models.Repository, ref string, 
 	return ptrs, nil
 }
 
-func (repoResolver) Blob(_ context.Context, obj *models.Repository, ref string, path string) (*models.GitBlob, error) {
+func (repoResolver) Blob(ctx context.Context, obj *models.Repository, ref string, path string) (*models.GitBlob, error) {
 	repo := obj.Repo.BrowseRepo()
-	rc, size, hash, err := repo.BlobAtPath(ref, path)
+	rc, size, hash, err := repo.BlobAtPath(ctx, ref, path)
 	if errors.Is(err, repository.ErrNotFound) {
 		return nil, nil
 	}
@@ -329,7 +329,7 @@ func (repoResolver) Blob(_ context.Context, obj *models.Repository, ref string, 
 	return blob, nil
 }
 
-func (repoResolver) Commits(_ context.Context, obj *models.Repository, after *string, first *int, ref string, path *string, since *time.Time, until *time.Time) (*models.GitCommitConnection, error) {
+func (repoResolver) Commits(ctx context.Context, obj *models.Repository, after *string, first *int, ref string, path *string, since *time.Time, until *time.Time) (*models.GitCommitConnection, error) {
 	// This is not using the normal relay pagination (connection.Connection()), because that requires having the
 	// full list in memory. Here, go-git does a partial walk only, which is better.
 
@@ -357,7 +357,7 @@ func (repoResolver) Commits(_ context.Context, obj *models.Repository, after *st
 		afterHash = repository.Hash(*after)
 	}
 
-	commits, err := repo.CommitLog(ref, p, limit, afterHash, since, until)
+	commits, err := repo.CommitLog(ctx, ref, p, limit, afterHash, since, until)
 	if err != nil {
 		return nil, err
 	}
@@ -392,9 +392,9 @@ func (repoResolver) Commits(_ context.Context, obj *models.Repository, after *st
 	}, nil
 }
 
-func (repoResolver) Commit(_ context.Context, obj *models.Repository, hash string) (*models.GitCommitMeta, error) {
+func (repoResolver) Commit(ctx context.Context, obj *models.Repository, hash string) (*models.GitCommitMeta, error) {
 	repo := obj.Repo.BrowseRepo()
-	detail, err := repo.CommitDetail(repository.Hash(hash))
+	detail, err := repo.CommitDetail(ctx, repository.Hash(hash))
 	if errors.Is(err, repository.ErrNotFound) {
 		return nil, nil
 	}
@@ -404,13 +404,13 @@ func (repoResolver) Commit(_ context.Context, obj *models.Repository, hash strin
 	return &models.GitCommitMeta{Repo: obj.Repo, CommitMeta: detail.CommitMeta}, nil
 }
 
-func (repoResolver) LastCommits(_ context.Context, obj *models.Repository, ref string, path *string, names []string) ([]*models.GitLastCommit, error) {
+func (repoResolver) LastCommits(ctx context.Context, obj *models.Repository, ref string, path *string, names []string) ([]*models.GitLastCommit, error) {
 	repo := obj.Repo.BrowseRepo()
 	p := ""
 	if path != nil {
 		p = *path
 	}
-	byName, err := repo.LastCommitForEntries(ref, p, names)
+	byName, err := repo.LastCommitForEntries(ctx, ref, p, names)
 	if err != nil {
 		return nil, err
 	}
@@ -425,8 +425,8 @@ func (repoResolver) LastCommits(_ context.Context, obj *models.Repository, ref s
 	return result, nil
 }
 
-func (repoResolver) Head(_ context.Context, obj *models.Repository) (*models.GitRef, error) {
-	meta, err := obj.Repo.BrowseRepo().Head()
+func (repoResolver) Head(ctx context.Context, obj *models.Repository) (*models.GitRef, error) {
+	meta, err := obj.Repo.BrowseRepo().Head(ctx)
 	if errors.Is(err, repository.ErrNotFound) {
 		return nil, nil
 	}

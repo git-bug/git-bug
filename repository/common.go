@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"io"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
@@ -10,7 +11,7 @@ import (
 
 // nonNativeListCommits is an implementation for ListCommits, for the case where
 // the underlying git implementation doesn't support if natively.
-func nonNativeListCommits(repo RepoData, commit Hash) ([]Hash, error) {
+func nonNativeListCommits(ctx context.Context, repo RepoData, commit Hash) ([]Hash, error) {
 	var result []Hash
 
 	stack := make([]Hash, 0, 32)
@@ -19,6 +20,10 @@ func nonNativeListCommits(repo RepoData, commit Hash) ([]Hash, error) {
 	stack = append(stack, commit)
 
 	for len(stack) > 0 {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
 		// pop
 		hash := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]

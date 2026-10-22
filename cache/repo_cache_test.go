@@ -51,7 +51,7 @@ func TestCache(t *testing.T) {
 		t.Helper()
 		idx, err := repo.GetIndex(name, formatVersion)
 		require.NoError(t, err)
-		builtFrom, err := idx.AllBuiltFrom()
+		builtFrom, err := idx.AllBuiltFrom(t.Context())
 		require.NoError(t, err)
 		return uint64(len(builtFrom))
 	}
@@ -470,7 +470,7 @@ func TestCacheMerge(t *testing.T) {
 		t.Helper()
 		idx, err := repoB.GetIndex(name, formatVersion)
 		require.NoError(t, err)
-		builtFrom, err := idx.AllBuiltFrom()
+		builtFrom, err := idx.AllBuiltFrom(t.Context())
 		require.NoError(t, err)
 		return uint64(len(builtFrom))
 	}

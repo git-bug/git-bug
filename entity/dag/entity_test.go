@@ -297,7 +297,7 @@ func TestCommitOperations(t *testing.T) {
 		require.Equal(t, ops, e.Operations())
 
 		// one operation pack per author
-		commits, err := repo.ListCommits(e.LastCommit())
+		commits, err := repo.ListCommits(t.Context(), e.LastCommit())
 		require.NoError(t, err)
 		require.Len(t, commits, 2)
 

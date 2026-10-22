@@ -127,7 +127,7 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 		// SCENARIO 2
 		// if the local Entity has new commits but the remote don't, nothing is changed
 
-		localCommits, err := repo.ListCommits(localCommit)
+		localCommits, err := repo.ListCommits(context.TODO(), localCommit)
 		if err != nil {
 			return entity.NewMergeError(err, id)
 		}
@@ -164,7 +164,7 @@ func merge[EntityT entity.Interface](def Definition, wrapper func(e *Entity) Ent
 	// if the remote has new commit, the local bug is updated to match the same history
 	// (fast-forward update)
 
-	remoteCommits, err := repo.ListCommits(remoteCommit)
+	remoteCommits, err := repo.ListCommits(context.TODO(), remoteCommit)
 	if err != nil {
 		return entity.NewMergeError(err, id)
 	}

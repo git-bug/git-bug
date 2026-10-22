@@ -2,6 +2,7 @@
 package identity
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -126,7 +127,7 @@ func ReadTracking(repo repository.Repo, remote string, id entity.Id) (*Identity,
 // read will load and parse an identity from git, from its last commit, and make
 // sure that it is the identity with the given id.
 func read(repo repository.Repo, id entity.Id, lastCommit repository.Hash) (*Identity, error) {
-	hashes, err := repo.ListCommits(lastCommit)
+	hashes, err := repo.ListCommits(context.TODO(), lastCommit)
 	if err != nil {
 		return nil, err
 	}
