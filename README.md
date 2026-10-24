@@ -66,7 +66,7 @@ Often, projects need to have their bug-tracker public and accept editions from a
 Create a new identity:
 
 ```shell
-git bug user create
+git bug user new
 ```
 
 Create a new bug:
