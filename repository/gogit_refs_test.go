@@ -491,5 +491,31 @@ func TestGoGitRepo_Refs(t *testing.T) {
 			require.Contains(t, names, "refs/bugs/x.lock",
 				"go-git no longer lists lock files as refs: one of the reasons listed in gogit_refs.go is gone")
 		})
+
+		t.Run("an update ignores git's lock", func(t *testing.T) {
+			s, dir := plainStorage(t)
+			require.NoError(t, s.SetReference(plumbing.NewHashReference("refs/bugs/x", hash1)))
+			require.NoError(t, os.WriteFile(filepath.Join(dir, "refs", "bugs", "x.lock"), []byte(hash2.String()+"\n"), 0o644))
+
+			err := s.CheckAndSetReference(
+				plumbing.NewHashReference("refs/bugs/x", hash2),
+				plumbing.NewHashReference("refs/bugs/x", hash1),
+			)
+			require.NoError(t, err,
+				"go-git no longer updates a ref git holds the lock of: one of the reasons listed in gogit_refs.go is gone")
+		})
+
+		t.Run("an update can't require the ref to be absent", func(t *testing.T) {
+			s, _ := plainStorage(t)
+			require.NoError(t, s.SetReference(plumbing.NewHashReference("refs/bugs/x", hash1)))
+
+			// without an old ref, the update is unconditional
+			err := s.CheckAndSetReference(plumbing.NewHashReference("refs/bugs/x", hash2), nil)
+			require.NoError(t, err)
+			ref, err := s.Reference("refs/bugs/x")
+			require.NoError(t, err)
+			require.Equal(t, hash2, ref.Hash(),
+				"go-git can now create a ref only if it doesn't exist: one of the reasons listed in gogit_refs.go is gone")
+		})
 	})
 }

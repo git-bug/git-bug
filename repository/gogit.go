@@ -1,5 +1,39 @@
 package repository
 
+// GoGitRepo works around go-git defects in several places. None is meant to
+// remain: each goes once go-git fixes the defect and git-bug uses that version.
+// The canary tests, in gogit_storage_test.go and gogit_refs_test.go, fail when
+// go-git does, for the defects a test can show: not for concurrency, which
+// crashes the whole test binary, the resource leak, or the transports.
+//
+//   - The configuration: go-git parses all of it whenever it reads it, opening
+//     the repository included, and fails on what git accepts, such as a branch
+//     merging a pull request's ref (https://github.com/go-git/go-git/issues/530)
+//     or a negative fetch refspec (https://github.com/go-git/go-git/issues/1927).
+//     gogitStorage.Config hides everything but core and extensions from go-git.
+//     GoGitRepo then takes the configuration, read with gitconfig, only to build
+//     the remotes of FetchRefs and PushRefs, and StoreSignedCommit writes no
+//     author.
+//   - The packfile index: go-git never notices the packs other processes add or
+//     remove. gogitStorage rebuilds the index and retries a read when they
+//     changed, keeps it built at all times, as go-git's pack writer crashes
+//     otherwise, and refreshes it before iterating objects, which crashes on a
+//     pack go-git hasn't indexed (fixed in v6 by
+//     https://github.com/go-git/go-git/pull/2448).
+//   - Concurrency: go-git isn't safe for concurrent use
+//     (https://github.com/go-git/go-git/issues/208). rMutex serializes
+//     GoGitRepo's reads, and gogitStorage's mu every access to the packfile
+//     index, go-git's fetch and push included.
+//   - The refs of git-bug's namespaces: go-git writes and lists them wrongly,
+//     such as https://github.com/go-git/go-git/issues/2399. gogit_refs.go writes
+//     and lists them itself, as git does.
+//   - The remotes: go-git doesn't implement all of git's transports and their
+//     configuration, such as parts of the SSH configuration, credential helpers
+//     or remote.<name>.pushurl. git-bug.git-transport=git runs the git binary
+//     for the remotes instead, see GitRepo, and FetchRefs and PushRefs suggest
+//     it when they fail.
+//   - A possible resource leak in gogit.Open, fixed in v6.
+
 import (
 	"bytes"
 	"context"
@@ -39,6 +73,10 @@ var _ RepoRemote = &GoGitRepo{}
 var _ RepoBrowse = &GoGitRepo{}
 
 // GoGitRepo is the git data of a Repo, in a git directory on disk, with go-git.
+//
+// It takes the repository's configuration, as read by gitconfig, only to work
+// around go-git failing on configurations git accepts: see gogitStorage.Config.
+// It's not meant to remain, and goes with that workaround.
 type GoGitRepo struct {
 	// Unfortunately, some parts of go-git are not thread-safe so we have to cover them with a big fat mutex here.
 	// See https://github.com/go-git/go-git/issues/48
@@ -47,6 +85,7 @@ type GoGitRepo struct {
 	rMutex sync.Mutex
 	r      *gogit.Repository
 	path   string
+	config RepoConfig
 
 	// lastCommitCache caches LastCommitForEntries results keyed by
 	// "<treeHash>\x00<path>". Git trees are content-addressed and
@@ -60,8 +99,9 @@ type GoGitRepo struct {
 }
 
 // OpenGoGitRepo opens the repository of the git directory gitDir, see
-// FindGitDir. It fails with ErrNotARepo if gitDir isn't one.
-func OpenGoGitRepo(gitDir string) (*GoGitRepo, error) {
+// FindGitDir, whose configuration is config. It fails with ErrNotARepo if
+// gitDir isn't one.
+func OpenGoGitRepo(gitDir string, config RepoConfig) (*GoGitRepo, error) {
 	gitDir, err := filepath.Abs(gitDir)
 	if err != nil {
 		return nil, err
@@ -74,34 +114,9 @@ func OpenGoGitRepo(gitDir string) (*GoGitRepo, error) {
 		return nil, fmt.Errorf("%w: %s", ErrNotARepo, gitDir)
 	}
 
-	return newGoGitRepo(gitDir)
-}
-
-// InitGoGitRepo creates a new empty git repo at the given path.
-func InitGoGitRepo(path string) (*GoGitRepo, error) {
-	_, err := gogit.PlainInit(path, false)
-	if err != nil {
-		return nil, err
-	}
-
-	return newGoGitRepo(filepath.Join(path, ".git"))
-}
-
-// InitBareGoGitRepo creates a new --bare empty git repo at the given path.
-func InitBareGoGitRepo(path string) (*GoGitRepo, error) {
-	_, err := gogit.PlainInit(path, true)
-	if err != nil {
-		return nil, err
-	}
-
-	return newGoGitRepo(path)
-}
-
-// newGoGitRepo returns the GoGitRepo of the git directory gitDir.
-func newGoGitRepo(gitDir string) (*GoGitRepo, error) {
 	// TODO: the possible resource leak is an existing issue in go-git v5
 	// it's fixed in v6
-	r, err := gogit.Open(newReindexingStorage(gitDir), nil)
+	r, err := gogit.Open(newGogitStorage(gitDir, config), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -109,8 +124,23 @@ func newGoGitRepo(gitDir string) (*GoGitRepo, error) {
 	return &GoGitRepo{
 		r:               r,
 		path:            gitDir,
+		config:          config,
 		lastCommitCache: must(lru.New[string, map[string]CommitMeta](lastCommitCacheSize)),
 	}, nil
+}
+
+// InitGoGitRepo creates a new empty git repo at the given path, to open with
+// OpenGoGitRepo.
+func InitGoGitRepo(path string) error {
+	_, err := gogit.PlainInit(path, false)
+	return err
+}
+
+// InitBareGoGitRepo creates a new --bare empty git repo at the given path, to
+// open with OpenGoGitRepo.
+func InitBareGoGitRepo(path string) error {
+	_, err := gogit.PlainInit(path, true)
+	return err
 }
 
 // FetchRefs retrieves the refs of the given namespaces (and the data they
@@ -124,16 +154,15 @@ func (repo *GoGitRepo) FetchRefs(ctx context.Context, remote string, namespaces 
 		refSpecs[i] = config.RefSpec(refPrefix(namespace) + "*:" + trackingRefPrefix(remote, namespace) + "*")
 	}
 
-	buf := bytes.NewBuffer(nil)
-
-	remoteUrl, err := repo.resolveRemote(remote, true)
+	remo, err := repo.remote(remote, true, refSpecs)
 	if err != nil {
 		return "", err
 	}
 
-	err = repo.r.FetchContext(ctx, &gogit.FetchOptions{
+	buf := bytes.NewBuffer(nil)
+
+	err = remo.FetchContext(ctx, &gogit.FetchOptions{
 		RemoteName: remote,
-		RemoteURL:  remoteUrl,
 		RefSpecs:   refSpecs,
 		Progress:   buf,
 	})
@@ -148,92 +177,33 @@ func (repo *GoGitRepo) FetchRefs(ctx context.Context, remote string, namespaces 
 	return buf.String(), nil
 }
 
-// resolveRemote returns the URI for a given remote
-// TODO: read the remotes with gitconfig rather than the go-git config, as
-// RepoConfig.GetRemotes does.
-func (repo *GoGitRepo) resolveRemote(remote string, fetch bool) (string, error) {
-	cfg, err := repo.r.ConfigScoped(config.SystemScope)
-	if err != nil {
-		return "", fmt.Errorf("unable to load system-scoped git config: %v", err)
-	}
-
-	var url string
-	for _, re := range cfg.Remotes {
-		if remote == re.Name {
-			// url is set matching the default logic in go-git's repository.Push
-			// and repository.Fetch logic as of go-git v5.12.1.
-			//
-			// we do this because the push and fetch methods can only take one
-			// remote for both option structs, even though the push method
-			// _should_ push to all of the URLs defined for a given remote.
-			url = re.URLs[len(re.URLs)-1]
-			if fetch {
-				url = re.URLs[0]
-			}
-
-			for _, u := range cfg.URLs {
-				if strings.HasPrefix(url, u.InsteadOf) {
-					url = u.ApplyInsteadOf(url)
-					break
-				}
-			}
-		}
-	}
-
-	if url == "" {
-		return "", fmt.Errorf("unable to resolve URL for remote: %v", err)
-	}
-
-	return url, nil
-}
-
 // PushRefs sends the local refs of the given namespaces (and the data they
 // point to) to a remote, and updates that remote's tracking refs to match.
 // The equivalent git refspec for namespace="foo" is "refs/foo/*:refs/foo/*"
 func (repo *GoGitRepo) PushRefs(ctx context.Context, remote string, namespaces ...string) (string, error) {
-	remo, err := repo.r.Remote(remote)
-	if err != nil {
-		return "", err
-	}
-
 	refSpecs := make([]config.RefSpec, len(namespaces))
+	// go-git updates the tracking ref of a pushed ref only if a fetch refspec
+	// of the remote maps it
+	fetchRefSpecs := make([]config.RefSpec, len(namespaces))
 
 	for i, namespace := range namespaces {
-		refspec := refPrefix(namespace) + "*:" + refPrefix(namespace) + "*"
+		refSpecs[i] = config.RefSpec(refPrefix(namespace) + "*:" + refPrefix(namespace) + "*")
+		fetchRefSpecs[i] = config.RefSpec(refPrefix(namespace) + "*:" + trackingRefPrefix(remote, namespace) + "*")
+	}
 
-		// to make sure that the push also create the corresponding refs/remotes/<remote>/... references,
-		// we need to have a default fetch refspec configured on the remote, to make our refs "track" the remote ones.
-		// This does not change the config on disk, only on memory.
-		hasCustomFetch := false
-		fetchRefspec := refPrefix(namespace) + "*:" + trackingRefPrefix(remote, namespace) + "*"
-		for _, r := range remo.Config().Fetch {
-			if string(r) == fetchRefspec {
-				hasCustomFetch = true
-				break
-			}
-		}
-
-		if !hasCustomFetch {
-			remo.Config().Fetch = append(remo.Config().Fetch, config.RefSpec(fetchRefspec))
-		}
-
-		refSpecs[i] = config.RefSpec(refspec)
+	remo, err := repo.remote(remote, false, fetchRefSpecs)
+	if err != nil {
+		return "", err
 	}
 
 	buf := bytes.NewBuffer(nil)
 
-	remoteUrl, err := repo.resolveRemote(remote, false)
-	if err != nil {
-		return "", err
-	}
-
 	err = remo.PushContext(ctx, &gogit.PushOptions{
 		RemoteName: remote,
-		RemoteURL:  remoteUrl,
 		RefSpecs:   refSpecs,
 		Progress:   buf,
 	})
-	if err == gogit.NoErrAlreadyUpToDate {
+	if errors.Is(err, gogit.NoErrAlreadyUpToDate) {
 		return "already up-to-date", nil
 	}
 	if err != nil {
@@ -242,6 +212,45 @@ func (repo *GoGitRepo) PushRefs(ctx context.Context, remote string, namespaces .
 	}
 
 	return buf.String(), nil
+}
+
+// remote returns the go-git remote for the configured remote name, with fetch
+// as its fetch refspecs. Its URL is the first configured one to fetch, the
+// last one to push, rewritten by the longest matching url.<base>.insteadOf,
+// as go-git would. go-git never reads the remotes itself: see
+// gogitStorage.Config.
+func (repo *GoGitRepo) remote(name string, fetching bool, fetch []config.RefSpec) (*gogit.Remote, error) {
+	cfg, err := repo.config.Config().Read()
+	if err != nil {
+		return nil, err
+	}
+
+	urls := cfg.GetAll("remote." + name + ".url")
+	if len(urls) == 0 {
+		return nil, fmt.Errorf("unknown remote %q", name)
+	}
+	url := urls[len(urls)-1].Value
+	if fetching {
+		url = urls[0].Value
+	}
+
+	base, prefix := "", ""
+	for _, sub := range cfg.Subsections("url") {
+		for _, insteadOf := range cfg.GetAll("url." + sub + ".insteadOf") {
+			if strings.HasPrefix(url, insteadOf.Value) && len(insteadOf.Value) > len(prefix) {
+				base, prefix = sub, insteadOf.Value
+			}
+		}
+	}
+	if prefix != "" {
+		url = base + url[len(prefix):]
+	}
+
+	return gogit.NewRemote(repo.r.Storer, &config.RemoteConfig{
+		Name:  name,
+		URLs:  []string{url},
+		Fetch: fetch,
+	}), nil
 }
 
 // StoreData will store arbitrary data and return the corresponding hash
@@ -287,22 +296,7 @@ func (repo *GoGitRepo) ReadData(hash Hash) (io.ReadCloser, error) {
 func (repo *GoGitRepo) StoreTree(mapping []TreeEntry) (Hash, error) {
 	var tree object.Tree
 
-	// TODO: can be removed once https://github.com/go-git/go-git/issues/193 is resolved
-	sorted := make([]TreeEntry, len(mapping))
-	copy(sorted, mapping)
-	sort.Slice(sorted, func(i, j int) bool {
-		nameI := sorted[i].Name
-		if sorted[i].ObjectType == Tree {
-			nameI += "/"
-		}
-		nameJ := sorted[j].Name
-		if sorted[j].ObjectType == Tree {
-			nameJ += "/"
-		}
-		return nameI < nameJ
-	})
-
-	for _, entry := range sorted {
+	for _, entry := range mapping {
 		mode := filemode.Regular
 		if entry.ObjectType == Tree {
 			mode = filemode.Dir
@@ -314,6 +308,8 @@ func (repo *GoGitRepo) StoreTree(mapping []TreeEntry) (Hash, error) {
 			Hash: plumbing.NewHash(entry.Hash.String()),
 		})
 	}
+	// in git's order, which Encode requires
+	sort.Sort(object.TreeEntrySorter(tree.Entries))
 
 	obj := repo.r.Storer.NewEncodedObject()
 	obj.SetType(plumbing.TreeObject)
@@ -389,24 +385,12 @@ func (repo *GoGitRepo) StoreCommit(treeHash Hash, parents ...Hash) (Hash, error)
 // StoreSignedCommit will store a Git commit with the given Git tree. If signKey is not nil, the commit
 // will be signed accordingly.
 func (repo *GoGitRepo) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity, parents ...Hash) (Hash, error) {
-	cfg, err := repo.r.Config()
-	if err != nil {
-		return "", err
-	}
-
+	// no name nor email: the operations carry their own authors
 	commit := object.Commit{
-		Author: object.Signature{
-			Name:  cfg.Author.Name,
-			Email: cfg.Author.Email,
-			When:  time.Now(),
-		},
-		Committer: object.Signature{
-			Name:  cfg.Committer.Name,
-			Email: cfg.Committer.Email,
-			When:  time.Now(),
-		},
-		Message:  "",
-		TreeHash: plumbing.NewHash(treeHash.String()),
+		Author:    object.Signature{When: time.Now()},
+		Committer: object.Signature{When: time.Now()},
+		Message:   "",
+		TreeHash:  plumbing.NewHash(treeHash.String()),
 	}
 
 	for _, parent := range parents {
@@ -435,7 +419,7 @@ func (repo *GoGitRepo) StoreSignedCommit(treeHash Hash, signKey *openpgp.Entity,
 
 	obj := repo.r.Storer.NewEncodedObject()
 	obj.SetType(plumbing.CommitObject)
-	err = commit.Encode(obj)
+	err := commit.Encode(obj)
 	if err != nil {
 		return "", err
 	}

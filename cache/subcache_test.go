@@ -1313,15 +1313,15 @@ func TestSubCacheWorker(t *testing.T) {
 		// memory with it
 		reopen := func(t *testing.T, repo *repotest.GoGitRepo) repository.Repo {
 			t.Helper()
-			git, err := repository.OpenGoGitRepo(repo.GitDir)
-			require.NoError(t, err)
-			config := repository.NewGitConfig(gitconfig.Env{
+			config := repository.NewRepoConfig(repository.NewGitConfig(gitconfig.Env{
 				GitDir:       repo.GitDir,
 				GlobalConfig: []string{filepath.Join(t.TempDir(), ".gitconfig")},
-			})
+			}))
+			git, err := repository.OpenGoGitRepo(repo.GitDir, config)
+			require.NoError(t, err)
 			storage := repository.NewLocalStorage(filepath.Join(repo.GitDir, "git-bug"))
 			handle := &repository.ComposedRepo{
-				RepoConfig:  repository.NewRepoConfig(config),
+				RepoConfig:  config,
 				RepoKeyring: repository.NewRepoKeyring(keyring.NewArrayKeyring(nil)),
 				RepoStorage: repository.NewRepoStorage(storage),
 				RepoIndex:   repository.NewSqliteIndex(filepath.Join(storage.Root(), "index.db")),

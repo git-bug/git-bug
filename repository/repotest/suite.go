@@ -4,6 +4,7 @@ package repotest
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -1246,6 +1247,44 @@ func RepoRemoteTest(t *testing.T, newRemote func(t testing.TB, repo *GoGitRepo) 
 
 	t.Run("second round", func(t *testing.T) {
 		roundTrip(t, commit1, commit2)
+	})
+
+	t.Run("configuration go-git rejects", func(t *testing.T) {
+		// as `gh pr checkout` sets up, and a negative refspec
+		for _, repo := range []*GoGitRepo{repoA, repoB} {
+			require.NoError(t, repo.Config().Update(func(f *gitconfig.File) error {
+				return errors.Join(
+					f.Set("branch.refs/pull/1/head.remote", "origin"),
+					f.Set("branch.refs/pull/1/head.merge", "refs/pull/1/head"),
+					f.Add("remote.origin.fetch", "^refs/heads/skip"),
+				)
+			}))
+		}
+
+		commit3, err := repoA.StoreCommit(treeHash, commit2)
+		require.NoError(t, err)
+		roundTrip(t, commit2, commit3)
+	})
+
+	t.Run("url rewritten by insteadOf", func(t *testing.T) {
+		// the longest prefix wins
+		require.NoError(t, repoA.Config().Update(func(f *gitconfig.File) error {
+			return errors.Join(
+				f.Set("remote.aliased.url", "alias:remote"),
+				f.Set("url./nowhere/.insteadOf", "alias:"),
+				f.Set("url."+remote.GitDir+".insteadOf", "alias:remote"),
+			)
+		}))
+
+		_, err := remoteA.PushRefs(t.Context(), "aliased", namespace)
+		require.NoError(t, err)
+		_, err = remoteA.FetchRefs(t.Context(), "aliased", namespace)
+		require.NoError(t, err)
+		h, err := repoA.ResolveTrackingRef("aliased", namespace, key)
+		require.NoError(t, err)
+		h2, err := remote.ResolveRef(namespace, key)
+		require.NoError(t, err)
+		require.Equal(t, h2, h)
 	})
 
 	t.Run("unknown remote", func(t *testing.T) {

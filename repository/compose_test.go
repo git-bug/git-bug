@@ -35,12 +35,11 @@ func TestOpenDefaultGitTransport(t *testing.T) {
 			}
 
 			dir := t.TempDir()
-			_, err := InitGoGitRepo(dir)
-			require.NoError(t, err)
+			require.NoError(t, InitGoGitRepo(dir))
 			gitDir := filepath.Join(dir, ".git")
 
 			if tt.transport != "" {
-				err = NewGitConfig(gitconfig.Env{GitDir: gitDir}).Update(func(f *gitconfig.File) error {
+				err := NewGitConfig(gitconfig.Env{GitDir: gitDir}).Update(func(f *gitconfig.File) error {
 					return f.Set(gitTransportConfigKey, tt.transport)
 				})
 				require.NoError(t, err)

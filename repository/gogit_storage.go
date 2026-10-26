@@ -1,22 +1,30 @@
 package repository
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"slices"
 	"sort"
 	"sync"
 
+	"github.com/git-bug/gitconfig"
 	"github.com/go-git/go-billy/v5/osfs"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/cache"
+	format "github.com/go-git/go-git/v5/plumbing/format/config"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 )
 
-// reindexingStorage is the storer behind every GoGitRepo. It heals go-git's
-// packfile index when other processes change the repository.
+// gogitStorage is the storer behind every GoGitRepo. It works around go-git
+// defects, and is not meant to remain: each part goes once go-git fixes the
+// defect it's for, as the canary tests tell.
 //
+// It hides most of the repository's configuration from go-git, see Config.
+//
+// It heals go-git's packfile index when other processes change the repository.
 // go-git parses the .idx of every packfile on the first packed lookup and never
 // looks at objects/pack again, so a pack written by another process (a native
 // `git fetch` or `git gc`) is invisible, and a pack deleted by `git gc` leaves
@@ -33,7 +41,7 @@ import (
 // completes. GoGitRepo's rMutex serializes its own reads, but not go-git's
 // fetch and push, which run without it. mu therefore guards every access to the
 // index made through this storer.
-type reindexingStorage struct {
+type gogitStorage struct {
 	*filesystem.Storage
 
 	mu sync.Mutex
@@ -42,13 +50,16 @@ type reindexingStorage struct {
 	// stale is set when the last index build failed, so the index must be
 	// rebuilt on the next miss whatever packs says.
 	stale bool
+
+	config RepoConfig
 }
 
-// newReindexingStorage opens the storage for the git directory at dotGitPath,
-// configured as gogit.PlainOpen would.
-func newReindexingStorage(dotGitPath string) *reindexingStorage {
-	s := &reindexingStorage{
+// newGogitStorage opens the storage for the git directory at dotGitPath,
+// configured as gogit.PlainOpen would, whose configuration is config.
+func newGogitStorage(dotGitPath string, config RepoConfig) *gogitStorage {
+	s := &gogitStorage{
 		Storage: filesystem.NewStorage(osfs.New(dotGitPath), cache.NewObjectLRUDefault()),
+		config:  config,
 	}
 	s.mu.Lock()
 	s.loadIndex()
@@ -62,7 +73,7 @@ func newReindexingStorage(dotGitPath string) *reindexingStorage {
 // panic on a nil map if the index had been dropped in the meantime.
 //
 // Must be called with mu held.
-func (s *reindexingStorage) loadIndex() {
+func (s *gogitStorage) loadIndex() {
 	// The pack list is taken before the index is built, so a pack that lands
 	// in between is seen as a change on the next miss.
 	packs, err := s.listPacks()
@@ -89,7 +100,7 @@ func (s *reindexingStorage) loadIndex() {
 // built, and reports whether it did.
 //
 // Must be called with mu held.
-func (s *reindexingStorage) refresh() bool {
+func (s *gogitStorage) refresh() bool {
 	if !s.stale {
 		packs, err := s.listPacks()
 		if err != nil || slices.Equal(packs, s.packs) {
@@ -102,7 +113,7 @@ func (s *reindexingStorage) refresh() bool {
 }
 
 // listPacks returns the packfiles on disk, in a stable order.
-func (s *reindexingStorage) listPacks() ([]plumbing.Hash, error) {
+func (s *gogitStorage) listPacks() ([]plumbing.Hash, error) {
 	packs, err := s.Storage.ObjectPacks()
 	if err != nil {
 		return nil, err
@@ -112,7 +123,7 @@ func (s *reindexingStorage) listPacks() ([]plumbing.Hash, error) {
 }
 
 // Reindex rebuilds the packfile index unconditionally.
-func (s *reindexingStorage) Reindex() {
+func (s *gogitStorage) Reindex() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.Storage.Reindex()
@@ -122,7 +133,7 @@ func (s *reindexingStorage) Reindex() {
 // withRetry runs a read under mu and, if it fails and the packs changed, runs
 // it once more. Any error is retried, not only ErrObjectNotFound: a pack
 // deleted by `git gc` surfaces as an I/O error.
-func withRetry[T any](s *reindexingStorage, read func() (T, error)) (T, error) {
+func withRetry[T any](s *gogitStorage, read func() (T, error)) (T, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	res, err := read()
@@ -135,7 +146,7 @@ func withRetry[T any](s *reindexingStorage, read func() (T, error)) (T, error) {
 // EncodedObject returns the object of type t (or of any type, for
 // plumbing.AnyObject) with hash h, retrying once against a rebuilt index if the
 // packs on disk changed.
-func (s *reindexingStorage) EncodedObject(t plumbing.ObjectType, h plumbing.Hash) (plumbing.EncodedObject, error) {
+func (s *gogitStorage) EncodedObject(t plumbing.ObjectType, h plumbing.Hash) (plumbing.EncodedObject, error) {
 	return withRetry(s, func() (plumbing.EncodedObject, error) {
 		return s.Storage.EncodedObject(t, h)
 	})
@@ -144,7 +155,7 @@ func (s *reindexingStorage) EncodedObject(t plumbing.ObjectType, h plumbing.Hash
 // DeltaObject is EncodedObject, except that an object stored as a delta in a
 // pack is returned as that delta rather than resolved, so that building a pack
 // to push can reuse it instead of computing a new one.
-func (s *reindexingStorage) DeltaObject(t plumbing.ObjectType, h plumbing.Hash) (plumbing.EncodedObject, error) {
+func (s *gogitStorage) DeltaObject(t plumbing.ObjectType, h plumbing.Hash) (plumbing.EncodedObject, error) {
 	return withRetry(s, func() (plumbing.EncodedObject, error) {
 		return s.Storage.DeltaObject(t, h)
 	})
@@ -152,7 +163,7 @@ func (s *reindexingStorage) DeltaObject(t plumbing.ObjectType, h plumbing.Hash) 
 
 // HasEncodedObject returns nil if the object with hash h exists, without
 // reading it, or ErrObjectNotFound if it still does not after the retry.
-func (s *reindexingStorage) HasEncodedObject(h plumbing.Hash) error {
+func (s *gogitStorage) HasEncodedObject(h plumbing.Hash) error {
 	_, err := withRetry(s, func() (struct{}, error) {
 		return struct{}{}, s.Storage.HasEncodedObject(h)
 	})
@@ -161,7 +172,7 @@ func (s *reindexingStorage) HasEncodedObject(h plumbing.Hash) error {
 
 // EncodedObjectSize returns the uncompressed size of the object with hash h,
 // without reading its content.
-func (s *reindexingStorage) EncodedObjectSize(h plumbing.Hash) (int64, error) {
+func (s *gogitStorage) EncodedObjectSize(h plumbing.Hash) (int64, error) {
 	return withRetry(s, func() (int64, error) {
 		return s.Storage.EncodedObjectSize(h)
 	})
@@ -171,7 +182,7 @@ func (s *reindexingStorage) EncodedObjectSize(h plumbing.Hash) (int64, error) {
 // for resolving abbreviated hashes. The index is refreshed first rather than
 // on a miss: a stale index can return some matches but not all, and an
 // ambiguous abbreviation would then look unique.
-func (s *reindexingStorage) HashesWithPrefix(prefix []byte) ([]plumbing.Hash, error) {
+func (s *gogitStorage) HashesWithPrefix(prefix []byte) ([]plumbing.Hash, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.refresh()
@@ -182,7 +193,7 @@ func (s *reindexingStorage) HashesWithPrefix(prefix []byte) ([]plumbing.Hash, er
 // packed. It covers the packs on disk when it is created, opening each one as
 // it reaches it: a pack added meanwhile is not visited, and one removed
 // meanwhile makes the iteration fail, with no retry.
-func (s *reindexingStorage) IterEncodedObjects(t plumbing.ObjectType) (storer.EncodedObjectIter, error) {
+func (s *gogitStorage) IterEncodedObjects(t plumbing.ObjectType) (storer.EncodedObjectIter, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	iter, err := s.Storage.IterEncodedObjects(t)
@@ -194,7 +205,7 @@ func (s *reindexingStorage) IterEncodedObjects(t plumbing.ObjectType) (storer.En
 	// Refreshing now makes the index cover every pack the iterator can
 	// visit. If rebuilding it failed, typically on a pack whose .idx is still
 	// being written, some may be missing: fail now rather than crash later.
-	// Fix proposed upstream: https://github.com/go-git/go-git/pull/2448
+	// Fixed in go-git v6: https://github.com/go-git/go-git/pull/2448
 	s.refresh()
 	if s.stale {
 		iter.Close()
@@ -208,7 +219,7 @@ func (s *reindexingStorage) IterEncodedObjects(t plumbing.ObjectType) (storer.En
 // PackfileWriter returns a writer for a new pack, which go-git uses to store
 // what a fetch receives. When the writer is closed, the pack is renamed into
 // place and added to the index.
-func (s *reindexingStorage) PackfileWriter() (io.WriteCloser, error) {
+func (s *gogitStorage) PackfileWriter() (io.WriteCloser, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	w, err := s.Storage.PackfileWriter()
@@ -216,6 +227,58 @@ func (s *reindexingStorage) PackfileWriter() (io.WriteCloser, error) {
 		return nil, err
 	}
 	return &lockedPackWriter{mu: &s.mu, WriteCloser: w}, nil
+}
+
+// Config returns the core and extensions sections of the repository's
+// configuration, which go-git checks to open it, and nothing else.
+//
+// go-git parses the whole configuration whenever it reads it, opening the
+// repository included, and fails on what git accepts, such as a branch
+// merging a pull request's ref, as `gh pr checkout` sets up
+// (https://github.com/go-git/go-git/issues/530), or a negative fetch refspec
+// (https://github.com/go-git/go-git/issues/1927): every git-bug command
+// would fail. Its decoder also rejects syntax git accepts, such as an old
+// [branch.main] header, a key on the header line or a BOM. git-bug reads the
+// configuration with gitconfig instead, and hands go-git what it needs from
+// it: here, as in the remotes of GoGitRepo's FetchRefs and PushRefs.
+//
+// Only the repository's own configuration counts, as git reads the format
+// and extensions of a repository nowhere else.
+func (s *gogitStorage) Config() (*config.Config, error) {
+	all, err := s.config.Config().Read()
+	if err != nil {
+		return nil, err
+	}
+
+	kept := format.New()
+	for _, name := range []string{"core", "extensions"} {
+		for e := range all.Section(name) {
+			if e.Origin.Scope != gitconfig.ScopeLocal {
+				continue
+			}
+			value := e.Value
+			if e.Implicit {
+				// as git reads a boolean, where go-git expects "true"
+				value = "true"
+			}
+			kept.Section(name).AddOption(e.Key.Name, value)
+		}
+	}
+	var buf bytes.Buffer
+	if err := format.NewEncoder(&buf).Encode(kept); err != nil {
+		return nil, err
+	}
+	cfg := config.NewConfig()
+	if err := cfg.Unmarshal(buf.Bytes()); err != nil {
+		return nil, err
+	}
+	return cfg, nil
+}
+
+// SetConfig always fails: it would write the configuration Config returns,
+// without everything else.
+func (s *gogitStorage) SetConfig(*config.Config) error {
+	return errors.New("go-git doesn't write git-bug's repository configuration")
 }
 
 // lockedObjectIter takes the storage lock around each step of an object

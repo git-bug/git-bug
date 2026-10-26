@@ -18,7 +18,8 @@ var _ RepoRemote = &GitRepo{}
 
 // GitRepo is the remote operations of a git directory, running the git
 // binary: they get git's own transports and configuration, ssh's included,
-// where go-git reimplements them.
+// where go-git reimplements them. It works around what go-git doesn't
+// implement, see the top of gogit.go, and isn't meant to remain.
 //
 // It never prompts: a password or a passphrase git or ssh would ask for, or the
 // confirmation of an unknown host, fails the operation instead, as with

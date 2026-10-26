@@ -14,7 +14,7 @@ require (
 	github.com/dustin/go-humanize v1.1.0
 	github.com/fatih/color v1.19.0
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/git-bug/gitconfig v0.1.0
+	github.com/git-bug/gitconfig v0.2.0
 	github.com/go-git/go-billy/v5 v5.9.1
 	github.com/go-git/go-git/v5 v5.19.2
 	github.com/gorilla/mux v1.8.1
