@@ -20,13 +20,15 @@ func StatusFilter(status common.Status) Filter {
 }
 
 // AuthorFilter return a Filter that matches a bug author
+// The identity filters don't match an identity that doesn't resolve: a bug can
+// reference one that was removed, or that didn't come along in a pull.
 func AuthorFilter(query string) Filter {
 	return func(ctx context.Context, excerpt *BugExcerpt, resolvers entity.Resolvers) bool {
 		query = strings.ToLower(query)
 
 		author, err := entity.Resolve[*IdentityExcerpt](ctx, resolvers, excerpt.AuthorId)
 		if err != nil {
-			panic(err)
+			return false
 		}
 
 		return author.Match(query)
@@ -63,7 +65,7 @@ func ActorFilter(query string) Filter {
 		for _, id := range excerpt.Actors {
 			identityExcerpt, err := entity.Resolve[*IdentityExcerpt](ctx, resolvers, id)
 			if err != nil {
-				panic(err)
+				continue
 			}
 
 			if identityExcerpt.Match(query) {
@@ -82,7 +84,7 @@ func ParticipantFilter(query string) Filter {
 		for _, id := range excerpt.Participants {
 			identityExcerpt, err := entity.Resolve[*IdentityExcerpt](ctx, resolvers, id)
 			if err != nil {
-				panic(err)
+				continue
 			}
 
 			if identityExcerpt.Match(query) {
