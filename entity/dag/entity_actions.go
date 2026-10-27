@@ -47,16 +47,20 @@ func Pull[EntityT entity.Interface](ctx context.Context, def Definition, wrapper
 		return err
 	}
 
+	// MergeAll needs to be read to the end, so the first failure is kept for later
+	var firstErr error
 	for merge := range MergeAll(ctx, def, wrapper, repo, resolvers, remote, author) {
-		if merge.Err != nil {
-			return merge.Err
+		if firstErr != nil {
+			continue
 		}
-		if merge.Status == entity.MergeStatusInvalid {
-			return fmt.Errorf("merge failure: %s", merge.Reason)
+		if merge.Err != nil {
+			firstErr = merge.Err
+		} else if merge.Status == entity.MergeStatusInvalid {
+			firstErr = fmt.Errorf("merge failure: %s", merge.Reason)
 		}
 	}
 
-	return nil
+	return firstErr
 }
 
 // MergeAll will merge all the available remote Entity:

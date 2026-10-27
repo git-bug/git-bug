@@ -582,6 +582,43 @@ func TestMergeInvalidRemote(t *testing.T) {
 	}
 }
 
+// Pull fails on an entity that can't be merged, and merges the others all the
+// same.
+func TestPullContinuesOnFailure(t *testing.T) {
+	repoA, repoB, _, id1, _, resolvers, def := makeTestContextRemote(t)
+
+	var ids []entity.Id
+	for _, msg := range []string{"foo", "bar", "baz", "qux"} {
+		e := New(def)
+		e.Append(newOp1(id1, msg))
+		require.NoError(t, e.Commit(t.Context(), repoA))
+		ids = append(ids, e.Id())
+	}
+
+	// one more, with an edit time that isn't after its parent's, as in
+	// TestMergeInvalidRemote
+	invalid := New(def)
+	invalid.Append(newOp1(id1, "invalid"))
+	require.NoError(t, invalid.Commit(t.Context(), repoA))
+	opp := &operationPack{
+		Author:     id1,
+		Operations: []Operation{newOp1(id1, "forged")},
+		EditTime:   invalid.editTime,
+	}
+	forged, err := opp.Write(t.Context(), def, repoA, invalid.lastCommit)
+	require.NoError(t, err)
+	require.NoError(t, repoA.UpdateRef(t.Context(), def.Namespace, invalid.Id().String(), invalid.lastCommit, forged))
+
+	_, err = Push(t.Context(), def, repoA, "remote")
+	require.NoError(t, err)
+
+	require.Error(t, Pull(t.Context(), def, wrapper, repoB, resolvers, "remote", id1))
+
+	local, err := ListLocalIds(t.Context(), def, repoB)
+	require.NoError(t, err)
+	require.ElementsMatch(t, ids, local)
+}
+
 // Merging when there is nothing to merge in is the most common case, and must
 // not pay for reading the remote entity.
 func TestMergeNothingDoesntReadRemote(t *testing.T) {
