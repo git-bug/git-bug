@@ -806,7 +806,7 @@ func TestSubCacheDerived(t *testing.T) {
 		_, _, err = bug.AddComment(other, rene, time.Now().Unix(), "markercommitted", nil, nil)
 		require.NoError(t, err)
 		require.NoError(t, other.Commit(repo))
-		require.NoError(t, c.bugs.onCommit(b.shared))
+		c.bugs.onCommit(b.shared)
 
 		require.Equal(t, []entity.Id{b.Id()}, searchBugs(t, c, "markercommitted"))
 		require.Empty(t, searchBugs(t, c, "markerpending"))
@@ -835,7 +835,7 @@ func TestSubCacheDerived(t *testing.T) {
 		obs := &observer{}
 		require.NoError(t, c.registerObserver("repotest", bug.Typename, obs))
 
-		require.NoError(t, c.bugs.onCommit(b.shared))
+		c.bugs.onCommit(b.shared)
 		require.Empty(t, obs.updated)
 		require.Equal(t, 2, lenComments(t, c, b.Id()))
 		requireDerivedBuiltFromRefs(t, repo, c)
@@ -851,7 +851,7 @@ func TestSubCacheDerived(t *testing.T) {
 		require.NoError(t, c.Bugs().Remove(b.Id().String()))
 		obs := &observer{}
 		require.NoError(t, c.registerObserver("repotest", bug.Typename, obs))
-		require.NoError(t, c.bugs.onCommit(b.shared))
+		c.bugs.onCommit(b.shared)
 
 		require.NotContains(t, c.bugs.cached, b.Id())
 		require.Empty(t, obs.created)
@@ -949,10 +949,21 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 }
 
-// listHookRepo calls onList, if set, each time the bug refs are listed.
+// listHookRepo calls onList, if set, each time the bug refs are listed, and
+// onGetIndex, if set, each time the index of a namespace is opened.
 type listHookRepo struct {
 	repository.Repo
-	onList func() error
+	onList     func() error
+	onGetIndex func(namespace string) error
+}
+
+func (r *listHookRepo) GetIndex(namespace string, version uint) (repository.Index, error) {
+	if r.onGetIndex != nil {
+		if err := r.onGetIndex(namespace); err != nil {
+			return nil, err
+		}
+	}
+	return r.Repo.GetIndex(namespace, version)
 }
 
 func (r *listHookRepo) ListRefs(namespace string) (map[string]repository.Hash, error) {
@@ -1224,6 +1235,69 @@ func TestSubCacheWorker(t *testing.T) {
 			require.True(t, hasExcerpt(t, c, failing))
 			require.True(t, hasExcerpt(t, c, other))
 		})
+	})
+
+	// the commit is in git once written: a failure of the sync that follows
+	// doesn't make it a failed commit, which a retry would duplicate
+	t.Run("a commit whose sync fails succeeds, and is synced by the worker", func(t *testing.T) {
+		for _, tc := range []struct {
+			name       string
+			namespace  string
+			commit     func(t *testing.T, c *RepoCache) entity.Id
+			hasExcerpt func(c *RepoCache, id entity.Id) bool
+		}{
+			{
+				name:      "bug",
+				namespace: bug.Namespace,
+				commit: func(t *testing.T, c *RepoCache) entity.Id {
+					b, _, err := c.Bugs().New(t.Context(), "title", "message")
+					require.NoError(t, err)
+					require.NoError(t, b.Commit(t.Context()))
+					require.False(t, b.NeedCommit())
+					return b.Id()
+				},
+				hasExcerpt: func(c *RepoCache, id entity.Id) bool {
+					_, err := c.Bugs().ResolveExcerpt(id)
+					return err == nil
+				},
+			},
+			{
+				name:      "new identity",
+				namespace: identity.Namespace,
+				commit: func(t *testing.T, c *RepoCache) entity.Id {
+					i, err := c.Identities().New("Blaise Pascal", "blaise@pascal.fr")
+					require.NoError(t, err)
+					return i.Id()
+				},
+				hasExcerpt: func(c *RepoCache, id entity.Id) bool {
+					_, err := c.Identities().ResolveExcerpt(id)
+					return err == nil
+				},
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				synctest.Test(t, func(t *testing.T) {
+					repo, c, _, hook, _ := setup(t)
+					// only the sync of the commit fails
+					var opened atomic.Int32
+					hook.onGetIndex = func(namespace string) error {
+						if namespace == tc.namespace && opened.Add(1) == 1 {
+							return errors.New("index unavailable")
+						}
+						return nil
+					}
+
+					id := tc.commit(t, c)
+					_, err := repo.ResolveRef(tc.namespace, id.String())
+					require.NoError(t, err)
+					require.False(t, tc.hasExcerpt(c, id))
+
+					time.Sleep(syncInterval)
+					synctest.Wait()
+					require.True(t, tc.hasExcerpt(c, id))
+				})
+			})
+		}
 	})
 
 	t.Run("observers are notified of changes made outside", func(t *testing.T) {

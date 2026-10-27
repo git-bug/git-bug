@@ -15,13 +15,13 @@ var _ identity.Interface = &IdentityCache{}
 // loaded identity.
 type IdentityCache struct {
 	repo     repository.Repo
-	onCommit func() error // called after each commit
+	onCommit func() // called after each commit
 
 	mu sync.Mutex
 	*identity.Identity
 }
 
-func NewIdentityCache(i *identity.Identity, repo repository.Repo, onCommit func() error) *IdentityCache {
+func NewIdentityCache(i *identity.Identity, repo repository.Repo, onCommit func()) *IdentityCache {
 	return &IdentityCache{
 		repo:     repo,
 		onCommit: onCommit,
@@ -42,7 +42,8 @@ func (i *IdentityCache) Commit() error {
 	if err != nil {
 		return err
 	}
-	return i.onCommit()
+	i.onCommit()
+	return nil
 }
 
 func (i *IdentityCache) CommitAsNeeded() error {
@@ -56,5 +57,6 @@ func (i *IdentityCache) CommitAsNeeded() error {
 	if err != nil {
 		return err
 	}
-	return i.onCommit()
+	i.onCommit()
+	return nil
 }
