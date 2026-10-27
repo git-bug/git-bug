@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/git-bug/gitconfig"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/stretchr/testify/require"
 )
@@ -17,11 +18,17 @@ import (
 func newTestGoGitRepo(t testing.TB, bare bool) *GoGitRepo {
 	t.Helper()
 
-	create := InitGoGitRepo
+	dir := t.TempDir()
+	create, gitDir := InitGoGitRepo, filepath.Join(dir, ".git")
 	if bare {
-		create = InitBareGoGitRepo
+		create, gitDir = InitBareGoGitRepo, dir
 	}
-	repo, err := create(t.TempDir())
+	require.NoError(t, create(dir))
+	config := NewRepoConfig(NewGitConfig(gitconfig.Env{
+		GitDir:       gitDir,
+		GlobalConfig: []string{filepath.Join(t.TempDir(), ".gitconfig")},
+	}))
+	repo, err := OpenGoGitRepo(gitDir, config)
 	require.NoError(t, err)
 	return repo
 }
@@ -82,20 +89,24 @@ func TestFindGitDir(t *testing.T) {
 		sub := filepath.Join(plainRoot, "a", "b")
 		require.NoError(t, os.MkdirAll(sub, 0755))
 
-		for _, tc := range []struct {
+		tests := []struct {
+			name     string
 			in       string
 			expected string
 		}{
-			{plainRoot, plainGitDir},
-			{sub, plainGitDir},
-			{plainGitDir, plainGitDir},
-			{filepath.Join(plainGitDir, "objects"), plainGitDir},
-			{bareGitDir, bareGitDir},
-			{filepath.Join(bareGitDir, "objects"), bareGitDir},
-		} {
-			gitDir, err := FindGitDir(tc.in)
-			require.NoError(t, err, tc.in)
-			require.Equal(t, tc.expected, gitDir, tc.in)
+			{name: "worktree", in: plainRoot, expected: plainGitDir},
+			{name: "worktree subdirectory", in: sub, expected: plainGitDir},
+			{name: "git directory", in: plainGitDir, expected: plainGitDir},
+			{name: "git directory subdirectory", in: filepath.Join(plainGitDir, "objects"), expected: plainGitDir},
+			{name: "bare", in: bareGitDir, expected: bareGitDir},
+			{name: "bare subdirectory", in: filepath.Join(bareGitDir, "objects"), expected: bareGitDir},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				gitDir, err := FindGitDir(tt.in)
+				require.NoError(t, err)
+				require.Equal(t, tt.expected, gitDir)
+			})
 		}
 	})
 
@@ -172,34 +183,67 @@ func TestFindGitDir(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, plainGitDir, gitDir)
 	})
-
-	t.Run("OpenGoGitRepo doesn't search", func(t *testing.T) {
-		_, err := OpenGoGitRepo(plainRoot)
-		require.ErrorIs(t, err, ErrNotARepo)
-
-		repo, err := OpenGoGitRepo(plainGitDir)
-		require.NoError(t, err)
-		require.Equal(t, plainGitDir, repo.path)
-	})
 }
 
-func TestGoGitRepo_Head(t *testing.T) {
-	repo := newTestGoGitRepo(t, false)
+// TestGoGitRepo_Specifics tests what the shared suite, run by TestGoGitRepo,
+// doesn't.
+func TestGoGitRepo_Specifics(t *testing.T) {
+	t.Run("OpenGoGitRepo doesn't search", func(t *testing.T) {
+		opened := newTestGoGitRepo(t, false)
+		gitDir := opened.path
 
-	// a new repository's HEAD points to refs/heads/master, which doesn't exist yet
-	_, err := repo.Head(t.Context())
-	require.ErrorIs(t, err, ErrNotFound)
+		_, err := OpenGoGitRepo(filepath.Dir(gitDir), opened.config)
+		require.ErrorIs(t, err, ErrNotARepo)
 
-	commit := storeTestCommits(t, repo, 1)[0]
-	require.NoError(t, repo.r.Storer.SetReference(plumbing.NewHashReference(
-		plumbing.NewBranchReferenceName("master"), plumbing.NewHash(commit.String()))))
+		repo, err := OpenGoGitRepo(gitDir, opened.config)
+		require.NoError(t, err)
+		require.Equal(t, gitDir, repo.path)
+	})
 
-	meta, err := repo.Head(t.Context())
-	require.NoError(t, err)
-	require.Equal(t, RefMeta{
-		Name:      "refs/heads/master",
-		ShortName: "master",
-		Type:      GitRefTypeBranch,
-		Hash:      string(commit),
-	}, meta)
+	t.Run("StoreTree sorts as git", func(t *testing.T) {
+		requireGitBinary(t)
+
+		repo := newTestGoGitRepo(t, false)
+		blob, err := repo.StoreData([]byte("content"))
+		require.NoError(t, err)
+		sub, err := repo.StoreTree([]TreeEntry{{ObjectType: Blob, Hash: blob, Name: "x"}})
+		require.NoError(t, err)
+
+		// git compares a directory's name as if it ended with a slash: "a" goes
+		// after "a-c" and "a.b", not before
+		tree, err := repo.StoreTree([]TreeEntry{
+			{ObjectType: Tree, Hash: sub, Name: "a"},
+			{ObjectType: Blob, Hash: blob, Name: "a.b"},
+			{ObjectType: Blob, Hash: blob, Name: "a-c"},
+		})
+		require.NoError(t, err)
+
+		// git fsck rejects a tree out of git's order
+		commit, err := repo.StoreCommit(tree)
+		require.NoError(t, err)
+		dir := filepath.Dir(repo.path)
+		runGit(t, dir, "update-ref", "refs/test/tree", string(commit))
+		runGit(t, dir, "fsck", "--strict")
+	})
+
+	t.Run("Head", func(t *testing.T) {
+		repo := newTestGoGitRepo(t, false)
+
+		// a new repository's HEAD points to refs/heads/master, which doesn't exist yet
+		_, err := repo.Head(t.Context())
+		require.ErrorIs(t, err, ErrNotFound)
+
+		commit := storeTestCommits(t, repo, 1)[0]
+		require.NoError(t, repo.r.Storer.SetReference(plumbing.NewHashReference(
+			plumbing.NewBranchReferenceName("master"), plumbing.NewHash(commit.String()))))
+
+		meta, err := repo.Head(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, RefMeta{
+			Name:      "refs/heads/master",
+			ShortName: "master",
+			Type:      GitRefTypeBranch,
+			Hash:      string(commit),
+		}, meta)
+	})
 }

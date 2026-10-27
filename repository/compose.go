@@ -31,26 +31,13 @@ const gitTransportConfigKey = "git-bug.git-transport"
 // in <gitDir>/<namespace>, and the remote operations of go-git or the git
 // binary, as git-bug.git-transport says.
 func OpenDefault(gitDir string, namespace string) (Repo, error) {
-	git, err := OpenGoGitRepo(gitDir)
+	env, err := gitconfig.Discover(gitDir)
 	if err != nil {
 		return nil, err
 	}
-	return newDefault(git, namespace)
-}
+	config := NewRepoConfig(NewGitConfig(env))
 
-// InitDefault creates an empty git repository at path, and returns it with the
-// same parts as OpenDefault.
-func InitDefault(path string, namespace string) (Repo, error) {
-	git, err := InitGoGitRepo(path)
-	if err != nil {
-		return nil, err
-	}
-	return newDefault(git, namespace)
-}
-
-// newDefault returns the repository of git with the parts of OpenDefault.
-func newDefault(git *GoGitRepo, namespace string) (Repo, error) {
-	env, err := gitconfig.Discover(git.path)
+	git, err := OpenGoGitRepo(gitDir, config)
 	if err != nil {
 		return nil, err
 	}
@@ -59,8 +46,6 @@ func newDefault(git *GoGitRepo, namespace string) (Repo, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	config := NewRepoConfig(NewGitConfig(env))
 
 	cfg, err := config.Config().Read()
 	if err != nil {
@@ -91,6 +76,15 @@ func newDefault(git *GoGitRepo, namespace string) (Repo, error) {
 		RepoBrowse:  git,
 		RepoClock:   NewPersistedClocks(storage),
 	}, nil
+}
+
+// InitDefault creates an empty git repository at path, and returns it with the
+// same parts as OpenDefault.
+func InitDefault(path string, namespace string) (Repo, error) {
+	if err := InitGoGitRepo(path); err != nil {
+		return nil, err
+	}
+	return OpenDefault(filepath.Join(path, ".git"), namespace)
 }
 
 // Close closes the parts holding resources: the indexes.

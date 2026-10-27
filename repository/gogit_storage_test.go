@@ -11,6 +11,7 @@ import (
 	"github.com/git-bug/gitconfig"
 	"github.com/go-git/go-billy/v5/osfs"
 	gogit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -28,9 +29,8 @@ import (
 func setupPrimedRepo(t *testing.T) (*GoGitRepo, string) {
 	t.Helper()
 
-	dir := t.TempDir()
-	repo, err := InitGoGitRepo(dir)
-	require.NoError(t, err)
+	repo := newTestGoGitRepo(t, false)
+	dir := filepath.Dir(repo.path)
 
 	h, err := repo.StoreData([]byte("already packed"))
 	require.NoError(t, err)
@@ -117,7 +117,7 @@ func TestGoGitStorage(t *testing.T) {
 
 		t.Run("HasEncodedObject", func(t *testing.T) {
 			repo, dir := setupFetched(t)
-			s := repo.r.Storer.(*reindexingStorage)
+			s := repo.r.Storer.(*gogitStorage)
 
 			h := plumbing.NewHash(runGit(t, dir, "rev-parse", "main:a/x"))
 			require.NoError(t, s.HasEncodedObject(h))
@@ -125,7 +125,7 @@ func TestGoGitStorage(t *testing.T) {
 
 		t.Run("DeltaObject", func(t *testing.T) {
 			repo, dir := setupFetched(t)
-			s := repo.r.Storer.(*reindexingStorage)
+			s := repo.r.Storer.(*gogitStorage)
 
 			h := plumbing.NewHash(runGit(t, dir, "rev-parse", "main:a/x"))
 			obj, err := s.DeltaObject(plumbing.AnyObject, h)
@@ -135,7 +135,7 @@ func TestGoGitStorage(t *testing.T) {
 
 		t.Run("HashesWithPrefix", func(t *testing.T) {
 			repo, dir := setupFetched(t)
-			s := repo.r.Storer.(*reindexingStorage)
+			s := repo.r.Storer.(*gogitStorage)
 
 			h := plumbing.NewHash(runGit(t, dir, "rev-parse", "main:a/x"))
 			hashes, err := s.HashesWithPrefix(h[:4])
@@ -147,7 +147,7 @@ func TestGoGitStorage(t *testing.T) {
 		// pack's: the empty prefix matches the primed blob, already indexed.
 		t.Run("HashesWithPrefix with an indexed match", func(t *testing.T) {
 			repo, dir := setupFetched(t)
-			s := repo.r.Storer.(*reindexingStorage)
+			s := repo.r.Storer.(*gogitStorage)
 
 			hashes, err := s.HashesWithPrefix(nil)
 			require.NoError(t, err)
@@ -160,7 +160,7 @@ func TestGoGitStorage(t *testing.T) {
 	// the packs didn't change.
 	t.Run("missing object", func(t *testing.T) {
 		repo, _ := setupPrimedRepo(t)
-		s := repo.r.Storer.(*reindexingStorage)
+		s := repo.r.Storer.(*gogitStorage)
 		packs := s.packs
 		require.NotEmpty(t, packs)
 
@@ -178,7 +178,7 @@ func TestGoGitStorage(t *testing.T) {
 
 	t.Run("IterEncodedObjects", func(t *testing.T) {
 		repo, dir := setupFetched(t)
-		s := repo.r.Storer.(*reindexingStorage)
+		s := repo.r.Storer.(*gogitStorage)
 
 		iter, err := s.IterEncodedObjects(plumbing.BlobObject)
 		require.NoError(t, err)
@@ -198,7 +198,7 @@ func TestGoGitStorage(t *testing.T) {
 	// would crash on reaching it: iterating must fail instead.
 	t.Run("IterEncodedObjects with a pack being written", func(t *testing.T) {
 		repo, dir := setupPrimedRepo(t)
-		s := repo.r.Storer.(*reindexingStorage)
+		s := repo.r.Storer.(*gogitStorage)
 		pack := filepath.Join(dir, ".git", "objects", "pack", "pack-0123456789abcdef0123456789abcdef01234567.pack")
 		require.NoError(t, os.WriteFile(pack, []byte("not yet indexed"), 0o644))
 
@@ -248,7 +248,7 @@ func TestGoGitStorage(t *testing.T) {
 		// one. Run with -race.
 		t.Run("during reindex", func(t *testing.T) {
 			repo, head := setup(t)
-			s := repo.r.Storer.(*reindexingStorage)
+			s := repo.r.Storer.(*gogitStorage)
 
 			done := make(chan struct{})
 			var wg sync.WaitGroup
@@ -325,7 +325,7 @@ func TestGoGitStorage(t *testing.T) {
 	t.Run("concurrent reindex", func(t *testing.T) {
 		repo, dir := setupFetched(t)
 		blob := Hash(runGit(t, dir, "rev-parse", "main:a/z"))
-		s := repo.r.Storer.(*reindexingStorage)
+		s := repo.r.Storer.(*gogitStorage)
 
 		var wg sync.WaitGroup
 		for range 4 {
@@ -358,7 +358,7 @@ func TestGoGitStorage(t *testing.T) {
 	// go-git fixed it, and the workaround named in the message can go.
 	t.Run("canary", func(t *testing.T) {
 		// plainStorage opens dir's git directory with go-git's own storage,
-		// as gogit.PlainOpen would, without reindexingStorage.
+		// as gogit.PlainOpen would, without gogitStorage.
 		plainStorage := func(dir string) *filesystem.Storage {
 			return filesystem.NewStorage(osfs.New(filepath.Join(dir, ".git")), cache.NewObjectLRUDefault())
 		}
@@ -380,12 +380,12 @@ func TestGoGitStorage(t *testing.T) {
 				s := plainStorage(dir)
 
 				require.ErrorIs(t, s.HasEncodedObject(plumbing.ZeroHash), plumbing.ErrObjectNotFound,
-					"reindexingStorage.loadIndex treats any other error as a failed index build")
+					"gogitStorage.loadIndex treats any other error as a failed index build")
 
 				fetchAsPack(t, dir, setupSource(t), "main:refs/heads/main")
 				_, err := s.EncodedObject(plumbing.AnyObject, plumbing.NewHash(runGit(t, dir, "rev-parse", "main")))
 				require.ErrorIs(t, err, plumbing.ErrObjectNotFound,
-					"HasEncodedObject no longer builds the index: reindexingStorage.loadIndex must build it another way")
+					"HasEncodedObject no longer builds the index: gogitStorage.loadIndex must build it another way")
 			})
 
 			t.Run("ObjectPacks lists the packs on disk", func(t *testing.T) {
@@ -398,7 +398,7 @@ func TestGoGitStorage(t *testing.T) {
 				after, err := s.ObjectPacks()
 				require.NoError(t, err)
 				require.Len(t, after, len(before)+1,
-					"ObjectPacks no longer reads the directory: reindexingStorage.refresh can't detect new packs with it")
+					"ObjectPacks no longer reads the directory: gogitStorage.refresh can't detect new packs with it")
 			})
 
 			t.Run("the pack writer indexes its pack on close", func(t *testing.T) {
@@ -416,7 +416,7 @@ func TestGoGitStorage(t *testing.T) {
 
 				_, err = s.EncodedObject(plumbing.AnyObject, head)
 				require.NoError(t, err,
-					"the pack writer no longer adds its pack to the index on close: review what lockedPackWriter and the eager index rebuild in reindexingStorage guard")
+					"the pack writer no longer adds its pack to the index on close: review what lockedPackWriter and the eager index rebuild in gogitStorage guard")
 			})
 
 			t.Run("traversals read objects through Repository.Storer", func(t *testing.T) {
@@ -440,7 +440,7 @@ func TestGoGitStorage(t *testing.T) {
 					return err
 				}))
 
-				msg := "go-git reads some objects around the storer it was opened with: reindexingStorage no longer sees every read"
+				msg := "go-git reads some objects around the storer it was opened with: gogitStorage no longer sees every read"
 				require.Positive(t, s.reads[first], msg)
 				require.Positive(t, s.reads[tree], msg)
 			})
@@ -456,7 +456,7 @@ func TestGoGitStorage(t *testing.T) {
 				fetchAsPack(t, dir, setupSource(t), "main:refs/heads/main")
 				_, err = s.EncodedObject(plumbing.AnyObject, plumbing.NewHash(runGit(t, dir, "rev-parse", "main")))
 				require.ErrorIs(t, err, plumbing.ErrObjectNotFound,
-					"go-git now sees packs added by other processes: reindexingStorage's retry can go")
+					"go-git now sees packs added by other processes: gogitStorage's retry can go")
 			})
 
 			t.Run("a pack deleted externally fails the read", func(t *testing.T) {
@@ -469,7 +469,7 @@ func TestGoGitStorage(t *testing.T) {
 				runGit(t, dir, "repack", "-a", "-d")
 				_, err = s.EncodedObject(plumbing.AnyObject, plumbing.NewHash(runGit(t, dir, "rev-parse", "main:a/y")))
 				require.Error(t, err,
-					"go-git now recovers from packs removed by other processes: reindexingStorage's retry can go")
+					"go-git now recovers from packs removed by other processes: gogitStorage's retry can go")
 			})
 
 			t.Run("iterating objects crashes on a pack added externally", func(t *testing.T) {
@@ -491,7 +491,7 @@ func TestGoGitStorage(t *testing.T) {
 					if err == nil {
 						_ = iter.ForEach(func(plumbing.EncodedObject) error { return nil })
 					}
-				}, "IterEncodedObjects no longer crashes on a pack it hasn't indexed (go-git#2448): reindexingStorage.IterEncodedObjects needn't refresh first")
+				}, "IterEncodedObjects no longer crashes on a pack it hasn't indexed (go-git#2448): gogitStorage.IterEncodedObjects needn't refresh first")
 			})
 
 			t.Run("closing a pack writer after Reindex crashes", func(t *testing.T) {
@@ -505,9 +505,102 @@ func TestGoGitStorage(t *testing.T) {
 				_, err = w.Write(pack)
 				require.NoError(t, err)
 				require.Panics(t, func() { _ = w.Close() },
-					"the pack writer no longer crashes on a dropped index: reindexingStorage needn't rebuild the index right after Reindex")
+					"the pack writer no longer crashes on a dropped index: gogitStorage needn't rebuild the index right after Reindex")
 			})
 		})
+	})
+}
+
+func TestGoGitStorage_Config(t *testing.T) {
+	// configurations git accepts and go-git rejects
+	tests := []struct {
+		name   string
+		config string
+		issue  string
+	}{
+		{
+			name:   "branch merging a pull request",
+			config: "[branch \"refs/pull/1/head\"]\n\tremote = origin\n\tmerge = refs/pull/1/head\n",
+			issue:  "go-git#530",
+		},
+		{
+			name:   "negative fetch refspec",
+			config: "[remote \"origin\"]\n\turl = /nowhere\n\tfetch = ^refs/heads/skip\n",
+			issue:  "go-git#1927",
+		},
+		{
+			name:   "old-style section header",
+			config: "[branch.main]\n\tremote = origin\n",
+			issue:  "go-git's decoder",
+		},
+		{
+			name:   "key on the header line",
+			config: "[core] fsmonitor = false\n",
+			issue:  "go-git's decoder",
+		},
+		{
+			name:   "byte order mark",
+			config: "\ufeff",
+			issue:  "go-git's decoder",
+		},
+		{
+			name:   "sparse checkout",
+			config: "[extensions]\n\tworktreeConfig = true\n",
+			issue:  "go-git v5's extensions",
+		},
+		{
+			name:   "blobless clone",
+			config: "[core]\n\trepositoryformatversion = 1\n[extensions]\n\tpartialClone = origin\n",
+			issue:  "go-git v5's extensions",
+		},
+		{
+			name:   "precious objects",
+			config: "[core]\n\trepositoryformatversion = 1\n[extensions]\n\tpreciousObjects = true\n",
+			issue:  "go-git v5's extensions",
+		},
+		{
+			name:   "SHA-1 object format",
+			config: "[core]\n\trepositoryformatversion = 1\n[extensions]\n\tobjectFormat = sha1\n",
+			issue:  "go-git v5's extensions",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			require.NoError(t, InitGoGitRepo(dir))
+			gitDir := filepath.Join(dir, ".git")
+			require.NoError(t, os.WriteFile(filepath.Join(gitDir, "config"), []byte(tt.config), 0o644))
+
+			repo, err := OpenGoGitRepo(gitDir, NewRepoConfig(NewGitConfig(gitconfig.Env{
+				GitDir:       gitDir,
+				GlobalConfig: []string{filepath.Join(t.TempDir(), ".gitconfig")},
+			})))
+			require.NoError(t, err)
+			storeTestCommits(t, repo, 1)
+
+			// a canary, as in TestGoGitStorage: if it fails, go-git fixed the bug
+			_, err = gogit.PlainOpen(dir)
+			require.Error(t, err, "go-git now opens a repository with a %s (%s): gogitStorage.Config may keep more of the configuration, and GoGitRepo may not need it anymore", tt.name, tt.issue)
+		})
+	}
+
+	t.Run("SHA-256 object format", func(t *testing.T) {
+		// an extension go-git must still see, and refuse
+		dir := t.TempDir()
+		require.NoError(t, InitGoGitRepo(dir))
+		gitDir := filepath.Join(dir, ".git")
+		require.NoError(t, os.WriteFile(filepath.Join(gitDir, "config"), []byte("[core]\n\trepositoryformatversion = 1\n[extensions]\n\tobjectFormat = sha256\n"), 0o644))
+
+		_, err := OpenGoGitRepo(gitDir, NewRepoConfig(NewGitConfig(gitconfig.Env{
+			GitDir:       gitDir,
+			GlobalConfig: []string{filepath.Join(t.TempDir(), ".gitconfig")},
+		})))
+		require.Error(t, err)
+	})
+
+	t.Run("SetConfig doesn't write", func(t *testing.T) {
+		repo := newTestGoGitRepo(t, false)
+		require.Error(t, repo.r.Storer.SetConfig(config.NewConfig()))
 	})
 }
 

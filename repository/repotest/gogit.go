@@ -39,14 +39,13 @@ func NewGoGitRepo(t testing.TB, bare bool) *GoGitRepo {
 	if bare {
 		create, gitDir = repository.InitBareGoGitRepo, dir
 	}
-	git, err := create(dir)
-	require.NoError(t, err)
+	require.NoError(t, create(dir))
 
 	config := repository.NewGitConfig(gitconfig.Env{
 		GitDir:       gitDir,
 		GlobalConfig: []string{filepath.Join(t.TempDir(), ".gitconfig")},
 	})
-	err = config.Update(func(f *gitconfig.File) error {
+	err := config.Update(func(f *gitconfig.File) error {
 		return errors.Join(
 			f.Set("user.name", "testuser"),
 			f.Set("user.email", "testuser@example.com"),
@@ -59,11 +58,15 @@ func NewGoGitRepo(t testing.TB, bare bool) *GoGitRepo {
 		)
 	})
 	require.NoError(t, err)
+	repoConfig := repository.NewRepoConfig(config)
+
+	git, err := repository.OpenGoGitRepo(gitDir, repoConfig)
+	require.NoError(t, err)
 
 	storage := repository.NewLocalStorage(filepath.Join(gitDir, namespace))
 
 	repo := &repository.ComposedRepo{
-		RepoConfig:  repository.NewRepoConfig(config),
+		RepoConfig:  repoConfig,
 		RepoKeyring: repository.NewRepoKeyring(keyring.NewArrayKeyring(nil)),
 		RepoStorage: repository.NewRepoStorage(storage),
 		RepoIndex:   repository.NewSqliteIndex(filepath.Join(storage.Root(), "index.db")),
