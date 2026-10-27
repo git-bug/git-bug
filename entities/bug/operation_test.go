@@ -152,7 +152,7 @@ func TestID(t *testing.T) {
 	for _, repo := range repos {
 		rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
-		err = rene.Commit(repo)
+		err = rene.Commit(t.Context(), repo)
 		require.NoError(t, err)
 
 		b, op, err := Create(rene, time.Now().Unix(), "title", "message", nil, nil)
@@ -161,7 +161,7 @@ func TestID(t *testing.T) {
 		id1 := op.Id()
 		require.NoError(t, id1.Validate())
 
-		err = b.Commit(repo)
+		err = b.Commit(t.Context(), repo)
 		require.NoError(t, err)
 
 		op2 := b.FirstOp()

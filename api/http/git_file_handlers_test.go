@@ -32,7 +32,7 @@ func TestGitFileHandlers(t *testing.T) {
 	require.NoError(t, err)
 	mrc.Add("", repoCache)
 
-	author, err := repoCache.Identities().New("test identity", "test@test.org")
+	author, err := repoCache.Identities().New(t.Context(), "test identity", "test@test.org")
 	require.NoError(t, err)
 	err = repoCache.SetUserIdentity(t.Context(), author)
 	require.NoError(t, err)
@@ -96,26 +96,26 @@ func TestGitFileHandlers(t *testing.T) {
 	// valid ref. With longest-ref-first resolution, "feature/foo/image.png"
 	// must resolve via the tag (imgBytes), not via the branch (which has no
 	// foo/image.png and would 404).
-	imgHash, err := repo.StoreData(imgBytes)
+	imgHash, err := repo.StoreData(t.Context(), imgBytes)
 	require.NoError(t, err)
 
 	otherBytes := []byte("other content")
-	otherHash, err := repo.StoreData(otherBytes)
+	otherHash, err := repo.StoreData(t.Context(), otherBytes)
 	require.NoError(t, err)
 
-	imgTreeHash, err := repo.StoreTree([]repository.TreeEntry{
+	imgTreeHash, err := repo.StoreTree(t.Context(), []repository.TreeEntry{
 		{ObjectType: repository.Blob, Hash: imgHash, Name: "image.png"},
 	})
 	require.NoError(t, err)
 
-	otherTreeHash, err := repo.StoreTree([]repository.TreeEntry{
+	otherTreeHash, err := repo.StoreTree(t.Context(), []repository.TreeEntry{
 		{ObjectType: repository.Blob, Hash: otherHash, Name: "image.png"},
 	})
 	require.NoError(t, err)
 
-	mainCommit, err := repo.StoreCommit(imgTreeHash)
+	mainCommit, err := repo.StoreCommit(t.Context(), imgTreeHash)
 	require.NoError(t, err)
-	featureCommit, err := repo.StoreCommit(otherTreeHash)
+	featureCommit, err := repo.StoreCommit(t.Context(), otherTreeHash)
 	require.NoError(t, err)
 
 	require.NoError(t, repo.SetBranch("main", mainCommit))

@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"sync"
 
 	"github.com/git-bug/git-bug/entities/identity"
@@ -35,9 +36,9 @@ func (i *IdentityCache) Mutate(repo repository.RepoClock, f func(*identity.Mutat
 	return i.Identity.Mutate(repo, f)
 }
 
-func (i *IdentityCache) Commit() error {
+func (i *IdentityCache) Commit(ctx context.Context) error {
 	i.mu.Lock()
-	err := i.Identity.Commit(i.repo)
+	err := i.Identity.Commit(ctx, i.repo)
 	i.mu.Unlock()
 	if err != nil {
 		return err
@@ -46,13 +47,13 @@ func (i *IdentityCache) Commit() error {
 	return nil
 }
 
-func (i *IdentityCache) CommitAsNeeded() error {
+func (i *IdentityCache) CommitAsNeeded(ctx context.Context) error {
 	i.mu.Lock()
 	if !i.Identity.NeedCommit() {
 		i.mu.Unlock()
 		return nil
 	}
-	err := i.Identity.Commit(i.repo)
+	err := i.Identity.Commit(ctx, i.repo)
 	i.mu.Unlock()
 	if err != nil {
 		return err

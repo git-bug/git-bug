@@ -143,7 +143,7 @@ func makeTestContextInternal(repo repository.Repo) (identity.Interface, identity
 	if err != nil {
 		panic(err)
 	}
-	err = id1.Commit(repo)
+	err = id1.Commit(context.Background(), repo)
 	if err != nil {
 		panic(err)
 	}
@@ -151,7 +151,7 @@ func makeTestContextInternal(repo repository.Repo) (identity.Interface, identity
 	if err != nil {
 		panic(err)
 	}
-	err = id2.Commit(repo)
+	err = id2.Commit(context.Background(), repo)
 	if err != nil {
 		panic(err)
 	}

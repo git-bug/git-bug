@@ -27,7 +27,7 @@ import (
 func TestQueries(t *testing.T) {
 	repo := repotest.NewGoGitRepo(t, false)
 
-	random_bugs.FillRepoWithSeed(repo, 10, 42)
+	random_bugs.FillRepoWithSeed(t.Context(), repo, 10, 42)
 
 	mrc := cache.NewMultiRepoCache()
 	t.Cleanup(func() { require.NoError(t, mrc.Close()) })
@@ -253,54 +253,54 @@ func TestGitBrowseQueries(t *testing.T) {
 	libV1 := []byte("package lib\n")
 	utilV1 := []byte("package util\n")
 
-	hReadmeV1, err := repo.StoreData(readmeV1)
+	hReadmeV1, err := repo.StoreData(t.Context(), readmeV1)
 	require.NoError(t, err)
-	hReadmeV3, err := repo.StoreData(readmeV3)
+	hReadmeV3, err := repo.StoreData(t.Context(), readmeV3)
 	require.NoError(t, err)
-	hMainV1, err := repo.StoreData(mainV1)
+	hMainV1, err := repo.StoreData(t.Context(), mainV1)
 	require.NoError(t, err)
-	hMainV2, err := repo.StoreData(mainV2)
+	hMainV2, err := repo.StoreData(t.Context(), mainV2)
 	require.NoError(t, err)
-	hLibV1, err := repo.StoreData(libV1)
+	hLibV1, err := repo.StoreData(t.Context(), libV1)
 	require.NoError(t, err)
-	hUtilV1, err := repo.StoreData(utilV1)
+	hUtilV1, err := repo.StoreData(t.Context(), utilV1)
 	require.NoError(t, err)
 
-	srcTreeV1, err := repo.StoreTree([]repository.TreeEntry{
+	srcTreeV1, err := repo.StoreTree(t.Context(), []repository.TreeEntry{
 		{ObjectType: repository.Blob, Hash: hLibV1, Name: "lib.go"},
 	})
 	require.NoError(t, err)
-	rootTreeV1, err := repo.StoreTree([]repository.TreeEntry{
+	rootTreeV1, err := repo.StoreTree(t.Context(), []repository.TreeEntry{
 		{ObjectType: repository.Blob, Hash: hReadmeV1, Name: "README.md"},
 		{ObjectType: repository.Blob, Hash: hMainV1, Name: "main.go"},
 		{ObjectType: repository.Tree, Hash: srcTreeV1, Name: "src"},
 	})
 	require.NoError(t, err)
 
-	srcTreeV2, err := repo.StoreTree([]repository.TreeEntry{
+	srcTreeV2, err := repo.StoreTree(t.Context(), []repository.TreeEntry{
 		{ObjectType: repository.Blob, Hash: hLibV1, Name: "lib.go"},
 		{ObjectType: repository.Blob, Hash: hUtilV1, Name: "util.go"},
 	})
 	require.NoError(t, err)
-	rootTreeV2, err := repo.StoreTree([]repository.TreeEntry{
+	rootTreeV2, err := repo.StoreTree(t.Context(), []repository.TreeEntry{
 		{ObjectType: repository.Blob, Hash: hReadmeV1, Name: "README.md"},
 		{ObjectType: repository.Blob, Hash: hMainV2, Name: "main.go"},
 		{ObjectType: repository.Tree, Hash: srcTreeV2, Name: "src"},
 	})
 	require.NoError(t, err)
 
-	rootTreeV3, err := repo.StoreTree([]repository.TreeEntry{
+	rootTreeV3, err := repo.StoreTree(t.Context(), []repository.TreeEntry{
 		{ObjectType: repository.Blob, Hash: hReadmeV3, Name: "README.md"},
 		{ObjectType: repository.Blob, Hash: hMainV2, Name: "main.go"},
 		{ObjectType: repository.Tree, Hash: srcTreeV2, Name: "src"},
 	})
 	require.NoError(t, err)
 
-	c1, err := repo.StoreCommit(rootTreeV1)
+	c1, err := repo.StoreCommit(t.Context(), rootTreeV1)
 	require.NoError(t, err)
-	c2, err := repo.StoreCommit(rootTreeV2, c1)
+	c2, err := repo.StoreCommit(t.Context(), rootTreeV2, c1)
 	require.NoError(t, err)
-	c3, err := repo.StoreCommit(rootTreeV3, c2)
+	c3, err := repo.StoreCommit(t.Context(), rootTreeV3, c2)
 	require.NoError(t, err)
 
 	require.NoError(t, repo.SetBranch("main", c3))
@@ -605,7 +605,7 @@ func TestSubscriptions(t *testing.T) {
 	require.NoError(t, err)
 	mrc.Add("", rc)
 
-	rene, err := rc.Identities().New("René Descartes", "rene@descartes.fr")
+	rene, err := rc.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 	require.NoError(t, rc.SetUserIdentity(t.Context(), rene))
 
@@ -735,7 +735,7 @@ func TestMutations(t *testing.T) {
 	require.NoError(t, err)
 	mrc.Add("", rc)
 
-	rene, err := rc.Identities().New("René Descartes", "rene@descartes.fr")
+	rene, err := rc.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 	require.NoError(t, rc.SetUserIdentity(t.Context(), rene))
 
@@ -753,7 +753,7 @@ func TestMutations(t *testing.T) {
 		t.Helper()
 		b, err := rc.Bugs().Resolve(t.Context(), id)
 		require.NoError(t, err)
-		commit, err := repo.ReadCommit(b.LastCommit())
+		commit, err := repo.ReadCommit(t.Context(), b.LastCommit())
 		require.NoError(t, err)
 		require.Equal(t, []repository.Hash{before}, commit.Parents)
 		return b.Snapshot()
@@ -854,7 +854,7 @@ func TestMutations(t *testing.T) {
 		require.NoError(t, err)
 		mrc.Add("b", rcB)
 
-		rene, err := rcA.Identities().New("René Descartes", "rene@descartes.fr")
+		rene, err := rcA.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
 		require.NoError(t, err)
 		require.NoError(t, rcA.SetUserIdentity(t.Context(), rene))
 		b, _, err := rcA.Bugs().New(t.Context(), "title", "body")
@@ -925,7 +925,7 @@ func TestMutations(t *testing.T) {
 		require.Nil(t, resp.Data)
 
 		require.ElementsMatch(t, before, rc.Bugs().AllIds())
-		refs, err := repo.ListRefs(bug.Namespace)
+		refs, err := repo.ListRefs(t.Context(), bug.Namespace)
 		require.NoError(t, err)
 		require.Len(t, refs, len(before))
 	})

@@ -39,11 +39,11 @@ func storeTestCommits(t *testing.T, repo RepoData, n int) []Hash {
 	t.Helper()
 	commits := make([]Hash, n)
 	for i := range commits {
-		blobHash, err := repo.StoreData(randomData())
+		blobHash, err := repo.StoreData(t.Context(), randomData())
 		require.NoError(t, err)
-		treeHash, err := repo.StoreTree([]TreeEntry{{ObjectType: Blob, Hash: blobHash, Name: "blob"}})
+		treeHash, err := repo.StoreTree(t.Context(), []TreeEntry{{ObjectType: Blob, Hash: blobHash, Name: "blob"}})
 		require.NoError(t, err)
-		commits[i], err = repo.StoreCommit(treeHash)
+		commits[i], err = repo.StoreCommit(t.Context(), treeHash)
 		require.NoError(t, err)
 	}
 	return commits
@@ -82,7 +82,7 @@ func requireNoTempFiles(t *testing.T, repo *GoGitRepo) {
 
 func requireRef(t *testing.T, repo RepoData, namespace string, key string, expected Hash) {
 	t.Helper()
-	h, err := repo.ResolveRef(namespace, key)
+	h, err := repo.ResolveRef(t.Context(), namespace, key)
 	require.NoError(t, err)
 	require.Equal(t, expected, h)
 }
@@ -118,16 +118,16 @@ func TestGoGitRepo_Refs(t *testing.T) {
 				key := randomKey()
 				expected := map[string]Hash{}
 				if tc.exists {
-					require.NoError(t, repo.UpdateRef(tc.namespace, key, "", commits[0]))
+					require.NoError(t, repo.UpdateRef(t.Context(), tc.namespace, key, "", commits[0]))
 					packRef(t, gr, tc.namespace, key)
 					requireRef(t, repo, tc.namespace, key, commits[0])
 					expected[key] = commits[0]
 				}
 
-				require.ErrorIs(t, repo.UpdateRef(tc.namespace, key, tc.old, commits[2]), ErrRefChanged)
+				require.ErrorIs(t, repo.UpdateRef(t.Context(), tc.namespace, key, tc.old, commits[2]), ErrRefChanged)
 				requireNoLooseRef(t, gr, tc.namespace, key)
 
-				refs, err := repo.ListRefs(tc.namespace)
+				refs, err := repo.ListRefs(t.Context(), tc.namespace)
 				require.NoError(t, err)
 				require.Equal(t, expected, refs)
 			})
@@ -136,12 +136,12 @@ func TestGoGitRepo_Refs(t *testing.T) {
 		t.Run("loose ref takes precedence over packed", func(t *testing.T) {
 			const namespace = "precedence"
 			key := randomKey()
-			require.NoError(t, repo.UpdateRef(namespace, key, "", commits[0]))
+			require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, "", commits[0]))
 			packRef(t, gr, namespace, key)
 
-			require.NoError(t, repo.UpdateRef(namespace, key, commits[0], commits[1]))
+			require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, commits[0], commits[1]))
 			requireRef(t, repo, namespace, key, commits[1])
-			refs, err := repo.ListRefs(namespace)
+			refs, err := repo.ListRefs(t.Context(), namespace)
 			require.NoError(t, err)
 			require.Equal(t, map[string]Hash{key: commits[1]}, refs)
 		})
@@ -152,7 +152,7 @@ func TestGoGitRepo_Refs(t *testing.T) {
 		t.Run("permissions", func(t *testing.T) {
 			const namespace = "perms"
 			key := randomKey()
-			require.NoError(t, repo.UpdateRef(namespace, key, "", commits[0]))
+			require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, "", commits[0]))
 
 			// created normally, not by the code under test
 			reference, err := os.Create(filepath.Join(t.TempDir(), "reference"))
@@ -188,13 +188,13 @@ func TestGoGitRepo_Refs(t *testing.T) {
 				candidates := commits[1:]
 				if tc.exists {
 					old = commits[0]
-					require.NoError(t, repo.UpdateRef(namespace, key, "", old))
+					require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, "", old))
 				}
 
 				errs := make([]error, len(candidates))
 				var wg sync.WaitGroup
 				for i, commit := range candidates {
-					wg.Go(func() { errs[i] = repo.UpdateRef(namespace, key, old, commit) })
+					wg.Go(func() { errs[i] = repo.UpdateRef(t.Context(), namespace, key, old, commit) })
 				}
 				wg.Wait()
 
@@ -225,29 +225,29 @@ func TestGoGitRepo_Refs(t *testing.T) {
 		}{
 			{"missing ref", func(t *testing.T, key string) {}},
 			{"loose ref", func(t *testing.T, key string) {
-				require.NoError(t, repo.UpdateRef(namespace, key, "", commits[0]))
+				require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, "", commits[0]))
 			}},
 			{"packed ref", func(t *testing.T, key string) {
-				require.NoError(t, repo.UpdateRef(namespace, key, "", commits[0]))
+				require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, "", commits[0]))
 				packRef(t, gr, namespace, key)
 			}},
 			{"loose ref over packed", func(t *testing.T, key string) {
-				require.NoError(t, repo.UpdateRef(namespace, key, "", commits[0]))
+				require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, "", commits[0]))
 				packRef(t, gr, namespace, key)
-				require.NoError(t, repo.UpdateRef(namespace, key, commits[0], commits[1]))
+				require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, commits[0], commits[1]))
 			}},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				key := randomKey()
 				tc.setup(t, key)
 
-				require.NoError(t, repo.RemoveRef(namespace, key))
-				_, err := repo.ResolveRef(namespace, key)
+				require.NoError(t, repo.RemoveRef(t.Context(), namespace, key))
+				_, err := repo.ResolveRef(t.Context(), namespace, key)
 				require.ErrorIs(t, err, ErrNotFound)
 				requireNoLooseRef(t, gr, namespace, key)
 
 				// idempotent
-				require.NoError(t, repo.RemoveRef(namespace, key))
+				require.NoError(t, repo.RemoveRef(t.Context(), namespace, key))
 			})
 		}
 	})
@@ -267,12 +267,12 @@ func TestGoGitRepo_Refs(t *testing.T) {
 			name string
 			op   func(key string) error
 		}{
-			{"update", func(key string) error { return repo.UpdateRef(namespace, key, commits[0], commits[1]) }},
-			{"remove", func(key string) error { return repo.RemoveRef(namespace, key) }},
+			{"update", func(key string) error { return repo.UpdateRef(t.Context(), namespace, key, commits[0], commits[1]) }},
+			{"remove", func(key string) error { return repo.RemoveRef(t.Context(), namespace, key) }},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				key := randomKey()
-				require.NoError(t, repo.UpdateRef(namespace, key, "", commits[0]))
+				require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, "", commits[0]))
 				lockPath := filepath.Join(gr.path, "refs", namespace, key+refLockSuffix)
 				require.NoError(t, os.WriteFile(lockPath, []byte("held"), 0666))
 
@@ -314,18 +314,18 @@ func TestGoGitRepo_Refs(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				namespace := "listing-" + strings.ReplaceAll(tc.name, " ", "-")
 				key := randomKey()
-				require.NoError(t, repo.UpdateRef(namespace, key, "", commits[0]))
+				require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, "", commits[0]))
 				dir := filepath.Join(gr.path, "refs", namespace)
 				require.NoError(t, os.WriteFile(filepath.Join(dir, tc.file), tc.content, 0666))
 
-				refs, err := repo.ListRefs(namespace)
+				refs, err := repo.ListRefs(t.Context(), namespace)
 				require.NoError(t, err)
 				require.Equal(t, map[string]Hash{key: commits[0]}, refs)
 			})
 		}
 
 		t.Run("missing namespace", func(t *testing.T) {
-			refs, err := repo.ListRefs("nothing-here")
+			refs, err := repo.ListRefs(t.Context(), "nothing-here")
 			require.NoError(t, err)
 			require.Empty(t, refs)
 		})
@@ -353,8 +353,8 @@ func TestGoGitRepo_Refs(t *testing.T) {
 			{"empty namespace", "", "key"},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
-				require.Error(t, repo.UpdateRef(tc.namespace, tc.key, "", commits[0]))
-				require.Error(t, repo.RemoveRef(tc.namespace, tc.key))
+				require.Error(t, repo.UpdateRef(t.Context(), tc.namespace, tc.key, "", commits[0]))
+				require.Error(t, repo.RemoveRef(t.Context(), tc.namespace, tc.key))
 			})
 		}
 
@@ -368,10 +368,10 @@ func TestGoGitRepo_Refs(t *testing.T) {
 			{"remote with space", "a b", "invalid"},
 		} {
 			t.Run("list "+tc.name, func(t *testing.T) {
-				_, err := repo.ListTrackingRefs(tc.remote, tc.namespace)
+				_, err := repo.ListTrackingRefs(t.Context(), tc.remote, tc.namespace)
 				require.Error(t, err)
 				if tc.remote == "origin" {
-					_, err = repo.ListRefs(tc.namespace)
+					_, err = repo.ListRefs(t.Context(), tc.namespace)
 					require.Error(t, err)
 				}
 			})
@@ -391,8 +391,8 @@ func TestGoGitRepo_Refs(t *testing.T) {
 		createPackedRefs := func(t *testing.T, namespace string) (string, string) {
 			t.Helper()
 			key1, key2 := randomKey(), randomKey()
-			require.NoError(t, repo.UpdateRef(namespace, key1, "", commits[0]))
-			require.NoError(t, repo.UpdateRef(namespace, key2, "", commits[0]))
+			require.NoError(t, repo.UpdateRef(t.Context(), namespace, key1, "", commits[0]))
+			require.NoError(t, repo.UpdateRef(t.Context(), namespace, key2, "", commits[0]))
 			runGit(t, gr.path, "pack-refs", "--all")
 			requireNoLooseRef(t, gr, namespace, key1)
 			requireNoLooseRef(t, gr, namespace, key2)
@@ -403,7 +403,7 @@ func TestGoGitRepo_Refs(t *testing.T) {
 			const namespace = "interop-list"
 			key1, key2 := createPackedRefs(t, namespace)
 
-			refs, err := repo.ListRefs(namespace)
+			refs, err := repo.ListRefs(t.Context(), namespace)
 			require.NoError(t, err)
 			require.Equal(t, map[string]Hash{key1: commits[0], key2: commits[0]}, refs)
 		})
@@ -412,7 +412,7 @@ func TestGoGitRepo_Refs(t *testing.T) {
 			const namespace = "interop-rejected"
 			key1, _ := createPackedRefs(t, namespace)
 
-			require.ErrorIs(t, repo.UpdateRef(namespace, key1, commits[1], commits[2]), ErrRefChanged)
+			require.ErrorIs(t, repo.UpdateRef(t.Context(), namespace, key1, commits[1], commits[2]), ErrRefChanged)
 			require.Len(t, strings.Split(runGit(t, gr.path, "for-each-ref", refPrefix(namespace)), "\n"), 2)
 		})
 
@@ -420,7 +420,7 @@ func TestGoGitRepo_Refs(t *testing.T) {
 			const namespace = "interop-ours"
 			key1, _ := createPackedRefs(t, namespace)
 
-			require.NoError(t, repo.UpdateRef(namespace, key1, commits[0], commits[1]))
+			require.NoError(t, repo.UpdateRef(t.Context(), namespace, key1, commits[0], commits[1]))
 			require.Equal(t, commits[1].String(), runGit(t, gr.path, "rev-parse", refPrefix(namespace)+key1))
 		})
 
@@ -430,7 +430,7 @@ func TestGoGitRepo_Refs(t *testing.T) {
 
 			runGit(t, gr.path, "update-ref", refPrefix(namespace)+key2, commits[2].String(), commits[0].String())
 			requireRef(t, repo, namespace, key2, commits[2])
-			require.NoError(t, repo.UpdateRef(namespace, key2, commits[2], commits[0]))
+			require.NoError(t, repo.UpdateRef(t.Context(), namespace, key2, commits[2], commits[0]))
 		})
 	})
 

@@ -23,7 +23,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 
 	idBeforeCommit := identity.Id()
 
-	err = identity.Commit(repo)
+	err = identity.Commit(t.Context(), repo)
 	require.NoError(t, err)
 
 	commitsAreSet(t, identity)
@@ -55,7 +55,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 
 	require.Equal(t, idBeforeCommit, identity.Id())
 
-	err = identity.Commit(repo)
+	err = identity.Commit(t.Context(), repo)
 	require.NoError(t, err)
 
 	commitsAreSet(t, identity)
@@ -82,7 +82,7 @@ func TestIdentityCommitLoad(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = identity.Commit(repo)
+	err = identity.Commit(t.Context(), repo)
 	require.NoError(t, err)
 
 	commitsAreSet(t, identity)
@@ -124,7 +124,7 @@ func TestIdentityMutateStaleClock(t *testing.T) {
 
 	identity, err := NewIdentity(repo, "René Descartes", "rene.descartes@example.com")
 	require.NoError(t, err)
-	require.NoError(t, identity.Commit(repo))
+	require.NoError(t, identity.Commit(t.Context(), repo))
 
 	// the clock "foo" is at 42, as if it came back from 100
 	identity.versions[0].times["foo"] = 100
@@ -148,7 +148,7 @@ func TestIdentityCommitStaleCopy(t *testing.T) {
 
 	identity, err := NewIdentity(repo, "René Descartes", "rene.descartes@example.com")
 	require.NoError(t, err)
-	require.NoError(t, identity.Commit(repo))
+	require.NoError(t, identity.Commit(t.Context(), repo))
 
 	copy1, err := Read(t.Context(), repo, identity.Id())
 	require.NoError(t, err)
@@ -156,10 +156,10 @@ func TestIdentityCommitStaleCopy(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, copy1.Mutate(repo, func(orig *Mutator) { orig.Name = "René" }))
-	require.NoError(t, copy1.Commit(repo))
+	require.NoError(t, copy1.Commit(t.Context(), repo))
 
 	require.NoError(t, copy2.Mutate(repo, func(orig *Mutator) { orig.Login = "rene" }))
-	require.ErrorIs(t, copy2.Commit(repo), repository.ErrRefChanged)
+	require.ErrorIs(t, copy2.Commit(t.Context(), repo), repository.ErrRefChanged)
 
 	// the stale copy keeps its new version pending
 	require.True(t, copy2.NeedCommit())
@@ -177,7 +177,7 @@ func TestIdentityLastCommit(t *testing.T) {
 
 	requireRef := func(t *testing.T, i *Identity) {
 		t.Helper()
-		ref, err := repo.ResolveRef(Namespace, i.Id().String())
+		ref, err := repo.ResolveRef(t.Context(), Namespace, i.Id().String())
 		require.NoError(t, err)
 		require.Equal(t, ref, i.LastCommit())
 	}
@@ -185,7 +185,7 @@ func TestIdentityLastCommit(t *testing.T) {
 	identity, err := NewIdentity(repo, "René Descartes", "rene.descartes@example.com")
 	require.NoError(t, err)
 	require.Empty(t, identity.LastCommit())
-	require.NoError(t, identity.Commit(repo))
+	require.NoError(t, identity.Commit(t.Context(), repo))
 	requireRef(t, identity)
 
 	read, err := Read(t.Context(), repo, identity.Id())
@@ -195,13 +195,13 @@ func TestIdentityLastCommit(t *testing.T) {
 	// a pending version doesn't move it
 	require.NoError(t, identity.Mutate(repo, func(orig *Mutator) { orig.Name = "René" }))
 	requireRef(t, identity)
-	require.NoError(t, identity.Commit(repo))
+	require.NoError(t, identity.Commit(t.Context(), repo))
 	requireRef(t, identity)
 
 	// neither does a failed commit
 	require.NoError(t, read.Mutate(repo, func(orig *Mutator) { orig.Login = "rene" }))
 	lastCommit := read.LastCommit()
-	require.ErrorIs(t, read.Commit(repo), repository.ErrRefChanged)
+	require.ErrorIs(t, read.Commit(t.Context(), repo), repository.ErrRefChanged)
 	require.Equal(t, lastCommit, read.LastCommit())
 }
 
@@ -265,7 +265,7 @@ func TestMetadata(t *testing.T) {
 	assertHasKeyValue(t, identity.ImmutableMetadata(), "key1", "value1")
 	assertHasKeyValue(t, identity.MutableMetadata(), "key1", "value1")
 
-	err = identity.Commit(repo)
+	err = identity.Commit(t.Context(), repo)
 	require.NoError(t, err)
 
 	assertHasKeyValue(t, identity.ImmutableMetadata(), "key1", "value1")
@@ -281,7 +281,7 @@ func TestMetadata(t *testing.T) {
 	assertHasKeyValue(t, identity.ImmutableMetadata(), "key1", "value1")
 	assertHasKeyValue(t, identity.MutableMetadata(), "key1", "value2")
 
-	err = identity.Commit(repo)
+	err = identity.Commit(t.Context(), repo)
 	require.NoError(t, err)
 
 	// reload
@@ -297,7 +297,7 @@ func TestMetadata(t *testing.T) {
 	require.True(t, identity.NeedCommit())
 	require.Len(t, identity.versions, versionCount+1)
 
-	err = identity.Commit(repo)
+	err = identity.Commit(t.Context(), repo)
 	require.NoError(t, err)
 	require.Len(t, identity.versions, versionCount+1)
 }
@@ -310,7 +310,7 @@ func TestMetadataAfterCommit(t *testing.T) {
 	require.NoError(t, err)
 
 	identity.SetMetadata("key1", "value1")
-	err = identity.Commit(repo)
+	err = identity.Commit(t.Context(), repo)
 	require.NoError(t, err)
 
 	// the last version is commit, so a new one is created to hold the new value
@@ -326,7 +326,7 @@ func TestMetadataAfterCommit(t *testing.T) {
 	assertHasKeyValue(t, identity.MutableMetadata(), "key1", "value2")
 
 	// and what we read back from git says the same thing
-	err = identity.Commit(repo)
+	err = identity.Commit(t.Context(), repo)
 	require.NoError(t, err)
 
 	loaded, err := Read(t.Context(), repo, identity.Id())
@@ -349,7 +349,7 @@ func TestJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	// commit to make sure we have an Id
-	err = identity.Commit(repo)
+	err = identity.Commit(t.Context(), repo)
 	require.NoError(t, err)
 	require.NotEmpty(t, identity.Id())
 
@@ -380,7 +380,7 @@ func TestIdentityRemove(t *testing.T) {
 	rene, err := NewIdentity(repo, "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
 
-	err = rene.Commit(repo)
+	err = rene.Commit(t.Context(), repo)
 	require.NoError(t, err)
 
 	_, err = Push(t.Context(), repo, "remoteA")
@@ -395,7 +395,7 @@ func TestIdentityRemove(t *testing.T) {
 	_, err = Fetch(t.Context(), repo, "remoteB")
 	require.NoError(t, err)
 
-	err = Remove(repo, rene.Id())
+	err = Remove(t.Context(), repo, rene.Id())
 	require.NoError(t, err)
 
 	_, err = Read(t.Context(), repo, rene.Id())
@@ -407,7 +407,7 @@ func TestIdentityRemove(t *testing.T) {
 	_, err = ReadTracking(t.Context(), repo, "remoteB", rene.Id())
 	require.ErrorAs(t, entity.ErrNotFound{}, err)
 
-	ids, err := ListLocalIds(repo)
+	ids, err := ListLocalIds(t.Context(), repo)
 	require.NoError(t, err)
 	require.Len(t, ids, 0)
 }

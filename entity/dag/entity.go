@@ -68,7 +68,7 @@ func Read[EntityT entity.Interface](ctx context.Context, def Definition, wrapper
 		return *new(EntityT), fmt.Errorf("invalid id: %w", err)
 	}
 
-	commit, err := repo.ResolveRef(def.Namespace, id.String())
+	commit, err := repo.ResolveRef(ctx, def.Namespace, id.String())
 	if errors.Is(err, repository.ErrNotFound) {
 		return *new(EntityT), entity.NewErrNotFound(def.Typename)
 	}
@@ -85,7 +85,7 @@ func readTracking[EntityT entity.Interface](ctx context.Context, def Definition,
 		return *new(EntityT), fmt.Errorf("invalid id: %w", err)
 	}
 
-	commit, err := repo.ResolveTrackingRef(remote, def.Namespace, id.String())
+	commit, err := repo.ResolveTrackingRef(ctx, remote, def.Namespace, id.String())
 	if errors.Is(err, repository.ErrNotFound) {
 		return *new(EntityT), entity.NewErrNotFound(def.Typename)
 	}
@@ -142,7 +142,7 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 			return nil, 0, 0, err
 		}
 
-		commit, err := repo.ReadCommit(hash)
+		commit, err := repo.ReadCommit(ctx, hash)
 		if err != nil {
 			return nil, 0, 0, err
 		}
@@ -377,13 +377,13 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 // Note: readClockNoCheck does not verify the integrity of the Entity and could return incorrect or incomplete
 // clocks if so. If data integrity check is a requirement, a flow similar to read without actually reading/decoding
 // operation blobs can be implemented instead.
-func readClockNoCheck(repo repository.Repo, lastCommit repository.Hash) (createTime, editTime lamport.Time, err error) {
-	commit, err := repo.ReadCommit(lastCommit)
+func readClockNoCheck(ctx context.Context, repo repository.Repo, lastCommit repository.Hash) (createTime, editTime lamport.Time, err error) {
+	commit, err := repo.ReadCommit(ctx, lastCommit)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	createTime, editTime, err = readOperationPackClock(repo, commit)
+	createTime, editTime, err = readOperationPackClock(ctx, repo, commit)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -392,12 +392,12 @@ func readClockNoCheck(repo repository.Repo, lastCommit repository.Hash) (createT
 	if len(commit.Parents) > 0 {
 		for len(commit.Parents) > 0 {
 			// The path to the root is irrelevant.
-			commit, err = repo.ReadCommit(commit.Parents[0])
+			commit, err = repo.ReadCommit(ctx, commit.Parents[0])
 			if err != nil {
 				return 0, 0, err
 			}
 		}
-		createTime, _, err = readOperationPackClock(repo, commit)
+		createTime, _, err = readOperationPackClock(ctx, repo, commit)
 		if err != nil {
 			return 0, 0, err
 		}
@@ -420,7 +420,7 @@ func ReadAll[EntityT entity.Interface](ctx context.Context, def Definition, wrap
 	go func() {
 		defer close(out)
 
-		refs, err := repo.ListRefs(def.Namespace)
+		refs, err := repo.ListRefs(ctx, def.Namespace)
 		if err != nil {
 			out <- entity.StreamedEntity[EntityT]{Err: err}
 			return
@@ -451,14 +451,14 @@ func ReadAll[EntityT entity.Interface](ctx context.Context, def Definition, wrap
 
 // readAllClocksNoCheck goes over all entities matching Definition and return the highest creation and edit time
 // they hold, for the corresponding clocks to be rebuilt. Zero if there is no entity.
-func readAllClocksNoCheck(def Definition, repo repository.Repo) (createTime, editTime lamport.Time, err error) {
-	refs, err := repo.ListRefs(def.Namespace)
+func readAllClocksNoCheck(ctx context.Context, def Definition, repo repository.Repo) (createTime, editTime lamport.Time, err error) {
+	refs, err := repo.ListRefs(ctx, def.Namespace)
 	if err != nil {
 		return 0, 0, err
 	}
 
 	for _, commit := range refs {
-		create, edit, err := readClockNoCheck(repo, commit)
+		create, edit, err := readClockNoCheck(ctx, repo, commit)
 		if err != nil {
 			return 0, 0, err
 		}
@@ -573,13 +573,13 @@ func (e *Entity) NeedCommit() bool {
 
 // CommitAsNeeded execute a Commit only if necessary. This function is useful to avoid getting an error if the Entity
 // is already in sync with the repository.
-func (e *Entity) CommitAsNeeded(repo repository.Repo) error {
+func (e *Entity) CommitAsNeeded(ctx context.Context, repo repository.Repo) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if len(e.staging) == 0 {
 		return nil
 	}
-	return e.commitStagingLocked(repo)
+	return e.commitStagingLocked(ctx, repo)
 }
 
 // Commit write the appended operations in the repository.
@@ -587,17 +587,17 @@ func (e *Entity) CommitAsNeeded(repo repository.Repo) error {
 // knows about, otherwise repository.ErrRefChanged is returned and Repair can be used
 // before trying again. On any error, the Entity is left unchanged, with its operations
 // still pending.
-func (e *Entity) Commit(repo repository.Repo) error {
+func (e *Entity) Commit(ctx context.Context, repo repository.Repo) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if len(e.staging) == 0 {
 		return fmt.Errorf("can't commit an entity with no pending operation")
 	}
-	return e.commitStagingLocked(repo)
+	return e.commitStagingLocked(ctx, repo)
 }
 
-func (e *Entity) commitStagingLocked(repo repository.Repo) error {
-	err := e.commitOperationsLocked(repo, e.staging)
+func (e *Entity) commitStagingLocked(ctx context.Context, repo repository.Repo) error {
+	err := e.commitOperationsLocked(ctx, repo, e.staging)
 	if err != nil {
 		return err
 	}
@@ -613,16 +613,16 @@ func (e *Entity) commitStagingLocked(repo repository.Repo) error {
 // before trying again. On any error, the Entity is left unchanged.
 // It can't be used while the first operation of the Entity is still pending, as
 // that operation must stay the first one.
-func (e *Entity) CommitOperations(repo repository.Repo, ops []Operation) error {
+func (e *Entity) CommitOperations(ctx context.Context, repo repository.Repo, ops []Operation) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if len(e.ops) == 0 && len(e.staging) > 0 {
 		return fmt.Errorf("can't commit operations before the pending first operation of a %s", e.Definition.Typename)
 	}
-	return e.commitOperationsLocked(repo, ops)
+	return e.commitOperationsLocked(ctx, repo, ops)
 }
 
-func (e *Entity) commitOperationsLocked(repo repository.Repo, ops []Operation) error {
+func (e *Entity) commitOperationsLocked(ctx context.Context, repo repository.Repo, ops []Operation) error {
 	if len(ops) == 0 {
 		return fmt.Errorf("can't commit an empty set of operations")
 	}
@@ -652,7 +652,7 @@ func (e *Entity) commitOperationsLocked(repo repository.Repo, ops []Operation) e
 			staging = staging[1:]
 		}
 
-		editTime, err = incrementClock(e.Definition, repo, editClockPattern)
+		editTime, err = incrementClock(ctx, e.Definition, repo, editClockPattern)
 		if err != nil {
 			return err
 		}
@@ -664,7 +664,7 @@ func (e *Entity) commitOperationsLocked(repo repository.Repo, ops []Operation) e
 		}
 
 		if lastCommit == "" {
-			createTime, err = incrementClock(e.Definition, repo, creationClockPattern)
+			createTime, err = incrementClock(ctx, e.Definition, repo, creationClockPattern)
 			if err != nil {
 				return err
 			}
@@ -676,7 +676,7 @@ func (e *Entity) commitOperationsLocked(repo repository.Repo, ops []Operation) e
 			parentCommit = []repository.Hash{lastCommit}
 		}
 
-		lastCommit, err = opp.Write(e.Definition, repo, parentCommit...)
+		lastCommit, err = opp.Write(ctx, e.Definition, repo, parentCommit...)
 		if err != nil {
 			return err
 		}
@@ -693,7 +693,7 @@ func (e *Entity) commitOperationsLocked(repo repository.Repo, ops []Operation) e
 		id = ops[0].Id()
 	}
 
-	err = repo.UpdateRef(e.Namespace, id.String(), e.lastCommit, lastCommit)
+	err = repo.UpdateRef(ctx, e.Namespace, id.String(), e.lastCommit, lastCommit)
 	if err != nil {
 		return err
 	}
@@ -720,7 +720,7 @@ func (e *Entity) Repair(ctx context.Context, repo repository.Repo, resolvers ent
 	}
 	id := e.firstOpLocked().Id()
 
-	commit, err := repo.ResolveRef(e.Namespace, id.String())
+	commit, err := repo.ResolveRef(ctx, e.Namespace, id.String())
 	if errors.Is(err, repository.ErrNotFound) {
 		return entity.NewErrNotFound(e.Typename)
 	}

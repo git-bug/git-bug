@@ -41,10 +41,10 @@ type Actions[SharedT Shared] struct {
 	// Refresh brings a loaded entity up to date with its reference, either in place
 	// or by returning a replacement, which the cache then holds instead
 	Refresh      func(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers, shared SharedT) (SharedT, error)
-	Remove       func(repo repository.Repo, id entity.Id) error
-	RemoveAll    func(repo repository.Repo) error
+	Remove       func(ctx context.Context, repo repository.Repo, id entity.Id) error
+	RemoveAll    func(ctx context.Context, repo repository.Repo) error
 	MergeAll     func(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers, remote string, mergeAuthor identity.Interface) <-chan entity.MergeResult
-	EnsureClocks func(repo repository.Repo) error
+	EnsureClocks func(ctx context.Context, repo repository.Repo) error
 }
 
 var _ cacheMgmt = &SubCache[Shared, Excerpt, entity.Resolved]{}
@@ -156,7 +156,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) Typename() string {
 // EnsureClocks makes sure that the clocks of the entities are usable, rebuilding
 // them if not. See dag.EnsureClocks.
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) EnsureClocks() error {
-	return sc.actions.EnsureClocks(sc.repo)
+	return sc.actions.EnsureClocks(sc.ctx, sc.repo)
 }
 
 // Load reads the excerpts of the index, and brings them up to date with the
@@ -430,7 +430,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) resolveMatcher(f func(ExcerptT) bo
 	return matching[0], nil
 }
 
-func (sc *SubCache[SharedT, ExcerptT, ViewT]) Remove(prefix string) error {
+func (sc *SubCache[SharedT, ExcerptT, ViewT]) Remove(ctx context.Context, prefix string) error {
 	id, err := sc.resolveMatcher(func(excerpt ExcerptT) bool {
 		return excerpt.Id().HasPrefix(prefix)
 	})
@@ -438,21 +438,15 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) Remove(prefix string) error {
 		return err
 	}
 
-	err = sc.actions.Remove(sc.repo, id)
-	if err != nil {
-		return err
-	}
-
-	return sc.sync(id)
+	// a failed Remove may have removed the local ref already
+	err = sc.actions.Remove(ctx, sc.repo, id)
+	return errors.Join(err, sc.sync(id))
 }
 
-func (sc *SubCache[SharedT, ExcerptT, ViewT]) RemoveAll() error {
-	err := sc.actions.RemoveAll(sc.repo)
-	if err != nil {
-		return err
-	}
-
-	return sc.syncAll(nil)
+func (sc *SubCache[SharedT, ExcerptT, ViewT]) RemoveAll(ctx context.Context) error {
+	// a failed or cancelled RemoveAll may have removed some entities already
+	err := sc.actions.RemoveAll(ctx, sc.repo)
+	return errors.Join(err, sc.syncAll(nil))
 }
 
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) MergeAll(ctx context.Context, remote string) <-chan entity.MergeResult {
@@ -812,7 +806,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncIdsLocked(ctx context.Context,
 	indexBuiltFrom := make(map[string]repository.Hash, len(ids))
 	candidates := make(map[entity.Id]struct{}, len(ids))
 	for _, id := range ids {
-		ref, err := sc.repo.ResolveRef(sc.namespace, id.String())
+		ref, err := sc.repo.ResolveRef(ctx, sc.namespace, id.String())
 		switch {
 		case err == nil:
 			refs[id.String()] = ref
@@ -850,7 +844,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncAllLocked(ctx context.Context,
 		return nil, err
 	}
 
-	refs, err := sc.repo.ListRefs(sc.namespace)
+	refs, err := sc.repo.ListRefs(ctx, sc.namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -985,7 +979,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncEntitiesLocked(ctx context.Con
 		if entity.IsErrNotFound(err) {
 			// not found can also come from a missing dependency, such as the
 			// author identity: only a missing reference is a removal
-			_, refErr := sc.repo.ResolveRef(sc.namespace, id.String())
+			_, refErr := sc.repo.ResolveRef(ctx, sc.namespace, id.String())
 			if !errors.Is(refErr, repository.ErrNotFound) {
 				return err
 			}

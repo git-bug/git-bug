@@ -51,7 +51,7 @@ func NewRepoCacheIdentity(repo repository.Repo,
 			return identity.MergeAll(ctx, repo, remote)
 		},
 		// identities carry no clock of their own, they record the others'
-		EnsureClocks: func(repo repository.Repo) error { return nil },
+		EnsureClocks: func(_ context.Context, repo repository.Repo) error { return nil },
 	}
 
 	sc := NewSubCache[*identity.Identity, *IdentityExcerpt, *IdentityCache](
@@ -74,42 +74,42 @@ func (c *RepoCacheIdentity) ResolveIdentityImmutableMetadata(ctx context.Context
 
 // New create a new identity
 // The new identity is written in the repository (commit)
-func (c *RepoCacheIdentity) New(name string, email string) (*IdentityCache, error) {
-	return c.NewRaw(name, email, "", "", nil, nil)
+func (c *RepoCacheIdentity) New(ctx context.Context, name string, email string) (*IdentityCache, error) {
+	return c.NewRaw(ctx, name, email, "", "", nil, nil)
 }
 
 // NewFull create a new identity
 // The new identity is written in the repository (commit)
-func (c *RepoCacheIdentity) NewFull(name string, email string, login string, avatarUrl string, keys []*identity.Key) (*IdentityCache, error) {
-	return c.NewRaw(name, email, login, avatarUrl, keys, nil)
+func (c *RepoCacheIdentity) NewFull(ctx context.Context, name string, email string, login string, avatarUrl string, keys []*identity.Key) (*IdentityCache, error) {
+	return c.NewRaw(ctx, name, email, login, avatarUrl, keys, nil)
 }
 
-func (c *RepoCacheIdentity) NewRaw(name string, email string, login string, avatarUrl string, keys []*identity.Key, metadata map[string]string) (*IdentityCache, error) {
+func (c *RepoCacheIdentity) NewRaw(ctx context.Context, name string, email string, login string, avatarUrl string, keys []*identity.Key, metadata map[string]string) (*IdentityCache, error) {
 	i, err := identity.NewIdentityFull(c.repo, name, email, login, avatarUrl, keys)
 	if err != nil {
 		return nil, err
 	}
-	return c.finishIdentity(i, metadata)
+	return c.finishIdentity(ctx, i, metadata)
 }
 
-func (c *RepoCacheIdentity) NewFromGitUser() (*IdentityCache, error) {
-	return c.NewFromGitUserRaw(nil)
+func (c *RepoCacheIdentity) NewFromGitUser(ctx context.Context) (*IdentityCache, error) {
+	return c.NewFromGitUserRaw(ctx, nil)
 }
 
-func (c *RepoCacheIdentity) NewFromGitUserRaw(metadata map[string]string) (*IdentityCache, error) {
+func (c *RepoCacheIdentity) NewFromGitUserRaw(ctx context.Context, metadata map[string]string) (*IdentityCache, error) {
 	i, err := identity.NewFromGitUser(c.repo)
 	if err != nil {
 		return nil, err
 	}
-	return c.finishIdentity(i, metadata)
+	return c.finishIdentity(ctx, i, metadata)
 }
 
-func (c *RepoCacheIdentity) finishIdentity(i *identity.Identity, metadata map[string]string) (*IdentityCache, error) {
+func (c *RepoCacheIdentity) finishIdentity(ctx context.Context, i *identity.Identity, metadata map[string]string) (*IdentityCache, error) {
 	for key, value := range metadata {
 		i.SetMetadata(key, value)
 	}
 
-	err := i.Commit(c.repo)
+	err := i.Commit(ctx, c.repo)
 	if err != nil {
 		return nil, err
 	}

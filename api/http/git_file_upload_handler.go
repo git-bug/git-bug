@@ -77,7 +77,7 @@ func (gufh *gitUploadFileHandler) ServeHTTP(rw http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	hash, err := repo.StoreData(fileBytes)
+	hash, err := repo.StoreData(r.Context(), fileBytes)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return

@@ -22,7 +22,7 @@ func newWipeCommand(env *execenv.Env) *cobra.Command {
 
 func runWipe(env *execenv.Env) error {
 	env.Out.Println("cleaning entities...")
-	err := env.Backend.RemoveAll()
+	err := env.Backend.RemoveAll(env.Ctx)
 	if err != nil {
 		_ = env.Backend.Close()
 		return err

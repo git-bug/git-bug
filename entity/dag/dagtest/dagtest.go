@@ -28,7 +28,7 @@ func SerializeRoundTripTest[OpT dag.Operation](
 
 	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
 	require.NoError(t, err)
-	require.NoError(t, rene.Commit(repo))
+	require.NoError(t, rene.Commit(t.Context(), repo))
 
 	before, resolvers := maker(rene, time.Now().Unix())
 
@@ -47,7 +47,7 @@ func SerializeRoundTripTest[OpT dag.Operation](
 
 	e := dag.New(def)
 	e.Append(before)
-	require.NoError(t, e.Commit(repo))
+	require.NoError(t, e.Commit(t.Context(), repo))
 
 	read, err := dag.Read(t.Context(), def, func(e *dag.Entity) *dag.Entity { return e }, repo, resolvers, e.Id())
 	require.NoError(t, err)

@@ -531,6 +531,7 @@ func (gi *githubImporter) ensurePerson(ctx context.Context, repo *cache.RepoCach
 	}
 
 	i, err = repo.Identities().NewRaw(
+		ctx,
 		name,
 		email,
 		string(actor.Login),
@@ -568,6 +569,7 @@ func (gi *githubImporter) getGhost(ctx context.Context, repo *cache.RepoCache) (
 		userName = string(*user.Name)
 	}
 	return repo.Identities().NewRaw(
+		ctx,
 		userName,
 		"",
 		string(user.Login),

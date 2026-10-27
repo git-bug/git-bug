@@ -179,7 +179,7 @@ func (e *CachedEntityBase[SnapT, OpT]) commit(ctx context.Context, required bool
 
 func (e *CachedEntityBase[SnapT, OpT]) commitLocked(ctx context.Context) error {
 	for attempt := 0; ; attempt++ {
-		err := e.shared.CommitOperations(e.repo, e.staged)
+		err := e.shared.CommitOperations(ctx, e.repo, e.staged)
 		if err == nil {
 			e.staged, e.snap = nil, nil
 			return nil

@@ -35,12 +35,12 @@ func MergeAll(ctx context.Context, repo repository.Repo, resolvers entity.Resolv
 }
 
 // Remove will remove a local bug from its entity.Id
-func Remove(repo repository.Repo, id entity.Id) error {
-	return dag.Remove(def, repo, id)
+func Remove(ctx context.Context, repo repository.Repo, id entity.Id) error {
+	return dag.Remove(ctx, def, repo, id)
 }
 
 // RemoveAll will remove all local bugs.
 // RemoveAll is idempotent.
-func RemoveAll(repo repository.Repo) error {
-	return dag.RemoveAll(def, repo)
+func RemoveAll(ctx context.Context, repo repository.Repo) error {
+	return dag.RemoveAll(ctx, def, repo)
 }
