@@ -28,7 +28,7 @@ type BugCache struct {
 	CachedEntityBase[*bug.Snapshot, bug.Operation]
 }
 
-func newBugCache(shared *sharedBug, repo repository.Repo, resolvers func() entity.Resolvers, getUserIdentity getUserIdentityFunc, onCommit func() error) *BugCache {
+func newBugCache(shared *sharedBug, repo repository.Repo, resolvers func() entity.Resolvers, getUserIdentity getUserIdentityFunc, onCommit func()) *BugCache {
 	return &BugCache{
 		CachedEntityBase: CachedEntityBase[*bug.Snapshot, bug.Operation]{
 			repo:            repo,

@@ -41,7 +41,7 @@ type cloneable[SnapT any] interface {
 type CachedEntityBase[SnapT cloneable[SnapT], OpT dag.OperationWithApply[SnapT]] struct {
 	repo            repository.Repo
 	resolvers       func() entity.Resolvers
-	onCommit        func() error // called after each commit
+	onCommit        func() // called after each commit
 	getUserIdentity getUserIdentityFunc
 
 	shared *sharedEntity[SnapT, OpT]
@@ -173,7 +173,8 @@ func (e *CachedEntityBase[SnapT, OpT]) commit(ctx context.Context, required bool
 	if err != nil {
 		return err
 	}
-	return e.onCommit()
+	e.onCommit()
+	return nil
 }
 
 func (e *CachedEntityBase[SnapT, OpT]) commitLocked(ctx context.Context) error {

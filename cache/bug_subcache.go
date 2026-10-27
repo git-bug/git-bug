@@ -29,7 +29,7 @@ func NewRepoCacheBug(repo repository.Repo,
 	resolvers func() entity.Resolvers,
 	getUserIdentity getUserIdentityFunc) *RepoCacheBug {
 
-	makeView := func(shared *sharedBug, onCommit func() error) *BugCache {
+	makeView := func(shared *sharedBug, onCommit func()) *BugCache {
 		return newBugCache(shared, repo, resolvers, getUserIdentity, onCommit)
 	}
 

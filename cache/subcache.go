@@ -62,7 +62,7 @@ type SubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved] struct {
 	cancel context.CancelFunc
 
 	getUserIdentity getUserIdentityFunc
-	makeView        func(shared SharedT, onCommit func() error) ViewT
+	makeView        func(shared SharedT, onCommit func()) ViewT
 	makeExcerpt     func(SharedT) ExcerptT
 	makeIndexData   func(SharedT) []string
 	actions         Actions[SharedT]
@@ -118,7 +118,7 @@ type SubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved] struct {
 func NewSubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved](
 	repo repository.Repo,
 	resolvers func() entity.Resolvers, getUserIdentity getUserIdentityFunc,
-	makeView func(shared SharedT, onCommit func() error) ViewT,
+	makeView func(shared SharedT, onCommit func()) ViewT,
 	makeExcerpt func(SharedT) ExcerptT,
 	makeIndexData func(SharedT) []string,
 	actions Actions[SharedT],
@@ -482,13 +482,17 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) GetNamespace() string {
 // newView wraps a copy of an entity for a caller, and has its commits go through
 // onCommit.
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) newView(shared SharedT) ViewT {
-	return sc.makeView(shared, func() error { return sc.onCommit(shared) })
+	return sc.makeView(shared, func() { sc.onCommit(shared) })
 }
 
 // onCommit refreshes the derived state after an entity has been committed from
 // the given copy. With no copy of it loaded, as for a new entity or an evicted
 // one, that copy becomes the loaded one if it holds what was synced.
-func (sc *SubCache[SharedT, ExcerptT, ViewT]) onCommit(shared SharedT) error {
+//
+// The commit is in git already, so a failed sync doesn't fail it: reporting it
+// would have the caller commit again, a duplicate. The entity is left for the
+// worker to sync instead.
+func (sc *SubCache[SharedT, ExcerptT, ViewT]) onCommit(shared SharedT) {
 	// the id is only read now: the copy of a new entity has none before its
 	// first commit
 	id := shared.Id()
@@ -520,11 +524,11 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) onCommit(shared SharedT) error {
 	}()
 	sc.notifyChanges(changes)
 	if err != nil {
-		return err
+		sc.requestSync(id)
+		return
 	}
 
 	sc.evictIfNeeded()
-	return nil
 }
 
 // notifyObservers notifies all the observers when something happening for an entity

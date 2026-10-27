@@ -16,7 +16,7 @@ func NewRepoCacheIdentity(repo repository.Repo,
 	resolvers func() entity.Resolvers,
 	getUserIdentity getUserIdentityFunc) *RepoCacheIdentity {
 
-	makeView := func(i *identity.Identity, onCommit func() error) *IdentityCache {
+	makeView := func(i *identity.Identity, onCommit func()) *IdentityCache {
 		// a copy, so that what the view mutates stays its own until committed
 		return NewIdentityCache(i.Clone(), repo, onCommit)
 	}
@@ -114,10 +114,7 @@ func (c *RepoCacheIdentity) finishIdentity(i *identity.Identity, metadata map[st
 		return nil, err
 	}
 
-	err = c.onCommit(i)
-	if err != nil {
-		return nil, err
-	}
+	c.onCommit(i)
 
 	return c.newView(i), nil
 }
