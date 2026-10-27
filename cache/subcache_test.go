@@ -1191,27 +1191,53 @@ func TestSubCacheWorker(t *testing.T) {
 		})
 	})
 
-	t.Run("a failed sync is kept, and retried at the next change", func(t *testing.T) {
+	t.Run("a failed sync is kept, and retried on its own, less and less often", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			repo, c, rene, hook, source := setup(t)
-			hook.onList = func() error { return fmt.Errorf("listing failed") }
+			// atomic: the worker retries on its own, which orders nothing with
+			// the test
+			var lists atomic.Int32
+			var failing atomic.Bool
+			failing.Store(true)
+			hook.onList = func() error {
+				lists.Add(1)
+				if failing.Load() {
+					return fmt.Errorf("listing failed")
+				}
+				return nil
+			}
 			id := createOutside(t, repo, rene)
 
 			time.Sleep(syncInterval)
 			source.changes <- repository.Change{}
 			synctest.Wait()
 			require.ErrorContains(t, workerErr(c), "listing failed")
+			require.Equal(t, int32(1), lists.Load())
 
-			hook.onList = nil
+			// retried 1s, then 2s, then 4s after the latest failure
+			for _, tc := range []struct {
+				wait  time.Duration
+				lists int32
+			}{
+				{syncInterval, 2},
+				{syncInterval, 2},
+				{syncInterval, 3},
+				{3 * syncInterval, 3},
+			} {
+				time.Sleep(tc.wait)
+				synctest.Wait()
+				require.Equal(t, tc.lists, lists.Load())
+			}
+
+			failing.Store(false)
 			time.Sleep(syncInterval)
-			source.changes <- repository.Change{}
 			synctest.Wait()
 			require.NoError(t, workerErr(c))
 			require.True(t, hasExcerpt(t, c, id))
 		})
 	})
 
-	t.Run("entities of a failed sync are retried at the next change, whatever it names", func(t *testing.T) {
+	t.Run("entities of a failed sync are retried with the next sync, whatever it names", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			repo, c, rene, _, source := setup(t)
 
@@ -1226,14 +1252,81 @@ func TestSubCacheWorker(t *testing.T) {
 			require.Error(t, workerErr(c))
 			require.False(t, hasExcerpt(t, c, failing))
 
+			// the change comes before the retry is due, and is served with it
 			require.NoError(t, author.Commit(repo))
 			other := createOutside(t, repo, rene)
-			time.Sleep(syncInterval)
+			time.Sleep(syncInterval / 2)
 			source.changes <- naming(other)
+			time.Sleep(syncInterval / 2)
 			synctest.Wait()
 			require.NoError(t, workerErr(c))
 			require.True(t, hasExcerpt(t, c, failing))
 			require.True(t, hasExcerpt(t, c, other))
+		})
+	})
+
+	t.Run("an entity that can't be read doesn't hold back the others, and is retried alone", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, c, rene, hook, source := setup(t)
+			var lists atomic.Int32
+			hook.onList = func() error { lists.Add(1); return nil }
+
+			// a bug whose author isn't in the repository yet can't be read
+			author, err := identity.NewIdentity(repo, "Blaise Pascal", "blaise@pascal.fr")
+			require.NoError(t, err)
+			failing := createOutside(t, repo, author)
+			other := createOutside(t, repo, rene)
+
+			time.Sleep(syncInterval)
+			source.changes <- repository.Change{}
+			synctest.Wait()
+			var failed syncEntitiesError
+			require.ErrorAs(t, workerErr(c), &failed)
+			require.Equal(t, []entity.Id{failing}, slices.Collect(maps.Keys(failed)))
+			require.False(t, hasExcerpt(t, c, failing))
+			require.True(t, hasExcerpt(t, c, other))
+			require.Equal(t, int32(1), lists.Load())
+
+			// retried on its own, by id: no listing of every ref
+			require.NoError(t, author.Commit(repo))
+			time.Sleep(syncInterval)
+			synctest.Wait()
+			require.NoError(t, workerErr(c))
+			require.True(t, hasExcerpt(t, c, failing))
+			require.Equal(t, int32(1), lists.Load())
+		})
+	})
+
+	t.Run("an entity that can't be read when loading is a warning, and is retried", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo := repository.NewMockRepo()
+			rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
+			require.NoError(t, err)
+			require.NoError(t, rene.Commit(repo))
+			author, err := identity.NewIdentity(repo, "Blaise Pascal", "blaise@pascal.fr")
+			require.NoError(t, err)
+			failing := createOutside(t, repo, author)
+			other := createOutside(t, repo, rene)
+
+			// no source: the worker retries on its own
+			c, events := NewRepoCache(repo, nil)
+			var warnings []error
+			for event := range events {
+				require.NoError(t, event.Err)
+				if event.Event == BuildEventWarning {
+					warnings = append(warnings, event.Warning)
+				}
+			}
+			t.Cleanup(func() { require.NoError(t, c.Close()) })
+			require.Len(t, warnings, 1)
+			require.ErrorContains(t, warnings[0], failing.Human())
+			require.False(t, hasExcerpt(t, c, failing))
+			require.True(t, hasExcerpt(t, c, other))
+
+			require.NoError(t, author.Commit(repo))
+			time.Sleep(syncInterval)
+			synctest.Wait()
+			require.True(t, hasExcerpt(t, c, failing))
 		})
 	})
 
@@ -1278,10 +1371,11 @@ func TestSubCacheWorker(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				synctest.Test(t, func(t *testing.T) {
 					repo, c, _, hook, _ := setup(t)
-					// only the sync of the commit fails
+					// the sync of the commit fails, and the first one of the
+					// worker
 					var opened atomic.Int32
 					hook.onGetIndex = func(namespace string) error {
-						if namespace == tc.namespace && opened.Add(1) == 1 {
+						if namespace == tc.namespace && opened.Add(1) <= 2 {
 							return errors.New("index unavailable")
 						}
 						return nil
@@ -1292,6 +1386,11 @@ func TestSubCacheWorker(t *testing.T) {
 					require.NoError(t, err)
 					require.False(t, tc.hasExcerpt(c, id))
 
+					time.Sleep(syncInterval)
+					synctest.Wait()
+					require.False(t, tc.hasExcerpt(c, id))
+
+					// retried on its own, with no change reported
 					time.Sleep(syncInterval)
 					synctest.Wait()
 					require.True(t, tc.hasExcerpt(c, id))
