@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"maps"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -169,11 +171,27 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) Load() <-chan BuildEvent {
 		if err == nil {
 			err = sc.syncAll(func(event BuildEvent) { out <- event })
 		}
+		// the others are synced: the cache is usable, and the worker retries
+		// those that failed
+		var failed syncEntitiesError
+		if errors.As(err, &failed) {
+			for _, id := range slices.Sorted(maps.Keys(failed)) {
+				out <- BuildEvent{
+					Typename: sc.typename,
+					Event:    BuildEventWarning,
+					Warning:  fmt.Errorf("%s %s: %w", sc.typename, id.Human(), failed[id]),
+				}
+			}
+			err = nil
+		}
 		if err != nil {
 			out <- BuildEvent{Typename: sc.typename, Err: err}
 			return
 		}
 		sc.startSyncWorker()
+		if failed != nil {
+			sc.requestSync(slices.Collect(maps.Keys(failed))...)
+		}
 	}()
 
 	return out
@@ -613,6 +631,10 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncAll(progress func(BuildEvent))
 //     sync.
 const syncInterval = time.Second
 
+// syncRetryMaxDelay is the longest the worker waits before retrying a failed
+// sync, see startSyncWorker. It bounds the cost of a failure that lasts.
+const syncRetryMaxDelay = time.Minute
+
 // requestSync asks the worker for a sync of the given entities, or of every
 // entity if none is given, to bring the cache up to date with changes made to
 // the references outside of it, by another process or the git binary. It never
@@ -651,9 +673,10 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) addPendingLocked(ids ...entity.Id)
 // syncInterval after the latest sync ended is postponed until then, not
 // dropped.
 //
-// A failed sync is kept in syncWorkerErr. It is not retried on its own: the
-// entities it was for stay pending, and are synced again with the next request,
-// at the latest from the periodic source backing the others.
+// A failed sync is kept in syncWorkerErr. The entities it was for stay pending,
+// and are synced again with the next request, or else on their own, after a
+// delay doubling with each failure, from syncInterval to syncRetryMaxDelay: with
+// no source to report changes, nothing else would.
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) startSyncWorker() {
 	sc.muSyncWorker.Lock()
 	defer sc.muSyncWorker.Unlock()
@@ -665,8 +688,11 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) startSyncWorker() {
 		// started right after the sync of Load
 		lastSync := time.Now()
 		// postponed fires when a request received too soon after the latest
-		// sync can be served, nil if there is none
+		// sync can be served, or a failed sync retried, nil if there is none
 		var postponed <-chan time.Time
+		// retryDelay is the delay before the latest retry, 0 if the latest
+		// sync succeeded
+		var retryDelay time.Duration
 
 		for {
 			select {
@@ -675,9 +701,8 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) startSyncWorker() {
 			case <-postponed:
 			case <-sc.syncTrigger:
 				if wait := syncInterval - time.Since(lastSync); wait > 0 {
-					if postponed == nil {
-						postponed = time.After(wait)
-					}
+					// replaces a retry, due later
+					postponed = time.After(wait)
 					continue
 				}
 			}
@@ -706,10 +731,22 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) startSyncWorker() {
 			sc.muSyncWorker.Lock()
 			sc.syncWorkerErr = err
 			if err != nil {
+				// only the entities that failed, if the others were synced
+				var failed syncEntitiesError
+				if errors.As(err, &failed) {
+					ids = slices.Collect(maps.Keys(failed))
+				}
 				// no ids for a sync of every entity
 				sc.addPendingLocked(ids...)
 			}
 			sc.muSyncWorker.Unlock()
+
+			if err != nil {
+				retryDelay = min(max(2*retryDelay, syncInterval), syncRetryMaxDelay)
+				postponed = time.After(retryDelay)
+			} else {
+				retryDelay = 0
+			}
 		}
 	})
 }
@@ -745,6 +782,19 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) closeSyncWorker() {
 // |    300     |      31       |      72      |  4,787   |
 // |    500     |      23       |      72      |   5,4    |
 const syncBatchSize = 75
+
+// syncEntitiesError is the failure of a sync to bring some entities up to date,
+// by id, the others being synced all the same, see syncEntitiesLocked.
+type syncEntitiesError map[entity.Id]error
+
+func (e syncEntitiesError) Error() string {
+	ids := slices.Sorted(maps.Keys(e))
+	msgs := make([]string, len(ids))
+	for i, id := range ids {
+		msgs[i] = fmt.Sprintf("%s: %v", id.Human(), e[id])
+	}
+	return fmt.Sprintf("failed to sync %d entities: %s", len(e), strings.Join(msgs, "; "))
+}
 
 // syncIdsLocked brings the derived state of the given entities up to date with
 // their references, see syncEntitiesLocked.
@@ -838,6 +888,12 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncAllLocked(ctx context.Context,
 // earlier sync, has its excerpt read from the index instead. Nothing is read if
 // everything is up to date. Changes are applied in batches.
 //
+// An entity that can't be read, or whose document is refused, is left as it
+// was, and the sync goes on with the others: one broken entity doesn't hold
+// back the rest. Those failures are returned together, as a syncEntitiesError,
+// once everything else is applied. Any other error, of the repository or the
+// index, ends the sync.
+//
 // Entities are brought up to date under muDerived, which every change to the
 // derived state holds, so that each sync applies a state at least as recent as
 // the previous one. A reference moving after that is followed by a sync of its
@@ -877,6 +933,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncEntitiesLocked(ctx context.Con
 	})
 
 	changes := make(map[entity.Id]EntityEventType)
+	failed := make(syncEntitiesError)
 
 	// excerpt changes of the current batch, a nil derived being a removal
 	pending := make(map[entity.Id]*derived[ExcerptT])
@@ -976,7 +1033,11 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncEntitiesLocked(ctx context.Con
 		if fromIndex {
 			pending[id] = d
 		} else if err := fromEntity(id, ref); err != nil {
-			return changes, err
+			// a read interrupted is no failure of the entity
+			if ctx.Err() != nil {
+				return changes, ctx.Err()
+			}
+			failed[id] = err
 		}
 
 		batchSize++
@@ -1004,6 +1065,9 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncEntitiesLocked(ctx context.Con
 
 	progress(BuildEvent{Typename: sc.typename, Event: BuildEventFinished})
 
+	if len(failed) > 0 {
+		return changes, failed
+	}
 	return changes, nil
 }
 
