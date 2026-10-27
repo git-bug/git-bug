@@ -1287,6 +1287,57 @@ func RepoRemoteTest(t *testing.T, newRemote func(t testing.TB, repo *GoGitRepo) 
 		require.Equal(t, h2, h)
 	})
 
+	t.Run("push URL", func(t *testing.T) {
+		// the push goes where git would push, and fails where git would fail
+		require.NoError(t, repoA.Config().Update(func(f *gitconfig.File) error {
+			return errors.Join(
+				f.Set("url./nowhere/.insteadOf", "alias:"),
+				f.Set("url."+remote.GitDir+".insteadOf", "alias:remote"),
+				f.Set("remote.forked.url", "/nowhere/"),
+				f.Set("remote.forked.pushurl", "alias:remote"),
+				f.Set("remote.pushaliased.url", "alias:other"),
+				f.Set("url."+remote.GitDir+".pushInsteadOf", "alias:other"),
+				f.Set("remote.disabled.url", remote.GitDir),
+				f.Set("remote.disabled.pushurl", "/nowhere/"),
+				f.Set("remote.mirrors.url", remote.GitDir),
+				f.Add("remote.mirrors.url", "/nowhere/"),
+			)
+		}))
+
+		// push moves the ref to a new commit in repoA, and pushes it
+		push := func(t *testing.T, remoteName string) (repository.Hash, error) {
+			t.Helper()
+			old, err := repoA.ResolveRef(namespace, key)
+			require.NoError(t, err)
+			commit, err := repoA.StoreCommit(treeHash, old)
+			require.NoError(t, err)
+			require.NoError(t, repoA.UpdateRef(namespace, key, old, commit))
+			_, err = remoteA.PushRefs(t.Context(), remoteName, namespace)
+			return commit, err
+		}
+
+		for _, remoteName := range []string{"forked", "pushaliased"} {
+			commit, err := push(t, remoteName)
+			require.NoError(t, err, remoteName)
+			h, err := remote.ResolveRef(namespace, key)
+			require.NoError(t, err)
+			require.Equal(t, commit, h, remoteName)
+		}
+
+		before, err := remote.ResolveRef(namespace, key)
+		require.NoError(t, err)
+		_, err = push(t, "disabled")
+		require.Error(t, err)
+		h, err := remote.ResolveRef(namespace, key)
+		require.NoError(t, err)
+		require.Equal(t, before, h)
+
+		// git pushes to each URL, and fails on /nowhere/; go-git, which
+		// pushes to one, refuses
+		_, err = push(t, "mirrors")
+		require.Error(t, err)
+	})
+
 	t.Run("unknown remote", func(t *testing.T) {
 		// a path is not a configured remote, even if it is a repository
 		_, err := remoteA.PushRefs(t.Context(), remote.GitDir, namespace)

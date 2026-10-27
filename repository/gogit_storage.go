@@ -244,6 +244,13 @@ func (s *gogitStorage) PackfileWriter() (io.WriteCloser, error) {
 //
 // Only the repository's own configuration counts, as git reads the format
 // and extensions of a repository nowhere else.
+//
+// go-git v5 also refuses every extension but noop, so a sparse checkout
+// (worktreeConfig) or a blobless clone (partialClone) can't be opened. The
+// extensions that don't change what go-git does for git-bug are left out:
+// git-bug reads the configuration with gitconfig, which reads config.worktree,
+// never deletes objects, and only reads its own, which are always fetched
+// whole. go-git still refuses the others, such as a SHA-256 object format.
 func (s *gogitStorage) Config() (*config.Config, error) {
 	all, err := s.config.Config().Read()
 	if err != nil {
@@ -255,6 +262,16 @@ func (s *gogitStorage) Config() (*config.Config, error) {
 		for e := range all.Section(name) {
 			if e.Origin.Scope != gitconfig.ScopeLocal {
 				continue
+			}
+			if name == "extensions" {
+				switch e.Key.Name {
+				case "worktreeconfig", "partialclone", "preciousobjects":
+					continue
+				case "objectformat":
+					if e.Value == "sha1" {
+						continue
+					}
+				}
 			}
 			value := e.Value
 			if e.Implicit {

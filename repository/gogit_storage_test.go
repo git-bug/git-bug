@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"sync"
 	"testing"
 
@@ -544,17 +543,33 @@ func TestGoGitStorage_Config(t *testing.T) {
 			config: "\ufeff",
 			issue:  "go-git's decoder",
 		},
+		{
+			name:   "sparse checkout",
+			config: "[extensions]\n\tworktreeConfig = true\n",
+			issue:  "go-git v5's extensions",
+		},
+		{
+			name:   "blobless clone",
+			config: "[core]\n\trepositoryformatversion = 1\n[extensions]\n\tpartialClone = origin\n",
+			issue:  "go-git v5's extensions",
+		},
+		{
+			name:   "precious objects",
+			config: "[core]\n\trepositoryformatversion = 1\n[extensions]\n\tpreciousObjects = true\n",
+			issue:  "go-git v5's extensions",
+		},
+		{
+			name:   "SHA-1 object format",
+			config: "[core]\n\trepositoryformatversion = 1\n[extensions]\n\tobjectFormat = sha1\n",
+			issue:  "go-git v5's extensions",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			require.NoError(t, InitGoGitRepo(dir))
 			gitDir := filepath.Join(dir, ".git")
-			// before the rest, where a BOM must be
-			path := filepath.Join(gitDir, "config")
-			data, err := os.ReadFile(path)
-			require.NoError(t, err)
-			require.NoError(t, os.WriteFile(path, append([]byte(tt.config), data...), 0o644))
+			require.NoError(t, os.WriteFile(filepath.Join(gitDir, "config"), []byte(tt.config), 0o644))
 
 			repo, err := OpenGoGitRepo(gitDir, NewRepoConfig(NewGitConfig(gitconfig.Env{
 				GitDir:       gitDir,
@@ -562,14 +577,26 @@ func TestGoGitStorage_Config(t *testing.T) {
 			})))
 			require.NoError(t, err)
 			storeTestCommits(t, repo, 1)
-		})
 
-		// a canary, as in TestGoGitStorage: if it fails, go-git fixed the bug
-		t.Run(tt.name+" canary", func(t *testing.T) {
-			_, err := config.ReadConfig(strings.NewReader(tt.config))
-			require.Error(t, err, "go-git now accepts a %s (%s): gogitStorage.Config may keep more of the configuration, and GoGitRepo may not need it anymore", tt.name, tt.issue)
+			// a canary, as in TestGoGitStorage: if it fails, go-git fixed the bug
+			_, err = gogit.PlainOpen(dir)
+			require.Error(t, err, "go-git now opens a repository with a %s (%s): gogitStorage.Config may keep more of the configuration, and GoGitRepo may not need it anymore", tt.name, tt.issue)
 		})
 	}
+
+	t.Run("SHA-256 object format", func(t *testing.T) {
+		// an extension go-git must still see, and refuse
+		dir := t.TempDir()
+		require.NoError(t, InitGoGitRepo(dir))
+		gitDir := filepath.Join(dir, ".git")
+		require.NoError(t, os.WriteFile(filepath.Join(gitDir, "config"), []byte("[core]\n\trepositoryformatversion = 1\n[extensions]\n\tobjectFormat = sha256\n"), 0o644))
+
+		_, err := OpenGoGitRepo(gitDir, NewRepoConfig(NewGitConfig(gitconfig.Env{
+			GitDir:       gitDir,
+			GlobalConfig: []string{filepath.Join(t.TempDir(), ".gitconfig")},
+		})))
+		require.Error(t, err)
+	})
 
 	t.Run("SetConfig doesn't write", func(t *testing.T) {
 		repo := newTestGoGitRepo(t, false)

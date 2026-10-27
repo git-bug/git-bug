@@ -14,6 +14,10 @@ package repository
 //     GoGitRepo then takes the configuration, read with gitconfig, only to build
 //     the remotes of FetchRefs and PushRefs, and StoreSignedCommit writes no
 //     author.
+//   - The extensions: go-git v5 refuses every extension but noop, so a sparse
+//     checkout or a blobless clone can't be opened. gogitStorage.Config leaves
+//     out those that don't change what go-git does for git-bug: worktreeConfig,
+//     partialClone, preciousObjects and a SHA-1 objectFormat.
 //   - The packfile index: go-git never notices the packs other processes add or
 //     remove. gogitStorage rebuilds the index and retries a read when they
 //     changed, keeps it built at all times, as go-git's pack writer crashes
@@ -29,9 +33,10 @@ package repository
 //     and lists them itself, as git does.
 //   - The remotes: go-git doesn't implement all of git's transports and their
 //     configuration, such as parts of the SSH configuration, credential helpers
-//     or remote.<name>.pushurl. git-bug.git-transport=git runs the git binary
-//     for the remotes instead, see GitRepo, and FetchRefs and PushRefs suggest
-//     it when they fail.
+//     or remote.<name>.pushurl. GoGitRepo.remote works out the URL git would
+//     use, pushurl and insteadOf included, but go-git pushes to one URL only.
+//     git-bug.git-transport=git runs the git binary for the remotes instead, see
+//     GitRepo, and FetchRefs and PushRefs suggest it when they fail.
 //   - A possible resource leak in gogit.Open, fixed in v6.
 
 import (
@@ -215,10 +220,13 @@ func (repo *GoGitRepo) PushRefs(ctx context.Context, remote string, namespaces .
 }
 
 // remote returns the go-git remote for the configured remote name, with fetch
-// as its fetch refspecs. Its URL is the first configured one to fetch, the
-// last one to push, rewritten by the longest matching url.<base>.insteadOf,
-// as go-git would. go-git never reads the remotes itself: see
-// gogitStorage.Config.
+// as its fetch refspecs, and the URL git would use: to fetch, the first
+// remote.<name>.url, rewritten by the longest matching url.<base>.insteadOf;
+// to push, the remote.<name>.pushurl if there is one, rewritten the same way,
+// or else the url, rewritten by the longest matching url.<base>.pushInsteadOf,
+// or insteadOf if none matches. git pushes to every push URL, go-git to one: a
+// remote with several fails, rather than push to some only. go-git never reads
+// the remotes itself: see gogitStorage.Config.
 func (repo *GoGitRepo) remote(name string, fetching bool, fetch []config.RefSpec) (*gogit.Remote, error) {
 	cfg, err := repo.config.Config().Read()
 	if err != nil {
@@ -229,21 +237,39 @@ func (repo *GoGitRepo) remote(name string, fetching bool, fetch []config.RefSpec
 	if len(urls) == 0 {
 		return nil, fmt.Errorf("unknown remote %q", name)
 	}
-	url := urls[len(urls)-1].Value
-	if fetching {
-		url = urls[0].Value
-	}
 
-	base, prefix := "", ""
-	for _, sub := range cfg.Subsections("url") {
-		for _, insteadOf := range cfg.GetAll("url." + sub + ".insteadOf") {
-			if strings.HasPrefix(url, insteadOf.Value) && len(insteadOf.Value) > len(prefix) {
-				base, prefix = sub, insteadOf.Value
+	// rewrite returns url rewritten by the longest matching url.<base>.<key>,
+	// and whether one matched
+	rewrite := func(url string, key string) (string, bool) {
+		base, prefix := "", ""
+		for _, sub := range cfg.Subsections("url") {
+			for _, e := range cfg.GetAll("url." + sub + "." + key) {
+				if strings.HasPrefix(url, e.Value) && len(e.Value) > len(prefix) {
+					base, prefix = sub, e.Value
+				}
 			}
 		}
+		if prefix == "" {
+			return url, false
+		}
+		return base + url[len(prefix):], true
 	}
-	if prefix != "" {
-		url = base + url[len(prefix):]
+
+	var url string
+	pushURLs := cfg.GetAll("remote." + name + ".pushurl")
+	switch {
+	case fetching:
+		url, _ = rewrite(urls[0].Value, "insteadOf")
+	case len(pushURLs) > 1 || len(pushURLs) == 0 && len(urls) > 1:
+		return nil, fmt.Errorf("remote %q has several push URLs, go-git can push to one only: setting %s=git pushes to all", name, gitTransportConfigKey)
+	case len(pushURLs) == 1:
+		url, _ = rewrite(pushURLs[0].Value, "insteadOf")
+	default:
+		var ok bool
+		url, ok = rewrite(urls[0].Value, "pushInsteadOf")
+		if !ok {
+			url, _ = rewrite(url, "insteadOf")
+		}
 	}
 
 	return gogit.NewRemote(repo.r.Storer, &config.RemoteConfig{
