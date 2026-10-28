@@ -218,6 +218,12 @@ func TestGoGitRepo_Refs(t *testing.T) {
 		repo := newTestGoGitRepo(t, false)
 		gr := repo
 		commits := storeTestCommits(t, repo, 2)
+		packedPath := filepath.Join(gr.path, "packed-refs")
+
+		// packed before the removed ones, and after: rewriting packed-refs keeps it
+		other := randomKey()
+		require.NoError(t, repo.UpdateRef(t.Context(), namespace, other, "", commits[0]))
+		packRef(t, gr, namespace, other)
 
 		for _, tc := range []struct {
 			name  string
@@ -230,6 +236,15 @@ func TestGoGitRepo_Refs(t *testing.T) {
 			{"packed ref", func(t *testing.T, key string) {
 				require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, "", commits[0]))
 				packRef(t, gr, namespace, key)
+			}},
+			{"packed ref with a peeled line", func(t *testing.T, key string) {
+				require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, "", commits[0]))
+				packRef(t, gr, namespace, key)
+				f, err := os.OpenFile(packedPath, os.O_WRONLY|os.O_APPEND, 0666)
+				require.NoError(t, err)
+				_, err = f.WriteString("^" + commits[1].String() + "\n")
+				require.NoError(t, err)
+				require.NoError(t, f.Close())
 			}},
 			{"loose ref over packed", func(t *testing.T, key string) {
 				require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, "", commits[0]))
@@ -245,6 +260,15 @@ func TestGoGitRepo_Refs(t *testing.T) {
 				_, err := repo.ResolveRef(t.Context(), namespace, key)
 				require.ErrorIs(t, err, ErrNotFound)
 				requireNoLooseRef(t, gr, namespace, key)
+				require.NoFileExists(t, packedPath+refLockSuffix)
+
+				packed, err := os.ReadFile(packedPath)
+				require.NoError(t, err)
+				require.NotContains(t, string(packed), key)
+				require.NotContains(t, string(packed), "^")
+				refs, err := repo.ListRefs(t.Context(), namespace)
+				require.NoError(t, err)
+				require.Equal(t, map[string]Hash{other: commits[0]}, refs)
 
 				// idempotent
 				require.NoError(t, repo.RemoveRef(t.Context(), namespace, key))
@@ -252,10 +276,36 @@ func TestGoGitRepo_Refs(t *testing.T) {
 		}
 	})
 
+	t.Run("RemoveTrackingRef", func(t *testing.T) {
+		const namespace = "removing-tracking"
+		repo := newTestGoGitRepo(t, false)
+		gr := repo
+		commits := storeTestCommits(t, repo, 1)
+		key := randomKey()
+		name := trackingRefPrefix("origin", namespace) + key
+
+		// loose and packed, as fetch leaves it once git packed an older value
+		path := filepath.Join(gr.path, filepath.FromSlash(name))
+		require.NoError(t, os.MkdirAll(filepath.Dir(path), 0777))
+		require.NoError(t, os.WriteFile(path, []byte(commits[0]+"\n"), 0666))
+		require.NoError(t, os.WriteFile(filepath.Join(gr.path, "packed-refs"), []byte(commits[0]+" "+Hash(name)+"\n"), 0666))
+
+		require.NoError(t, repo.RemoveTrackingRef(t.Context(), "origin", namespace, key))
+		_, err := repo.ResolveTrackingRef(t.Context(), "origin", namespace, key)
+		require.ErrorIs(t, err, ErrNotFound)
+		require.NoFileExists(t, path)
+		require.NoFileExists(t, path+refLockSuffix)
+
+		// idempotent
+		require.NoError(t, repo.RemoveTrackingRef(t.Context(), "origin", namespace, key))
+	})
+
 	// A lock held by someone else (another process, or one that crashed) makes
 	// the operation fail, and is left alone. For a removal, this is what keeps it
 	// from happening between the comparison and the rename of an update, which
-	// would then recreate the removed ref.
+	// would then recreate the removed ref, or between git pack-refs writing
+	// packed-refs and removing the loose refs it packed, which would then bring
+	// back the removed ref, or lose the ones packed.
 	t.Run("held lock", func(t *testing.T) {
 		const namespace = "locked"
 		repo := newTestGoGitRepo(t, false)
@@ -263,17 +313,25 @@ func TestGoGitRepo_Refs(t *testing.T) {
 		commits := storeTestCommits(t, repo, 2)
 		shortenLockTimeout(t)
 
+		update := func(key string) error { return repo.UpdateRef(t.Context(), namespace, key, commits[0], commits[1]) }
+		remove := func(key string) error { return repo.RemoveRef(t.Context(), namespace, key) }
+		refLock := func(key string) string { return filepath.Join(gr.path, "refs", namespace, key+refLockSuffix) }
+		packedRefsLock := func(key string) string { return filepath.Join(gr.path, "packed-refs"+refLockSuffix) }
+
 		for _, tc := range []struct {
 			name string
 			op   func(key string) error
+			lock func(key string) string
 		}{
-			{"update", func(key string) error { return repo.UpdateRef(t.Context(), namespace, key, commits[0], commits[1]) }},
-			{"remove", func(key string) error { return repo.RemoveRef(t.Context(), namespace, key) }},
+			{"update", update, refLock},
+			{"remove", remove, refLock},
+			// even for a ref packed-refs doesn't list
+			{"remove under packed-refs lock", remove, packedRefsLock},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				key := randomKey()
 				require.NoError(t, repo.UpdateRef(t.Context(), namespace, key, "", commits[0]))
-				lockPath := filepath.Join(gr.path, "refs", namespace, key+refLockSuffix)
+				lockPath := tc.lock(key)
 				require.NoError(t, os.WriteFile(lockPath, []byte("held"), 0666))
 
 				err := tc.op(key)
@@ -424,6 +482,16 @@ func TestGoGitRepo_Refs(t *testing.T) {
 			require.Equal(t, commits[1].String(), runGit(t, gr.path, "rev-parse", refPrefix(namespace)+key1))
 		})
 
+		t.Run("git sees our removals", func(t *testing.T) {
+			const namespace = "interop-removed"
+			key1, key2 := createPackedRefs(t, namespace)
+
+			require.NoError(t, repo.RemoveRef(t.Context(), namespace, key1))
+			require.Equal(t, commits[0].String()+" commit\t"+refPrefix(namespace)+key2,
+				runGit(t, gr.path, "for-each-ref", refPrefix(namespace)))
+			runGit(t, gr.path, "pack-refs", "--all")
+		})
+
 		t.Run("we see git's updates", func(t *testing.T) {
 			const namespace = "interop-theirs"
 			_, key2 := createPackedRefs(t, namespace)
@@ -503,6 +571,19 @@ func TestGoGitRepo_Refs(t *testing.T) {
 			)
 			require.NoError(t, err,
 				"go-git no longer updates a ref git holds the lock of: one of the reasons listed in gogit_refs.go is gone")
+		})
+
+		t.Run("a removal ignores git's packed-refs lock", func(t *testing.T) {
+			s, dir := plainStorage(t)
+			packedPath := filepath.Join(dir, "packed-refs")
+			require.NoError(t, os.WriteFile(packedPath, []byte(hash1.String()+" refs/bugs/x\n"+hash2.String()+" refs/bugs/y\n"), 0o644))
+			require.NoError(t, os.WriteFile(packedPath+".lock", nil, 0o644))
+
+			require.NoError(t, s.RemoveReference("refs/bugs/x"),
+				"go-git no longer rewrites packed-refs while git holds its lock: one of the reasons listed in gogit_refs.go is gone")
+			packed, err := os.ReadFile(packedPath)
+			require.NoError(t, err)
+			require.NotContains(t, string(packed), "refs/bugs/x")
 		})
 
 		t.Run("an update can't require the ref to be absent", func(t *testing.T) {
