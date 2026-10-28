@@ -463,7 +463,7 @@ func (i *Identity) Merge(ctx context.Context, repo repository.Repo, other *Ident
 		i.versions = append(i.versions, newVersions...)
 	}
 
-	return false, nil
+	return len(newVersions) > 0, nil
 }
 
 // Validate check if the Identity data is valid

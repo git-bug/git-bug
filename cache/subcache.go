@@ -440,13 +440,21 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) Remove(ctx context.Context, prefix
 
 	// a failed Remove may have removed the local ref already
 	err = sc.actions.Remove(ctx, sc.repo, id)
-	return errors.Join(err, sc.sync(id))
+	// git is changed already: a failed sync is left to the worker, as in onCommit
+	if syncErr := sc.sync(id); syncErr != nil {
+		sc.requestSync(id)
+	}
+	return err
 }
 
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) RemoveAll(ctx context.Context) error {
 	// a failed or cancelled RemoveAll may have removed some entities already
 	err := sc.actions.RemoveAll(ctx, sc.repo)
-	return errors.Join(err, sc.syncAll(nil))
+	// git is changed already: a failed sync is left to the worker, as in onCommit
+	if syncErr := sc.syncAll(nil); syncErr != nil {
+		sc.requestSync()
+	}
+	return err
 }
 
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) MergeAll(ctx context.Context, remote string) <-chan entity.MergeResult {
@@ -477,9 +485,12 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) MergeAll(ctx context.Context, remo
 		// copies that are behind their reference are brought up to date there,
 		// like any other, and nothing is loaded for a merge alone: a merge is not
 		// a use of the entity.
-		err = sc.syncAll(nil)
-		if err != nil {
-			out <- entity.NewMergeError(err, "")
+		//
+		// The merges are in git already, and reported: a failed sync is left to
+		// the worker, as in onCommit. An entity that can't be read is reported
+		// at the next Load.
+		if err := sc.syncAll(nil); err != nil {
+			sc.requestSync()
 		}
 	}()
 

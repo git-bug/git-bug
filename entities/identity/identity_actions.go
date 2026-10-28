@@ -27,16 +27,20 @@ func Pull(ctx context.Context, repo repository.Repo, remote string) error {
 		return err
 	}
 
+	// MergeAll needs to be read to the end, so the first failure is kept for later
+	var firstErr error
 	for merge := range MergeAll(ctx, repo, remote) {
-		if merge.Err != nil {
-			return merge.Err
+		if firstErr != nil {
+			continue
 		}
-		if merge.Status == entity.MergeStatusInvalid {
-			return fmt.Errorf("merge failure: %s", merge.Reason)
+		if merge.Err != nil {
+			firstErr = merge.Err
+		} else if merge.Status == entity.MergeStatusInvalid {
+			firstErr = fmt.Errorf("merge failure: %s", merge.Reason)
 		}
 	}
 
-	return nil
+	return firstErr
 }
 
 // MergeAll will merge all the available remote identity
@@ -86,7 +90,11 @@ func MergeAll(ctx context.Context, repo repository.Repo, remote string) <-chan e
 
 				if err != nil {
 					out <- entity.NewMergeError(err, id)
-					return
+					if ctx.Err() != nil {
+						// cut short, already reported
+						return
+					}
+					continue
 				}
 
 				out <- entity.NewMergeNewStatus(id)
@@ -106,14 +114,27 @@ func MergeAll(ctx context.Context, repo repository.Repo, remote string) <-chan e
 
 			if err != nil {
 				out <- entity.NewMergeError(fmt.Errorf("local identity is not readable: %w", err), id)
-				return
+				if ctx.Err() != nil {
+					// cut short, already reported
+					return
+				}
+				continue
 			}
 
 			updated, err := localIdentity.Merge(ctx, repo, remoteIdentity)
 
-			if err != nil {
+			if errors.Is(err, ErrNonFastForwardMerge) {
 				out <- entity.NewMergeInvalidStatus(id, fmt.Errorf("merge failed: %w", err).Error())
-				return
+				continue
+			}
+
+			if err != nil {
+				out <- entity.NewMergeError(err, id)
+				if ctx.Err() != nil {
+					// cut short, already reported
+					return
+				}
+				continue
 			}
 
 			if updated {

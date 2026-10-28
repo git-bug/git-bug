@@ -1399,6 +1399,74 @@ func TestSubCacheWorker(t *testing.T) {
 		}
 	})
 
+	t.Run("a removal or a merge whose sync fails succeeds, and is synced by the worker", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			// do changes git, calling fail right before the call whose sync
+			// fails, and returns the bug to check, and whether it should have
+			// an excerpt once synced
+			do func(t *testing.T, repo repository.Repo, c *RepoCache, rene *IdentityCache, fail func()) (entity.Id, bool)
+		}{
+			{
+				name: "remove",
+				do: func(t *testing.T, repo repository.Repo, c *RepoCache, rene *IdentityCache, fail func()) (entity.Id, bool) {
+					b, _, err := c.Bugs().New(t.Context(), "title", "message")
+					require.NoError(t, err)
+					require.NoError(t, b.Commit(t.Context()))
+					fail()
+					require.NoError(t, c.Bugs().Remove(t.Context(), b.Id().String()))
+					return b.Id(), false
+				},
+			},
+			{
+				name: "remove all",
+				do: func(t *testing.T, repo repository.Repo, c *RepoCache, rene *IdentityCache, fail func()) (entity.Id, bool) {
+					b, _, err := c.Bugs().New(t.Context(), "title", "message")
+					require.NoError(t, err)
+					require.NoError(t, b.Commit(t.Context()))
+					fail()
+					require.NoError(t, c.RemoveAll(t.Context()))
+					return b.Id(), false
+				},
+			},
+			{
+				name: "merge",
+				do: func(t *testing.T, repo repository.Repo, c *RepoCache, rene *IdentityCache, fail func()) (entity.Id, bool) {
+					// picked up by the sync ending the merge
+					id := createOutside(t, repo, rene)
+					fail()
+					for result := range c.MergeAll(t.Context(), "origin") {
+						require.NoError(t, result.Err)
+					}
+					return id, true
+				},
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				synctest.Test(t, func(t *testing.T) {
+					repo, c, rene, hook, _ := setup(t)
+					// the next opening of the bug index fails
+					fail := func() {
+						var opened atomic.Int32
+						hook.onGetIndex = func(namespace string) error {
+							if namespace == bug.Namespace && opened.Add(1) == 1 {
+								return errors.New("index unavailable")
+							}
+							return nil
+						}
+					}
+
+					id, want := tc.do(t, repo, c, rene, fail)
+					require.Equal(t, !want, hasExcerpt(t, c, id))
+
+					time.Sleep(syncInterval)
+					synctest.Wait()
+					require.Equal(t, want, hasExcerpt(t, c, id))
+				})
+			})
+		}
+	})
+
 	t.Run("observers are notified of changes made outside", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			repo, c, rene, _, source := setup(t)
