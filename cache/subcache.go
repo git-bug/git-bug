@@ -160,7 +160,8 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) EnsureClocks() error {
 }
 
 // Load reads the excerpts of the index, and brings them up to date with the
-// repository. The caller must read all the returned events.
+// repository. The caller must read all the returned events, and start the sync
+// worker once every subcache loaded, see startSyncWorker.
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) Load() <-chan BuildEvent {
 	out := make(chan BuildEvent)
 
@@ -188,8 +189,8 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) Load() <-chan BuildEvent {
 			out <- BuildEvent{Typename: sc.typename, Err: err}
 			return
 		}
-		sc.startSyncWorker()
 		if failed != nil {
+			// served once the worker is started
 			sc.requestSync(slices.Collect(maps.Keys(failed))...)
 		}
 	}()
@@ -258,7 +259,9 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) excerptFromIndex(ctx context.Conte
 }
 
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) SetCacheSize(size int) {
+	sc.muMaps.Lock()
 	sc.maxLoaded = size
+	sc.muMaps.Unlock()
 	sc.evictIfNeeded()
 }
 

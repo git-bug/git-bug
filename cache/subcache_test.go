@@ -949,12 +949,14 @@ func TestSubCacheDerived(t *testing.T) {
 	})
 }
 
-// listHookRepo calls onList, if set, each time the bug refs are listed, and
-// onGetIndex, if set, each time the index of a namespace is opened.
+// listHookRepo calls onList, if set, each time the bug refs are listed,
+// onGetIndex, if set, each time the index of a namespace is opened, and
+// onSearch, if set, before each search of an index.
 type listHookRepo struct {
 	repository.Repo
 	onList     func() error
 	onGetIndex func(namespace string) error
+	onSearch   func()
 }
 
 func (r *listHookRepo) GetIndex(namespace string, version uint) (repository.Index, error) {
@@ -963,7 +965,21 @@ func (r *listHookRepo) GetIndex(namespace string, version uint) (repository.Inde
 			return nil, err
 		}
 	}
-	return r.Repo.GetIndex(namespace, version)
+	index, err := r.Repo.GetIndex(namespace, version)
+	if err != nil || r.onSearch == nil {
+		return index, err
+	}
+	return searchHookIndex{Index: index, onSearch: r.onSearch}, nil
+}
+
+type searchHookIndex struct {
+	repository.Index
+	onSearch func()
+}
+
+func (i searchHookIndex) Search(ctx context.Context, phrases []string) ([]string, error) {
+	i.onSearch()
+	return i.Index.Search(ctx, phrases)
 }
 
 func (r *listHookRepo) ListRefs(ctx context.Context, namespace string) (map[string]repository.Hash, error) {
@@ -1687,4 +1703,120 @@ func BenchmarkSync(b *testing.B) {
 			require.NoError(b, view.Commit(b.Context()))
 		}
 	})
+}
+
+// A search in progress doesn't hold back a sync, nor the readers behind it.
+func TestQueryDoesntBlockSyncs(t *testing.T) {
+	repo := repository.NewMockRepo()
+	hook := &listHookRepo{Repo: repo}
+	c, err := NewRepoCacheNoEvents(hook, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, c.Close()) })
+	rene, err := c.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+
+	searching := make(chan struct{})
+	released := make(chan struct{})
+	release := sync.OnceFunc(func() { close(released) })
+	// before Close, which a search still holding the lock would block
+	t.Cleanup(release)
+	hook.onSearch = func() {
+		close(searching)
+		<-released
+	}
+	queried := make(chan error)
+	go func() {
+		_, err := c.Bugs().Query(t.Context(), &query.Query{
+			Search:         query.Search{"title"},
+			OrderBy:        query.OrderByCreation,
+			OrderDirection: query.OrderDescending,
+		})
+		queried <- err
+	}()
+	<-searching
+
+	// a change made outside, for the sync to apply
+	b, _, err := bug.Create(rene, time.Now().Unix(), "title", "message", nil, nil)
+	require.NoError(t, err)
+	require.NoError(t, b.Commit(t.Context(), repo))
+
+	synced := make(chan error)
+	go func() { synced <- c.bugs.syncAll(nil) }()
+	select {
+	case err := <-synced:
+		require.NoError(t, err)
+	case <-time.After(5 * time.Second):
+		t.Fatal("the sync waits for the search")
+	}
+	_, err = c.Bugs().ResolveExcerpt(b.Id())
+	require.NoError(t, err)
+
+	release()
+	require.NoError(t, <-queried)
+}
+
+// A failed load leaves nothing running: the caller gets no cache to close.
+func TestFailedLoadLeavesNothingRunning(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		// the identities load, the bugs don't
+		hook := &listHookRepo{
+			Repo: repository.NewMockRepo(),
+			onGetIndex: func(namespace string) error {
+				if namespace == bug.Namespace {
+					return errors.New("index unavailable")
+				}
+				return nil
+			},
+		}
+		c, err := NewRepoCacheNoEvents(hook, nil)
+		require.ErrorContains(t, err, "index unavailable")
+		require.Nil(t, c)
+		// the repository, and the indexes it opened, are the caller's
+		require.NoError(t, hook.Close())
+		// synctest.Test fails if a goroutine of the bubble is left blocked
+	})
+}
+
+// The setters of shared fields don't race with their readers. Only meaningful
+// with -race.
+func TestSettersDontRace(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		write, read func(t *testing.T, c *RepoCache, rene *IdentityCache)
+	}{
+		{
+			name: "user identity",
+			write: func(t *testing.T, c *RepoCache, rene *IdentityCache) {
+				require.NoError(t, c.SetUserIdentity(t.Context(), rene))
+			},
+			read: func(t *testing.T, c *RepoCache, rene *IdentityCache) {
+				_, err := c.GetUserIdentityExcerpt()
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "cache size",
+			write: func(t *testing.T, c *RepoCache, rene *IdentityCache) {
+				c.identities.SetCacheSize(10)
+			},
+			read: func(t *testing.T, c *RepoCache, rene *IdentityCache) {
+				// as after a commit or a Resolve
+				c.identities.evictIfNeeded()
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c, err := NewRepoCacheNoEvents(repository.NewMockRepo(), nil)
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, c.Close()) })
+			rene, err := c.Identities().New(t.Context(), "René Descartes", "rene@descartes.fr")
+			require.NoError(t, err)
+			require.NoError(t, c.SetUserIdentity(t.Context(), rene))
+
+			var wg sync.WaitGroup
+			wg.Go(func() { tc.write(t, c, rene) })
+			wg.Go(func() { tc.read(t, c, rene) })
+			wg.Wait()
+		})
+	}
 }

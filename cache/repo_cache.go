@@ -41,6 +41,8 @@ type cacheMgmt interface {
 	GetNamespace() string
 	RegisterObserver(repoName string, observer Observer)
 	UnregisterObserver(observer Observer)
+	// startSyncWorker starts the background syncs, once the cache is loaded.
+	startSyncWorker()
 	// requestSync asks for a sync of the given entities, or of every entity
 	// if none is given, in the background.
 	requestSync(ids ...entity.Id)
@@ -209,7 +211,15 @@ func (c *RepoCache) load(events chan BuildEvent) bool {
 	}
 	wg.Wait()
 
-	return !failed.Load()
+	// only once every subcache loaded: a failed load leaves nothing running,
+	// as the caller gets no cache to close
+	if failed.Load() {
+		return false
+	}
+	for _, subcache := range c.subcaches {
+		subcache.startSyncWorker()
+	}
+	return true
 }
 
 // followChanges subscribes to the change source, if any, until

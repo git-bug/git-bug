@@ -3,6 +3,8 @@ package cache
 import (
 	"context"
 	"errors"
+	"maps"
+	"slices"
 	"sort"
 	"time"
 
@@ -128,43 +130,45 @@ func (c *RepoCacheBug) ResolveComment(ctx context.Context, prefix string) (*BugC
 
 // Query return the id of all Bug matching the given Query
 func (c *RepoCacheBug) Query(ctx context.Context, q *query.Query) ([]entity.Id, error) {
-	c.muMaps.RLock()
-	defer c.muMaps.RUnlock()
-
 	if q == nil {
 		return c.AllIds(), nil
 	}
 
 	matcher := compileMatcher(q.Filters)
 
-	var filtered []*BugExcerpt
-	var foundBySearch map[entity.Id]*BugExcerpt
-
+	// The search and the filters run without muMaps, which a slow search
+	// would hold for as long: a sync waiting for it would then hold back every
+	// reader. Only the excerpts are taken under it; they are replaced, never
+	// changed, so they can be read after.
+	var hits []string
 	if q.Search != nil {
-		foundBySearch = map[entity.Id]*BugExcerpt{}
-
 		index, err := c.repo.GetIndex(c.namespace, c.version)
 		if err != nil {
 			return nil, err
 		}
 
-		res, err := index.Search(ctx, q.Search)
+		hits, err = index.Search(ctx, q.Search)
 		if err != nil {
 			return nil, err
 		}
+	}
 
-		for _, hit := range res {
-			id := entity.Id(hit)
+	var found []*BugExcerpt
+	c.muMaps.RLock()
+	if q.Search != nil {
+		for _, hit := range hits {
 			// the index can be ahead of the excerpts, see SubCache.syncEntitiesLocked
-			if excerpt, ok := c.excerpts[id]; ok {
-				foundBySearch[id] = excerpt
+			if excerpt, ok := c.excerpts[entity.Id(hit)]; ok {
+				found = append(found, excerpt)
 			}
 		}
 	} else {
-		foundBySearch = c.excerpts
+		found = slices.Collect(maps.Values(c.excerpts))
 	}
+	c.muMaps.RUnlock()
 
-	for _, excerpt := range foundBySearch {
+	var filtered []*BugExcerpt
+	for _, excerpt := range found {
 		if matcher.Match(ctx, excerpt, c.resolvers()) {
 			filtered = append(filtered, excerpt)
 		}
