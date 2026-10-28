@@ -499,15 +499,6 @@ func (repo *GoGitRepo) ResolveTrackingRef(ctx context.Context, remote string, na
 	return repo.lookupRef(trackingRefPrefix(remote, namespace) + key)
 }
 
-// RemoveTrackingRef deletes a tracking ref.
-// RemoveTrackingRef is idempotent.
-func (repo *GoGitRepo) RemoveTrackingRef(ctx context.Context, remote string, namespace string, key string) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	return repo.r.Storer.RemoveReference(plumbing.ReferenceName(trackingRefPrefix(remote, namespace) + key))
-}
-
 func (repo *GoGitRepo) lookupRef(name string) (Hash, error) {
 	r, err := repo.r.Reference(plumbing.ReferenceName(name), false)
 	if err == plumbing.ErrReferenceNotFound {

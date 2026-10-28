@@ -2,9 +2,9 @@ package repository
 
 // TODO: remove this file and its tests once go-git writes refs under a lock
 // file, skips lock files and broken loose refs when listing, and git-bug uses
-// that version (go-git branch ref-lockfile). UpdateRef and RemoveRef then go
-// through CheckAndSetReference and RemoveReference, ListRefs and
-// ListTrackingRefs through IterReferences.
+// that version (go-git branch ref-lockfile). UpdateRef, RemoveRef and
+// RemoveTrackingRef then go through CheckAndSetReference and RemoveReference,
+// ListRefs and ListTrackingRefs through IterReferences.
 //
 // GoGitRepo writes and lists the refs of git-bug's namespaces itself, rather
 // than through go-git, which gets both wrong in ways git-bug depends on:
@@ -14,21 +14,23 @@ package repository
 //     (https://github.com/go-git/go-git/issues/2399),
 //   - it can't create a ref only if it doesn't exist yet, atomically,
 //   - it locks a ref with flock on the ref file, which the git binary ignores,
+//     and rewrites packed-refs under an flock too, ignoring packed-refs.lock:
+//     a removal can then undo a git pack-refs running meanwhile, losing the
+//     refs it packed,
 //   - listing refs reads every file under refs/ as a ref, including the .lock
 //     files of an update in progress.
 //
 // This follows git's own protocol for loose refs instead: an update holds
 // <ref>.lock, created exclusively and already holding the new value, while it
-// compares, then renames it over the ref. Listing reads the loose refs and packed-refs of one namespace,
-// skipping lock files and broken refs like git does.
-//
-// Removing a local ref holds the same lock, so that it can't interleave with an
-// update, but the removal itself, including rewriting packed-refs, is still
-// done by go-git.
+// compares, then renames it over the ref. A removal holds <ref>.lock and
+// packed-refs.lock while it removes the ref from packed-refs, then the loose
+// ref.
+// Listing reads the loose refs and packed-refs of one namespace, skipping lock
+// files and broken refs like git does.
 //
 // Everything else stays with go-git: resolving a single ref (which already falls
-// back to packed-refs on a broken loose file), removing tracking refs, and the
-// refs written by fetch and push.
+// back to packed-refs on a broken loose file), and the refs written by fetch
+// and push.
 
 import (
 	"bufio"
@@ -59,7 +61,7 @@ var refLockTimeout = time.Second
 // An empty old means that the ref must not exist yet.
 // Returns ErrRefChanged otherwise, and the ref is left unchanged.
 func (repo *GoGitRepo) UpdateRef(ctx context.Context, namespace string, key string, old Hash, commit Hash) error {
-	name, err := refName(namespace, key)
+	name, err := refName(refPrefix(namespace), key)
 	if err != nil {
 		return err
 	}
@@ -100,10 +102,26 @@ func (repo *GoGitRepo) UpdateRef(ctx context.Context, namespace string, key stri
 // RemoveRef deletes a local ref.
 // RemoveRef is idempotent.
 func (repo *GoGitRepo) RemoveRef(ctx context.Context, namespace string, key string) error {
-	name, err := refName(namespace, key)
+	name, err := refName(refPrefix(namespace), key)
 	if err != nil {
 		return err
 	}
+	return repo.removeRef(ctx, name)
+}
+
+// RemoveTrackingRef deletes a tracking ref.
+// RemoveTrackingRef is idempotent.
+func (repo *GoGitRepo) RemoveTrackingRef(ctx context.Context, remote string, namespace string, key string) error {
+	name, err := refName(trackingRefPrefix(remote, namespace), key)
+	if err != nil {
+		return err
+	}
+	return repo.removeRef(ctx, name)
+}
+
+// removeRef deletes the ref name, as git does: from packed-refs first, then
+// the loose ref, which would otherwise expose the packed value meanwhile.
+func (repo *GoGitRepo) removeRef(ctx context.Context, name string) error {
 	path := filepath.Join(repo.path, filepath.FromSlash(name))
 
 	// holding the lock orders the removal with the updates: one comparing
@@ -115,16 +133,63 @@ func (repo *GoGitRepo) RemoveRef(ctx context.Context, namespace string, key stri
 	}
 	defer os.Remove(lockPath)
 
-	return repo.r.Storer.RemoveReference(plumbing.ReferenceName(name))
+	// held until the loose ref is gone, even when packed-refs doesn't list the
+	// ref: a git pack-refs could otherwise pack the loose ref right before it
+	// is removed, which would bring the ref back from packed-refs
+	packedPath := filepath.Join(repo.path, "packed-refs")
+	packedLockPath, err := repo.lockRef(ctx, packedPath, nil)
+	if err != nil {
+		return fmt.Errorf("can't remove %s: %w", name, err)
+	}
+	defer os.Remove(packedLockPath)
+
+	packed, err := os.ReadFile(packedPath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+	// keep every line but the ref's, and the "^<hash>" lines peeling it
+	var kept []string
+	removed, peeling := false, false
+	for _, line := range strings.SplitAfter(string(packed), "\n") {
+		if peeling && strings.HasPrefix(line, "^") {
+			continue
+		}
+		_, lineName, _ := strings.Cut(strings.TrimSuffix(line, "\n"), " ")
+		peeling = line != "" && line[0] != '#' && line[0] != '^' && lineName == name
+		if peeling {
+			removed = true
+			continue
+		}
+		kept = append(kept, line)
+	}
+	if removed {
+		// renaming a temporary file rather than the lock keeps the lock held,
+		// like git's packed-refs.new
+		tmpPath, err := writeTempFile(repo.path, []byte(strings.Join(kept, "")))
+		if err != nil {
+			return err
+		}
+		defer os.Remove(tmpPath)
+		if err := os.Rename(tmpPath, packedPath); err != nil {
+			return err
+		}
+	}
+
+	err = os.Remove(path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	return err
 }
 
-// lockRef creates the lock file of the ref at path, holding content, and
-// returns its path. It waits for a concurrent writer to release the lock, or
-// for ctx to be done.
+// lockRef creates the lock file at path+".lock", of a ref or of packed-refs,
+// holding content, and returns its path. It waits for a concurrent writer to
+// release the lock, or for ctx to be done.
 //
-// The lock file never exists empty: go-git lists refs by reading every file
-// under refs/, lock files included, and an empty one makes the whole listing
-// fail. So content is written to a temporary file outside of refs/ first, then
+// The lock file of a ref never exists empty: go-git lists refs by reading every
+// file under refs/, lock files included, and an empty one makes the whole
+// listing fail. packed-refs.lock is outside of refs/, and can be empty. So
+// content is written to a temporary file outside of refs/ first, then
 // hard-linked as the lock, which fails if the lock exists, like an exclusive
 // create. On a filesystem without hard links, the lock is created exclusively
 // then written, and the empty window comes back.
@@ -173,7 +238,7 @@ func (repo *GoGitRepo) lockRef(ctx context.Context, path string, content []byte)
 			return "", err
 		}
 		if time.Now().After(deadline) {
-			return "", fmt.Errorf("%s exists: another process is updating the ref, or crashed doing so; if no git or git-bug process is running, remove it", lockPath)
+			return "", fmt.Errorf("%s exists: another process is updating refs, or crashed doing so; if no git or git-bug process is running, remove it", lockPath)
 		}
 		select {
 		case <-ctx.Done():
@@ -225,12 +290,12 @@ func createFileExclusive(path string, content []byte) error {
 	return err
 }
 
-// refName returns the name of the local ref of namespace and key, rejecting the
+// refName returns the name of the ref of key under prefix, rejecting the
 // names git would reject: those also can't escape the repository once turned
 // into a path, nor be taken for a lock file. The key must not leave its
 // namespace either.
-func refName(namespace string, key string) (string, error) {
-	name := refPrefix(namespace) + key
+func refName(prefix string, key string) (string, error) {
+	name := prefix + key
 	if strings.Contains(key, "/") {
 		return "", fmt.Errorf("invalid ref key %q", key)
 	}
