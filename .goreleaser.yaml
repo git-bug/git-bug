@@ -97,7 +97,7 @@ nfpms:
     vendor: git-bug
     homepage: https://github.com/git-bug/git-bug
     maintainer: Michael Muré <batolettre@gmail.com>
-    description: Distributed, offline-first bug tracker embedded in git, with bridges
+    description: Distributed, offline-first bug tracker integrated in git, with bridges
     license: GPL-3.0-or-later
     formats:
       - deb

@@ -1,18 +1,9 @@
 package commands
 
 import (
-	"log/slog"
-
 	"github.com/spf13/cobra"
 
 	"github.com/git-bug/git-bug/commands/execenv"
-)
-
-// TODO: 0.12.0: remove deprecated build vars
-var (
-	GitCommit   string
-	GitLastTag  string
-	GitExactTag string
 )
 
 func newVersionCommand(env *execenv.Env) *cobra.Command {
@@ -43,24 +34,7 @@ Format Description:
   <arch> is the target architecture (GOARCH).
 `,
 		Run: func(cmd *cobra.Command, args []string) {
-			defer warnDeprecated()
 			env.Out.Printf("%s %s", execenv.RootCommandName, cmd.Root().Version)
 		},
-	}
-}
-
-// warnDeprecated warns about deprecated build variables
-// TODO: 0.12.0: remove support for old build tags
-func warnDeprecated() {
-	msg := "please contact your package maintainer"
-	reason := "deprecated build variable"
-	if GitLastTag != "" {
-		slog.Warn(msg, "reason", reason, "name", "GitLastTag", "value", GitLastTag)
-	}
-	if GitExactTag != "" {
-		slog.Warn(msg, "reason", reason, "name", "GitExactTag", "value", GitExactTag)
-	}
-	if GitCommit != "" {
-		slog.Warn(msg, "reason", reason, "name", "GitCommit", "value", GitCommit)
 	}
 }

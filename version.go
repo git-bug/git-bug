@@ -4,7 +4,6 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/git-bug/git-bug/commands"
 	"golang.org/x/mod/semver"
 )
 
@@ -23,16 +22,6 @@ var version = "undefined"
 //
 // TODO: support notifying the user if their version is out of date
 func getVersion() string {
-	// this supports overriding the default version if the deprecated var used
-	// for setting the exact version for releases is supplied. we are doing this
-	// in order to give downstream package maintainers a longer window to
-	// migrate.
-	//
-	// TODO: 0.12.0: remove support for old build tags
-	if version == "undefined" && commands.GitExactTag != "" {
-		version = commands.GitExactTag
-	}
-
 	// add the v prefix if it's missing, then fall back to "undefined" if what
 	// we are left with isn't a real version. this guards against whatever a
 	// downstream packager might inject.
