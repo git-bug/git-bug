@@ -156,8 +156,8 @@ func (c *RepoCache) Pull(ctx context.Context, remote string) error {
 }
 
 func (c *RepoCache) SetUserIdentity(ctx context.Context, i *IdentityCache) error {
-	c.muUserIdentity.RLock()
-	defer c.muUserIdentity.RUnlock()
+	c.muUserIdentity.Lock()
+	defer c.muUserIdentity.Unlock()
 
 	// Make sure that everything is fine
 	if _, err := c.identities.Resolve(ctx, i.Id()); err != nil {

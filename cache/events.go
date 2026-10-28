@@ -50,8 +50,11 @@ const (
 	EntityEventRemoved
 )
 
-// Observer gets notified of changes in entities in the cache
+// Observer gets notified of changes in entities in the cache.
 type Observer interface {
+	// EntityEvent is called synchronously, on the goroutine making the change or on
+	// the sync worker of the cache, once the change is visible in the cache. It must
+	// not block: it would stall that writer, or every later sync.
 	EntityEvent(event EntityEventType, repoName string, typename string, id entity.Id)
 }
 
