@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gorilla/mux"
 	"github.com/phayes/freeport"
 	"github.com/skratchdot/open-golang/open"
@@ -19,6 +18,7 @@ import (
 
 	"github.com/git-bug/git-bug/api/auth"
 	"github.com/git-bug/git-bug/api/graphql"
+	"github.com/git-bug/git-bug/api/graphql/playground"
 	httpapi "github.com/git-bug/git-bug/api/http"
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/commands/execenv"
@@ -110,7 +110,7 @@ func setupRoutes(env *execenv.Env, opts webUIOptions) (*mux.Router, error) {
 	}
 
 	if opts.dev {
-		router.Path("/playground").Handler(playground.Handler("git-bug", "/graphql"))
+		router.Path("/playground").Handler(playground.NewHandler())
 	}
 	router.Path("/graphql").Handler(graphql.NewHandler(mrc, errOut, opts.dev))
 	router.Path("/gitfile/{repo}/{rest:.+}").Handler(httpapi.NewGitFileHandler(mrc))

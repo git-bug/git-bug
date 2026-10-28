@@ -153,8 +153,10 @@ jobs:
       # step. regenerate them here and fail if the result differs from what is
       # committed. the webui build is needed first because //doc:generate.go
       # pulls in //commands, which pulls in //webui and its //go:embed.
+      # //api/graphql is regenerated too, so that a gqlgen update reaching its
+      # generated code or the static playground page is not left behind.
       - name: Check generated files are up to date
         run: |
           make webui/dist
-          go generate
-          git diff --exit-code -- doc/man doc/md misc/completion
+          go generate . ./api/graphql/...
+          git diff --exit-code -- doc/man doc/md misc/completion api/graphql

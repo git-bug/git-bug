@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  	<meta charset="utf-8">
+  	<title>git-bug</title>
+	<style>
+		body {
+			margin: 0;
+		}
+
+		#graphiql {
+			height: 100vh;
+		}
+
+		.loading {
+        	height: 100%;
+        	display: flex;
+        	align-items: center;
+        	justify-content: center;
+        	font-size: 4rem;
+		}
+	</style>
+	<script
+		src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"
+		integrity="sha256-S0lp&#43;k7zWUMk2ixteM6HZvu8L9Eh//OVrt&#43;ZfbCpmgY="
+		crossorigin="anonymous"
+	></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"
+		integrity="sha256-IXWO0ITNDjfnNXIu5POVfqlgYoop36bDzhodR6LW5Pc="
+		crossorigin="anonymous"
+	></script>
+	<link
+		rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/graphiql@4.1.2/graphiql.min.css"
+		integrity="sha256-MEh&#43;B2NdMSpj9kexQNN3QKc8UzMrCXW/Sx/phcpuyIU="
+		crossorigin="anonymous"
+	/>
+  </head>
+  <body>
+    <div id="graphiql">
+		<div class="loading">Loading…</div>
+	</div>
+
+	<script
+		src="https://cdn.jsdelivr.net/npm/graphiql@4.1.2/graphiql.min.js"
+		integrity="sha256-hnImuor1znlJkD/FOTL3jayfS/xsyNoP04abi8bFJWs="
+		crossorigin="anonymous"
+	></script>
+
+    <script>
+      class PrefixedStorage {
+        constructor(prefix = '') {
+          this.prefix = prefix;
+        }
+
+        _addPrefix(key) {
+          return this.prefix + key;
+        }
+
+        _removePrefix(prefixedKey) {
+          return prefixedKey.substring(this.prefix.length);
+        }
+
+        setItem(key, value) {
+          const prefixedKey = this._addPrefix(key);
+          localStorage.setItem(prefixedKey, value);
+        }
+
+        getItem(key) {
+          const prefixedKey = this._addPrefix(key);
+          return localStorage.getItem(prefixedKey);
+        }
+
+        removeItem(key) {
+          const prefixedKey = this._addPrefix(key);
+          localStorage.removeItem(prefixedKey);
+        }
+
+        clear() {
+          const keysToRemove = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith(this.prefix)) {
+              keysToRemove.push(key);
+            }
+          }
+          keysToRemove.forEach(key => localStorage.removeItem(key));
+        }
+
+        get length() {
+          let count = 0;
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith(this.prefix)) {
+              count++;
+            }
+          }
+          return count;
+        }
+
+        key(index) {
+          const keys = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith(this.prefix)) {
+              keys.push(this._removePrefix(key));
+            }
+          }
+          return index >= 0 && index < keys.length ? keys[index] : null;
+        }
+      }
+      const url = location.protocol + '//' + location.host + "/graphql";
+      const wsProto = location.protocol == 'https:' ? 'wss:' : 'ws:';
+      const subscriptionUrl = wsProto + '//' + location.host + "/graphql";
+      const fetcherHeaders = undefined;
+      const uiHeaders = undefined;
+
+      let plugins = [];
+
+      const fetcher = GraphiQL.createFetcher({ url, subscriptionUrl, headers: fetcherHeaders });
+      ReactDOM.render(
+        React.createElement(GraphiQL, {
+          fetcher: fetcher,
+          isHeadersEditorEnabled: true,
+          shouldPersistHeaders: true,
+          headers: JSON.stringify(uiHeaders, null, 2),
+          plugins: plugins,
+          storage: new PrefixedStorage(''),
+          inputValueDeprecation: true
+        }),
+        document.getElementById('graphiql'),
+      );
+    </script>
+  </body>
+</html>
