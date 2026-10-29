@@ -186,12 +186,20 @@ func TestFindGitDir(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, expected, gitDir)
 
-		// Do not clean away ".." before the OS follows the symlink.
-		gitDir, err = FindGitDir(link + string(os.PathSeparator) + "..")
-		require.NoError(t, err)
-		superGitDir, err := filepath.EvalSymlinks(filepath.Join(super, ".git"))
-		require.NoError(t, err)
-		require.Equal(t, superGitDir, gitDir)
+		t.Run("symlink followed by dotdot", func(t *testing.T) {
+			gitDir, err := FindGitDir(link + string(os.PathSeparator) + "..")
+			if runtime.GOOS == "windows" {
+				// Windows resolves ".." lexically before following symlinks,
+				// reaching root, which is not a repository in this fixture.
+				require.ErrorIs(t, err, ErrNotARepo)
+				return
+			}
+			// POSIX follows the symlink before resolving "..", reaching super.
+			require.NoError(t, err)
+			superGitDir, err := filepath.EvalSymlinks(filepath.Join(super, ".git"))
+			require.NoError(t, err)
+			require.Equal(t, superGitDir, gitDir)
+		})
 	})
 
 	t.Run("whitespace in the git directory", func(t *testing.T) {
