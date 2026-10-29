@@ -5,117 +5,51 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
+
+	"golang.org/x/sys/execabs"
 )
 
-// FindGitDir returns the git directory of the repository at path or at one of
-// its parents. In each directory, from path up, it looks for:
-//   - a .git directory,
-//   - a .git file, "gitdir: <path>", as submodules and linked worktrees have,
-//   - the directory itself being a git directory, as a bare repository is.
+// FindGitDir asks git for the absolute common directory of the repository at
+// path. Git handles parent discovery, bare repositories, submodules, linked
+// worktrees and the environment variables controlling repository discovery.
+// For a linked worktree, the common directory holds the shared objects and refs.
 //
-// For a linked worktree, it returns the git directory of the main worktree,
-// which holds the objects and refs.
-//
-// It fails with ErrNotARepo if there is none up to the root, and stops with
-// an error at a .git file that is malformed or doesn't point to a git
-// directory, as git does.
+// It requires git 2.31 or later in PATH, for rev-parse's --path-format option.
+// It fails with ErrNotARepo if git cannot find a repository, and preserves
+// other errors, such as a malformed .git file or an unreadable directory.
 func FindGitDir(path string) (string, error) {
-	dir, err := filepath.Abs(path)
+	cmd := execabs.Command("git", "rev-parse", "--path-format=absolute", "--git-common-dir")
+	// Let the OS resolve path, including symlinks followed by "..". Cleaning
+	// it with filepath.Abs or filepath.Join first can select another directory.
+	cmd.Dir = path
+	// Git has no distinct exit status for a missing repository. Keep its
+	// diagnostic in English so we can recognise that case without hiding
+	// malformed gitfiles, permission errors or dubious ownership warnings.
+	cmd.Env = append(cmd.Environ(), "LC_ALL=C")
+	out, err := cmd.Output()
 	if err != nil {
-		return "", err
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			message := strings.TrimSuffix(string(exitErr.Stderr), "\n")
+			if strings.HasPrefix(message, "fatal: not a git repository (or any") {
+				return "", fmt.Errorf("%w: git rev-parse: %w: %s", ErrNotARepo, err, message)
+			}
+			return "", fmt.Errorf("git rev-parse: %w: %s", err, message)
+		}
+		return "", fmt.Errorf("git rev-parse: %w", err)
 	}
 
-	for {
-		gitDir, err := gitDirAt(dir)
-		if !errors.Is(err, ErrNotARepo) {
-			return gitDir, err
-		}
-
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			return "", fmt.Errorf("%w: %s, or any of its parents", ErrNotARepo, path)
-		}
-		dir = parent
-	}
-}
-
-// gitDirAt returns the git directory of the repository at dir, without
-// looking at its parents, see FindGitDir.
-func gitDirAt(dir string) (string, error) {
-	dot := filepath.Join(dir, ".git")
-	fi, err := os.Stat(dot)
-	switch {
-	case err == nil && fi.Mode().IsRegular():
-		gitDir, err := readGitFile(dot)
-		if err != nil {
-			return "", err
-		}
-		ok, err := isGitDir(gitDir)
-		if err != nil {
-			return "", err
-		}
-		if !ok {
-			// not ErrNotARepo: the search stops here
-			return "", fmt.Errorf("%s points to %s, which is not a git directory", dot, gitDir)
-		}
-		return gitDir, nil
-
-	case err == nil && fi.IsDir():
-		ok, err := isGitDir(dot)
-		if err != nil {
-			return "", err
-		}
-		if ok {
-			return dot, nil
-		}
-		// as git, a .git directory that isn't a git directory is ignored
-
-	case err != nil && !isMissing(err):
-		return "", err
-	}
-
-	ok, err := isGitDir(dir)
-	if err != nil {
-		return "", err
-	}
-	if !ok {
-		return "", ErrNotARepo
-	}
-	return dir, nil
-}
-
-// readGitFile returns the git directory a .git file at path points to, with
-// a "gitdir: <path>" line, relative to the directory of the file or not. For
-// a linked worktree, whose git directory has a commondir file, it is the
-// common directory that commondir names.
-func readGitFile(path string) (string, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-	gitDir, ok := strings.CutPrefix(strings.TrimRight(string(data), "\r\n"), "gitdir: ")
-	if !ok || gitDir == "" {
-		return "", fmt.Errorf("invalid gitfile format: %s", path)
-	}
+	// Strip only the record separator, not whitespace belonging to the path.
+	gitDir := strings.TrimSuffix(string(out), "\n")
 	if !filepath.IsAbs(gitDir) {
-		gitDir = filepath.Join(filepath.Dir(path), gitDir)
+		// Older git versions echo unknown options instead of rejecting them.
+		return "", fmt.Errorf("git rev-parse returned a non-absolute path %q; git 2.31 or later is required", gitDir)
 	}
-
-	commonDir, err := os.ReadFile(filepath.Join(gitDir, "commondir"))
-	if isMissing(err) {
-		return filepath.Clean(gitDir), nil
-	}
-	if err != nil {
-		return "", err
-	}
-	common := strings.TrimRight(string(commonDir), "\r\n")
-	if !filepath.IsAbs(common) {
-		common = filepath.Join(gitDir, common)
-	}
-	return filepath.Clean(common), nil
+	return filepath.FromSlash(gitDir), nil
 }
 
 // isGitDir tells if gitDir is a git directory as git recognizes one: it holds

@@ -105,6 +105,8 @@ nfpms:
       - apk
       - archlinux
     bindir: /usr/bin
+    dependencies:
+      - git
     contents:
       # unlike the archives, a package can put these where the system will
       # actually find them

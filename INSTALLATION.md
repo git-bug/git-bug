@@ -14,6 +14,10 @@
 platforms. Follow this document for instructions on how to install `git-bug`,
 and verify your installation.
 
+Git 2.31 or newer must also be installed and available in your `PATH`.
+`git-bug` uses `git rev-parse` to locate repository metadata, including in
+submodules and linked worktrees.
+
 <!-- mdformat-toc start --slug=github --maxlevel=4 --minlevel=2 -->
 
 - [Download a pre-compiled release binary](#download-a-pre-compiled-release-binary)
