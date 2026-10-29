@@ -105,8 +105,22 @@ nfpms:
       - apk
       - archlinux
     bindir: /usr/bin
-    dependencies:
-      - git
+    # rev-parse --path-format=absolute requires Git 2.31. Dependency syntax
+    # differs between package formats, so express the minimum in each one.
+    overrides:
+      deb:
+        dependencies:
+          # Debian and Ubuntu's Git packages have epoch 1.
+          - git (>= 1:2.31)
+      rpm:
+        dependencies:
+          - git >= 2.31
+      apk:
+        dependencies:
+          - git>=2.31
+      archlinux:
+        dependencies:
+          - git>=2.31
     contents:
       # unlike the archives, a package can put these where the system will
       # actually find them
