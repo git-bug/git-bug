@@ -3,6 +3,7 @@ package bridge
 
 import (
 	"github.com/git-bug/git-bug/bridge/core"
+	"github.com/git-bug/git-bug/bridge/gitea"
 	"github.com/git-bug/git-bug/bridge/github"
 	"github.com/git-bug/git-bug/bridge/gitlab"
 	"github.com/git-bug/git-bug/bridge/jira"
@@ -12,6 +13,7 @@ import (
 )
 
 func init() {
+	core.Register(&gitea.Gitea{})
 	core.Register(&github.Github{})
 	core.Register(&gitlab.Gitlab{})
 	core.Register(&launchpad.Launchpad{})
