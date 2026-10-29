@@ -117,7 +117,11 @@ func TestFindGitDir(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, plainGitDir, gitDir)
 
-		rel, err := filepath.Rel(dir, plainGitDir)
+		// Git resolves the gitfile from its physical directory. On macOS,
+		// TempDir can use /var while plainGitDir is under /private/var.
+		physicalDir, err := filepath.EvalSymlinks(dir)
+		require.NoError(t, err)
+		rel, err := filepath.Rel(physicalDir, plainGitDir)
 		require.NoError(t, err)
 		writeGitFile(t, dir, rel)
 		gitDir, err = FindGitDir(dir)
