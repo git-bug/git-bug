@@ -27,6 +27,12 @@ func FindGitDir(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	// as git, search from the physical path: a relative "gitdir: ../.." in a
+	// .git file is relative to it, not to a symbolic link on the way. On
+	// failure, as it can on some Windows volumes, search from dir as is.
+	if physical, err := filepath.EvalSymlinks(dir); err == nil {
+		dir = physical
+	}
 
 	for {
 		gitDir, err := gitDirAt(dir)
