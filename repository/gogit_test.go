@@ -76,9 +76,18 @@ func runGit(t *testing.T, dir string, args ...string) string {
 }
 
 func TestFindGitDir(t *testing.T) {
-	plainGitDir := newTestGoGitRepo(t, false).path
+	// FindGitDir returns physical paths, and temporary directories can be
+	// behind a symbolic link, as on macOS
+	physical := func(t *testing.T, path string) string {
+		t.Helper()
+		path, err := filepath.EvalSymlinks(path)
+		require.NoError(t, err)
+		return path
+	}
+
+	plainGitDir := physical(t, newTestGoGitRepo(t, false).path)
 	plainRoot := filepath.Dir(plainGitDir)
-	bareGitDir := newTestGoGitRepo(t, true).path
+	bareGitDir := physical(t, newTestGoGitRepo(t, true).path)
 
 	writeGitFile := func(t *testing.T, dir string, gitDir string) {
 		t.Helper()
@@ -116,7 +125,7 @@ func TestFindGitDir(t *testing.T) {
 	})
 
 	t.Run("a .git file, absolute or relative", func(t *testing.T) {
-		dir := t.TempDir()
+		dir := physical(t, t.TempDir())
 		writeGitFile(t, dir, plainGitDir)
 		gitDir, err := FindGitDir(dir)
 		require.NoError(t, err)
@@ -142,6 +151,23 @@ func TestFindGitDir(t *testing.T) {
 		dir := t.TempDir()
 		writeGitFile(t, dir, wtGitDir)
 		gitDir, err := FindGitDir(dir)
+		require.NoError(t, err)
+		require.Equal(t, plainGitDir, gitDir)
+	})
+
+	t.Run("a relative .git file through a symbolic link", func(t *testing.T) {
+		// as a submodule reached through a link to one of its parents: the
+		// .git file is relative to the physical directory, not to the link
+		sub := filepath.Join(plainRoot, "real", "sub")
+		require.NoError(t, os.MkdirAll(sub, 0755))
+		writeGitFile(t, sub, filepath.Join("..", "..", ".git"))
+
+		link := filepath.Join(t.TempDir(), "link")
+		if err := os.Symlink(filepath.Join(plainRoot, "real"), link); err != nil {
+			t.Skipf("can't create a symbolic link: %v", err)
+		}
+
+		gitDir, err := FindGitDir(filepath.Join(link, "sub"))
 		require.NoError(t, err)
 		require.Equal(t, plainGitDir, gitDir)
 	})
