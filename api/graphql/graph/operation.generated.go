@@ -143,7 +143,7 @@ func (ec *executionContext) _OperationConnection_totalCount(ctx context.Context,
 	)
 }
 func (ec *executionContext) fieldContext_OperationConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("OperationConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("OperationConnection", field, false, false, "Int")
 }
 
 func (ec *executionContext) _OperationEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.OperationEdge) (ret graphql.Marshaler) {
@@ -166,7 +166,7 @@ func (ec *executionContext) _OperationEdge_cursor(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext_OperationEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("OperationEdge", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("OperationEdge", field, false, false, "String")
 }
 
 func (ec *executionContext) _OperationEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.OperationEdge) (ret graphql.Marshaler) {
@@ -262,8 +262,7 @@ func (ec *executionContext) _OperationConnection(ctx context.Context, sel ast.Se
 	fields := graphql.CollectFields(ec.OperationContext, sel, operationConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -297,14 +296,10 @@ func (ec *executionContext) _OperationConnection(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -315,8 +310,7 @@ func (ec *executionContext) _OperationEdge(ctx context.Context, sel ast.Selectio
 	fields := graphql.CollectFields(ec.OperationContext, sel, operationEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -340,14 +334,10 @@ func (ec *executionContext) _OperationEdge(ctx context.Context, sel ast.Selectio
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -358,9 +348,7 @@ func (ec *executionContext) _OperationEdge(ctx context.Context, sel ast.Selectio
 
 func (ec *executionContext) marshalNOperation2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentityᚋdagᚐOperation(ctx context.Context, sel ast.SelectionSet, v dag.Operation) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "Operation!")
 		return graphql.Null
 	}
 	return ec._Operation(ctx, sel, v)
@@ -384,9 +372,7 @@ func (ec *executionContext) marshalNOperation2ᚕgithubᚗcomᚋgitᚑbugᚋgit�
 
 func (ec *executionContext) marshalNOperationConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationConnection(ctx context.Context, sel ast.SelectionSet, v *models.OperationConnection) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "OperationConnection!")
 		return graphql.Null
 	}
 	return ec._OperationConnection(ctx, sel, v)
@@ -410,9 +396,7 @@ func (ec *executionContext) marshalNOperationEdge2ᚕᚖgithubᚗcomᚋgitᚑbug
 
 func (ec *executionContext) marshalNOperationEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐOperationEdge(ctx context.Context, sel ast.SelectionSet, v *models.OperationEdge) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "OperationEdge!")
 		return graphql.Null
 	}
 	return ec._OperationEdge(ctx, sel, v)

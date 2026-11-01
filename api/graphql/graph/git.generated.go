@@ -4,7 +4,6 @@ package graph
 
 import (
 	"context"
-	"errors"
 	"math"
 	"strconv"
 	"sync/atomic"
@@ -114,7 +113,7 @@ func (ec *executionContext) _GitBlob_path(ctx context.Context, field graphql.Col
 	)
 }
 func (ec *executionContext) fieldContext_GitBlob_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitBlob", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitBlob", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitBlob_hash(ctx context.Context, field graphql.CollectedField, obj *models.GitBlob) (ret graphql.Marshaler) {
@@ -137,7 +136,7 @@ func (ec *executionContext) _GitBlob_hash(ctx context.Context, field graphql.Col
 	)
 }
 func (ec *executionContext) fieldContext_GitBlob_hash(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitBlob", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitBlob", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitBlob_text(ctx context.Context, field graphql.CollectedField, obj *models.GitBlob) (ret graphql.Marshaler) {
@@ -160,7 +159,7 @@ func (ec *executionContext) _GitBlob_text(ctx context.Context, field graphql.Col
 	)
 }
 func (ec *executionContext) fieldContext_GitBlob_text(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitBlob", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitBlob", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitBlob_size(ctx context.Context, field graphql.CollectedField, obj *models.GitBlob) (ret graphql.Marshaler) {
@@ -183,7 +182,7 @@ func (ec *executionContext) _GitBlob_size(ctx context.Context, field graphql.Col
 	)
 }
 func (ec *executionContext) fieldContext_GitBlob_size(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitBlob", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("GitBlob", field, false, false, "Int")
 }
 
 func (ec *executionContext) _GitBlob_isBinary(ctx context.Context, field graphql.CollectedField, obj *models.GitBlob) (ret graphql.Marshaler) {
@@ -206,7 +205,7 @@ func (ec *executionContext) _GitBlob_isBinary(ctx context.Context, field graphql
 	)
 }
 func (ec *executionContext) fieldContext_GitBlob_isBinary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitBlob", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("GitBlob", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _GitBlob_isTruncated(ctx context.Context, field graphql.CollectedField, obj *models.GitBlob) (ret graphql.Marshaler) {
@@ -229,7 +228,7 @@ func (ec *executionContext) _GitBlob_isTruncated(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext_GitBlob_isTruncated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitBlob", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("GitBlob", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _GitChangedFile_path(ctx context.Context, field graphql.CollectedField, obj *repository.ChangedFile) (ret graphql.Marshaler) {
@@ -252,7 +251,7 @@ func (ec *executionContext) _GitChangedFile_path(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext_GitChangedFile_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitChangedFile", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitChangedFile", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitChangedFile_oldPath(ctx context.Context, field graphql.CollectedField, obj *repository.ChangedFile) (ret graphql.Marshaler) {
@@ -275,7 +274,7 @@ func (ec *executionContext) _GitChangedFile_oldPath(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_GitChangedFile_oldPath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitChangedFile", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitChangedFile", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitChangedFile_status(ctx context.Context, field graphql.CollectedField, obj *repository.ChangedFile) (ret graphql.Marshaler) {
@@ -298,7 +297,7 @@ func (ec *executionContext) _GitChangedFile_status(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_GitChangedFile_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitChangedFile", field, false, false, errors.New("field of type GitChangeStatus does not have child fields"))
+	return graphql.NewScalarFieldContext("GitChangedFile", field, false, false, "GitChangeStatus")
 }
 
 func (ec *executionContext) _GitChangedFileConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *models.GitChangedFileConnection) (ret graphql.Marshaler) {
@@ -385,7 +384,7 @@ func (ec *executionContext) _GitChangedFileConnection_totalCount(ctx context.Con
 	)
 }
 func (ec *executionContext) fieldContext_GitChangedFileConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitChangedFileConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("GitChangedFileConnection", field, false, false, "Int")
 }
 
 func (ec *executionContext) _GitCommit_hash(ctx context.Context, field graphql.CollectedField, obj *models.GitCommitMeta) (ret graphql.Marshaler) {
@@ -408,7 +407,7 @@ func (ec *executionContext) _GitCommit_hash(ctx context.Context, field graphql.C
 	)
 }
 func (ec *executionContext) fieldContext_GitCommit_hash(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitCommit", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitCommit", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitCommit_shortHash(ctx context.Context, field graphql.CollectedField, obj *models.GitCommitMeta) (ret graphql.Marshaler) {
@@ -431,7 +430,7 @@ func (ec *executionContext) _GitCommit_shortHash(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext_GitCommit_shortHash(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitCommit", field, true, true, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitCommit", field, true, true, "String")
 }
 
 func (ec *executionContext) _GitCommit_message(ctx context.Context, field graphql.CollectedField, obj *models.GitCommitMeta) (ret graphql.Marshaler) {
@@ -454,7 +453,7 @@ func (ec *executionContext) _GitCommit_message(ctx context.Context, field graphq
 	)
 }
 func (ec *executionContext) fieldContext_GitCommit_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitCommit", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitCommit", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitCommit_fullMessage(ctx context.Context, field graphql.CollectedField, obj *models.GitCommitMeta) (ret graphql.Marshaler) {
@@ -477,7 +476,7 @@ func (ec *executionContext) _GitCommit_fullMessage(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_GitCommit_fullMessage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitCommit", field, true, true, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitCommit", field, true, true, "String")
 }
 
 func (ec *executionContext) _GitCommit_authorName(ctx context.Context, field graphql.CollectedField, obj *models.GitCommitMeta) (ret graphql.Marshaler) {
@@ -500,7 +499,7 @@ func (ec *executionContext) _GitCommit_authorName(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext_GitCommit_authorName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitCommit", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitCommit", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitCommit_authorEmail(ctx context.Context, field graphql.CollectedField, obj *models.GitCommitMeta) (ret graphql.Marshaler) {
@@ -523,7 +522,7 @@ func (ec *executionContext) _GitCommit_authorEmail(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_GitCommit_authorEmail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitCommit", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitCommit", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitCommit_date(ctx context.Context, field graphql.CollectedField, obj *models.GitCommitMeta) (ret graphql.Marshaler) {
@@ -546,7 +545,7 @@ func (ec *executionContext) _GitCommit_date(ctx context.Context, field graphql.C
 	)
 }
 func (ec *executionContext) fieldContext_GitCommit_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitCommit", field, false, false, errors.New("field of type Time does not have child fields"))
+	return graphql.NewScalarFieldContext("GitCommit", field, false, false, "Time")
 }
 
 func (ec *executionContext) _GitCommit_parents(ctx context.Context, field graphql.CollectedField, obj *models.GitCommitMeta) (ret graphql.Marshaler) {
@@ -569,7 +568,7 @@ func (ec *executionContext) _GitCommit_parents(ctx context.Context, field graphq
 	)
 }
 func (ec *executionContext) fieldContext_GitCommit_parents(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitCommit", field, true, true, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitCommit", field, true, true, "String")
 }
 
 func (ec *executionContext) _GitCommit_files(ctx context.Context, field graphql.CollectedField, obj *models.GitCommitMeta) (ret graphql.Marshaler) {
@@ -744,7 +743,7 @@ func (ec *executionContext) _GitCommitConnection_totalCount(ctx context.Context,
 	)
 }
 func (ec *executionContext) fieldContext_GitCommitConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitCommitConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("GitCommitConnection", field, false, false, "Int")
 }
 
 func (ec *executionContext) _GitDiffHunk_oldStart(ctx context.Context, field graphql.CollectedField, obj *repository.DiffHunk) (ret graphql.Marshaler) {
@@ -767,7 +766,7 @@ func (ec *executionContext) _GitDiffHunk_oldStart(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext_GitDiffHunk_oldStart(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitDiffHunk", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("GitDiffHunk", field, false, false, "Int")
 }
 
 func (ec *executionContext) _GitDiffHunk_oldLines(ctx context.Context, field graphql.CollectedField, obj *repository.DiffHunk) (ret graphql.Marshaler) {
@@ -790,7 +789,7 @@ func (ec *executionContext) _GitDiffHunk_oldLines(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext_GitDiffHunk_oldLines(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitDiffHunk", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("GitDiffHunk", field, false, false, "Int")
 }
 
 func (ec *executionContext) _GitDiffHunk_newStart(ctx context.Context, field graphql.CollectedField, obj *repository.DiffHunk) (ret graphql.Marshaler) {
@@ -813,7 +812,7 @@ func (ec *executionContext) _GitDiffHunk_newStart(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext_GitDiffHunk_newStart(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitDiffHunk", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("GitDiffHunk", field, false, false, "Int")
 }
 
 func (ec *executionContext) _GitDiffHunk_newLines(ctx context.Context, field graphql.CollectedField, obj *repository.DiffHunk) (ret graphql.Marshaler) {
@@ -836,7 +835,7 @@ func (ec *executionContext) _GitDiffHunk_newLines(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext_GitDiffHunk_newLines(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitDiffHunk", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("GitDiffHunk", field, false, false, "Int")
 }
 
 func (ec *executionContext) _GitDiffHunk_lines(ctx context.Context, field graphql.CollectedField, obj *repository.DiffHunk) (ret graphql.Marshaler) {
@@ -891,7 +890,7 @@ func (ec *executionContext) _GitDiffLine_type(ctx context.Context, field graphql
 	)
 }
 func (ec *executionContext) fieldContext_GitDiffLine_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitDiffLine", field, false, false, errors.New("field of type GitDiffLineType does not have child fields"))
+	return graphql.NewScalarFieldContext("GitDiffLine", field, false, false, "GitDiffLineType")
 }
 
 func (ec *executionContext) _GitDiffLine_content(ctx context.Context, field graphql.CollectedField, obj *repository.DiffLine) (ret graphql.Marshaler) {
@@ -914,7 +913,7 @@ func (ec *executionContext) _GitDiffLine_content(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext_GitDiffLine_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitDiffLine", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitDiffLine", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitDiffLine_oldLine(ctx context.Context, field graphql.CollectedField, obj *repository.DiffLine) (ret graphql.Marshaler) {
@@ -937,7 +936,7 @@ func (ec *executionContext) _GitDiffLine_oldLine(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext_GitDiffLine_oldLine(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitDiffLine", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("GitDiffLine", field, false, false, "Int")
 }
 
 func (ec *executionContext) _GitDiffLine_newLine(ctx context.Context, field graphql.CollectedField, obj *repository.DiffLine) (ret graphql.Marshaler) {
@@ -960,7 +959,7 @@ func (ec *executionContext) _GitDiffLine_newLine(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext_GitDiffLine_newLine(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitDiffLine", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("GitDiffLine", field, false, false, "Int")
 }
 
 func (ec *executionContext) _GitFileDiff_path(ctx context.Context, field graphql.CollectedField, obj *repository.FileDiff) (ret graphql.Marshaler) {
@@ -983,7 +982,7 @@ func (ec *executionContext) _GitFileDiff_path(ctx context.Context, field graphql
 	)
 }
 func (ec *executionContext) fieldContext_GitFileDiff_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitFileDiff", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitFileDiff", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitFileDiff_oldPath(ctx context.Context, field graphql.CollectedField, obj *repository.FileDiff) (ret graphql.Marshaler) {
@@ -1006,7 +1005,7 @@ func (ec *executionContext) _GitFileDiff_oldPath(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext_GitFileDiff_oldPath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitFileDiff", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitFileDiff", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitFileDiff_isBinary(ctx context.Context, field graphql.CollectedField, obj *repository.FileDiff) (ret graphql.Marshaler) {
@@ -1029,7 +1028,7 @@ func (ec *executionContext) _GitFileDiff_isBinary(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext_GitFileDiff_isBinary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitFileDiff", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("GitFileDiff", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _GitFileDiff_isNew(ctx context.Context, field graphql.CollectedField, obj *repository.FileDiff) (ret graphql.Marshaler) {
@@ -1052,7 +1051,7 @@ func (ec *executionContext) _GitFileDiff_isNew(ctx context.Context, field graphq
 	)
 }
 func (ec *executionContext) fieldContext_GitFileDiff_isNew(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitFileDiff", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("GitFileDiff", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _GitFileDiff_isDelete(ctx context.Context, field graphql.CollectedField, obj *repository.FileDiff) (ret graphql.Marshaler) {
@@ -1075,7 +1074,7 @@ func (ec *executionContext) _GitFileDiff_isDelete(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext_GitFileDiff_isDelete(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitFileDiff", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("GitFileDiff", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _GitFileDiff_hunks(ctx context.Context, field graphql.CollectedField, obj *repository.FileDiff) (ret graphql.Marshaler) {
@@ -1130,7 +1129,7 @@ func (ec *executionContext) _GitLastCommit_name(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_GitLastCommit_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitLastCommit", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitLastCommit", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitLastCommit_commit(ctx context.Context, field graphql.CollectedField, obj *models.GitLastCommit) (ret graphql.Marshaler) {
@@ -1185,7 +1184,7 @@ func (ec *executionContext) _GitRef_name(ctx context.Context, field graphql.Coll
 	)
 }
 func (ec *executionContext) fieldContext_GitRef_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitRef", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitRef", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitRef_shortName(ctx context.Context, field graphql.CollectedField, obj *models.GitRef) (ret graphql.Marshaler) {
@@ -1208,7 +1207,7 @@ func (ec *executionContext) _GitRef_shortName(ctx context.Context, field graphql
 	)
 }
 func (ec *executionContext) fieldContext_GitRef_shortName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitRef", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitRef", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitRef_type(ctx context.Context, field graphql.CollectedField, obj *models.GitRef) (ret graphql.Marshaler) {
@@ -1231,7 +1230,7 @@ func (ec *executionContext) _GitRef_type(ctx context.Context, field graphql.Coll
 	)
 }
 func (ec *executionContext) fieldContext_GitRef_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitRef", field, false, false, errors.New("field of type GitRefType does not have child fields"))
+	return graphql.NewScalarFieldContext("GitRef", field, false, false, "GitRefType")
 }
 
 func (ec *executionContext) _GitRef_hash(ctx context.Context, field graphql.CollectedField, obj *models.GitRef) (ret graphql.Marshaler) {
@@ -1254,7 +1253,7 @@ func (ec *executionContext) _GitRef_hash(ctx context.Context, field graphql.Coll
 	)
 }
 func (ec *executionContext) fieldContext_GitRef_hash(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitRef", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitRef", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitRef_commit(ctx context.Context, field graphql.CollectedField, obj *models.GitRef) (ret graphql.Marshaler) {
@@ -1373,7 +1372,7 @@ func (ec *executionContext) _GitRefConnection_totalCount(ctx context.Context, fi
 	)
 }
 func (ec *executionContext) fieldContext_GitRefConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitRefConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("GitRefConnection", field, false, false, "Int")
 }
 
 func (ec *executionContext) _GitTreeEntry_name(ctx context.Context, field graphql.CollectedField, obj *models.GitTreeEntry) (ret graphql.Marshaler) {
@@ -1396,7 +1395,7 @@ func (ec *executionContext) _GitTreeEntry_name(ctx context.Context, field graphq
 	)
 }
 func (ec *executionContext) fieldContext_GitTreeEntry_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitTreeEntry", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitTreeEntry", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitTreeEntry_type(ctx context.Context, field graphql.CollectedField, obj *models.GitTreeEntry) (ret graphql.Marshaler) {
@@ -1419,7 +1418,7 @@ func (ec *executionContext) _GitTreeEntry_type(ctx context.Context, field graphq
 	)
 }
 func (ec *executionContext) fieldContext_GitTreeEntry_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitTreeEntry", field, false, false, errors.New("field of type GitObjectType does not have child fields"))
+	return graphql.NewScalarFieldContext("GitTreeEntry", field, false, false, "GitObjectType")
 }
 
 func (ec *executionContext) _GitTreeEntry_hash(ctx context.Context, field graphql.CollectedField, obj *models.GitTreeEntry) (ret graphql.Marshaler) {
@@ -1442,7 +1441,7 @@ func (ec *executionContext) _GitTreeEntry_hash(ctx context.Context, field graphq
 	)
 }
 func (ec *executionContext) fieldContext_GitTreeEntry_hash(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GitTreeEntry", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("GitTreeEntry", field, false, false, "String")
 }
 
 func (ec *executionContext) _GitTreeEntry_lastCommit(ctx context.Context, field graphql.CollectedField, obj *models.GitTreeEntry) (ret graphql.Marshaler) {
@@ -1495,8 +1494,7 @@ func (ec *executionContext) _GitBlob(ctx context.Context, sel ast.SelectionSet, 
 	fields := graphql.CollectFields(ec.OperationContext, sel, gitBlobImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1540,14 +1538,10 @@ func (ec *executionContext) _GitBlob(ctx context.Context, sel ast.SelectionSet, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1558,8 +1552,7 @@ func (ec *executionContext) _GitChangedFile(ctx context.Context, sel ast.Selecti
 	fields := graphql.CollectFields(ec.OperationContext, sel, gitChangedFileImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1588,14 +1581,10 @@ func (ec *executionContext) _GitChangedFile(ctx context.Context, sel ast.Selecti
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1606,8 +1595,7 @@ func (ec *executionContext) _GitChangedFileConnection(ctx context.Context, sel a
 	fields := graphql.CollectFields(ec.OperationContext, sel, gitChangedFileConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1636,14 +1624,10 @@ func (ec *executionContext) _GitChangedFileConnection(ctx context.Context, sel a
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1654,8 +1638,7 @@ func (ec *executionContext) _GitCommit(ctx context.Context, sel ast.SelectionSet
 	fields := graphql.CollectFields(ec.OperationContext, sel, gitCommitImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1666,86 +1649,22 @@ func (ec *executionContext) _GitCommit(ctx context.Context, sel ast.SelectionSet
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "shortHash":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._GitCommit_shortHash(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._GitCommit_shortHash(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "message":
 			out.Values[i] = ec._GitCommit_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "fullMessage":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._GitCommit_fullMessage(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._GitCommit_fullMessage(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "authorName":
 			out.Values[i] = ec._GitCommit_authorName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1762,119 +1681,23 @@ func (ec *executionContext) _GitCommit(ctx context.Context, sel ast.SelectionSet
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "parents":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._GitCommit_parents(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._GitCommit_parents(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "files":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._GitCommit_files(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._GitCommit_files(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "diff":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._GitCommit_diff(ctx, field, obj)
-				if res == graphql.RequiredNull {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, false,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._GitCommit_diff(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -1884,14 +1707,10 @@ func (ec *executionContext) _GitCommit(ctx context.Context, sel ast.SelectionSet
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1902,8 +1721,7 @@ func (ec *executionContext) _GitCommitConnection(ctx context.Context, sel ast.Se
 	fields := graphql.CollectFields(ec.OperationContext, sel, gitCommitConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1932,14 +1750,10 @@ func (ec *executionContext) _GitCommitConnection(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1950,8 +1764,7 @@ func (ec *executionContext) _GitDiffHunk(ctx context.Context, sel ast.SelectionS
 	fields := graphql.CollectFields(ec.OperationContext, sel, gitDiffHunkImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1990,14 +1803,10 @@ func (ec *executionContext) _GitDiffHunk(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -2008,8 +1817,7 @@ func (ec *executionContext) _GitDiffLine(ctx context.Context, sel ast.SelectionS
 	fields := graphql.CollectFields(ec.OperationContext, sel, gitDiffLineImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -2043,14 +1851,10 @@ func (ec *executionContext) _GitDiffLine(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -2061,8 +1865,7 @@ func (ec *executionContext) _GitFileDiff(ctx context.Context, sel ast.SelectionS
 	fields := graphql.CollectFields(ec.OperationContext, sel, gitFileDiffImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -2106,14 +1909,10 @@ func (ec *executionContext) _GitFileDiff(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -2124,8 +1923,7 @@ func (ec *executionContext) _GitLastCommit(ctx context.Context, sel ast.Selectio
 	fields := graphql.CollectFields(ec.OperationContext, sel, gitLastCommitImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -2149,14 +1947,10 @@ func (ec *executionContext) _GitLastCommit(ctx context.Context, sel ast.Selectio
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -2167,8 +1961,7 @@ func (ec *executionContext) _GitRef(ctx context.Context, sel ast.SelectionSet, o
 	fields := graphql.CollectFields(ec.OperationContext, sel, gitRefImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -2194,43 +1987,11 @@ func (ec *executionContext) _GitRef(ctx context.Context, sel ast.SelectionSet, o
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "commit":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._GitRef_commit(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._GitRef_commit(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2240,14 +2001,10 @@ func (ec *executionContext) _GitRef(ctx context.Context, sel ast.SelectionSet, o
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -2258,8 +2015,7 @@ func (ec *executionContext) _GitRefConnection(ctx context.Context, sel ast.Selec
 	fields := graphql.CollectFields(ec.OperationContext, sel, gitRefConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -2288,14 +2044,10 @@ func (ec *executionContext) _GitRefConnection(ctx context.Context, sel ast.Selec
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -2306,8 +2058,7 @@ func (ec *executionContext) _GitTreeEntry(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, gitTreeEntryImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -2328,43 +2079,11 @@ func (ec *executionContext) _GitTreeEntry(ctx context.Context, sel ast.Selection
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "lastCommit":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._GitTreeEntry_lastCommit(ctx, field, obj)
-				if res == graphql.RequiredNull {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, false,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._GitTreeEntry_lastCommit(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2374,14 +2093,10 @@ func (ec *executionContext) _GitTreeEntry(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -2418,9 +2133,7 @@ func (ec *executionContext) marshalNGitChangedFile2ᚕᚖgithubᚗcomᚋgitᚑbu
 
 func (ec *executionContext) marshalNGitChangedFile2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐChangedFile(ctx context.Context, sel ast.SelectionSet, v *repository.ChangedFile) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "GitChangedFile!")
 		return graphql.Null
 	}
 	return ec._GitChangedFile(ctx, sel, v)
@@ -2428,9 +2141,7 @@ func (ec *executionContext) marshalNGitChangedFile2ᚖgithubᚗcomᚋgitᚑbug�
 
 func (ec *executionContext) marshalNGitChangedFileConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitChangedFileConnection(ctx context.Context, sel ast.SelectionSet, v *models.GitChangedFileConnection) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "GitChangedFileConnection!")
 		return graphql.Null
 	}
 	return ec._GitChangedFileConnection(ctx, sel, v)
@@ -2454,9 +2165,7 @@ func (ec *executionContext) marshalNGitCommit2ᚕᚖgithubᚗcomᚋgitᚑbugᚋg
 
 func (ec *executionContext) marshalNGitCommit2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitCommitMeta(ctx context.Context, sel ast.SelectionSet, v *models.GitCommitMeta) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "GitCommit!")
 		return graphql.Null
 	}
 	return ec._GitCommit(ctx, sel, v)
@@ -2464,9 +2173,7 @@ func (ec *executionContext) marshalNGitCommit2ᚖgithubᚗcomᚋgitᚑbugᚋgit�
 
 func (ec *executionContext) marshalNGitCommitConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitCommitConnection(ctx context.Context, sel ast.SelectionSet, v *models.GitCommitConnection) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "GitCommitConnection!")
 		return graphql.Null
 	}
 	return ec._GitCommitConnection(ctx, sel, v)
@@ -2540,9 +2247,7 @@ func (ec *executionContext) marshalNGitLastCommit2ᚕᚖgithubᚗcomᚋgitᚑbug
 
 func (ec *executionContext) marshalNGitLastCommit2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitLastCommit(ctx context.Context, sel ast.SelectionSet, v *models.GitLastCommit) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "GitLastCommit!")
 		return graphql.Null
 	}
 	return ec._GitLastCommit(ctx, sel, v)
@@ -2576,9 +2281,7 @@ func (ec *executionContext) marshalNGitRef2ᚕᚖgithubᚗcomᚋgitᚑbugᚋgit�
 
 func (ec *executionContext) marshalNGitRef2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRef(ctx context.Context, sel ast.SelectionSet, v *models.GitRef) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "GitRef!")
 		return graphql.Null
 	}
 	return ec._GitRef(ctx, sel, v)
@@ -2586,9 +2289,7 @@ func (ec *executionContext) marshalNGitRef2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑb
 
 func (ec *executionContext) marshalNGitRefConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitRefConnection(ctx context.Context, sel ast.SelectionSet, v *models.GitRefConnection) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "GitRefConnection!")
 		return graphql.Null
 	}
 	return ec._GitRefConnection(ctx, sel, v)
@@ -2604,9 +2305,7 @@ func (ec *executionContext) marshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑ
 	_ = sel
 	res := graphql.MarshalString(marshalNGitRefType2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋrepositoryᚐGitRefType[v])
 	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullFromMarshaler(ctx, "GitRefType!")
 	}
 	return res
 }
@@ -2642,9 +2341,7 @@ func (ec *executionContext) marshalNGitTreeEntry2ᚕᚖgithubᚗcomᚋgitᚑbug�
 
 func (ec *executionContext) marshalNGitTreeEntry2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐGitTreeEntry(ctx context.Context, sel ast.SelectionSet, v *models.GitTreeEntry) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "GitTreeEntry!")
 		return graphql.Null
 	}
 	return ec._GitTreeEntry(ctx, sel, v)

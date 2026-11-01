@@ -80,7 +80,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_id(ctx context.Context, f
 	)
 }
 func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugAddCommentTimelineItem", field, true, false, errors.New("field of type CombinedId does not have child fields"))
+	return graphql.NewScalarFieldContext("BugAddCommentTimelineItem", field, true, false, "CombinedId")
 }
 
 func (ec *executionContext) _BugAddCommentTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
@@ -135,7 +135,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_message(ctx context.Conte
 	)
 }
 func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugAddCommentTimelineItem", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugAddCommentTimelineItem", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugAddCommentTimelineItem_messageIsEmpty(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
@@ -158,7 +158,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_messageIsEmpty(ctx contex
 	)
 }
 func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_messageIsEmpty(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugAddCommentTimelineItem", field, true, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("BugAddCommentTimelineItem", field, true, false, "Boolean")
 }
 
 func (ec *executionContext) _BugAddCommentTimelineItem_files(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
@@ -181,7 +181,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_files(ctx context.Context
 	)
 }
 func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugAddCommentTimelineItem", field, false, false, errors.New("field of type Hash does not have child fields"))
+	return graphql.NewScalarFieldContext("BugAddCommentTimelineItem", field, false, false, "Hash")
 }
 
 func (ec *executionContext) _BugAddCommentTimelineItem_createdAt(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
@@ -204,7 +204,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_createdAt(ctx context.Con
 	)
 }
 func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugAddCommentTimelineItem", field, true, true, errors.New("field of type Time does not have child fields"))
+	return graphql.NewScalarFieldContext("BugAddCommentTimelineItem", field, true, true, "Time")
 }
 
 func (ec *executionContext) _BugAddCommentTimelineItem_lastEdit(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
@@ -227,7 +227,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_lastEdit(ctx context.Cont
 	)
 }
 func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_lastEdit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugAddCommentTimelineItem", field, true, true, errors.New("field of type Time does not have child fields"))
+	return graphql.NewScalarFieldContext("BugAddCommentTimelineItem", field, true, true, "Time")
 }
 
 func (ec *executionContext) _BugAddCommentTimelineItem_edited(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
@@ -250,7 +250,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem_edited(ctx context.Contex
 	)
 }
 func (ec *executionContext) fieldContext_BugAddCommentTimelineItem_edited(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugAddCommentTimelineItem", field, true, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("BugAddCommentTimelineItem", field, true, false, "Boolean")
 }
 
 func (ec *executionContext) _BugAddCommentTimelineItem_history(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentTimelineItem) (ret graphql.Marshaler) {
@@ -337,7 +337,7 @@ func (ec *executionContext) _BugCommentHistoryStep_message(ctx context.Context, 
 	)
 }
 func (ec *executionContext) fieldContext_BugCommentHistoryStep_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCommentHistoryStep", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCommentHistoryStep", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugCommentHistoryStep_date(ctx context.Context, field graphql.CollectedField, obj *bug.CommentHistoryStep) (ret graphql.Marshaler) {
@@ -360,7 +360,7 @@ func (ec *executionContext) _BugCommentHistoryStep_date(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_BugCommentHistoryStep_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCommentHistoryStep", field, true, true, errors.New("field of type Time does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCommentHistoryStep", field, true, true, "Time")
 }
 
 func (ec *executionContext) _BugCreateTimelineItem_id(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
@@ -383,7 +383,7 @@ func (ec *executionContext) _BugCreateTimelineItem_id(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext_BugCreateTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCreateTimelineItem", field, true, false, errors.New("field of type CombinedId does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCreateTimelineItem", field, true, false, "CombinedId")
 }
 
 func (ec *executionContext) _BugCreateTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
@@ -438,7 +438,7 @@ func (ec *executionContext) _BugCreateTimelineItem_message(ctx context.Context, 
 	)
 }
 func (ec *executionContext) fieldContext_BugCreateTimelineItem_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCreateTimelineItem", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCreateTimelineItem", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugCreateTimelineItem_messageIsEmpty(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
@@ -461,7 +461,7 @@ func (ec *executionContext) _BugCreateTimelineItem_messageIsEmpty(ctx context.Co
 	)
 }
 func (ec *executionContext) fieldContext_BugCreateTimelineItem_messageIsEmpty(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCreateTimelineItem", field, true, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCreateTimelineItem", field, true, false, "Boolean")
 }
 
 func (ec *executionContext) _BugCreateTimelineItem_files(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
@@ -484,7 +484,7 @@ func (ec *executionContext) _BugCreateTimelineItem_files(ctx context.Context, fi
 	)
 }
 func (ec *executionContext) fieldContext_BugCreateTimelineItem_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCreateTimelineItem", field, false, false, errors.New("field of type Hash does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCreateTimelineItem", field, false, false, "Hash")
 }
 
 func (ec *executionContext) _BugCreateTimelineItem_createdAt(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
@@ -507,7 +507,7 @@ func (ec *executionContext) _BugCreateTimelineItem_createdAt(ctx context.Context
 	)
 }
 func (ec *executionContext) fieldContext_BugCreateTimelineItem_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCreateTimelineItem", field, true, true, errors.New("field of type Time does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCreateTimelineItem", field, true, true, "Time")
 }
 
 func (ec *executionContext) _BugCreateTimelineItem_lastEdit(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
@@ -530,7 +530,7 @@ func (ec *executionContext) _BugCreateTimelineItem_lastEdit(ctx context.Context,
 	)
 }
 func (ec *executionContext) fieldContext_BugCreateTimelineItem_lastEdit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCreateTimelineItem", field, true, true, errors.New("field of type Time does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCreateTimelineItem", field, true, true, "Time")
 }
 
 func (ec *executionContext) _BugCreateTimelineItem_edited(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
@@ -553,7 +553,7 @@ func (ec *executionContext) _BugCreateTimelineItem_edited(ctx context.Context, f
 	)
 }
 func (ec *executionContext) fieldContext_BugCreateTimelineItem_edited(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCreateTimelineItem", field, true, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCreateTimelineItem", field, true, false, "Boolean")
 }
 
 func (ec *executionContext) _BugCreateTimelineItem_history(ctx context.Context, field graphql.CollectedField, obj *bug.CreateTimelineItem) (ret graphql.Marshaler) {
@@ -608,7 +608,7 @@ func (ec *executionContext) _BugLabelChangeTimelineItem_id(ctx context.Context, 
 	)
 }
 func (ec *executionContext) fieldContext_BugLabelChangeTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugLabelChangeTimelineItem", field, true, false, errors.New("field of type CombinedId does not have child fields"))
+	return graphql.NewScalarFieldContext("BugLabelChangeTimelineItem", field, true, false, "CombinedId")
 }
 
 func (ec *executionContext) _BugLabelChangeTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeTimelineItem) (ret graphql.Marshaler) {
@@ -663,7 +663,7 @@ func (ec *executionContext) _BugLabelChangeTimelineItem_date(ctx context.Context
 	)
 }
 func (ec *executionContext) fieldContext_BugLabelChangeTimelineItem_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugLabelChangeTimelineItem", field, true, true, errors.New("field of type Time does not have child fields"))
+	return graphql.NewScalarFieldContext("BugLabelChangeTimelineItem", field, true, true, "Time")
 }
 
 func (ec *executionContext) _BugLabelChangeTimelineItem_added(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeTimelineItem) (ret graphql.Marshaler) {
@@ -750,7 +750,7 @@ func (ec *executionContext) _BugSetStatusTimelineItem_id(ctx context.Context, fi
 	)
 }
 func (ec *executionContext) fieldContext_BugSetStatusTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugSetStatusTimelineItem", field, true, false, errors.New("field of type CombinedId does not have child fields"))
+	return graphql.NewScalarFieldContext("BugSetStatusTimelineItem", field, true, false, "CombinedId")
 }
 
 func (ec *executionContext) _BugSetStatusTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusTimelineItem) (ret graphql.Marshaler) {
@@ -805,7 +805,7 @@ func (ec *executionContext) _BugSetStatusTimelineItem_date(ctx context.Context, 
 	)
 }
 func (ec *executionContext) fieldContext_BugSetStatusTimelineItem_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugSetStatusTimelineItem", field, true, true, errors.New("field of type Time does not have child fields"))
+	return graphql.NewScalarFieldContext("BugSetStatusTimelineItem", field, true, true, "Time")
 }
 
 func (ec *executionContext) _BugSetStatusTimelineItem_status(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusTimelineItem) (ret graphql.Marshaler) {
@@ -828,7 +828,7 @@ func (ec *executionContext) _BugSetStatusTimelineItem_status(ctx context.Context
 	)
 }
 func (ec *executionContext) fieldContext_BugSetStatusTimelineItem_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugSetStatusTimelineItem", field, false, false, errors.New("field of type Status does not have child fields"))
+	return graphql.NewScalarFieldContext("BugSetStatusTimelineItem", field, false, false, "Status")
 }
 
 func (ec *executionContext) _BugSetTitleTimelineItem_id(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleTimelineItem) (ret graphql.Marshaler) {
@@ -851,7 +851,7 @@ func (ec *executionContext) _BugSetTitleTimelineItem_id(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_BugSetTitleTimelineItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugSetTitleTimelineItem", field, true, false, errors.New("field of type CombinedId does not have child fields"))
+	return graphql.NewScalarFieldContext("BugSetTitleTimelineItem", field, true, false, "CombinedId")
 }
 
 func (ec *executionContext) _BugSetTitleTimelineItem_author(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleTimelineItem) (ret graphql.Marshaler) {
@@ -906,7 +906,7 @@ func (ec *executionContext) _BugSetTitleTimelineItem_date(ctx context.Context, f
 	)
 }
 func (ec *executionContext) fieldContext_BugSetTitleTimelineItem_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugSetTitleTimelineItem", field, true, true, errors.New("field of type Time does not have child fields"))
+	return graphql.NewScalarFieldContext("BugSetTitleTimelineItem", field, true, true, "Time")
 }
 
 func (ec *executionContext) _BugSetTitleTimelineItem_title(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleTimelineItem) (ret graphql.Marshaler) {
@@ -929,7 +929,7 @@ func (ec *executionContext) _BugSetTitleTimelineItem_title(ctx context.Context, 
 	)
 }
 func (ec *executionContext) fieldContext_BugSetTitleTimelineItem_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugSetTitleTimelineItem", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugSetTitleTimelineItem", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugSetTitleTimelineItem_was(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleTimelineItem) (ret graphql.Marshaler) {
@@ -952,7 +952,7 @@ func (ec *executionContext) _BugSetTitleTimelineItem_was(ctx context.Context, fi
 	)
 }
 func (ec *executionContext) fieldContext_BugSetTitleTimelineItem_was(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugSetTitleTimelineItem", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugSetTitleTimelineItem", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugTimelineItemConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.BugTimelineItemConnection) (ret graphql.Marshaler) {
@@ -1071,7 +1071,7 @@ func (ec *executionContext) _BugTimelineItemConnection_totalCount(ctx context.Co
 	)
 }
 func (ec *executionContext) fieldContext_BugTimelineItemConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugTimelineItemConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("BugTimelineItemConnection", field, false, false, "Int")
 }
 
 func (ec *executionContext) _BugTimelineItemEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.BugTimelineItemEdge) (ret graphql.Marshaler) {
@@ -1094,7 +1094,7 @@ func (ec *executionContext) _BugTimelineItemEdge_cursor(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_BugTimelineItemEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugTimelineItemEdge", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugTimelineItemEdge", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugTimelineItemEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.BugTimelineItemEdge) (ret graphql.Marshaler) {
@@ -1191,8 +1191,7 @@ func (ec *executionContext) _BugAddCommentTimelineItem(ctx context.Context, sel 
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugAddCommentTimelineItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1203,43 +1202,11 @@ func (ec *executionContext) _BugAddCommentTimelineItem(ctx context.Context, sel 
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "author":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugAddCommentTimelineItem_author(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugAddCommentTimelineItem_author(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "message":
 			out.Values[i] = ec._BugAddCommentTimelineItem_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1256,81 +1223,17 @@ func (ec *executionContext) _BugAddCommentTimelineItem(ctx context.Context, sel 
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugAddCommentTimelineItem_createdAt(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugAddCommentTimelineItem_createdAt(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "lastEdit":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugAddCommentTimelineItem_lastEdit(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugAddCommentTimelineItem_lastEdit(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "edited":
 			out.Values[i] = ec._BugAddCommentTimelineItem_edited(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1350,14 +1253,10 @@ func (ec *executionContext) _BugAddCommentTimelineItem(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1368,93 +1267,28 @@ func (ec *executionContext) _BugCommentHistoryStep(ctx context.Context, sel ast.
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugCommentHistoryStepImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("BugCommentHistoryStep")
 		case "author":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugCommentHistoryStep_author(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugCommentHistoryStep_author(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "message":
 			out.Values[i] = ec._BugCommentHistoryStep_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "date":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugCommentHistoryStep_date(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugCommentHistoryStep_date(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -1464,14 +1298,10 @@ func (ec *executionContext) _BugCommentHistoryStep(ctx context.Context, sel ast.
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1482,8 +1312,7 @@ func (ec *executionContext) _BugCreateTimelineItem(ctx context.Context, sel ast.
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugCreateTimelineItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1494,43 +1323,11 @@ func (ec *executionContext) _BugCreateTimelineItem(ctx context.Context, sel ast.
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "author":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugCreateTimelineItem_author(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugCreateTimelineItem_author(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "message":
 			out.Values[i] = ec._BugCreateTimelineItem_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1547,81 +1344,17 @@ func (ec *executionContext) _BugCreateTimelineItem(ctx context.Context, sel ast.
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugCreateTimelineItem_createdAt(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugCreateTimelineItem_createdAt(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "lastEdit":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugCreateTimelineItem_lastEdit(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugCreateTimelineItem_lastEdit(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "edited":
 			out.Values[i] = ec._BugCreateTimelineItem_edited(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1641,14 +1374,10 @@ func (ec *executionContext) _BugCreateTimelineItem(ctx context.Context, sel ast.
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1659,8 +1388,7 @@ func (ec *executionContext) _BugLabelChangeTimelineItem(ctx context.Context, sel
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugLabelChangeTimelineItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1671,81 +1399,17 @@ func (ec *executionContext) _BugLabelChangeTimelineItem(ctx context.Context, sel
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "author":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugLabelChangeTimelineItem_author(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugLabelChangeTimelineItem_author(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "date":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugLabelChangeTimelineItem_date(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugLabelChangeTimelineItem_date(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "added":
 			out.Values[i] = ec._BugLabelChangeTimelineItem_added(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1765,14 +1429,10 @@ func (ec *executionContext) _BugLabelChangeTimelineItem(ctx context.Context, sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1783,8 +1443,7 @@ func (ec *executionContext) _BugSetStatusTimelineItem(ctx context.Context, sel a
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugSetStatusTimelineItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1795,81 +1454,17 @@ func (ec *executionContext) _BugSetStatusTimelineItem(ctx context.Context, sel a
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "author":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugSetStatusTimelineItem_author(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugSetStatusTimelineItem_author(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "date":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugSetStatusTimelineItem_date(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugSetStatusTimelineItem_date(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "status":
 			out.Values[i] = ec._BugSetStatusTimelineItem_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1884,14 +1479,10 @@ func (ec *executionContext) _BugSetStatusTimelineItem(ctx context.Context, sel a
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1902,8 +1493,7 @@ func (ec *executionContext) _BugSetTitleTimelineItem(ctx context.Context, sel as
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugSetTitleTimelineItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1914,81 +1504,17 @@ func (ec *executionContext) _BugSetTitleTimelineItem(ctx context.Context, sel as
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "author":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugSetTitleTimelineItem_author(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugSetTitleTimelineItem_author(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "date":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugSetTitleTimelineItem_date(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugSetTitleTimelineItem_date(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "title":
 			out.Values[i] = ec._BugSetTitleTimelineItem_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -2008,14 +1534,10 @@ func (ec *executionContext) _BugSetTitleTimelineItem(ctx context.Context, sel as
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -2026,8 +1548,7 @@ func (ec *executionContext) _BugTimelineItemConnection(ctx context.Context, sel 
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugTimelineItemConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -2061,14 +1582,10 @@ func (ec *executionContext) _BugTimelineItemConnection(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -2079,8 +1596,7 @@ func (ec *executionContext) _BugTimelineItemEdge(ctx context.Context, sel ast.Se
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugTimelineItemEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -2104,14 +1620,10 @@ func (ec *executionContext) _BugTimelineItemEdge(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -2142,9 +1654,7 @@ func (ec *executionContext) marshalNBugCommentHistoryStep2ᚕgithubᚗcomᚋgit�
 
 func (ec *executionContext) marshalNBugTimelineItem2githubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐTimelineItem(ctx context.Context, sel ast.SelectionSet, v bug.TimelineItem) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugTimelineItem!")
 		return graphql.Null
 	}
 	return ec._BugTimelineItem(ctx, sel, v)
@@ -2168,9 +1678,7 @@ func (ec *executionContext) marshalNBugTimelineItem2ᚕgithubᚗcomᚋgitᚑbug�
 
 func (ec *executionContext) marshalNBugTimelineItemConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugTimelineItemConnection(ctx context.Context, sel ast.SelectionSet, v *models.BugTimelineItemConnection) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugTimelineItemConnection!")
 		return graphql.Null
 	}
 	return ec._BugTimelineItemConnection(ctx, sel, v)
@@ -2194,9 +1702,7 @@ func (ec *executionContext) marshalNBugTimelineItemEdge2ᚕᚖgithubᚗcomᚋgit
 
 func (ec *executionContext) marshalNBugTimelineItemEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugTimelineItemEdge(ctx context.Context, sel ast.SelectionSet, v *models.BugTimelineItemEdge) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugTimelineItemEdge!")
 		return graphql.Null
 	}
 	return ec._BugTimelineItemEdge(ctx, sel, v)

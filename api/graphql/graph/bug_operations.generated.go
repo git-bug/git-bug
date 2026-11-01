@@ -4,7 +4,6 @@ package graph
 
 import (
 	"context"
-	"errors"
 	"math"
 	"strconv"
 	"sync/atomic"
@@ -68,7 +67,7 @@ func (ec *executionContext) _BugAddCommentOperation_id(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext_BugAddCommentOperation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugAddCommentOperation", field, true, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("BugAddCommentOperation", field, true, false, "ID")
 }
 
 func (ec *executionContext) _BugAddCommentOperation_author(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentOperation) (ret graphql.Marshaler) {
@@ -123,7 +122,7 @@ func (ec *executionContext) _BugAddCommentOperation_date(ctx context.Context, fi
 	)
 }
 func (ec *executionContext) fieldContext_BugAddCommentOperation_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugAddCommentOperation", field, true, false, errors.New("field of type Time does not have child fields"))
+	return graphql.NewScalarFieldContext("BugAddCommentOperation", field, true, false, "Time")
 }
 
 func (ec *executionContext) _BugAddCommentOperation_message(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentOperation) (ret graphql.Marshaler) {
@@ -146,7 +145,7 @@ func (ec *executionContext) _BugAddCommentOperation_message(ctx context.Context,
 	)
 }
 func (ec *executionContext) fieldContext_BugAddCommentOperation_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugAddCommentOperation", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugAddCommentOperation", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugAddCommentOperation_files(ctx context.Context, field graphql.CollectedField, obj *bug.AddCommentOperation) (ret graphql.Marshaler) {
@@ -169,7 +168,7 @@ func (ec *executionContext) _BugAddCommentOperation_files(ctx context.Context, f
 	)
 }
 func (ec *executionContext) fieldContext_BugAddCommentOperation_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugAddCommentOperation", field, false, false, errors.New("field of type Hash does not have child fields"))
+	return graphql.NewScalarFieldContext("BugAddCommentOperation", field, false, false, "Hash")
 }
 
 func (ec *executionContext) _BugCreateOperation_id(ctx context.Context, field graphql.CollectedField, obj *bug.CreateOperation) (ret graphql.Marshaler) {
@@ -192,7 +191,7 @@ func (ec *executionContext) _BugCreateOperation_id(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_BugCreateOperation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCreateOperation", field, true, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCreateOperation", field, true, false, "ID")
 }
 
 func (ec *executionContext) _BugCreateOperation_author(ctx context.Context, field graphql.CollectedField, obj *bug.CreateOperation) (ret graphql.Marshaler) {
@@ -247,7 +246,7 @@ func (ec *executionContext) _BugCreateOperation_date(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext_BugCreateOperation_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCreateOperation", field, true, false, errors.New("field of type Time does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCreateOperation", field, true, false, "Time")
 }
 
 func (ec *executionContext) _BugCreateOperation_title(ctx context.Context, field graphql.CollectedField, obj *bug.CreateOperation) (ret graphql.Marshaler) {
@@ -270,7 +269,7 @@ func (ec *executionContext) _BugCreateOperation_title(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext_BugCreateOperation_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCreateOperation", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCreateOperation", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugCreateOperation_message(ctx context.Context, field graphql.CollectedField, obj *bug.CreateOperation) (ret graphql.Marshaler) {
@@ -293,7 +292,7 @@ func (ec *executionContext) _BugCreateOperation_message(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_BugCreateOperation_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCreateOperation", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCreateOperation", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugCreateOperation_files(ctx context.Context, field graphql.CollectedField, obj *bug.CreateOperation) (ret graphql.Marshaler) {
@@ -316,7 +315,7 @@ func (ec *executionContext) _BugCreateOperation_files(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext_BugCreateOperation_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCreateOperation", field, false, false, errors.New("field of type Hash does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCreateOperation", field, false, false, "Hash")
 }
 
 func (ec *executionContext) _BugEditCommentOperation_id(ctx context.Context, field graphql.CollectedField, obj *bug.EditCommentOperation) (ret graphql.Marshaler) {
@@ -339,7 +338,7 @@ func (ec *executionContext) _BugEditCommentOperation_id(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_BugEditCommentOperation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugEditCommentOperation", field, true, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("BugEditCommentOperation", field, true, false, "ID")
 }
 
 func (ec *executionContext) _BugEditCommentOperation_author(ctx context.Context, field graphql.CollectedField, obj *bug.EditCommentOperation) (ret graphql.Marshaler) {
@@ -394,7 +393,7 @@ func (ec *executionContext) _BugEditCommentOperation_date(ctx context.Context, f
 	)
 }
 func (ec *executionContext) fieldContext_BugEditCommentOperation_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugEditCommentOperation", field, true, false, errors.New("field of type Time does not have child fields"))
+	return graphql.NewScalarFieldContext("BugEditCommentOperation", field, true, false, "Time")
 }
 
 func (ec *executionContext) _BugEditCommentOperation_target(ctx context.Context, field graphql.CollectedField, obj *bug.EditCommentOperation) (ret graphql.Marshaler) {
@@ -417,7 +416,7 @@ func (ec *executionContext) _BugEditCommentOperation_target(ctx context.Context,
 	)
 }
 func (ec *executionContext) fieldContext_BugEditCommentOperation_target(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugEditCommentOperation", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugEditCommentOperation", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugEditCommentOperation_message(ctx context.Context, field graphql.CollectedField, obj *bug.EditCommentOperation) (ret graphql.Marshaler) {
@@ -440,7 +439,7 @@ func (ec *executionContext) _BugEditCommentOperation_message(ctx context.Context
 	)
 }
 func (ec *executionContext) fieldContext_BugEditCommentOperation_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugEditCommentOperation", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugEditCommentOperation", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugEditCommentOperation_files(ctx context.Context, field graphql.CollectedField, obj *bug.EditCommentOperation) (ret graphql.Marshaler) {
@@ -463,7 +462,7 @@ func (ec *executionContext) _BugEditCommentOperation_files(ctx context.Context, 
 	)
 }
 func (ec *executionContext) fieldContext_BugEditCommentOperation_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugEditCommentOperation", field, false, false, errors.New("field of type Hash does not have child fields"))
+	return graphql.NewScalarFieldContext("BugEditCommentOperation", field, false, false, "Hash")
 }
 
 func (ec *executionContext) _BugLabelChangeOperation_id(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeOperation) (ret graphql.Marshaler) {
@@ -486,7 +485,7 @@ func (ec *executionContext) _BugLabelChangeOperation_id(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_BugLabelChangeOperation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugLabelChangeOperation", field, true, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("BugLabelChangeOperation", field, true, false, "ID")
 }
 
 func (ec *executionContext) _BugLabelChangeOperation_author(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeOperation) (ret graphql.Marshaler) {
@@ -541,7 +540,7 @@ func (ec *executionContext) _BugLabelChangeOperation_date(ctx context.Context, f
 	)
 }
 func (ec *executionContext) fieldContext_BugLabelChangeOperation_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugLabelChangeOperation", field, true, false, errors.New("field of type Time does not have child fields"))
+	return graphql.NewScalarFieldContext("BugLabelChangeOperation", field, true, false, "Time")
 }
 
 func (ec *executionContext) _BugLabelChangeOperation_added(ctx context.Context, field graphql.CollectedField, obj *bug.LabelChangeOperation) (ret graphql.Marshaler) {
@@ -628,7 +627,7 @@ func (ec *executionContext) _BugSetStatusOperation_id(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext_BugSetStatusOperation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugSetStatusOperation", field, true, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("BugSetStatusOperation", field, true, false, "ID")
 }
 
 func (ec *executionContext) _BugSetStatusOperation_author(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusOperation) (ret graphql.Marshaler) {
@@ -683,7 +682,7 @@ func (ec *executionContext) _BugSetStatusOperation_date(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_BugSetStatusOperation_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugSetStatusOperation", field, true, false, errors.New("field of type Time does not have child fields"))
+	return graphql.NewScalarFieldContext("BugSetStatusOperation", field, true, false, "Time")
 }
 
 func (ec *executionContext) _BugSetStatusOperation_status(ctx context.Context, field graphql.CollectedField, obj *bug.SetStatusOperation) (ret graphql.Marshaler) {
@@ -706,7 +705,7 @@ func (ec *executionContext) _BugSetStatusOperation_status(ctx context.Context, f
 	)
 }
 func (ec *executionContext) fieldContext_BugSetStatusOperation_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugSetStatusOperation", field, false, false, errors.New("field of type Status does not have child fields"))
+	return graphql.NewScalarFieldContext("BugSetStatusOperation", field, false, false, "Status")
 }
 
 func (ec *executionContext) _BugSetTitleOperation_id(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleOperation) (ret graphql.Marshaler) {
@@ -729,7 +728,7 @@ func (ec *executionContext) _BugSetTitleOperation_id(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext_BugSetTitleOperation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugSetTitleOperation", field, true, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("BugSetTitleOperation", field, true, false, "ID")
 }
 
 func (ec *executionContext) _BugSetTitleOperation_author(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleOperation) (ret graphql.Marshaler) {
@@ -784,7 +783,7 @@ func (ec *executionContext) _BugSetTitleOperation_date(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext_BugSetTitleOperation_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugSetTitleOperation", field, true, false, errors.New("field of type Time does not have child fields"))
+	return graphql.NewScalarFieldContext("BugSetTitleOperation", field, true, false, "Time")
 }
 
 func (ec *executionContext) _BugSetTitleOperation_title(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleOperation) (ret graphql.Marshaler) {
@@ -807,7 +806,7 @@ func (ec *executionContext) _BugSetTitleOperation_title(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_BugSetTitleOperation_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugSetTitleOperation", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugSetTitleOperation", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugSetTitleOperation_was(ctx context.Context, field graphql.CollectedField, obj *bug.SetTitleOperation) (ret graphql.Marshaler) {
@@ -830,7 +829,7 @@ func (ec *executionContext) _BugSetTitleOperation_was(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext_BugSetTitleOperation_was(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugSetTitleOperation", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugSetTitleOperation", field, false, false, "String")
 }
 
 // endregion **************************** field.gotpl *****************************
@@ -851,8 +850,7 @@ func (ec *executionContext) _BugAddCommentOperation(ctx context.Context, sel ast
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugAddCommentOperationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -863,43 +861,11 @@ func (ec *executionContext) _BugAddCommentOperation(ctx context.Context, sel ast
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "author":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugAddCommentOperation_author(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugAddCommentOperation_author(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "date":
 			out.Values[i] = ec._BugAddCommentOperation_date(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -924,14 +890,10 @@ func (ec *executionContext) _BugAddCommentOperation(ctx context.Context, sel ast
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -942,8 +904,7 @@ func (ec *executionContext) _BugCreateOperation(ctx context.Context, sel ast.Sel
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugCreateOperationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -954,43 +915,11 @@ func (ec *executionContext) _BugCreateOperation(ctx context.Context, sel ast.Sel
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "author":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugCreateOperation_author(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugCreateOperation_author(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "date":
 			out.Values[i] = ec._BugCreateOperation_date(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1020,14 +949,10 @@ func (ec *executionContext) _BugCreateOperation(ctx context.Context, sel ast.Sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1038,8 +963,7 @@ func (ec *executionContext) _BugEditCommentOperation(ctx context.Context, sel as
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugEditCommentOperationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1050,43 +974,11 @@ func (ec *executionContext) _BugEditCommentOperation(ctx context.Context, sel as
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "author":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugEditCommentOperation_author(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugEditCommentOperation_author(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "date":
 			out.Values[i] = ec._BugEditCommentOperation_date(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1116,14 +1008,10 @@ func (ec *executionContext) _BugEditCommentOperation(ctx context.Context, sel as
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1134,8 +1022,7 @@ func (ec *executionContext) _BugLabelChangeOperation(ctx context.Context, sel as
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugLabelChangeOperationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1146,43 +1033,11 @@ func (ec *executionContext) _BugLabelChangeOperation(ctx context.Context, sel as
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "author":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugLabelChangeOperation_author(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugLabelChangeOperation_author(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "date":
 			out.Values[i] = ec._BugLabelChangeOperation_date(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1207,14 +1062,10 @@ func (ec *executionContext) _BugLabelChangeOperation(ctx context.Context, sel as
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1225,8 +1076,7 @@ func (ec *executionContext) _BugSetStatusOperation(ctx context.Context, sel ast.
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugSetStatusOperationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1237,43 +1087,11 @@ func (ec *executionContext) _BugSetStatusOperation(ctx context.Context, sel ast.
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "author":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugSetStatusOperation_author(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugSetStatusOperation_author(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "date":
 			out.Values[i] = ec._BugSetStatusOperation_date(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1293,14 +1111,10 @@ func (ec *executionContext) _BugSetStatusOperation(ctx context.Context, sel ast.
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1311,8 +1125,7 @@ func (ec *executionContext) _BugSetTitleOperation(ctx context.Context, sel ast.S
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugSetTitleOperationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1323,43 +1136,11 @@ func (ec *executionContext) _BugSetTitleOperation(ctx context.Context, sel ast.S
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "author":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugSetTitleOperation_author(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugSetTitleOperation_author(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "date":
 			out.Values[i] = ec._BugSetTitleOperation_date(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1384,14 +1165,10 @@ func (ec *executionContext) _BugSetTitleOperation(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1402,9 +1179,7 @@ func (ec *executionContext) _BugSetTitleOperation(ctx context.Context, sel ast.S
 
 func (ec *executionContext) marshalNBugAddCommentOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐAddCommentOperation(ctx context.Context, sel ast.SelectionSet, v *bug.AddCommentOperation) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugAddCommentOperation!")
 		return graphql.Null
 	}
 	return ec._BugAddCommentOperation(ctx, sel, v)
@@ -1412,9 +1187,7 @@ func (ec *executionContext) marshalNBugAddCommentOperation2ᚖgithubᚗcomᚋgit
 
 func (ec *executionContext) marshalNBugCreateOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐCreateOperation(ctx context.Context, sel ast.SelectionSet, v *bug.CreateOperation) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugCreateOperation!")
 		return graphql.Null
 	}
 	return ec._BugCreateOperation(ctx, sel, v)
@@ -1422,9 +1195,7 @@ func (ec *executionContext) marshalNBugCreateOperation2ᚖgithubᚗcomᚋgitᚑb
 
 func (ec *executionContext) marshalNBugEditCommentOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐEditCommentOperation(ctx context.Context, sel ast.SelectionSet, v *bug.EditCommentOperation) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugEditCommentOperation!")
 		return graphql.Null
 	}
 	return ec._BugEditCommentOperation(ctx, sel, v)
@@ -1432,9 +1203,7 @@ func (ec *executionContext) marshalNBugEditCommentOperation2ᚖgithubᚗcomᚋgi
 
 func (ec *executionContext) marshalNBugLabelChangeOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐLabelChangeOperation(ctx context.Context, sel ast.SelectionSet, v *bug.LabelChangeOperation) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugLabelChangeOperation!")
 		return graphql.Null
 	}
 	return ec._BugLabelChangeOperation(ctx, sel, v)
@@ -1442,9 +1211,7 @@ func (ec *executionContext) marshalNBugLabelChangeOperation2ᚖgithubᚗcomᚋgi
 
 func (ec *executionContext) marshalNBugSetStatusOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐSetStatusOperation(ctx context.Context, sel ast.SelectionSet, v *bug.SetStatusOperation) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugSetStatusOperation!")
 		return graphql.Null
 	}
 	return ec._BugSetStatusOperation(ctx, sel, v)
@@ -1452,9 +1219,7 @@ func (ec *executionContext) marshalNBugSetStatusOperation2ᚖgithubᚗcomᚋgit�
 
 func (ec *executionContext) marshalNBugSetTitleOperation2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐSetTitleOperation(ctx context.Context, sel ast.SelectionSet, v *bug.SetTitleOperation) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugSetTitleOperation!")
 		return graphql.Null
 	}
 	return ec._BugSetTitleOperation(ctx, sel, v)

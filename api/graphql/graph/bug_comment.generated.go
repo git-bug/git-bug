@@ -4,7 +4,6 @@ package graph
 
 import (
 	"context"
-	"errors"
 	"math"
 	"strconv"
 	"sync/atomic"
@@ -51,7 +50,7 @@ func (ec *executionContext) _BugComment_id(ctx context.Context, field graphql.Co
 	)
 }
 func (ec *executionContext) fieldContext_BugComment_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugComment", field, true, false, errors.New("field of type CombinedId does not have child fields"))
+	return graphql.NewScalarFieldContext("BugComment", field, true, false, "CombinedId")
 }
 
 func (ec *executionContext) _BugComment_author(ctx context.Context, field graphql.CollectedField, obj *bug.Comment) (ret graphql.Marshaler) {
@@ -106,7 +105,7 @@ func (ec *executionContext) _BugComment_message(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_BugComment_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugComment", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugComment", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugComment_files(ctx context.Context, field graphql.CollectedField, obj *bug.Comment) (ret graphql.Marshaler) {
@@ -129,7 +128,7 @@ func (ec *executionContext) _BugComment_files(ctx context.Context, field graphql
 	)
 }
 func (ec *executionContext) fieldContext_BugComment_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugComment", field, false, false, errors.New("field of type Hash does not have child fields"))
+	return graphql.NewScalarFieldContext("BugComment", field, false, false, "Hash")
 }
 
 func (ec *executionContext) _BugCommentConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.BugCommentConnection) (ret graphql.Marshaler) {
@@ -248,7 +247,7 @@ func (ec *executionContext) _BugCommentConnection_totalCount(ctx context.Context
 	)
 }
 func (ec *executionContext) fieldContext_BugCommentConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCommentConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCommentConnection", field, false, false, "Int")
 }
 
 func (ec *executionContext) _BugCommentEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.BugCommentEdge) (ret graphql.Marshaler) {
@@ -271,7 +270,7 @@ func (ec *executionContext) _BugCommentEdge_cursor(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_BugCommentEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCommentEdge", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCommentEdge", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugCommentEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.BugCommentEdge) (ret graphql.Marshaler) {
@@ -324,8 +323,7 @@ func (ec *executionContext) _BugComment(ctx context.Context, sel ast.SelectionSe
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugCommentImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -336,43 +334,11 @@ func (ec *executionContext) _BugComment(ctx context.Context, sel ast.SelectionSe
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "author":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BugComment_author(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
+			out.ResolveConcurrently(ec.OperationContext, &deferred, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._BugComment_author(ctx, field, obj)
 				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "message":
 			out.Values[i] = ec._BugComment_message(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -392,14 +358,10 @@ func (ec *executionContext) _BugComment(ctx context.Context, sel ast.SelectionSe
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -410,8 +372,7 @@ func (ec *executionContext) _BugCommentConnection(ctx context.Context, sel ast.S
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugCommentConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -445,14 +406,10 @@ func (ec *executionContext) _BugCommentConnection(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -463,8 +420,7 @@ func (ec *executionContext) _BugCommentEdge(ctx context.Context, sel ast.Selecti
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugCommentEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -488,14 +444,10 @@ func (ec *executionContext) _BugCommentEdge(ctx context.Context, sel ast.Selecti
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -522,9 +474,7 @@ func (ec *executionContext) marshalNBugComment2ᚕᚖgithubᚗcomᚋgitᚑbugᚋ
 
 func (ec *executionContext) marshalNBugComment2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋentitiesᚋbugᚐComment(ctx context.Context, sel ast.SelectionSet, v *bug.Comment) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugComment!")
 		return graphql.Null
 	}
 	return ec._BugComment(ctx, sel, v)
@@ -532,9 +482,7 @@ func (ec *executionContext) marshalNBugComment2ᚖgithubᚗcomᚋgitᚑbugᚋgit
 
 func (ec *executionContext) marshalNBugCommentConnection2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugCommentConnection(ctx context.Context, sel ast.SelectionSet, v *models.BugCommentConnection) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugCommentConnection!")
 		return graphql.Null
 	}
 	return ec._BugCommentConnection(ctx, sel, v)
@@ -558,9 +506,7 @@ func (ec *executionContext) marshalNBugCommentEdge2ᚕᚖgithubᚗcomᚋgitᚑbu
 
 func (ec *executionContext) marshalNBugCommentEdge2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugCommentEdge(ctx context.Context, sel ast.SelectionSet, v *models.BugCommentEdge) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugCommentEdge!")
 		return graphql.Null
 	}
 	return ec._BugCommentEdge(ctx, sel, v)
