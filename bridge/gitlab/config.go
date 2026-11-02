@@ -20,6 +20,7 @@ import (
 
 var (
 	ErrBadProjectURL = errors.New("bad project url")
+	BadTokenStr      = "token has incorrect format"
 )
 
 func (g *Gitlab) ValidParams() map[string]interface{} {
@@ -194,6 +195,11 @@ func promptTokenOptions(ctx context.Context, repo repository.RepoKeyring, login,
 	}
 }
 
+func validateToken(token string) (doesMatch bool) {
+	re := regexp.MustCompile(`^(glpat-)?[a-zA-Z0-9\-\_\.]{20,300}$`)
+	return re.MatchString(token)
+}
+
 func promptToken(ctx context.Context, baseUrl string) (*auth.Token, error) {
 	fmt.Printf("You can generate a new token by visiting %s.\n", strings.TrimSuffix(baseUrl, "/")+"/-/user_settings/personal_access_tokens")
 	fmt.Println("Choose 'Create personal access token' and set the necessary access scope for your repository.")
@@ -201,13 +207,11 @@ func promptToken(ctx context.Context, baseUrl string) (*auth.Token, error) {
 	fmt.Println("'api' access scope: to be able to make api calls")
 	fmt.Println()
 
-	re := regexp.MustCompile(`^(glpat-)?[a-zA-Z0-9\-\_]{20}$`)
-
 	var login string
 
 	validator := func(name string, value string) (complaint string, err error) {
-		if !re.MatchString(value) {
-			return "token has incorrect format", nil
+		if !validateToken(value) {
+			return BadTokenStr, nil
 		}
 		login, err = getLoginFromToken(ctx, baseUrl, auth.NewToken(target, value))
 		if ctx.Err() != nil {
