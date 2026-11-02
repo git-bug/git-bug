@@ -183,6 +183,7 @@ Every story automatically becomes a smoke test and an a11y test. For snapshot te
 ```tsx
 import { composeStories } from "@storybook/react-vite";
 import { expect, test } from "vitest";
+
 import * as stories from "./my-component.stories";
 
 const composed = composeStories(stories);
