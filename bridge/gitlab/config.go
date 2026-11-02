@@ -86,7 +86,12 @@ func (g *Gitlab) Configure(ctx context.Context, repo *cache.RepoCache, params co
 		}
 		login = l
 	case params.TokenRaw != "":
+		if !validateToken(params.TokenRaw) {
+			return nil, errors.New(BadTokenStr)
+		}
+
 		token := auth.NewToken(target, params.TokenRaw)
+
 		login, err = getLoginFromToken(ctx, baseUrl, token)
 		if err != nil {
 			return nil, err
