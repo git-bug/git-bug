@@ -1,2 +1,3 @@
 overrides:
   js-yaml@4: ^4.3.2
+  postcss-selector-parser@6: ^6.1.5
