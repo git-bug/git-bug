@@ -39,10 +39,9 @@ func (ji *jiraImporter) Init(ctx context.Context, repo *cache.RepoCache, conf co
 
 	var cred auth.Credential
 
-	// Prioritize LoginPassword credentials to avoid a prompt
-	creds, err := auth.List(repo,
+	// Respect the configured credential form, including password prompts.
+	creds, err := configuredCredentials(repo, conf,
 		auth.WithTarget(target),
-		auth.WithKind(auth.KindLoginPassword),
 		auth.WithMeta(auth.MetaKeyBaseURL, conf[confKeyBaseUrl]),
 		auth.WithMeta(auth.MetaKeyLogin, conf[confKeyDefaultLogin]),
 	)

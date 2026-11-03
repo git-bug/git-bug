@@ -10,6 +10,8 @@ import (
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/commands/input"
+	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/repository"
 )
 
 const (
@@ -28,6 +30,7 @@ const (
 	confKeyProject        = "project"
 	confKeyDefaultLogin   = "default-login"
 	confKeyCredentialType = "credentials-type" // "SESSION" or "TOKEN"
+	confKeyCredentialID   = "credential-id"
 	confKeyIDMap          = "bug-id-map"
 	confKeyIDRevMap       = "bug-id-revmap"
 	// the issue type when exporting a new bug. Default is Story (10001)
@@ -63,11 +66,23 @@ func (*Jira) NewExporter() core.Exporter {
 }
 
 func buildClient(ctx context.Context, baseURL string, credType string, cred auth.Credential) (*Client, error) {
-	client := NewClient(ctx, baseURL)
+	// Keep stored URLs intact for historical issue mappings, but normalize
+	// the transport URL before the client appends /rest/... paths.
+	client := NewClient(ctx, auth.NormalizeBaseURL(baseURL))
 
 	var login, password string
 
 	switch cred := cred.(type) {
+	case *auth.Token:
+		if credType != "TOKEN" {
+			return nil, fmt.Errorf("token credential requires Jira TOKEN authentication")
+		}
+		var ok bool
+		login, ok = cred.GetMetadata(auth.MetaKeyLogin)
+		if !ok || login == "" {
+			return nil, fmt.Errorf("Jira token has no login")
+		}
+		password = cred.Value
 	case *auth.LoginPassword:
 		login = cred.Login
 		password = cred.Password
@@ -78,6 +93,8 @@ func buildClient(ctx context.Context, baseURL string, credType string, cred auth
 			return nil, err
 		}
 		password = p
+	default:
+		return nil, fmt.Errorf("unsupported Jira credential %T", cred)
 	}
 
 	err := client.Login(credType, login, password)
@@ -86,6 +103,55 @@ func buildClient(ctx context.Context, baseURL string, credType string, cred auth
 	}
 
 	return client, nil
+}
+
+// List credentials compatible with the selected authentication mode, including
+// legacy TOKEN configurations that stored API tokens as passwords.
+func listCredentials(repo repository.RepoKeyring, credType string, opts ...auth.ListOption) ([]auth.Credential, error) {
+	var credentials []auth.Credential
+	if credType == "TOKEN" {
+		tokens, err := auth.List(repo, append(append([]auth.ListOption{}, opts...), auth.WithKind(auth.KindToken))...)
+		if err != nil {
+			return nil, err
+		}
+		credentials = append(credentials, tokens...)
+	}
+	passwords, err := auth.List(repo, append(append([]auth.ListOption{}, opts...), auth.WithKind(auth.KindLoginPassword), auth.WithKind(auth.KindLogin))...)
+	if err != nil {
+		return nil, err
+	}
+	// Legacy TOKEN configurations used password credentials for API tokens.
+	// Honor the newest stored secret across both forms for unpinned bridges.
+	credentials = append(credentials, passwords...)
+	sort.SliceStable(credentials, func(i, j int) bool {
+		if credentials[i].Kind() == auth.KindLogin || credentials[j].Kind() == auth.KindLogin {
+			return credentials[i].Kind() != auth.KindLogin && credentials[j].Kind() == auth.KindLogin
+		}
+		return credentials[i].CreateTime().After(credentials[j].CreateTime())
+	})
+	return credentials, nil
+}
+
+func configuredCredentials(repo repository.RepoKeyring, conf core.Configuration, opts ...auth.ListOption) ([]auth.Credential, error) {
+	credentials, err := listCredentials(repo, conf[confKeyCredentialType], opts...)
+	if err != nil {
+		return nil, err
+	}
+	if id := conf[confKeyCredentialID]; id != "" {
+		_, err := auth.LoadWithId(repo, entity.Id(id))
+		if err != nil {
+			return nil, fmt.Errorf("configured Jira credential is missing; reconfigure the bridge with --credential: %w", err)
+		}
+		for i, credential := range credentials {
+			if credential.ID().String() == id {
+				copy(credentials[1:i+1], credentials[:i])
+				credentials[0] = credential
+				return credentials, nil
+			}
+		}
+		return nil, fmt.Errorf("configured Jira credential is missing or does not match this bridge")
+	}
+	return credentials, nil
 }
 
 // stringInSlice returns true if needle is found in haystack
