@@ -39,7 +39,9 @@ func newBugShowCommand(env *execenv.Env) *cobra.Command {
 		"id", "labels", "shortId", "status", "title", "actors", "participants"}
 	flags.StringVarP(&options.fields, "field", "", "",
 		"Select field to display. Valid values are ["+strings.Join(fields, ",")+"]")
-	cmd.RegisterFlagCompletionFunc("by", completion.From(fields))
+	if err := cmd.RegisterFlagCompletionFunc("field", completion.From(fields)); err != nil {
+		panic(err)
+	}
 	flags.StringVarP(&options.format, "format", "f", "default",
 		"Select the output formatting style. Valid values are [default,json,org-mode]")
 
