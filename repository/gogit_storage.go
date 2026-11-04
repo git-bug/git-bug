@@ -250,7 +250,9 @@ func (s *gogitStorage) PackfileWriter() (io.WriteCloser, error) {
 // extensions that don't change what go-git does for git-bug are left out:
 // git-bug reads the configuration with gitconfig, which reads config.worktree,
 // never deletes objects, and only reads its own, which are always fetched
-// whole. go-git still refuses the others, such as a SHA-256 object format.
+// whole. Nor does relativeWorktrees, which only changes how git writes the
+// links between a linked worktree and the repository. go-git still refuses the
+// others, such as a SHA-256 object format.
 func (s *gogitStorage) Config() (*config.Config, error) {
 	all, err := s.config.Config().Read()
 	if err != nil {
@@ -265,7 +267,7 @@ func (s *gogitStorage) Config() (*config.Config, error) {
 			}
 			if name == "extensions" {
 				switch e.Key.Name {
-				case "worktreeconfig", "partialclone", "preciousobjects":
+				case "worktreeconfig", "partialclone", "preciousobjects", "relativeworktrees":
 					continue
 				case "objectformat":
 					if e.Value == "sha1" {

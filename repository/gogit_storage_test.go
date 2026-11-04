@@ -559,6 +559,11 @@ func TestGoGitStorage_Config(t *testing.T) {
 			issue:  "go-git v5's extensions",
 		},
 		{
+			name:   "relative worktrees",
+			config: "[core]\n\trepositoryformatversion = 1\n[extensions]\n\trelativeWorktrees = true\n",
+			issue:  "go-git#2324",
+		},
+		{
 			name:   "SHA-1 object format",
 			config: "[core]\n\trepositoryformatversion = 1\n[extensions]\n\tobjectFormat = sha1\n",
 			issue:  "go-git v5's extensions",
