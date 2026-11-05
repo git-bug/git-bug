@@ -15,9 +15,10 @@ package repository
 //     the remotes of FetchRefs and PushRefs, and StoreSignedCommit writes no
 //     author.
 //   - The extensions: go-git v5 refuses every extension but noop, so a sparse
-//     checkout or a blobless clone can't be opened. gogitStorage.Config leaves
-//     out those that don't change what go-git does for git-bug: worktreeConfig,
-//     partialClone, preciousObjects and a SHA-1 objectFormat.
+//     checkout, a blobless clone or a worktree with relative paths can't be
+//     opened. gogitStorage.Config leaves out those git-bug works with:
+//     worktreeConfig, partialClone, preciousObjects,
+//     relativeWorktrees, a SHA-1 objectFormat and a files refStorage.
 //   - The packfile index: go-git never notices the packs other processes add or
 //     remove. gogitStorage rebuilds the index and retries a read when they
 //     changed, keeps it built at all times, as go-git's pack writer crashes
