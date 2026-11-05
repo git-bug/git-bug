@@ -561,11 +561,16 @@ func TestGoGitStorage_Config(t *testing.T) {
 		{
 			name:   "relative worktrees",
 			config: "[core]\n\trepositoryformatversion = 1\n[extensions]\n\trelativeWorktrees = true\n",
-			issue:  "go-git#2324",
+			issue:  "go-git v5's extensions",
 		},
 		{
 			name:   "SHA-1 object format",
 			config: "[core]\n\trepositoryformatversion = 1\n[extensions]\n\tobjectFormat = sha1\n",
+			issue:  "go-git v5's extensions",
+		},
+		{
+			name:   "files ref storage",
+			config: "[core]\n\trepositoryformatversion = 1\n[extensions]\n\trefStorage = files\n",
 			issue:  "go-git v5's extensions",
 		},
 	}
@@ -589,19 +594,34 @@ func TestGoGitStorage_Config(t *testing.T) {
 		})
 	}
 
-	t.Run("SHA-256 object format", func(t *testing.T) {
-		// an extension go-git must still see, and refuse
-		dir := t.TempDir()
-		require.NoError(t, InitGoGitRepo(dir))
-		gitDir := filepath.Join(dir, ".git")
-		require.NoError(t, os.WriteFile(filepath.Join(gitDir, "config"), []byte("[core]\n\trepositoryformatversion = 1\n[extensions]\n\tobjectFormat = sha256\n"), 0o644))
+	// extensions go-git must still see, and refuse
+	refused := []struct {
+		name   string
+		config string
+	}{
+		{
+			name:   "SHA-256 object format",
+			config: "[core]\n\trepositoryformatversion = 1\n[extensions]\n\tobjectFormat = sha256\n",
+		},
+		{
+			name:   "reftable ref storage",
+			config: "[core]\n\trepositoryformatversion = 1\n[extensions]\n\trefStorage = reftable\n",
+		},
+	}
+	for _, tt := range refused {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			require.NoError(t, InitGoGitRepo(dir))
+			gitDir := filepath.Join(dir, ".git")
+			require.NoError(t, os.WriteFile(filepath.Join(gitDir, "config"), []byte(tt.config), 0o644))
 
-		_, err := OpenGoGitRepo(gitDir, NewRepoConfig(NewGitConfig(gitconfig.Env{
-			GitDir:       gitDir,
-			GlobalConfig: []string{filepath.Join(t.TempDir(), ".gitconfig")},
-		})))
-		require.Error(t, err)
-	})
+			_, err := OpenGoGitRepo(gitDir, NewRepoConfig(NewGitConfig(gitconfig.Env{
+				GitDir:       gitDir,
+				GlobalConfig: []string{filepath.Join(t.TempDir(), ".gitconfig")},
+			})))
+			require.Error(t, err)
+		})
+	}
 
 	t.Run("SetConfig doesn't write", func(t *testing.T) {
 		repo := newTestGoGitRepo(t, false)
