@@ -4,7 +4,6 @@ package graph
 
 import (
 	"context"
-	"errors"
 	"math"
 	"strconv"
 	"sync/atomic"
@@ -80,7 +79,7 @@ func (ec *executionContext) _EntityChange_event(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_EntityChange_event(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("EntityChange", field, false, false, errors.New("field of type EntityEventType does not have child fields"))
+	return graphql.NewScalarFieldContext("EntityChange", field, false, false, "EntityEventType")
 }
 
 func (ec *executionContext) _EntityChange_id(ctx context.Context, field graphql.CollectedField, obj *models.EntityChange) (ret graphql.Marshaler) {
@@ -103,7 +102,7 @@ func (ec *executionContext) _EntityChange_id(ctx context.Context, field graphql.
 	)
 }
 func (ec *executionContext) fieldContext_EntityChange_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("EntityChange", field, false, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("EntityChange", field, false, false, "ID")
 }
 
 func (ec *executionContext) _Subscription_entitiesChanged(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
@@ -168,8 +167,7 @@ func (ec *executionContext) _EntityChange(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, entityChangeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -193,14 +191,10 @@ func (ec *executionContext) _EntityChange(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -247,9 +241,7 @@ func (ec *executionContext) marshalNEntityChange2ᚕᚖgithubᚗcomᚋgitᚑbug�
 
 func (ec *executionContext) marshalNEntityChange2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐEntityChange(ctx context.Context, sel ast.SelectionSet, v *models.EntityChange) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "EntityChange!")
 		return graphql.Null
 	}
 	return ec._EntityChange(ctx, sel, v)

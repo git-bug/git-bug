@@ -2255,17 +2255,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := newExecutionContext(opCtx, e, make(chan graphql.DeferredResult))
-	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputBugAddCommentAndCloseInput,
-		ec.unmarshalInputBugAddCommentAndReopenInput,
-		ec.unmarshalInputBugAddCommentInput,
-		ec.unmarshalInputBugChangeLabelInput,
-		ec.unmarshalInputBugCreateInput,
-		ec.unmarshalInputBugEditCommentInput,
-		ec.unmarshalInputBugSetTitleInput,
-		ec.unmarshalInputBugStatusCloseInput,
-		ec.unmarshalInputBugStatusOpenInput,
-	)
+	inputUnmarshalers := func() *graphql.InputUnmarshalerIndex {
+		return graphql.NewInputUnmarshalerIndex(
+			graphql.NewInputUnmarshaler("BugAddCommentAndCloseInput", ec.unmarshalInputBugAddCommentAndCloseInput),
+			graphql.NewInputUnmarshaler("BugAddCommentAndReopenInput", ec.unmarshalInputBugAddCommentAndReopenInput),
+			graphql.NewInputUnmarshaler("BugAddCommentInput", ec.unmarshalInputBugAddCommentInput),
+			graphql.NewInputUnmarshaler("BugChangeLabelInput", ec.unmarshalInputBugChangeLabelInput),
+			graphql.NewInputUnmarshaler("BugCreateInput", ec.unmarshalInputBugCreateInput),
+			graphql.NewInputUnmarshaler("BugEditCommentInput", ec.unmarshalInputBugEditCommentInput),
+			graphql.NewInputUnmarshaler("BugSetTitleInput", ec.unmarshalInputBugSetTitleInput),
+			graphql.NewInputUnmarshaler("BugStatusCloseInput", ec.unmarshalInputBugStatusCloseInput),
+			graphql.NewInputUnmarshaler("BugStatusOpenInput", ec.unmarshalInputBugStatusOpenInput),
+		)
+	}
 	first := true
 
 	switch opCtx.Operation.Operation {
@@ -2275,7 +2277,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			var data graphql.Marshaler
 			if first {
 				first = false
-				ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
+				ctx = graphql.WithLazyInputUnmarshalerIndex(ctx, inputUnmarshalers)
 				data = ec._Query(ctx, opCtx.Operation.SelectionSet)
 			} else {
 				if atomic.LoadInt32(&ec.PendingDeferred) > 0 {
@@ -2305,7 +2307,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				return nil
 			}
 			first = false
-			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
+			ctx = graphql.WithLazyInputUnmarshalerIndex(ctx, inputUnmarshalers)
 			data := ec._Mutation(ctx, opCtx.Operation.SelectionSet)
 			var buf bytes.Buffer
 			data.MarshalGQL(&buf)

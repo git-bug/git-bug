@@ -4,7 +4,6 @@ package graph
 
 import (
 	"context"
-	"errors"
 	"math"
 	"strconv"
 	"sync/atomic"
@@ -45,7 +44,7 @@ func (ec *executionContext) _BugAddCommentAndClosePayload_clientMutationId(ctx c
 	)
 }
 func (ec *executionContext) fieldContext_BugAddCommentAndClosePayload_clientMutationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugAddCommentAndClosePayload", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugAddCommentAndClosePayload", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugAddCommentAndClosePayload_bug(ctx context.Context, field graphql.CollectedField, obj *models.BugAddCommentAndClosePayload) (ret graphql.Marshaler) {
@@ -164,7 +163,7 @@ func (ec *executionContext) _BugAddCommentAndReopenPayload_clientMutationId(ctx 
 	)
 }
 func (ec *executionContext) fieldContext_BugAddCommentAndReopenPayload_clientMutationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugAddCommentAndReopenPayload", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugAddCommentAndReopenPayload", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugAddCommentAndReopenPayload_bug(ctx context.Context, field graphql.CollectedField, obj *models.BugAddCommentAndReopenPayload) (ret graphql.Marshaler) {
@@ -283,7 +282,7 @@ func (ec *executionContext) _BugAddCommentPayload_clientMutationId(ctx context.C
 	)
 }
 func (ec *executionContext) fieldContext_BugAddCommentPayload_clientMutationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugAddCommentPayload", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugAddCommentPayload", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugAddCommentPayload_bug(ctx context.Context, field graphql.CollectedField, obj *models.BugAddCommentPayload) (ret graphql.Marshaler) {
@@ -370,7 +369,7 @@ func (ec *executionContext) _BugChangeLabelPayload_clientMutationId(ctx context.
 	)
 }
 func (ec *executionContext) fieldContext_BugChangeLabelPayload_clientMutationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugChangeLabelPayload", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugChangeLabelPayload", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugChangeLabelPayload_bug(ctx context.Context, field graphql.CollectedField, obj *models.BugChangeLabelPayload) (ret graphql.Marshaler) {
@@ -489,7 +488,7 @@ func (ec *executionContext) _BugCreatePayload_clientMutationId(ctx context.Conte
 	)
 }
 func (ec *executionContext) fieldContext_BugCreatePayload_clientMutationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugCreatePayload", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugCreatePayload", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugCreatePayload_bug(ctx context.Context, field graphql.CollectedField, obj *models.BugCreatePayload) (ret graphql.Marshaler) {
@@ -576,7 +575,7 @@ func (ec *executionContext) _BugEditCommentPayload_clientMutationId(ctx context.
 	)
 }
 func (ec *executionContext) fieldContext_BugEditCommentPayload_clientMutationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugEditCommentPayload", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugEditCommentPayload", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugEditCommentPayload_bug(ctx context.Context, field graphql.CollectedField, obj *models.BugEditCommentPayload) (ret graphql.Marshaler) {
@@ -663,7 +662,7 @@ func (ec *executionContext) _BugSetTitlePayload_clientMutationId(ctx context.Con
 	)
 }
 func (ec *executionContext) fieldContext_BugSetTitlePayload_clientMutationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugSetTitlePayload", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugSetTitlePayload", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugSetTitlePayload_bug(ctx context.Context, field graphql.CollectedField, obj *models.BugSetTitlePayload) (ret graphql.Marshaler) {
@@ -750,7 +749,7 @@ func (ec *executionContext) _BugStatusClosePayload_clientMutationId(ctx context.
 	)
 }
 func (ec *executionContext) fieldContext_BugStatusClosePayload_clientMutationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugStatusClosePayload", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugStatusClosePayload", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugStatusClosePayload_bug(ctx context.Context, field graphql.CollectedField, obj *models.BugStatusClosePayload) (ret graphql.Marshaler) {
@@ -837,7 +836,7 @@ func (ec *executionContext) _BugStatusOpenPayload_clientMutationId(ctx context.C
 	)
 }
 func (ec *executionContext) fieldContext_BugStatusOpenPayload_clientMutationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BugStatusOpenPayload", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BugStatusOpenPayload", field, false, false, "String")
 }
 
 func (ec *executionContext) _BugStatusOpenPayload_bug(ctx context.Context, field graphql.CollectedField, obj *models.BugStatusOpenPayload) (ret graphql.Marshaler) {
@@ -966,6 +965,18 @@ func (ec *executionContext) unmarshalInputBugAddCommentAndCloseInput(ctx context
 	return it, nil
 }
 
+// UnmarshalBugAddCommentAndCloseInput unmarshals raw into the BugAddCommentAndCloseInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalBugAddCommentAndCloseInput(ctx context.Context, raw any) (models.BugAddCommentAndCloseInput, error) {
+	var out models.BugAddCommentAndCloseInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "BugAddCommentAndCloseInput", raw, &out)
+	return out, err
+}
+
 func (ec *executionContext) unmarshalInputBugAddCommentAndReopenInput(ctx context.Context, obj any) (models.BugAddCommentAndReopenInput, error) {
 	var it models.BugAddCommentAndReopenInput
 	if obj == nil {
@@ -1022,6 +1033,18 @@ func (ec *executionContext) unmarshalInputBugAddCommentAndReopenInput(ctx contex
 		}
 	}
 	return it, nil
+}
+
+// UnmarshalBugAddCommentAndReopenInput unmarshals raw into the BugAddCommentAndReopenInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalBugAddCommentAndReopenInput(ctx context.Context, raw any) (models.BugAddCommentAndReopenInput, error) {
+	var out models.BugAddCommentAndReopenInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "BugAddCommentAndReopenInput", raw, &out)
+	return out, err
 }
 
 func (ec *executionContext) unmarshalInputBugAddCommentInput(ctx context.Context, obj any) (models.BugAddCommentInput, error) {
@@ -1082,6 +1105,18 @@ func (ec *executionContext) unmarshalInputBugAddCommentInput(ctx context.Context
 	return it, nil
 }
 
+// UnmarshalBugAddCommentInput unmarshals raw into the BugAddCommentInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalBugAddCommentInput(ctx context.Context, raw any) (models.BugAddCommentInput, error) {
+	var out models.BugAddCommentInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "BugAddCommentInput", raw, &out)
+	return out, err
+}
+
 func (ec *executionContext) unmarshalInputBugChangeLabelInput(ctx context.Context, obj any) (models.BugChangeLabelInput, error) {
 	var it models.BugChangeLabelInput
 	if obj == nil {
@@ -1138,6 +1173,18 @@ func (ec *executionContext) unmarshalInputBugChangeLabelInput(ctx context.Contex
 		}
 	}
 	return it, nil
+}
+
+// UnmarshalBugChangeLabelInput unmarshals raw into the BugChangeLabelInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalBugChangeLabelInput(ctx context.Context, raw any) (models.BugChangeLabelInput, error) {
+	var out models.BugChangeLabelInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "BugChangeLabelInput", raw, &out)
+	return out, err
 }
 
 func (ec *executionContext) unmarshalInputBugCreateInput(ctx context.Context, obj any) (models.BugCreateInput, error) {
@@ -1198,6 +1245,18 @@ func (ec *executionContext) unmarshalInputBugCreateInput(ctx context.Context, ob
 	return it, nil
 }
 
+// UnmarshalBugCreateInput unmarshals raw into the BugCreateInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalBugCreateInput(ctx context.Context, raw any) (models.BugCreateInput, error) {
+	var out models.BugCreateInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "BugCreateInput", raw, &out)
+	return out, err
+}
+
 func (ec *executionContext) unmarshalInputBugEditCommentInput(ctx context.Context, obj any) (models.BugEditCommentInput, error) {
 	var it models.BugEditCommentInput
 	if obj == nil {
@@ -1256,6 +1315,18 @@ func (ec *executionContext) unmarshalInputBugEditCommentInput(ctx context.Contex
 	return it, nil
 }
 
+// UnmarshalBugEditCommentInput unmarshals raw into the BugEditCommentInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalBugEditCommentInput(ctx context.Context, raw any) (models.BugEditCommentInput, error) {
+	var out models.BugEditCommentInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "BugEditCommentInput", raw, &out)
+	return out, err
+}
+
 func (ec *executionContext) unmarshalInputBugSetTitleInput(ctx context.Context, obj any) (models.BugSetTitleInput, error) {
 	var it models.BugSetTitleInput
 	if obj == nil {
@@ -1307,6 +1378,18 @@ func (ec *executionContext) unmarshalInputBugSetTitleInput(ctx context.Context, 
 	return it, nil
 }
 
+// UnmarshalBugSetTitleInput unmarshals raw into the BugSetTitleInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalBugSetTitleInput(ctx context.Context, raw any) (models.BugSetTitleInput, error) {
+	var out models.BugSetTitleInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "BugSetTitleInput", raw, &out)
+	return out, err
+}
+
 func (ec *executionContext) unmarshalInputBugStatusCloseInput(ctx context.Context, obj any) (models.BugStatusCloseInput, error) {
 	var it models.BugStatusCloseInput
 	if obj == nil {
@@ -1349,6 +1432,18 @@ func (ec *executionContext) unmarshalInputBugStatusCloseInput(ctx context.Contex
 		}
 	}
 	return it, nil
+}
+
+// UnmarshalBugStatusCloseInput unmarshals raw into the BugStatusCloseInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalBugStatusCloseInput(ctx context.Context, raw any) (models.BugStatusCloseInput, error) {
+	var out models.BugStatusCloseInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "BugStatusCloseInput", raw, &out)
+	return out, err
 }
 
 func (ec *executionContext) unmarshalInputBugStatusOpenInput(ctx context.Context, obj any) (models.BugStatusOpenInput, error) {
@@ -1395,6 +1490,18 @@ func (ec *executionContext) unmarshalInputBugStatusOpenInput(ctx context.Context
 	return it, nil
 }
 
+// UnmarshalBugStatusOpenInput unmarshals raw into the BugStatusOpenInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalBugStatusOpenInput(ctx context.Context, raw any) (models.BugStatusOpenInput, error) {
+	var out models.BugStatusOpenInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "BugStatusOpenInput", raw, &out)
+	return out, err
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -1409,8 +1516,7 @@ func (ec *executionContext) _BugAddCommentAndClosePayload(ctx context.Context, s
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugAddCommentAndClosePayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1444,14 +1550,10 @@ func (ec *executionContext) _BugAddCommentAndClosePayload(ctx context.Context, s
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1462,8 +1564,7 @@ func (ec *executionContext) _BugAddCommentAndReopenPayload(ctx context.Context, 
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugAddCommentAndReopenPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1497,14 +1598,10 @@ func (ec *executionContext) _BugAddCommentAndReopenPayload(ctx context.Context, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1515,8 +1612,7 @@ func (ec *executionContext) _BugAddCommentPayload(ctx context.Context, sel ast.S
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugAddCommentPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1545,14 +1641,10 @@ func (ec *executionContext) _BugAddCommentPayload(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1563,8 +1655,7 @@ func (ec *executionContext) _BugChangeLabelPayload(ctx context.Context, sel ast.
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugChangeLabelPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1598,14 +1689,10 @@ func (ec *executionContext) _BugChangeLabelPayload(ctx context.Context, sel ast.
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1616,8 +1703,7 @@ func (ec *executionContext) _BugCreatePayload(ctx context.Context, sel ast.Selec
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugCreatePayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1646,14 +1732,10 @@ func (ec *executionContext) _BugCreatePayload(ctx context.Context, sel ast.Selec
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1664,8 +1746,7 @@ func (ec *executionContext) _BugEditCommentPayload(ctx context.Context, sel ast.
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugEditCommentPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1694,14 +1775,10 @@ func (ec *executionContext) _BugEditCommentPayload(ctx context.Context, sel ast.
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1712,8 +1789,7 @@ func (ec *executionContext) _BugSetTitlePayload(ctx context.Context, sel ast.Sel
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugSetTitlePayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1742,14 +1818,10 @@ func (ec *executionContext) _BugSetTitlePayload(ctx context.Context, sel ast.Sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1760,8 +1832,7 @@ func (ec *executionContext) _BugStatusClosePayload(ctx context.Context, sel ast.
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugStatusClosePayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1790,14 +1861,10 @@ func (ec *executionContext) _BugStatusClosePayload(ctx context.Context, sel ast.
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1808,8 +1875,7 @@ func (ec *executionContext) _BugStatusOpenPayload(ctx context.Context, sel ast.S
 	fields := graphql.CollectFields(ec.OperationContext, sel, bugStatusOpenPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -1838,14 +1904,10 @@ func (ec *executionContext) _BugStatusOpenPayload(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -1861,9 +1923,7 @@ func (ec *executionContext) unmarshalNBugAddCommentAndCloseInput2githubᚗcomᚋ
 
 func (ec *executionContext) marshalNBugAddCommentAndClosePayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugAddCommentAndClosePayload(ctx context.Context, sel ast.SelectionSet, v *models.BugAddCommentAndClosePayload) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugAddCommentAndClosePayload!")
 		return graphql.Null
 	}
 	return ec._BugAddCommentAndClosePayload(ctx, sel, v)
@@ -1876,9 +1936,7 @@ func (ec *executionContext) unmarshalNBugAddCommentAndReopenInput2githubᚗcom�
 
 func (ec *executionContext) marshalNBugAddCommentAndReopenPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugAddCommentAndReopenPayload(ctx context.Context, sel ast.SelectionSet, v *models.BugAddCommentAndReopenPayload) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugAddCommentAndReopenPayload!")
 		return graphql.Null
 	}
 	return ec._BugAddCommentAndReopenPayload(ctx, sel, v)
@@ -1891,9 +1949,7 @@ func (ec *executionContext) unmarshalNBugAddCommentInput2githubᚗcomᚋgitᚑbu
 
 func (ec *executionContext) marshalNBugAddCommentPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugAddCommentPayload(ctx context.Context, sel ast.SelectionSet, v *models.BugAddCommentPayload) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugAddCommentPayload!")
 		return graphql.Null
 	}
 	return ec._BugAddCommentPayload(ctx, sel, v)
@@ -1901,9 +1957,7 @@ func (ec *executionContext) marshalNBugAddCommentPayload2ᚖgithubᚗcomᚋgit�
 
 func (ec *executionContext) marshalNBugChangeLabelPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugChangeLabelPayload(ctx context.Context, sel ast.SelectionSet, v *models.BugChangeLabelPayload) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugChangeLabelPayload!")
 		return graphql.Null
 	}
 	return ec._BugChangeLabelPayload(ctx, sel, v)
@@ -1916,9 +1970,7 @@ func (ec *executionContext) unmarshalNBugCreateInput2githubᚗcomᚋgitᚑbugᚋ
 
 func (ec *executionContext) marshalNBugCreatePayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugCreatePayload(ctx context.Context, sel ast.SelectionSet, v *models.BugCreatePayload) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugCreatePayload!")
 		return graphql.Null
 	}
 	return ec._BugCreatePayload(ctx, sel, v)
@@ -1931,9 +1983,7 @@ func (ec *executionContext) unmarshalNBugEditCommentInput2githubᚗcomᚋgitᚑb
 
 func (ec *executionContext) marshalNBugEditCommentPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugEditCommentPayload(ctx context.Context, sel ast.SelectionSet, v *models.BugEditCommentPayload) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugEditCommentPayload!")
 		return graphql.Null
 	}
 	return ec._BugEditCommentPayload(ctx, sel, v)
@@ -1946,9 +1996,7 @@ func (ec *executionContext) unmarshalNBugSetTitleInput2githubᚗcomᚋgitᚑbug�
 
 func (ec *executionContext) marshalNBugSetTitlePayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugSetTitlePayload(ctx context.Context, sel ast.SelectionSet, v *models.BugSetTitlePayload) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugSetTitlePayload!")
 		return graphql.Null
 	}
 	return ec._BugSetTitlePayload(ctx, sel, v)
@@ -1961,9 +2009,7 @@ func (ec *executionContext) unmarshalNBugStatusCloseInput2githubᚗcomᚋgitᚑb
 
 func (ec *executionContext) marshalNBugStatusClosePayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugStatusClosePayload(ctx context.Context, sel ast.SelectionSet, v *models.BugStatusClosePayload) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugStatusClosePayload!")
 		return graphql.Null
 	}
 	return ec._BugStatusClosePayload(ctx, sel, v)
@@ -1976,9 +2022,7 @@ func (ec *executionContext) unmarshalNBugStatusOpenInput2githubᚗcomᚋgitᚑbu
 
 func (ec *executionContext) marshalNBugStatusOpenPayload2ᚖgithubᚗcomᚋgitᚑbugᚋgitᚑbugᚋapiᚋgraphqlᚋmodelsᚐBugStatusOpenPayload(ctx context.Context, sel ast.SelectionSet, v *models.BugStatusOpenPayload) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BugStatusOpenPayload!")
 		return graphql.Null
 	}
 	return ec._BugStatusOpenPayload(ctx, sel, v)
