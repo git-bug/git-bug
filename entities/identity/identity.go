@@ -127,13 +127,29 @@ func ReadTracking(ctx context.Context, repo repository.Repo, remote string, id e
 // read will load and parse an identity from git, from its last commit, and make
 // sure that it is the identity with the given id.
 func read(ctx context.Context, repo repository.Repo, id entity.Id, lastCommit repository.Hash) (*Identity, error) {
-	hashes, err := repo.ListCommits(ctx, lastCommit)
-	if err != nil {
-		return nil, err
+	// An identity history is a single chain: walk it back from the last commit,
+	// then reverse it to get the versions oldest first.
+	var hashes []repository.Hash
+	for hash := lastCommit; ; {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
+		commit, err := repo.ReadCommit(ctx, hash)
+		if err != nil {
+			return nil, err
+		}
+		hashes = append(hashes, hash)
+
+		if len(commit.Parents) > 1 {
+			return nil, fmt.Errorf("invalid identity: merge commit %s", hash)
+		}
+		if len(commit.Parents) == 0 {
+			break
+		}
+		hash = commit.Parents[0]
 	}
-	if len(hashes) == 0 {
-		return nil, fmt.Errorf("empty identity")
-	}
+	slices.Reverse(hashes)
 
 	i := &Identity{}
 

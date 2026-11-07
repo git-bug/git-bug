@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
@@ -140,17 +139,17 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 		// SCENARIO 2
 		// if the local Entity has new commits but the remote don't, nothing is changed
 
-		localCommits, err := repo.ListCommits(ctx, localCommit)
+		localCommits, err := walkHistory(ctx, repo, localCommit, "")
 		if err != nil {
 			return entity.NewMergeError(err, id)
 		}
 
-		if slices.Contains(localCommits, remoteCommit) {
+		if _, ok := localCommits[remoteCommit]; ok {
 			return entity.NewMergeNothingStatus(id)
 		}
 	}
 
-	remoteEntity, err := read[EntityT](ctx, def, wrapper, repo, resolvers, id, remoteCommit)
+	remoteEntity, remoteCommits, err := read[EntityT](ctx, def, wrapper, repo, resolvers, id, remoteCommit)
 	if err != nil {
 		// a read cut short says nothing of the remote data
 		if ctx.Err() != nil {
@@ -181,15 +180,8 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 	// if the remote has new commit, the local bug is updated to match the same history
 	// (fast-forward update)
 
-	remoteCommits, err := repo.ListCommits(ctx, remoteCommit)
-	if err != nil {
-		return entity.NewMergeError(err, id)
-	}
-
-	// fast-forward is possible if otherRef include ref
-	fastForwardPossible := slices.Contains(remoteCommits, localCommit)
-
-	if fastForwardPossible {
+	// fast-forward is possible if the remote history includes the local commit
+	if _, ok := remoteCommits[localCommit]; ok {
 		err = repo.UpdateRef(ctx, def.Namespace, id.String(), localCommit, remoteCommit)
 		if err != nil {
 			return entity.NewMergeError(err, id)

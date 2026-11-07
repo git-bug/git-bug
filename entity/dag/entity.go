@@ -76,7 +76,8 @@ func Read[EntityT entity.Interface](ctx context.Context, def Definition, wrapper
 		return *new(EntityT), err
 	}
 
-	return read[EntityT](ctx, def, wrapper, repo, resolvers, id, commit)
+	e, _, err := read[EntityT](ctx, def, wrapper, repo, resolvers, id, commit)
+	return e, err
 }
 
 // readTracking will read and decode an Entity from the tracking refs of a remote
@@ -93,15 +94,17 @@ func readTracking[EntityT entity.Interface](ctx context.Context, def Definition,
 		return *new(EntityT), err
 	}
 
-	return read[EntityT](ctx, def, wrapper, repo, resolvers, id, commit)
+	e, _, err := read[EntityT](ctx, def, wrapper, repo, resolvers, id, commit)
+	return e, err
 }
 
 // read fetch from git and decode an Entity from its last commit, and make sure
 // that it is the Entity with the given id.
-func read[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash) (EntityT, error) {
-	ops, createTime, editTime, err := readSince(ctx, def, repo, resolvers, id, lastCommit, "", 0)
+// It also returns the commits of the Entity.
+func read[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash) (EntityT, map[repository.Hash]repository.Commit, error) {
+	ops, createTime, editTime, commits, err := readSince(ctx, def, repo, resolvers, id, lastCommit, "", 0)
 	if err != nil {
-		return *new(EntityT), err
+		return *new(EntityT), nil, err
 	}
 
 	return wrapper(&Entity{
@@ -110,22 +113,16 @@ func read[EntityT entity.Interface](ctx context.Context, def Definition, wrapper
 		lastCommit: lastCommit,
 		createTime: createTime,
 		editTime:   editTime,
-	}), nil
+	}), commits, nil
 }
 
-// readSince fetch from git and decode the operations of an Entity from its last commit,
-// and make sure that it is the Entity with the given id.
-// If since is not empty, only the commits after it are read, and sinceEditTime must be
-// its edit time. Those commits must all descend from it, otherwise an error is returned.
-func readSince(ctx context.Context, def Definition, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash, since repository.Hash, sinceEditTime lamport.Time) ([]Operation, lamport.Time, lamport.Time, error) {
-	// Perform a breadth-first search to discover the commits of the DAG, going back in time
-	// up to the chronological root, or to since. Along the way, count the children of each
-	// commit.
-
+// walkHistory performs a breadth-first search to read lastCommit and its ancestors,
+// going back in time up to the chronological root, or to since if not empty. since
+// itself is not read.
+func walkHistory(ctx context.Context, repo repository.Repo, lastCommit repository.Hash, since repository.Hash) (map[repository.Hash]repository.Commit, error) {
 	queue := make([]repository.Hash, 0, 32)
 	visited := make(map[repository.Hash]struct{})
 	commits := make(map[repository.Hash]repository.Commit)
-	children := make(map[repository.Hash]int)
 
 	queue = append(queue, lastCommit)
 	visited[lastCommit] = struct{}{}
@@ -139,23 +136,45 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 		queue = queue[1:]
 
 		if err := ctx.Err(); err != nil {
-			return nil, 0, 0, err
+			return nil, err
 		}
 
 		commit, err := repo.ReadCommit(ctx, hash)
 		if err != nil {
-			return nil, 0, 0, err
+			return nil, err
 		}
 
 		commits[hash] = commit
 
 		for _, parent := range commit.Parents {
-			children[parent]++
 			if _, ok := visited[parent]; !ok {
 				queue = append(queue, parent)
 				// mark as visited
 				visited[parent] = struct{}{}
 			}
+		}
+	}
+
+	return commits, nil
+}
+
+// readSince fetch from git and decode the operations of an Entity from its last commit,
+// and make sure that it is the Entity with the given id.
+// If since is not empty, only the commits after it are read, and sinceEditTime must be
+// its edit time. Those commits must all descend from it, otherwise an error is returned.
+// It also returns the commits it read.
+func readSince(ctx context.Context, def Definition, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash, since repository.Hash, sinceEditTime lamport.Time) ([]Operation, lamport.Time, lamport.Time, map[repository.Hash]repository.Commit, error) {
+	// Discover the commits of the DAG, then count the children of each commit.
+
+	commits, err := walkHistory(ctx, repo, lastCommit, since)
+	if err != nil {
+		return nil, 0, 0, nil, err
+	}
+
+	children := make(map[repository.Hash]int)
+	for _, commit := range commits {
+		for _, parent := range commit.Parents {
+			children[parent]++
 		}
 	}
 
@@ -247,44 +266,44 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 		// When reading from since, there should be no root at all: reaching one
 		// means that some commits don't descend from since.
 		if !isFirstCommit && len(commit.Parents) == 0 {
-			return nil, 0, 0, fmt.Errorf("multiple leafs in the entity DAG")
+			return nil, 0, 0, nil, fmt.Errorf("multiple leafs in the entity DAG")
 		}
 
 		if err := ctx.Err(); err != nil {
-			return nil, 0, 0, err
+			return nil, 0, 0, nil, err
 		}
 
 		opp, err := readOperationPack(ctx, def, repo, resolvers, commit)
 		if err != nil {
-			return nil, 0, 0, err
+			return nil, 0, 0, nil, err
 		}
 
 		err = opp.Validate()
 		if err != nil {
-			return nil, 0, 0, err
+			return nil, 0, 0, nil, err
 		}
 
 		if isMerge && len(opp.Operations) > 0 {
-			return nil, 0, 0, fmt.Errorf("merge commit cannot have operations")
+			return nil, 0, 0, nil, fmt.Errorf("merge commit cannot have operations")
 		}
 
 		// an operation can only be stored once
 		for _, op := range opp.Operations {
 			if _, ok := opIds[op.Id()]; ok {
-				return nil, 0, 0, fmt.Errorf("duplicate operation %s", op.Id())
+				return nil, 0, 0, nil, fmt.Errorf("duplicate operation %s", op.Id())
 			}
 			opIds[op.Id()] = struct{}{}
 		}
 
 		// Check that the create lamport clock is set (not checked in Validate() as it's optional)
 		if isFirstCommit && opp.CreateTime <= 0 {
-			return nil, 0, 0, fmt.Errorf("creation lamport time not set")
+			return nil, 0, 0, nil, fmt.Errorf("creation lamport time not set")
 		}
 
 		// The id of an Entity is the id of its first operation: make sure that
 		// the ref actually points to the Entity it is named after.
 		if isFirstCommit && (len(opp.Operations) == 0 || opp.Operations[0].Id() != id) {
-			return nil, 0, 0, fmt.Errorf("the %s doesn't match its id %s", def.Typename, id)
+			return nil, 0, 0, nil, fmt.Errorf("the %s doesn't match its id %s", def.Typename, id)
 		}
 
 		// make sure that the lamport clocks causality match the DAG topology
@@ -292,7 +311,7 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 			parentEditTime := editTimeOf(parentHash)
 
 			if parentEditTime >= opp.EditTime {
-				return nil, 0, 0, fmt.Errorf("lamport clock ordering doesn't match the DAG")
+				return nil, 0, 0, nil, fmt.Errorf("lamport clock ordering doesn't match the DAG")
 			}
 
 			// to avoid an attack where clocks are pushed toward the uint64 rollover, make sure
@@ -300,7 +319,7 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 			// we ignore merge commits here to allow merging after a loooong time without breaking anything,
 			// as long as there is one valid chain of small hops, it's fine.
 			if !isMerge && opp.EditTime-parentEditTime > 1_000_000 {
-				return nil, 0, 0, fmt.Errorf("lamport clock jumping too far in the future, likely an attack")
+				return nil, 0, 0, nil, fmt.Errorf("lamport clock jumping too far in the future, likely an attack")
 			}
 		}
 
@@ -310,7 +329,7 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 			for i, parent := range commit.Parents {
 				for j, other := range commit.Parents {
 					if i != j && (parent == other || isAncestor(other, parent)) {
-						return nil, 0, 0, fmt.Errorf("merge commit with a parent that is an ancestor of another")
+						return nil, 0, 0, nil, fmt.Errorf("merge commit with a parent that is an ancestor of another")
 					}
 				}
 			}
@@ -324,11 +343,11 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 	for _, opp := range oppMap {
 		err := witnessClock(repo, fmt.Sprintf(creationClockPattern, def.Namespace), opp.CreateTime)
 		if err != nil {
-			return nil, 0, 0, err
+			return nil, 0, 0, nil, err
 		}
 		err = witnessClock(repo, fmt.Sprintf(editClockPattern, def.Namespace), opp.EditTime)
 		if err != nil {
-			return nil, 0, 0, err
+			return nil, 0, 0, nil, err
 		}
 	}
 
@@ -369,7 +388,7 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 		}
 	}
 
-	return ops, createTime, editTime, nil
+	return ops, createTime, editTime, commits, nil
 }
 
 // readClockNoCheck fetch from git the clocks of an Entity from its last commit: the creation time of its
@@ -430,7 +449,7 @@ func ReadAll[EntityT entity.Interface](ctx context.Context, def Definition, wrap
 		current := int64(1)
 
 		for key, commit := range refs {
-			e, err := read[EntityT](ctx, def, wrapper, repo, resolvers, entity.Id(key), commit)
+			e, _, err := read[EntityT](ctx, def, wrapper, repo, resolvers, entity.Id(key), commit)
 
 			if err != nil {
 				out <- entity.StreamedEntity[EntityT]{Err: err}
@@ -740,7 +759,7 @@ func (e *Entity) Repair(ctx context.Context, repo repository.Repo, resolvers ent
 	// any real problem.
 	// Note: both read the clocks, so that the next commit get higher ones.
 	if e.lastCommit != "" {
-		ops, createTime, editTime, err := readSince(ctx, e.Definition, repo, resolvers, id, commit, e.lastCommit, e.editTime)
+		ops, createTime, editTime, _, err := readSince(ctx, e.Definition, repo, resolvers, id, commit, e.lastCommit, e.editTime)
 		if err == nil {
 			// readSince only sees the new operations, check them against the known ones
 			known := make(map[entity.Id]struct{}, len(e.ops))
@@ -765,7 +784,7 @@ func (e *Entity) Repair(ctx context.Context, repo repository.Repo, resolvers ent
 		}
 	}
 
-	ops, createTime, editTime, err := readSince(ctx, e.Definition, repo, resolvers, id, commit, "", 0)
+	ops, createTime, editTime, _, err := readSince(ctx, e.Definition, repo, resolvers, id, commit, "", 0)
 	if err != nil {
 		return err
 	}

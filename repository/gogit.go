@@ -511,12 +511,6 @@ func (repo *GoGitRepo) lookupRef(name string) (Hash, error) {
 	return Hash(r.Hash().String()), nil
 }
 
-// ListCommits returns the hashes of commit and all its ancestors, in
-// chronological order.
-func (repo *GoGitRepo) ListCommits(ctx context.Context, commit Hash) ([]Hash, error) {
-	return nonNativeListCommits(ctx, repo, commit)
-}
-
 func (repo *GoGitRepo) ReadCommit(ctx context.Context, hash Hash) (Commit, error) {
 	repo.rMutex.Lock()
 	defer repo.rMutex.Unlock()

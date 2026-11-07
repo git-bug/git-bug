@@ -224,10 +224,6 @@ type RepoData interface {
 	// RemoveTrackingRef deletes a tracking ref.
 	// RemoveTrackingRef is idempotent.
 	RemoveTrackingRef(ctx context.Context, remote string, namespace string, key string) error
-
-	// ListCommits returns the hashes of commit and all its ancestors, in
-	// chronological order.
-	ListCommits(ctx context.Context, commit Hash) ([]Hash, error)
 }
 
 // RepoClock give access to Lamport clocks
