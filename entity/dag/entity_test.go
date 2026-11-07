@@ -298,9 +298,12 @@ func TestCommitOperations(t *testing.T) {
 		require.Equal(t, ops, e.Operations())
 
 		// one operation pack per author
-		commits, err := repo.ListCommits(t.Context(), e.LastCommit())
+		last, err := repo.ReadCommit(t.Context(), e.LastCommit())
 		require.NoError(t, err)
-		require.Len(t, commits, 2)
+		require.Len(t, last.Parents, 1)
+		first, err := repo.ReadCommit(t.Context(), last.Parents[0])
+		require.NoError(t, err)
+		require.Empty(t, first.Parents)
 
 		read, err := Read(t.Context(), def, wrapper, repo, resolver, id)
 		require.NoError(t, err)
@@ -688,11 +691,11 @@ func BenchmarkRead(b *testing.B) {
 			b.Run(fmt.Sprintf("%s/%d", shape.name, commits), func(b *testing.B) {
 				h := shape.build(b, commits)
 				// make sure the history is valid
-				_, err := read(b.Context(), h.def, wrapper, h.repo, h.resolvers, h.e.Id(), h.head)
+				_, _, err := read(b.Context(), h.def, wrapper, h.repo, h.resolvers, h.e.Id(), h.head)
 				require.NoError(b, err)
 
 				for b.Loop() {
-					_, _ = read(b.Context(), h.def, wrapper, h.repo, h.resolvers, h.e.Id(), h.head)
+					_, _, _ = read(b.Context(), h.def, wrapper, h.repo, h.resolvers, h.e.Id(), h.head)
 				}
 			})
 		}

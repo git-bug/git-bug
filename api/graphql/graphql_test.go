@@ -908,9 +908,9 @@ func TestMutations(t *testing.T) {
 		b, err := rc.Bugs().Resolve(t.Context(), entity.Id(data.BugCreate.Bug.Id))
 		require.NoError(t, err)
 		require.Equal(t, "created", b.Snapshot().Title)
-		commits, err := repo.ListCommits(t.Context(), b.LastCommit())
+		commit, err := repo.ReadCommit(t.Context(), b.LastCommit())
 		require.NoError(t, err)
-		require.Len(t, commits, 1)
+		require.Empty(t, commit.Parents)
 	})
 
 	t.Run("a failing mutation discards a creation", func(t *testing.T) {

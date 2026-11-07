@@ -78,8 +78,8 @@ type commit struct {
 // mockRepoDataBrowse keeps everything in maps, guarded by mu: it is safe for
 // concurrent use, as a cache syncing in the background requires. Each public
 // method touching the maps holds mu, which also makes UpdateRef atomic, as
-// RepoData requires; StoreCommit and ListCommits only delegate to such
-// methods, and the private helpers run under the caller's lock.
+// RepoData requires; StoreCommit only delegates to such methods, and the
+// private helpers run under the caller's lock.
 type mockRepoDataBrowse struct {
 	mu sync.Mutex
 
@@ -339,10 +339,6 @@ func (r *mockRepoDataBrowse) lookupRef(name string) (Hash, error) {
 		return "", ErrNotFound
 	}
 	return h, nil
-}
-
-func (r *mockRepoDataBrowse) ListCommits(ctx context.Context, commit Hash) ([]Hash, error) {
-	return nonNativeListCommits(ctx, r, commit)
 }
 
 // resolveRev resolves a rev matching the RepoBrowse contract:

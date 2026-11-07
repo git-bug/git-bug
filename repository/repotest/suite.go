@@ -254,15 +254,6 @@ func RepoDataTest(t *testing.T, repo repository.RepoData) {
 	err = repo.RemoveTrackingRef(t.Context(), "origin", "bugs", key1)
 	require.NoError(t, err)
 
-	commits, err := repo.ListCommits(t.Context(), commit2)
-	require.NoError(t, err)
-	require.Equal(t, []repository.Hash{commit1, commit2}, commits)
-
-	canceled, cancel := context.WithCancel(t.Context())
-	cancel()
-	_, err = repo.ListCommits(canceled, commit2)
-	require.ErrorIs(t, err, context.Canceled)
-
 	// Cleanup
 
 	err = repo.RemoveRef(t.Context(), "bugs", key1)

@@ -178,8 +178,7 @@ func TestViews(t *testing.T) {
 		b, _, err := c.Bugs().New(t.Context(), "title", "message")
 		require.NoError(t, err)
 		require.NoError(t, b.Commit(t.Context()))
-		before, err := repo.ListCommits(t.Context(), b.LastCommit())
-		require.NoError(t, err)
+		before := b.LastCommit()
 
 		_, _, err = b.AddComment(t.Context(), "comment")
 		require.NoError(t, err)
@@ -187,9 +186,9 @@ func TestViews(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, b.Commit(t.Context()))
 
-		after, err := repo.ListCommits(t.Context(), b.LastCommit())
+		after, err := repo.ReadCommit(t.Context(), b.LastCommit())
 		require.NoError(t, err)
-		require.Len(t, after, len(before)+1)
+		require.Equal(t, []repository.Hash{before}, after.Parents)
 		require.Equal(t, common.ClosedStatus, b.Snapshot().Status)
 		require.Equal(t, []string{"message", "comment"}, commentsInGit(t, repo, b.Id()))
 	})
@@ -216,9 +215,9 @@ func TestViews(t *testing.T) {
 
 		require.NoError(t, b.Commit(t.Context()))
 		require.Equal(t, id, b.Id())
-		commits, err := repo.ListCommits(t.Context(), b.LastCommit())
+		commit, err := repo.ReadCommit(t.Context(), b.LastCommit())
 		require.NoError(t, err)
-		require.Len(t, commits, 1)
+		require.Empty(t, commit.Parents)
 		require.Equal(t, []string{"message", "comment"}, commentsInGit(t, repo, id))
 		requireDerivedBuiltFromRefs(t, repo, c)
 
