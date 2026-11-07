@@ -21,6 +21,7 @@ import (
 var errDone = errors.New("Iteration Done")
 var errTransitionNotFound = errors.New("Transition not found")
 var errTransitionNotAllowed = errors.New("Transition not allowed")
+var errSearchNotFound = errors.New("Search endpoint not found")
 
 // =============================================================================
 // Extended JSON
@@ -193,15 +194,12 @@ type Issue struct {
 // SearchResult The result type from querying the search endpoint
 // https://docs.atlassian.com/software/jira/docs/api/REST/8.2.6/#api/2/search
 type SearchResult struct {
-	StartAt       int     `json:"startAt"`       // Server-only
-	MaxResults    int     `json:"maxResults"`    // Server-only
-	Total         int     `json:"total"`         // Server-only
-	NextPageToken string  `json:"nextPageToken"` // Cloud-only
-	IsLast        bool    `json:"isLast"`        // Cloud-only
+	StartAt       int     `json:"startAt"`       // Data Center only
+	MaxResults    int     `json:"maxResults"`    // Data Center only
+	Total         int     `json:"total"`         // Data Center only
+	NextPageToken string  `json:"nextPageToken"` // Cloud only
+	IsLast        bool    `json:"isLast"`        // Cloud only
 	Issues        []Issue `json:"issues"`
-
-	// cloud is true when the result comes from the Cloud /search/jql endpoint
-	cloud bool
 }
 
 // NextStartAt return the index of the first item on the next page
@@ -211,32 +209,23 @@ func (sr *SearchResult) NextStartAt() int {
 
 // IsLastPage return true if there are no more items beyond this page
 func (sr *SearchResult) IsLastPage() bool {
-	if sr.cloud {
-		return sr.IsLast || sr.NextPageToken == ""
+	if sr.IsLast {
+		return true
+	}
+	if sr.NextPageToken != "" {
+		return false
 	}
 	return sr.NextStartAt() >= sr.Total
 }
 
-// SearchRequest the JSON object POSTed to the /search endpoint (Server) or
-// the /search/jql endpoint (Cloud)
+// SearchRequest the JSON object POSTed to the /search/jql endpoint (Cloud) or
+// the /search endpoint (Data Center)
 type SearchRequest struct {
 	JQL           string   `json:"jql"`
 	StartAt       int      `json:"startAt,omitempty"`
 	NextPageToken string   `json:"nextPageToken,omitempty"`
 	MaxResults    int      `json:"maxResults"`
 	Fields        []string `json:"fields"`
-}
-
-// ApproximateCountRequest the JSON object POSTed to the
-// /search/approximate-count endpoint (Cloud)
-type ApproximateCountRequest struct {
-	JQL string `json:"jql"`
-}
-
-// ApproximateCountResult the JSON object returned from the
-// /search/approximate-count endpoint (Cloud)
-type ApproximateCountResult struct {
-	Count int `json:"count"`
 }
 
 // Project the JSON object representing a project. Note that we don't use all
@@ -356,6 +345,9 @@ type Client struct {
 	*http.Client
 	serverURL string
 	ctx       context.Context
+
+	// noSearchJQL is set once /search/jql answered 404, as on Data Center
+	noSearchJQL bool
 }
 
 // NewClient Construct a new client connected to the provided server and
@@ -367,7 +359,7 @@ func NewClient(ctx context.Context, serverURL string) *Client {
 		Jar:       cookiJar,
 	}
 
-	return &Client{client, serverURL, ctx}
+	return &Client{Client: client, serverURL: serverURL, ctx: ctx}
 }
 
 // Login POST credentials to the /session endpoint and get a session cookie
@@ -469,40 +461,16 @@ func (client *Client) RefreshSessionTokenRaw(credentialsJSON []byte) error {
 // Endpoint Wrappers
 // =============================================================================
 
-// isCloud returns true if the client is connected to a Jira Cloud site, as
-// opposed to Jira Server or Data Center
-func (client *Client) isCloud() bool {
-	urlobj, err := url.Parse(client.serverURL)
-	if err != nil {
-		return false
-	}
-	host := strings.ToLower(urlobj.Hostname())
-	if strings.HasSuffix(host, ".atlassian.net") {
-		return true
-	}
-	return host == "api.atlassian.com" && strings.HasPrefix(urlobj.Path, "/ex/jira")
-}
-
-// Search Perform an issue a JQL search on the /search endpoint (Server) or
-// the /search/jql endpoint (Cloud). On Server, pages are selected with
-// startAt; on Cloud, with the nextPageToken of the previous page.
+// Search Perform a JQL search, one page at a time: pass nil for the first page,
+// then the previous page to fetch the next one. Jira Cloud serves /search/jql,
+// which pages with nextPageToken. Data Center serves /search, which pages with
+// startAt, so the client falls back to it once /search/jql answers 404.
+// https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-search/
 // https://docs.atlassian.com/software/jira/docs/api/REST/8.2.6/#api/2/search
-func (client *Client) Search(jql string, maxResults int, startAt int, nextPageToken string) (*SearchResult, error) {
-	cloud := client.isCloud()
-
-	url := fmt.Sprintf("%s/rest/api/2/search", client.serverURL)
-	if cloud {
-		url = fmt.Sprintf("%s/rest/api/2/search/jql", client.serverURL)
-		startAt = 0
-	} else {
-		nextPageToken = ""
-	}
-
-	requestBody, err := json.Marshal(SearchRequest{
-		JQL:           jql,
-		StartAt:       startAt,
-		NextPageToken: nextPageToken,
-		MaxResults:    maxResults,
+func (client *Client) Search(jql string, maxResults int, prev *SearchResult) (*SearchResult, error) {
+	query := SearchRequest{
+		JQL:        jql,
+		MaxResults: maxResults,
 		Fields: []string{
 			"comment",
 			"created",
@@ -510,7 +478,30 @@ func (client *Client) Search(jql string, maxResults int, startAt int, nextPageTo
 			"description",
 			"labels",
 			"status",
-			"summary"}})
+			"summary"}}
+	if prev != nil {
+		if prev.NextPageToken != "" {
+			query.NextPageToken = prev.NextPageToken
+		} else {
+			query.StartAt = prev.NextStartAt()
+		}
+	}
+
+	if !client.noSearchJQL {
+		result, err := client.postSearch("search/jql", query)
+		if err != errSearchNotFound {
+			return result, err
+		}
+		client.noSearchJQL = true
+	}
+	return client.postSearch("search", query)
+}
+
+// postSearch POST a search request to the given search endpoint
+func (client *Client) postSearch(endpoint string, query SearchRequest) (*SearchResult, error) {
+	url := fmt.Sprintf("%s/rest/api/2/%s", client.serverURL, endpoint)
+
+	requestBody, err := json.Marshal(query)
 	if err != nil {
 		return nil, err
 	}
@@ -531,6 +522,10 @@ func (client *Client) Search(jql string, maxResults int, startAt int, nextPageTo
 		return nil, err
 	}
 	defer response.Body.Close()
+
+	if response.StatusCode == http.StatusNotFound {
+		return nil, errSearchNotFound
+	}
 
 	if response.StatusCode != http.StatusOK {
 		err := fmt.Errorf(
@@ -547,64 +542,8 @@ func (client *Client) Search(jql string, maxResults int, startAt int, nextPageTo
 		err := fmt.Errorf("Decoding response %v", err)
 		return nil, err
 	}
-	message.cloud = cloud
 
 	return &message, nil
-}
-
-// SearchCount return the number of issues matching a JQL search. On Cloud,
-// the search endpoint returns no total, so the /search/approximate-count
-// endpoint is used instead.
-func (client *Client) SearchCount(jql string) (int, error) {
-	if !client.isCloud() {
-		message, err := client.Search(jql, 0, 0, "")
-		if err != nil {
-			return 0, err
-		}
-		return message.Total, nil
-	}
-
-	url := fmt.Sprintf("%s/rest/api/2/search/approximate-count", client.serverURL)
-
-	requestBody, err := json.Marshal(ApproximateCountRequest{JQL: jql})
-	if err != nil {
-		return 0, err
-	}
-
-	request, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
-	if err != nil {
-		return 0, err
-	}
-
-	if client.ctx != nil {
-		ctx, cancel := context.WithTimeout(client.ctx, defaultTimeout)
-		defer cancel()
-		request = request.WithContext(ctx)
-	}
-
-	response, err := client.Do(request)
-	if err != nil {
-		return 0, err
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		err := fmt.Errorf(
-			"HTTP response %d, query was %s, %s", response.StatusCode,
-			url, requestBody)
-		return 0, err
-	}
-
-	var message ApproximateCountResult
-
-	data, _ := io.ReadAll(response.Body)
-	err = json.Unmarshal(data, &message)
-	if err != nil {
-		err := fmt.Errorf("Decoding response %v", err)
-		return 0, err
-	}
-
-	return message.Count, nil
 }
 
 // SearchIterator cursor within paginated results from the /search endpoint
@@ -652,8 +591,7 @@ func (si *SearchIterator) Next() *Issue {
 			// There are still more pages to fetch, so fetch the next page and
 			// cache it
 			si.searchResult, si.Err = si.client.Search(
-				si.jql, si.pageSize, si.searchResult.NextStartAt(),
-				si.searchResult.NextPageToken)
+				si.jql, si.pageSize, si.searchResult)
 			// NOTE(josh): we don't deal with the error now, we just cache it.
 			// HasNext() will return false and the caller can check the error
 			// afterward.
@@ -665,7 +603,7 @@ func (si *SearchIterator) Next() *Issue {
 
 // IterSearch return an iterator over paginated results for a JQL search
 func (client *Client) IterSearch(jql string, pageSize int) *SearchIterator {
-	result, err := client.Search(jql, pageSize, 0, "")
+	result, err := client.Search(jql, pageSize, nil)
 
 	iter := &SearchIterator{
 		client:       client,
