@@ -42,10 +42,8 @@ Each [release][rel/latest] provides, for every supported system:
 - on Linux, **packages** that install all of the above where your system
   expects them.
 
-The download links are in the section for your OS below. Binary links always
-point to the latest release. Archive and package filenames include the version,
-so their links point to v0.11.0; [the release page][rel/latest] may have a newer
-one.
+The download links are in the section for your OS below, and always point to
+the latest release.
 
 ### Verify a download<a name="verify-a-download"></a>
 
@@ -84,10 +82,10 @@ You can download it from the release. The CPU is what `uname -m` prints:
 Install a package with your package manager:
 
 ```
-sudo apt install ./git-bug_<version>_linux_amd64.deb                # Debian, Ubuntu
-sudo dnf install ./git-bug_<version>_linux_amd64.rpm                # Fedora, RHEL
-sudo apk add --allow-untrusted ./git-bug_<version>_linux_amd64.apk  # Alpine
-sudo pacman -U ./git-bug_<version>_linux_amd64.pkg.tar.zst          # Arch
+sudo apt install ./git-bug_linux_amd64.deb                # Debian, Ubuntu
+sudo dnf install ./git-bug_linux_amd64.rpm                # Fedora, RHEL
+sudo apk add --allow-untrusted ./git-bug_linux_amd64.apk  # Alpine
+sudo pacman -U ./git-bug_linux_amd64.pkg.tar.zst          # Arch
 ```
 
 ### Arch Linux<a name="arch-linux"></a>
@@ -220,7 +218,7 @@ The versions we use are pinned in [`.tool-versions`](./.tool-versions).
 ```
 git clone https://github.com/git-bug/git-bug.git
 cd git-bug
-git checkout v0.11.0 # optional: pick a release, or stay on the development head
+git checkout v0.12.0 # optional: pick a release, or stay on the development head
 make install
 ```
 
@@ -250,24 +248,18 @@ ______________________________________________________________________
 
 - [Documentation home][docs/home]
 
-<!--
-    When cutting a release, replace the previous version number everywhere in
-    this file before tagging, so that the archive and package links point to the
-    new release.
--->
-
-[arc/darwin_amd64]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_darwin_amd64.tar.gz
-[arc/darwin_arm64]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_darwin_arm64.tar.gz
-[arc/freebsd_amd64]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_freebsd_amd64.tar.gz
-[arc/freebsd_arm64]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_freebsd_arm64.tar.gz
-[arc/linux_amd64]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_amd64.tar.gz
-[arc/linux_arm64]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_arm64.tar.gz
-[arc/linux_armv6]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_armv6.tar.gz
-[arc/linux_armv7]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_armv7.tar.gz
-[arc/netbsd_amd64]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_netbsd_amd64.tar.gz
-[arc/openbsd_amd64]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_openbsd_amd64.tar.gz
-[arc/windows_amd64]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_windows_amd64.zip
-[arc/windows_arm64]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_windows_arm64.zip
+[arc/darwin_amd64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_darwin_amd64.tar.gz
+[arc/darwin_arm64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_darwin_arm64.tar.gz
+[arc/freebsd_amd64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_freebsd_amd64.tar.gz
+[arc/freebsd_arm64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_freebsd_arm64.tar.gz
+[arc/linux_amd64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_amd64.tar.gz
+[arc/linux_arm64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_arm64.tar.gz
+[arc/linux_armv6]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_armv6.tar.gz
+[arc/linux_armv7]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_armv7.tar.gz
+[arc/netbsd_amd64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_netbsd_amd64.tar.gz
+[arc/openbsd_amd64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_openbsd_amd64.tar.gz
+[arc/windows_amd64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_windows_amd64.zip
+[arc/windows_arm64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_windows_arm64.zip
 [bin/darwin_amd64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_darwin_amd64
 [bin/darwin_arm64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_darwin_arm64
 [bin/freebsd_amd64]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_freebsd_amd64
@@ -287,19 +279,19 @@ ______________________________________________________________________
 [p/arch-repo]: https://archlinux.org/packages/extra/x86_64/git-bug/
 [p/aur]: https://aur.archlinux.org/packages/git-bug-bin
 [p/nix]: https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/applications/version-management/git-bug/default.nix
-[pkg/linux_amd64.apk]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_amd64.apk
-[pkg/linux_amd64.arch]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_amd64.pkg.tar.zst
-[pkg/linux_amd64.deb]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_amd64.deb
-[pkg/linux_amd64.rpm]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_amd64.rpm
-[pkg/linux_arm64.apk]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_arm64.apk
-[pkg/linux_arm64.arch]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_arm64.pkg.tar.zst
-[pkg/linux_arm64.deb]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_arm64.deb
-[pkg/linux_arm64.rpm]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_arm64.rpm
-[pkg/linux_armv6.apk]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_armv6.apk
-[pkg/linux_armv6.deb]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_armv6.deb
-[pkg/linux_armv6.rpm]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_armv6.rpm
-[pkg/linux_armv7.apk]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_armv7.apk
-[pkg/linux_armv7.arch]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_armv7.pkg.tar.zst
-[pkg/linux_armv7.deb]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_armv7.deb
-[pkg/linux_armv7.rpm]: https://github.com/git-bug/git-bug/releases/download/v0.11.0/git-bug_0.11.0_linux_armv7.rpm
+[pkg/linux_amd64.apk]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_amd64.apk
+[pkg/linux_amd64.arch]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_amd64.pkg.tar.zst
+[pkg/linux_amd64.deb]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_amd64.deb
+[pkg/linux_amd64.rpm]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_amd64.rpm
+[pkg/linux_arm64.apk]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_arm64.apk
+[pkg/linux_arm64.arch]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_arm64.pkg.tar.zst
+[pkg/linux_arm64.deb]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_arm64.deb
+[pkg/linux_arm64.rpm]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_arm64.rpm
+[pkg/linux_armv6.apk]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_armv6.apk
+[pkg/linux_armv6.deb]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_armv6.deb
+[pkg/linux_armv6.rpm]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_armv6.rpm
+[pkg/linux_armv7.apk]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_armv7.apk
+[pkg/linux_armv7.arch]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_armv7.pkg.tar.zst
+[pkg/linux_armv7.deb]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_armv7.deb
+[pkg/linux_armv7.rpm]: https://github.com/git-bug/git-bug/releases/latest/download/git-bug_linux_armv7.rpm
 [rel/latest]: https://github.com/git-bug/git-bug/releases/latest
