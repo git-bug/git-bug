@@ -3,7 +3,6 @@ package dag
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/lamport"
@@ -28,8 +27,8 @@ import (
 // fresh clone has none, and an identity records every clock in each of its
 // versions.
 func EnsureClocks(ctx context.Context, def Definition, repo repository.Repo) error {
-	for _, pattern := range []string{creationClockPattern, editClockPattern} {
-		usable, err := clockUsable(repo, fmt.Sprintf(pattern, def.Namespace))
+	for _, name := range []string{def.creationClock(), def.editClock()} {
+		usable, err := clockUsable(repo, name)
 		if err != nil {
 			return err
 		}
@@ -78,11 +77,9 @@ func witnessClock(repo repository.Repo, name string, time lamport.Time) error {
 	return err
 }
 
-// incrementClock returns the next time of a clock, rebuilding it first if it
-// isn't usable.
-func incrementClock(ctx context.Context, def Definition, repo repository.Repo, pattern string) (lamport.Time, error) {
-	name := fmt.Sprintf(pattern, def.Namespace)
-
+// incrementClock returns the next time of the clock with this name, one of the
+// definition's, rebuilding the clocks first if it isn't usable.
+func incrementClock(ctx context.Context, def Definition, repo repository.Repo, name string) (lamport.Time, error) {
 	time, err := repo.Increment(name)
 	if !unusableClock(err) {
 		return time, err
@@ -105,12 +102,12 @@ func rebuildClocks(ctx context.Context, def Definition, repo repository.Repo) er
 		return err
 	}
 
-	err = rebuildClock(repo, fmt.Sprintf(creationClockPattern, def.Namespace), createTime)
+	err = rebuildClock(repo, def.creationClock(), createTime)
 	if err != nil {
 		return err
 	}
 
-	return rebuildClock(repo, fmt.Sprintf(editClockPattern, def.Namespace), editTime)
+	return rebuildClock(repo, def.editClock(), editTime)
 }
 
 // rebuildClock creates a clock at a time found by scanning every entity, or
