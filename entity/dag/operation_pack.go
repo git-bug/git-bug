@@ -275,7 +275,7 @@ func readOperationPack(ctx context.Context, def Definition, repo repository.Repo
 	}
 
 	// Verify signature if we expect one
-	keys := author.ValidKeysAtTime(fmt.Sprintf(editClockPattern, def.Namespace), editTime)
+	keys := author.ValidKeysAtTime(def.editClock(), editTime)
 	if len(keys) > 0 {
 		// this is a *very* convoluted and inefficient way to make OpenPGP accept to check a signature, but anything
 		// else goes against the grain and make it very unhappy.

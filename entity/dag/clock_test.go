@@ -2,7 +2,6 @@ package dag
 
 import (
 	"errors"
-	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -36,7 +35,7 @@ func TestUnusableClockRebuiltOnIncrement(t *testing.T) {
 				require.NoError(t, e2.Commit(t.Context(), repo))
 			}
 
-			editClock := fmt.Sprintf(editClockPattern, def.Namespace)
+			editClock := def.editClock()
 			damage(t, repo, editClock)
 
 			// reading e1 alone doesn't touch the clock
@@ -56,7 +55,7 @@ func TestUnusableClockRebuiltOnIncrement(t *testing.T) {
 func TestUnusableClockRebuiltWithoutEntities(t *testing.T) {
 	repo, id1, _, _, def := makeTestContextGoGit(t)
 
-	createClock := fmt.Sprintf(creationClockPattern, def.Namespace)
+	createClock := def.creationClock()
 	corruptClock(t, repo, createClock)
 
 	e := wrapper(New(def))
@@ -68,8 +67,8 @@ func TestUnusableClockRebuiltWithoutEntities(t *testing.T) {
 // EnsureClocks rebuilds whatever isn't usable, and leaves the rest alone.
 func TestEnsureClocks(t *testing.T) {
 	repo, id1, _, _, def := makeTestContextGoGit(t)
-	createClock := fmt.Sprintf(creationClockPattern, def.Namespace)
-	editClock := fmt.Sprintf(editClockPattern, def.Namespace)
+	createClock := def.creationClock()
+	editClock := def.editClock()
 
 	// no entity yet: the clocks start from the beginning
 	require.NoError(t, EnsureClocks(t.Context(), def, repo))

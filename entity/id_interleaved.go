@@ -29,7 +29,7 @@ func (ci CombinedId) HasPrefix(prefix string) bool {
 }
 
 // UnmarshalGQL implement the Unmarshaler interface for gqlgen
-func (ci *CombinedId) UnmarshalGQL(v interface{}) error {
+func (ci *CombinedId) UnmarshalGQL(v any) error {
 	_, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("CombinedIds must be strings")

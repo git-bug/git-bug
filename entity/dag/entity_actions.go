@@ -206,7 +206,7 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 		), id)
 	}
 
-	editTime, err := incrementClock(ctx, def, repo, editClockPattern)
+	editTime, err := incrementClock(ctx, def, repo, def.editClock())
 	if err != nil {
 		return entity.NewMergeError(err, id)
 	}

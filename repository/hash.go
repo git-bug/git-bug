@@ -16,7 +16,7 @@ func (h Hash) String() string {
 }
 
 // UnmarshalGQL implement the Unmarshaler interface for gqlgen
-func (h *Hash) UnmarshalGQL(v interface{}) error {
+func (h *Hash) UnmarshalGQL(v any) error {
 	_, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("hashes must be strings")

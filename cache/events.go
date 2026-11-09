@@ -71,7 +71,7 @@ func (e EntityEventType) MarshalGQL(w io.Writer) {
 	}
 }
 
-func (e *EntityEventType) UnmarshalGQL(v interface{}) error {
+func (e *EntityEventType) UnmarshalGQL(v any) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")

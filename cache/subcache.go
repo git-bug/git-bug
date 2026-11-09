@@ -11,10 +11,11 @@ import (
 	"sync"
 	"time"
 
+	"resenje.org/singleflight"
+
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
-	"resenje.org/singleflight"
 )
 
 type Excerpt interface {

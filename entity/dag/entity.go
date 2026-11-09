@@ -4,9 +4,9 @@ package dag
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"sync"
 
@@ -15,23 +15,6 @@ import (
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/util/lamport"
 )
-
-const creationClockPattern = "%s-create"
-const editClockPattern = "%s-edit"
-
-type OperationUnmarshaler func(ctx context.Context, raw json.RawMessage, resolver entity.Resolvers) (Operation, error)
-
-// Definition hold the details defining one specialization of an Entity.
-type Definition struct {
-	// the name of the entity (bug, pull-request, ...), for human consumption
-	Typename string
-	// the Namespace in git references (bugs, prs, ...)
-	Namespace string
-	// a function decoding a JSON message into an Operation
-	OperationUnmarshaler OperationUnmarshaler
-	// the expected format version number, that can be used for data migration/upgrade
-	FormatVersion uint
-}
 
 // Entity is a data structure stored in a chain of git objects, supporting actions like Push, Pull and Merge.
 type Entity struct {
@@ -69,24 +52,6 @@ func Read[EntityT entity.Interface](ctx context.Context, def Definition, wrapper
 	}
 
 	commit, err := repo.ResolveRef(ctx, def.Namespace, id.String())
-	if errors.Is(err, repository.ErrNotFound) {
-		return *new(EntityT), entity.NewErrNotFound(def.Typename)
-	}
-	if err != nil {
-		return *new(EntityT), err
-	}
-
-	e, _, err := read[EntityT](ctx, def, wrapper, repo, resolvers, id, commit)
-	return e, err
-}
-
-// readTracking will read and decode an Entity from the tracking refs of a remote
-func readTracking[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, remote string, id entity.Id) (EntityT, error) {
-	if err := id.Validate(); err != nil {
-		return *new(EntityT), fmt.Errorf("invalid id: %w", err)
-	}
-
-	commit, err := repo.ResolveTrackingRef(ctx, remote, def.Namespace, id.String())
 	if errors.Is(err, repository.ErrNotFound) {
 		return *new(EntityT), entity.NewErrNotFound(def.Typename)
 	}
@@ -255,8 +220,7 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 		return false
 	}
 
-	for i := len(topoOrder) - 1; i >= 0; i-- {
-		commit := topoOrder[i]
+	for i, commit := range slices.Backward(topoOrder) {
 		isFirstCommit := since == "" && i == len(topoOrder)-1
 		isMerge := len(commit.Parents) > 1
 
@@ -341,11 +305,11 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 
 	// The clocks are fine, we witness them
 	for _, opp := range oppMap {
-		err := witnessClock(repo, fmt.Sprintf(creationClockPattern, def.Namespace), opp.CreateTime)
+		err := witnessClock(repo, def.creationClock(), opp.CreateTime)
 		if err != nil {
 			return nil, 0, 0, nil, err
 		}
-		err = witnessClock(repo, fmt.Sprintf(editClockPattern, def.Namespace), opp.EditTime)
+		err = witnessClock(repo, def.editClock(), opp.EditTime)
 		if err != nil {
 			return nil, 0, 0, nil, err
 		}
@@ -671,7 +635,7 @@ func (e *Entity) commitOperationsLocked(ctx context.Context, repo repository.Rep
 			staging = staging[1:]
 		}
 
-		editTime, err = incrementClock(ctx, e.Definition, repo, editClockPattern)
+		editTime, err = incrementClock(ctx, e.Definition, repo, e.editClock())
 		if err != nil {
 			return err
 		}
@@ -683,7 +647,7 @@ func (e *Entity) commitOperationsLocked(ctx context.Context, repo repository.Rep
 		}
 
 		if lastCommit == "" {
-			createTime, err = incrementClock(ctx, e.Definition, repo, creationClockPattern)
+			createTime, err = incrementClock(ctx, e.Definition, repo, e.creationClock())
 			if err != nil {
 				return err
 			}
