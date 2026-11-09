@@ -147,7 +147,7 @@ func (c *RepoCache) Pull(ctx context.Context, remote string) error {
 		}
 		if merge.Err != nil {
 			firstErr = merge.Err
-		} else if merge.Status == entity.MergeStatusInvalid {
+		} else if merge.Status == entity.MergeStatusInvalid || merge.Status == entity.MergeStatusConflict {
 			firstErr = fmt.Errorf("merge failure: %s", merge.Reason)
 		}
 	}
