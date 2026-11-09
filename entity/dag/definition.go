@@ -80,3 +80,8 @@ func (def Definition) creationClock() string {
 func (def Definition) editClock() string {
 	return def.Namespace + "-edit"
 }
+
+// entityName names the Entity with this id in messages.
+func (def Definition) entityName(id entity.Id) string {
+	return fmt.Sprintf("%s %s", def.Typename, id.Human())
+}

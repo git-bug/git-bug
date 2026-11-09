@@ -648,6 +648,51 @@ func TestMergeUnequalBranches(t *testing.T) {
 	}
 }
 
+// The same first operation committed twice gives two histories with the same id but
+// different roots: they are never joined, as a DAG with two roots can't be read.
+func TestMergeUnrelatedHistories(t *testing.T) {
+	repoA, repoB, _, id1, _, resolvers, def := makeTestContextRemote(t)
+
+	op := newOp1(id1, "foo")
+	eA := New(def)
+	eA.Append(op)
+	require.NoError(t, eA.Commit(t.Context(), repoA))
+
+	// a higher edit time in B gives another root commit
+	_, err := repoB.GetOrCreateClock(def.editClock(), 10)
+	require.NoError(t, err)
+	eB := New(def)
+	eB.Append(op)
+	require.NoError(t, eB.Commit(t.Context(), repoB))
+
+	require.Equal(t, eA.Id(), eB.Id())
+	require.NotEqual(t, eA.LastCommit(), eB.LastCommit())
+
+	_, err = Push(t.Context(), def, repoA, "remote")
+	require.NoError(t, err)
+	_, err = Fetch(t.Context(), def, repoB, "remote")
+	require.NoError(t, err)
+
+	var all []entity.MergeResult
+	for result := range MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", id1) {
+		require.NoError(t, result.Err)
+		all = append(all, result)
+	}
+	require.Len(t, all, 1)
+	require.Equal(t, eA.Id(), all[0].Id)
+	require.Equal(t, entity.MergeStatusConflict, all[0].Status)
+
+	// nothing changed locally, and the entity is still readable
+	local, err := repoB.ResolveRef(t.Context(), def.Namespace, eB.Id().String())
+	require.NoError(t, err)
+	require.Equal(t, eB.LastCommit(), local)
+	_, err = Read(t.Context(), def, wrapper, repoB, resolvers, eB.Id())
+	require.NoError(t, err)
+
+	// Pull reports it as a failure
+	require.Error(t, Pull(t.Context(), def, wrapper, repoB, resolvers, "remote", id1))
+}
+
 // Invalid remote data must never reach the local entities, whether the merge
 // would create, fast-forward or join the local entity with a merge commit.
 func TestMergeInvalidRemote(t *testing.T) {

@@ -72,7 +72,7 @@ func Pull[EntityT entity.Interface](ctx context.Context, def Definition, wrapper
 		}
 		if merge.Err != nil {
 			firstErr = merge.Err
-		} else if merge.Status == entity.MergeStatusInvalid {
+		} else if merge.Status == entity.MergeStatusInvalid || merge.Status == entity.MergeStatusConflict {
 			firstErr = fmt.Errorf("merge failure: %s", merge.Reason)
 		}
 	}
@@ -92,7 +92,10 @@ func Pull[EntityT entity.Interface](ctx context.Context, def Definition, wrapper
 //  4. if the remote has new commit, the local bug is updated to match the same history
 //     (fast-forward update)
 //     --> emit entity.MergeStatusUpdated
-//  5. if both local and remote Entity have new commits (that is, we have a concurrent edition),
+//  5. if the local and remote Entity have no common history (different root commits), they are
+//     never merged, nothing is changed.
+//     --> emit entity.MergeStatusConflict
+//  6. if both local and remote Entity have new commits (that is, we have a concurrent edition),
 //     a merge commit with an empty operationPack is created to join both branch and form a DAG.
 //     --> emit entity.MergeStatusUpdated
 //
@@ -152,6 +155,7 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 	// the remote Entity as there is no need to pay for it. Scenario 1 is by far
 	// the most common case.
 
+	var localRoot repository.Hash
 	if localExist {
 		// SCENARIO 1
 		// if the remote and local Entity have the same state, nothing is changed
@@ -164,7 +168,8 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 		// SCENARIO 2
 		// if the local Entity has new commits but the remote don't, nothing is changed
 
-		localCommits, err := walkHistory(ctx, repo, localCommit, "")
+		var localCommits map[repository.Hash]repository.Commit
+		localCommits, localRoot, err = walkHistory(ctx, repo, localCommit, "")
 		if err != nil {
 			return entity.NewMergeError(err, id)
 		}
@@ -215,6 +220,16 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 	}
 
 	// SCENARIO 5
+	// if the local and remote Entity have no common history, they are never merged:
+	// joining them would give a DAG with two roots, which can't be read. Both histories
+	// descend from their single root, so they share a commit if and only if they share
+	// the root.
+
+	if _, ok := remoteCommits[localRoot]; !ok {
+		return entity.NewMergeConflictStatus(id, fmt.Sprintf("remote %s has no common history with the local one", def.entityName(id)))
+	}
+
+	// SCENARIO 6
 	// if both local and remote Entity have new commits (that is, we have a concurrent edition),
 	// a merge commit with an empty operationPack is created to join both branch and form a DAG.
 
@@ -227,7 +242,7 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 	// without a user identity set (e.g. in a fresh clone) works in all other cases.
 	if author == nil {
 		return entity.NewMergeError(fmt.Errorf(
-			"%s %s has diverged and requires a merge commit: %w", def.Typename, id.Human(), identity.ErrNoIdentitySet,
+			"%s has diverged and requires a merge commit: %w", def.entityName(id), identity.ErrNoIdentitySet,
 		), id)
 	}
 

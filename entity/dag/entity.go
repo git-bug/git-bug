@@ -84,10 +84,13 @@ func read[EntityT entity.Interface](ctx context.Context, def Definition, wrapper
 // walkHistory performs a breadth-first search to read lastCommit and its ancestors,
 // going back in time up to the chronological root, or to since if not empty. since
 // itself is not read.
-func walkHistory(ctx context.Context, repo repository.Repo, lastCommit repository.Hash, since repository.Hash) (map[repository.Hash]repository.Commit, error) {
+// It also returns the root, the commit without parents it reached, which is empty
+// if the walk stopped at since before reaching one.
+func walkHistory(ctx context.Context, repo repository.RepoData, lastCommit repository.Hash, since repository.Hash) (map[repository.Hash]repository.Commit, repository.Hash, error) {
 	queue := make([]repository.Hash, 0, 32)
 	visited := make(map[repository.Hash]struct{})
 	commits := make(map[repository.Hash]repository.Commit)
+	var root repository.Hash
 
 	queue = append(queue, lastCommit)
 	visited[lastCommit] = struct{}{}
@@ -101,15 +104,18 @@ func walkHistory(ctx context.Context, repo repository.Repo, lastCommit repositor
 		queue = queue[1:]
 
 		if err := ctx.Err(); err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
 		commit, err := repo.ReadCommit(ctx, hash)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
 		commits[hash] = commit
+		if len(commit.Parents) == 0 {
+			root = hash
+		}
 
 		for _, parent := range commit.Parents {
 			if _, ok := visited[parent]; !ok {
@@ -120,7 +126,7 @@ func walkHistory(ctx context.Context, repo repository.Repo, lastCommit repositor
 		}
 	}
 
-	return commits, nil
+	return commits, root, nil
 }
 
 // readSince fetch from git and decode the operations of an Entity from its last commit,
@@ -131,7 +137,7 @@ func walkHistory(ctx context.Context, repo repository.Repo, lastCommit repositor
 func readSince(ctx context.Context, def Definition, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash, since repository.Hash, sinceEditTime lamport.Time) ([]Operation, lamport.Time, lamport.Time, map[repository.Hash]repository.Commit, error) {
 	// Discover the commits of the DAG, then count the children of each commit.
 
-	commits, err := walkHistory(ctx, repo, lastCommit, since)
+	commits, _, err := walkHistory(ctx, repo, lastCommit, since)
 	if err != nil {
 		return nil, 0, 0, nil, err
 	}

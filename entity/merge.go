@@ -8,12 +8,13 @@ import (
 type MergeStatus int
 
 const (
-	_                  MergeStatus = iota
-	MergeStatusNew                 // a new Entity was created locally
-	MergeStatusInvalid             // the remote data is invalid
-	MergeStatusUpdated             // a local Entity has been updated
-	MergeStatusNothing             // no changes were made to a local Entity (already up to date)
-	MergeStatusError               // a terminal error happened
+	_                   MergeStatus = iota
+	MergeStatusNew                  // a new Entity was created locally
+	MergeStatusInvalid              // the remote data is invalid
+	MergeStatusUpdated              // a local Entity has been updated
+	MergeStatusNothing              // no changes were made to a local Entity (already up to date)
+	MergeStatusError                // a terminal error happened
+	MergeStatusConflict             // the local and remote Entity have no common history, nothing was changed
 )
 
 // MergeResult hold the result of a merge operation on an Entity.
@@ -24,7 +25,7 @@ type MergeResult struct {
 	Id     Id
 	Status MergeStatus
 
-	// Only set for Invalid status
+	// Only set for Invalid and Conflict status
 	Reason string
 }
 
@@ -43,6 +44,8 @@ func (mr MergeResult) String() string {
 			return fmt.Sprintf("merge error on %s: %s", mr.Id, mr.Err.Error())
 		}
 		return fmt.Sprintf("merge error: %s", mr.Err.Error())
+	case MergeStatusConflict:
+		return fmt.Sprintf("conflict: %s", mr.Reason)
 	default:
 		panic("unknown merge status")
 	}
@@ -74,6 +77,14 @@ func NewMergeNothingStatus(id Id) MergeResult {
 	return MergeResult{
 		Id:     id,
 		Status: MergeStatusNothing,
+	}
+}
+
+func NewMergeConflictStatus(id Id, reason string) MergeResult {
+	return MergeResult{
+		Id:     id,
+		Status: MergeStatusConflict,
+		Reason: reason,
 	}
 }
 
