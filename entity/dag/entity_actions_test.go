@@ -729,9 +729,9 @@ func TestRemove(t *testing.T) {
 	_, err := Push(t.Context(), def, repoA, "remote")
 	require.NoError(t, err)
 
-	// the push created the remote-tracking ref, so the remote copy is readable,
-	// which makes the check below after the removal meaningful
-	_, err = readTracking(t.Context(), def, wrapper, repoA, resolvers, "remote", e.Id())
+	// the push created the remote-tracking ref, which makes the check below
+	// after the removal meaningful
+	_, err = repoA.ResolveTrackingRef(t.Context(), "remote", def.Namespace, e.Id().String())
 	require.NoError(t, err)
 
 	err = Remove(t.Context(), def, repoA, e.Id())
@@ -740,8 +740,8 @@ func TestRemove(t *testing.T) {
 	_, err = Read(t.Context(), def, wrapper, repoA, resolvers, e.Id())
 	require.Error(t, err)
 
-	_, err = readTracking(t.Context(), def, wrapper, repoA, resolvers, "remote", e.Id())
-	require.Error(t, err)
+	_, err = repoA.ResolveTrackingRef(t.Context(), "remote", def.Namespace, e.Id().String())
+	require.ErrorIs(t, err, repository.ErrNotFound)
 
 	// Remove is idempotent
 	err = Remove(t.Context(), def, repoA, e.Id())
@@ -770,8 +770,8 @@ func TestRemoveAll(t *testing.T) {
 		_, err = Read(t.Context(), def, wrapper, repoA, resolvers, id)
 		require.Error(t, err)
 
-		_, err = readTracking(t.Context(), def, wrapper, repoA, resolvers, "remote", id)
-		require.Error(t, err)
+		_, err = repoA.ResolveTrackingRef(t.Context(), "remote", def.Namespace, id.String())
+		require.ErrorIs(t, err, repository.ErrNotFound)
 	}
 
 	// Remove is idempotent

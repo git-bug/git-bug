@@ -248,7 +248,7 @@ func (l LabelChangeStatus) MarshalGQL(w io.Writer) {
 	}
 }
 
-func (l *LabelChangeStatus) UnmarshalGQL(v interface{}) error {
+func (l *LabelChangeStatus) UnmarshalGQL(v any) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")

@@ -69,7 +69,7 @@ func (s Status) MarshalGQL(w io.Writer) {
 	}
 }
 
-func (s *Status) UnmarshalGQL(v interface{}) error {
+func (s *Status) UnmarshalGQL(v any) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
