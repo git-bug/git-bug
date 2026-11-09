@@ -381,6 +381,12 @@ func TestIdentityKeysNotEntities(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []entity.Id{i.Id()}, ids)
 
+		heads, err := ListHeads(t.Context(), repoA)
+		require.NoError(t, err)
+		require.Equal(t, map[entity.Id]repository.Hash{i.Id(): i.LastCommit()}, heads)
+
+		require.Equal(t, []entity.Id{i.Id()}, IdsFromKeys([]string{key, i.Id().String()}))
+
 		var read []*Identity
 		for streamed := range ReadAll(t.Context(), repoA) {
 			require.NoError(t, streamed.Err)
@@ -408,6 +414,12 @@ func TestIdentityKeysNotEntities(t *testing.T) {
 
 		_, err := ListLocalIds(t.Context(), repoA)
 		require.ErrorIs(t, err, entity.ErrOutdatedId)
+
+		_, err = ListHeads(t.Context(), repoA)
+		require.ErrorIs(t, err, entity.ErrOutdatedId)
+
+		// ListHeads reports it
+		require.Equal(t, []entity.Id{i.Id()}, IdsFromKeys([]string{key, i.Id().String()}))
 
 		var readErr error
 		for streamed := range ReadAll(t.Context(), repoA) {

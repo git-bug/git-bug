@@ -147,6 +147,12 @@ func TestKeysNotEntities(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []entity.Id{e.Id()}, ids)
 
+		heads, err := ListHeads(t.Context(), def, repoA)
+		require.NoError(t, err)
+		require.Equal(t, map[entity.Id]repository.Hash{e.Id(): e.LastCommit()}, heads)
+
+		require.Equal(t, []entity.Id{e.Id()}, IdsFromKeys(def, []string{key, e.Id().String()}))
+
 		var read []*Foo
 		for streamed := range ReadAll(t.Context(), def, wrapper, repoA, resolvers) {
 			require.NoError(t, streamed.Err)
@@ -178,6 +184,12 @@ func TestKeysNotEntities(t *testing.T) {
 		_, err := ListLocalIds(t.Context(), def, repoA)
 		require.ErrorIs(t, err, entity.ErrOutdatedId)
 
+		_, err = ListHeads(t.Context(), def, repoA)
+		require.ErrorIs(t, err, entity.ErrOutdatedId)
+
+		// ListHeads reports it
+		require.Equal(t, []entity.Id{e.Id()}, IdsFromKeys(def, []string{key, e.Id().String()}))
+
 		var readErr error
 		for streamed := range ReadAll(t.Context(), def, wrapper, repoA, resolvers) {
 			if streamed.Err != nil {
@@ -201,6 +213,35 @@ func TestKeysNotEntities(t *testing.T) {
 		require.ErrorIs(t, RemoveAll(t.Context(), def, repoA), entity.ErrOutdatedId)
 		_, err = repoA.ResolveRef(t.Context(), def.Namespace, e.Id().String())
 		require.NoError(t, err)
+	})
+}
+
+func TestHeads(t *testing.T) {
+	repo, _, _, id1, id2, _, def := makeTestContextRemote(t)
+
+	e1 := New(def)
+	e1.Append(newOp1(id1, "foo"))
+	require.NoError(t, e1.Commit(t.Context(), repo))
+	e2 := New(def)
+	e2.Append(newOp2(id2, "bar"))
+	require.NoError(t, e2.Commit(t.Context(), repo))
+
+	t.Run("ListHeads", func(t *testing.T) {
+		heads, err := ListHeads(t.Context(), def, repo)
+		require.NoError(t, err)
+		require.Equal(t, map[entity.Id]repository.Hash{
+			e1.Id(): e1.LastCommit(),
+			e2.Id(): e2.LastCommit(),
+		}, heads)
+	})
+
+	t.Run("Head", func(t *testing.T) {
+		head, err := Head(t.Context(), def, repo, e1.Id())
+		require.NoError(t, err)
+		require.Equal(t, e1.LastCommit(), head)
+
+		_, err = Head(t.Context(), def, repo, entity.DeriveId([]byte("missing")))
+		require.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }
 

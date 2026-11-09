@@ -36,7 +36,18 @@ type getUserIdentityFunc func(ctx context.Context) (*IdentityCache, error)
 // Actions expose a number of action functions on Entities, to give upper layers (cache) a way to normalize interactions.
 // Note: ideally this wouldn't exist, the cache layer would assume that everything is an entity/dag, and directly use the
 // functions from this package, but right now identities are not using that framework.
+//
+// The cache knows the entities by id only: how they are stored in references is left
+// to the entity type, through ListHeads, Head and IdsFromKeys.
 type Actions[SharedT Shared] struct {
+	// ListHeads returns every entity, with the commit its reference points to
+	ListHeads func(ctx context.Context, repo repository.Repo) (map[entity.Id]repository.Hash, error)
+	// Head returns the commit the reference of an entity points to, or
+	// repository.ErrNotFound if there is none
+	Head func(ctx context.Context, repo repository.Repo, id entity.Id) (repository.Hash, error)
+	// IdsFromKeys returns the ids of the entities stored in the references with these
+	// keys, as given by the repository changes, ignoring the other keys
+	IdsFromKeys func(keys []string) []entity.Id
 	// ReadWithResolver reads an entity from the repository
 	ReadWithResolver func(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (SharedT, error)
 	// Refresh brings a loaded entity up to date with its reference, either in place
@@ -644,6 +655,14 @@ const syncInterval = time.Second
 // sync, see startSyncWorker. It bounds the cost of a failure that lasts.
 const syncRetryMaxDelay = time.Minute
 
+// refsChanged asks the worker for a sync of the entities stored in the references
+// with these keys, see requestSync. A key that can't hold an entity is ignored.
+func (sc *SubCache[SharedT, ExcerptT, ViewT]) refsChanged(keys []string) {
+	if ids := sc.actions.IdsFromKeys(keys); len(ids) > 0 {
+		sc.requestSync(ids...)
+	}
+}
+
 // requestSync asks the worker for a sync of the given entities, or of every
 // entity if none is given, to bring the cache up to date with changes made to
 // the references outside of it, by another process or the git binary. It never
@@ -817,14 +836,14 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncIdsLocked(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	refs := make(map[string]repository.Hash, len(ids))
+	refs := make(map[entity.Id]repository.Hash, len(ids))
 	indexBuiltFrom := make(map[string]repository.Hash, len(ids))
 	candidates := make(map[entity.Id]struct{}, len(ids))
 	for _, id := range ids {
-		ref, err := sc.repo.ResolveRef(ctx, sc.namespace, id.String())
+		ref, err := sc.actions.Head(ctx, sc.repo, id)
 		switch {
 		case err == nil:
-			refs[id.String()] = ref
+			refs[id] = ref
 		case !errors.Is(err, repository.ErrNotFound):
 			return nil, err
 		}
@@ -859,14 +878,14 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncAllLocked(ctx context.Context,
 		return nil, err
 	}
 
-	refs, err := sc.repo.ListRefs(ctx, sc.namespace)
+	refs, err := sc.actions.ListHeads(ctx, sc.repo)
 	if err != nil {
 		return nil, err
 	}
 
 	candidates := make(map[entity.Id]struct{}, len(refs))
-	for key := range refs {
-		candidates[entity.Id(key)] = struct{}{}
+	for id := range refs {
+		candidates[id] = struct{}{}
 	}
 	for id := range sc.builtFrom {
 		candidates[id] = struct{}{}
@@ -911,7 +930,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncAllLocked(ctx context.Context,
 // It returns the changes of excerpts that were applied, even on error, for the
 // caller to notify once muDerived is released. progress, if not nil, receives
 // the build events.
-func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncEntitiesLocked(ctx context.Context, index repository.Index, candidates map[entity.Id]struct{}, refs map[string]repository.Hash, indexBuiltFrom map[string]repository.Hash, progress func(BuildEvent)) (map[entity.Id]EntityEventType, error) {
+func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncEntitiesLocked(ctx context.Context, index repository.Index, candidates map[entity.Id]struct{}, refs map[entity.Id]repository.Hash, indexBuiltFrom map[string]repository.Hash, progress func(BuildEvent)) (map[entity.Id]EntityEventType, error) {
 	if progress == nil {
 		progress = func(BuildEvent) {}
 	}
@@ -921,7 +940,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncEntitiesLocked(ctx context.Con
 	inIndex := make(map[entity.Id]bool)
 	sc.muMaps.RLock()
 	for id := range candidates {
-		ref := refs[id.String()]
+		ref := refs[id]
 		loaded, isLoaded := sc.cached[id]
 		loadedBehind := isLoaded && loaded.LastCommit() != ref
 		if sc.builtFrom[id] != ref || indexBuiltFrom[id.String()] != ref || loadedBehind {
@@ -994,7 +1013,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncEntitiesLocked(ctx context.Con
 		if entity.IsErrNotFound(err) {
 			// not found can also come from a missing dependency, such as the
 			// author identity: only a missing reference is a removal
-			_, refErr := sc.repo.ResolveRef(ctx, sc.namespace, id.String())
+			_, refErr := sc.actions.Head(ctx, sc.repo, id)
 			if !errors.Is(refErr, repository.ErrNotFound) {
 				return err
 			}
@@ -1029,7 +1048,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncEntitiesLocked(ctx context.Con
 	}
 
 	for i, id := range behind {
-		ref := refs[id.String()]
+		ref := refs[id]
 		var d *derived[ExcerptT]
 		fromIndex := false
 		if inIndex[id] {

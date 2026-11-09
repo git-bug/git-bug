@@ -46,6 +46,9 @@ type cacheMgmt interface {
 	// requestSync asks for a sync of the given entities, or of every entity
 	// if none is given, in the background.
 	requestSync(ids ...entity.Id)
+	// refsChanged asks for a sync of what the references of the namespace with these
+	// keys hold, as reported by the repository changes, in the background.
+	refsChanged(keys []string)
 	Close() error
 }
 
@@ -257,16 +260,8 @@ func (c *RepoCache) followChanges(events chan BuildEvent) {
 					continue
 				}
 				for _, subcache := range c.subcaches {
-					keys := change.Keys[subcache.GetNamespace()]
-					ids := make([]entity.Id, 0, len(keys))
-					for _, key := range keys {
-						// not a ref of an entity: nothing to sync
-						if id := entity.Id(key); id.Validate() == nil {
-							ids = append(ids, id)
-						}
-					}
-					if len(ids) > 0 {
-						subcache.requestSync(ids...)
+					if keys := change.Keys[subcache.GetNamespace()]; len(keys) > 0 {
+						subcache.refsChanged(keys)
 					}
 				}
 			}
