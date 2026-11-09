@@ -403,17 +403,17 @@ func ReadAll[EntityT entity.Interface](ctx context.Context, def Definition, wrap
 	go func() {
 		defer close(out)
 
-		refs, err := repo.ListRefs(ctx, def.Namespace)
+		heads, err := def.listEntities(ctx, repo)
 		if err != nil {
 			out <- entity.StreamedEntity[EntityT]{Err: err}
 			return
 		}
 
-		total := int64(len(refs))
+		total := int64(len(heads))
 		current := int64(1)
 
-		for key, commit := range refs {
-			e, _, err := read[EntityT](ctx, def, wrapper, repo, resolvers, entity.Id(key), commit)
+		for id, commit := range heads {
+			e, _, err := read[EntityT](ctx, def, wrapper, repo, resolvers, id, commit)
 
 			if err != nil {
 				out <- entity.StreamedEntity[EntityT]{Err: err}
@@ -435,12 +435,12 @@ func ReadAll[EntityT entity.Interface](ctx context.Context, def Definition, wrap
 // readAllClocksNoCheck goes over all entities matching Definition and return the highest creation and edit time
 // they hold, for the corresponding clocks to be rebuilt. Zero if there is no entity.
 func readAllClocksNoCheck(ctx context.Context, def Definition, repo repository.Repo) (createTime, editTime lamport.Time, err error) {
-	refs, err := repo.ListRefs(ctx, def.Namespace)
+	heads, err := def.listEntities(ctx, repo)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	for _, commit := range refs {
+	for _, commit := range heads {
 		create, edit, err := readClockNoCheck(ctx, repo, commit)
 		if err != nil {
 			return 0, 0, err

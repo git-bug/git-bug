@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+// ErrOutdatedId is returned by Id.Validate and CombinedId.Validate for an id of the
+// outdated repository format, where ids were 40 characters long.
+var ErrOutdatedId = errors.New("outdated repository format, please use https://github.com/git-bug/git-bug-migration to upgrade")
+
 // ErrNotFound is to be returned when an entity, item, element is
 // not found.
 type ErrNotFound struct {
