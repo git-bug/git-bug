@@ -39,6 +39,9 @@ func NewRepoCacheIdentity(repo repository.Repo,
 	//   resolved before keeps the previous copy until it is resolved again.
 
 	actions := Actions[*identity.Identity]{
+		ListHeads:   identity.ListHeads,
+		Head:        identity.Head,
+		IdsFromKeys: identity.IdsFromKeys,
 		ReadWithResolver: func(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (*identity.Identity, error) {
 			return identity.Read(ctx, repo, id)
 		},

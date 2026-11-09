@@ -8,6 +8,7 @@ import (
 	"maps"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -1343,6 +1344,45 @@ func TestSubCacheWorker(t *testing.T) {
 			time.Sleep(syncInterval)
 			synctest.Wait()
 			require.True(t, hasExcerpt(t, c, failing))
+		})
+	})
+
+	// setupKey returns a mock repo with a bug, and a reference with this key to the
+	// same commit
+	setupKey := func(t *testing.T, key string) (repository.Repo, entity.Id) {
+		repo := repository.NewMockRepo()
+		rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
+		require.NoError(t, err)
+		require.NoError(t, rene.Commit(t.Context(), repo))
+		id := createOutside(t, repo, rene)
+		commit, err := repo.ResolveRef(t.Context(), bug.Namespace, id.String())
+		require.NoError(t, err)
+		require.NoError(t, repo.UpdateRef(t.Context(), bug.Namespace, key, "", commit))
+		return repo, id
+	}
+
+	t.Run("a reference that can't hold an entity is ignored when loading", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, id := setupKey(t, "not-an-id")
+
+			c, events := NewRepoCache(repo, nil)
+			for event := range events {
+				require.NoError(t, event.Err)
+				require.NotEqual(t, BuildEventWarning, event.Event)
+			}
+			t.Cleanup(func() { require.NoError(t, c.Close()) })
+			require.Equal(t, []entity.Id{id}, c.Bugs().AllIds())
+		})
+	})
+
+	t.Run("a reference of the outdated repository format fails the loading", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			repo, _ := setupKey(t, strings.Repeat("0", 40))
+
+			c, err := NewRepoCacheNoEvents(repo, nil)
+			require.ErrorIs(t, err, entity.ErrOutdatedId)
+			require.Nil(t, c)
+			require.NoError(t, repo.Close())
 		})
 	})
 

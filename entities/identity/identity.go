@@ -230,15 +230,39 @@ func headsFromRefs(refs map[string]repository.Hash) (map[entity.Id]repository.Ha
 
 // ListLocalIds list all the available local identity ids
 func ListLocalIds(ctx context.Context, repo repository.Repo) ([]entity.Id, error) {
-	refs, err := repo.ListRefs(ctx, Namespace)
-	if err != nil {
-		return nil, err
-	}
-	heads, err := headsFromRefs(refs)
+	heads, err := ListHeads(ctx, repo)
 	if err != nil {
 		return nil, err
 	}
 	return slices.Collect(maps.Keys(heads)), nil
+}
+
+// ListHeads returns every local identity id, with the commit its reference points to.
+func ListHeads(ctx context.Context, repo repository.Repo) (map[entity.Id]repository.Hash, error) {
+	refs, err := repo.ListRefs(ctx, Namespace)
+	if err != nil {
+		return nil, err
+	}
+	return headsFromRefs(refs)
+}
+
+// Head returns the commit the reference of a local identity points to, or
+// repository.ErrNotFound if there is none.
+func Head(ctx context.Context, repo repository.Repo, id entity.Id) (repository.Hash, error) {
+	return repo.ResolveRef(ctx, Namespace, id.String())
+}
+
+// IdsFromKeys returns the ids of the identities stored in the references with these
+// keys, ignoring the other keys, including those of the outdated repository format
+// which ListHeads reports.
+func IdsFromKeys(keys []string) []entity.Id {
+	ids := make([]entity.Id, 0, len(keys))
+	for _, key := range keys {
+		if id, ok, _ := idFromKey(key); ok {
+			ids = append(ids, id)
+		}
+	}
+	return ids
 }
 
 // ReadAll read and parse all local Identity

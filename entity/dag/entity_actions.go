@@ -21,6 +21,30 @@ func ListLocalIds(ctx context.Context, def Definition, repo repository.RepoData)
 	return slices.Collect(maps.Keys(heads)), nil
 }
 
+// ListHeads returns every local Entity's Id, with the commit its reference points to.
+func ListHeads(ctx context.Context, def Definition, repo repository.Repo) (map[entity.Id]repository.Hash, error) {
+	return def.listEntities(ctx, repo)
+}
+
+// Head returns the commit the reference of a local Entity points to, or
+// repository.ErrNotFound if there is none.
+func Head(ctx context.Context, def Definition, repo repository.Repo, id entity.Id) (repository.Hash, error) {
+	return repo.ResolveRef(ctx, def.Namespace, id.String())
+}
+
+// IdsFromKeys returns the ids of the Entities stored in the references with these keys,
+// ignoring the other keys, including those of the outdated repository format which
+// ListHeads reports.
+func IdsFromKeys(def Definition, keys []string) []entity.Id {
+	ids := make([]entity.Id, 0, len(keys))
+	for _, key := range keys {
+		if id, ok, _ := def.idFromKey(key); ok {
+			ids = append(ids, id)
+		}
+	}
+	return ids
+}
+
 // Fetch retrieve updates from a remote
 // This does not change the local entity state
 func Fetch(ctx context.Context, def Definition, repo repository.Repo, remote string) (string, error) {

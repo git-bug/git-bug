@@ -46,6 +46,9 @@ func NewRepoCacheBug(repo repository.Repo,
 	}
 
 	actions := Actions[*sharedBug]{
+		ListHeads:   bug.ListHeads,
+		Head:        bug.Head,
+		IdsFromKeys: bug.IdsFromKeys,
 		ReadWithResolver: func(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (*sharedBug, error) {
 			b, err := bug.ReadWithResolver(ctx, repo, resolvers, id)
 			if err != nil {

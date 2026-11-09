@@ -16,7 +16,8 @@ type OperationUnmarshaler func(ctx context.Context, raw json.RawMessage, resolve
 //
 // The id of an Entity is the id of its first operation. An Entity is stored in a git
 // reference of its Namespace named after its id: refs/<Namespace>/<id>, as part of the
-// storage format (see https://github.com/git-bug/spec).
+// storage format (see https://github.com/git-bug/spec). Code outside of this package finds
+// entities by id through ListHeads, Head and IdsFromKeys, not by reading references.
 //
 // A reference of the Namespace whose key can't hold an Entity is not an Entity: every
 // function ignores it, locally or on a remote. The exception is the key of an Entity
