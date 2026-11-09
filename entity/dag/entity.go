@@ -45,13 +45,17 @@ func New(definition Definition) *Entity {
 	}
 }
 
-// Read will read and decode a stored local Entity from a repository
+// Read will read and decode a stored local Entity from a repository.
+// A singleton is not addressed by id, see ReadSingleton.
 func Read[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, id entity.Id) (EntityT, error) {
+	if def.isSingleton() {
+		return *new(EntityT), fmt.Errorf("%s is a singleton, see ReadSingleton", def.Typename)
+	}
 	if err := id.Validate(); err != nil {
 		return *new(EntityT), fmt.Errorf("invalid id: %w", err)
 	}
 
-	commit, err := repo.ResolveRef(ctx, def.Namespace, id.String())
+	commit, err := repo.ResolveRef(ctx, def.Namespace, def.keyFromId(id))
 	if errors.Is(err, repository.ErrNotFound) {
 		return *new(EntityT), entity.NewErrNotFound(def.Typename)
 	}
@@ -63,11 +67,30 @@ func Read[EntityT entity.Interface](ctx context.Context, def Definition, wrapper
 	return e, err
 }
 
+// ReadSingleton reads and decodes the singleton Entity of the Definition, whatever
+// its id.
+func ReadSingleton[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers) (EntityT, error) {
+	if !def.isSingleton() {
+		return *new(EntityT), fmt.Errorf("%s is not a singleton", def.Typename)
+	}
+
+	commit, err := repo.ResolveRef(ctx, def.Namespace, def.SingletonKey)
+	if errors.Is(err, repository.ErrNotFound) {
+		return *new(EntityT), entity.NewErrNotFound(def.Typename)
+	}
+	if err != nil {
+		return *new(EntityT), err
+	}
+
+	e, _, err := read[EntityT](ctx, def, wrapper, repo, resolvers, "", commit)
+	return e, err
+}
+
 // read fetch from git and decode an Entity from its last commit, and make sure
-// that it is the Entity with the given id.
+// that it is the Entity with the expected id, if not empty.
 // It also returns the commits of the Entity.
-func read[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash) (EntityT, map[repository.Hash]repository.Commit, error) {
-	ops, createTime, editTime, commits, err := readSince(ctx, def, repo, resolvers, id, lastCommit, "", 0)
+func read[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, expected entity.Id, lastCommit repository.Hash) (EntityT, map[repository.Hash]repository.Commit, error) {
+	ops, createTime, editTime, commits, err := readSince(ctx, def, repo, resolvers, expected, lastCommit, "", 0)
 	if err != nil {
 		return *new(EntityT), nil, err
 	}
@@ -130,11 +153,11 @@ func walkHistory(ctx context.Context, repo repository.RepoData, lastCommit repos
 }
 
 // readSince fetch from git and decode the operations of an Entity from its last commit,
-// and make sure that it is the Entity with the given id.
+// and make sure that it is the Entity with the expected id, if not empty.
 // If since is not empty, only the commits after it are read, and sinceEditTime must be
 // its edit time. Those commits must all descend from it, otherwise an error is returned.
 // It also returns the commits it read.
-func readSince(ctx context.Context, def Definition, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, lastCommit repository.Hash, since repository.Hash, sinceEditTime lamport.Time) ([]Operation, lamport.Time, lamport.Time, map[repository.Hash]repository.Commit, error) {
+func readSince(ctx context.Context, def Definition, repo repository.Repo, resolvers entity.Resolvers, expected entity.Id, lastCommit repository.Hash, since repository.Hash, sinceEditTime lamport.Time) ([]Operation, lamport.Time, lamport.Time, map[repository.Hash]repository.Commit, error) {
 	// Discover the commits of the DAG, then count the children of each commit.
 
 	commits, _, err := walkHistory(ctx, repo, lastCommit, since)
@@ -271,9 +294,12 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 		}
 
 		// The id of an Entity is the id of its first operation: make sure that
-		// the ref actually points to the Entity it is named after.
-		if isFirstCommit && (len(opp.Operations) == 0 || opp.Operations[0].Id() != id) {
-			return nil, 0, 0, nil, fmt.Errorf("the %s doesn't match its id %s", def.Typename, id)
+		// the ref actually points to the expected Entity.
+		if isFirstCommit && len(opp.Operations) == 0 {
+			return nil, 0, 0, nil, fmt.Errorf("the %s has no first operation", def.Typename)
+		}
+		if isFirstCommit && expected != "" && opp.Operations[0].Id() != expected {
+			return nil, 0, 0, nil, fmt.Errorf("the %s doesn't match its id %s", def.Typename, expected)
 		}
 
 		// make sure that the lamport clocks causality match the DAG topology
@@ -420,7 +446,6 @@ func ReadAll[EntityT entity.Interface](ctx context.Context, def Definition, wrap
 
 		for id, commit := range heads {
 			e, _, err := read[EntityT](ctx, def, wrapper, repo, resolvers, id, commit)
-
 			if err != nil {
 				out <- entity.StreamedEntity[EntityT]{Err: err}
 				return
@@ -682,7 +707,7 @@ func (e *Entity) commitOperationsLocked(ctx context.Context, repo repository.Rep
 		id = ops[0].Id()
 	}
 
-	err = repo.UpdateRef(ctx, e.Namespace, id.String(), e.lastCommit, lastCommit)
+	err = repo.UpdateRef(ctx, e.Namespace, e.keyFromId(id), e.lastCommit, lastCommit)
 	if err != nil {
 		return err
 	}
@@ -699,6 +724,9 @@ func (e *Entity) commitOperationsLocked(ctx context.Context, repo repository.Rep
 // top of the reloaded state.
 // When the new commits all descend from the last commit the Entity knows about, only
 // those are read. Otherwise, the whole Entity is read again.
+// It returns an entity.ErrNotFound if the Entity is not in the repository anymore. For
+// a singleton, that includes its reference holding another Entity, for instance when
+// another one was created first: ReadSingleton gives that other Entity.
 // On any error, the Entity is left unchanged.
 func (e *Entity) Repair(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers) error {
 	e.mu.Lock()
@@ -709,7 +737,7 @@ func (e *Entity) Repair(ctx context.Context, repo repository.Repo, resolvers ent
 	}
 	id := e.firstOpLocked().Id()
 
-	commit, err := repo.ResolveRef(ctx, e.Namespace, id.String())
+	commit, err := repo.ResolveRef(ctx, e.Namespace, e.keyFromId(id))
 	if errors.Is(err, repository.ErrNotFound) {
 		return entity.NewErrNotFound(e.Typename)
 	}
@@ -754,9 +782,18 @@ func (e *Entity) Repair(ctx context.Context, repo repository.Repo, resolvers ent
 		}
 	}
 
-	ops, createTime, editTime, _, err := readSince(ctx, e.Definition, repo, resolvers, id, commit, "", 0)
+	// The reference of a singleton can hold another Entity: the read accepts any, and
+	// its first operation tells.
+	expected := id
+	if e.isSingleton() {
+		expected = ""
+	}
+	ops, createTime, editTime, _, err := readSince(ctx, e.Definition, repo, resolvers, expected, commit, "", 0)
 	if err != nil {
 		return err
+	}
+	if ops[0].Id() != id {
+		return entity.NewErrNotFound(e.Typename)
 	}
 
 	e.ops = ops

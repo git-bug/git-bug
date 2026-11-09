@@ -14,10 +14,14 @@ type OperationUnmarshaler func(ctx context.Context, raw json.RawMessage, resolve
 
 // Definition hold the details defining one specialization of an Entity.
 //
-// The id of an Entity is the id of its first operation. An Entity is stored in a git
-// reference of its Namespace named after its id: refs/<Namespace>/<id>, as part of the
-// storage format (see https://github.com/git-bug/spec). Code outside of this package finds
-// entities by id through ListHeads, Head and IdsFromKeys, not by reading references.
+// The id of an Entity is the id of its first operation. A regular Entity is stored in
+// a git reference of its Namespace named after its id: refs/<Namespace>/<id>, as part
+// of the storage format (see https://github.com/git-bug/spec). Code outside of this package
+// finds entities by id through ListHeads, Head and IdsFromKeys, not by reading
+// references.
+//
+// A singleton is stored in refs/<Namespace>/<SingletonKey>, and is not addressed by
+// id: ReadSingleton reads it, RemoveAll removes it.
 //
 // A reference of the Namespace whose key can't hold an Entity is not an Entity: every
 // function ignores it, locally or on a remote. The exception is the key of an Entity
@@ -28,16 +32,36 @@ type Definition struct {
 	Typename string
 	// the Namespace in git references (bugs, prs, ...)
 	Namespace string
+	// SingletonKey, if set, makes the Entity a singleton: there is at most one in the
+	// Namespace, stored in the reference with that key instead of one named after its id.
+	SingletonKey string
 	// a function decoding a JSON message into an Operation
 	OperationUnmarshaler OperationUnmarshaler
 	// the expected format version number, that can be used for data migration/upgrade
 	FormatVersion uint
 }
 
-// idFromKey tells what the reference with this key holds. If ok, it holds the Entity
-// with this id. If not, the key can't hold an Entity and the reference is ignored. The
-// key of an Entity in the outdated repository format gives entity.ErrOutdatedId.
+// isSingleton tells whether the Entity is a singleton, see SingletonKey.
+func (def Definition) isSingleton() bool {
+	return def.SingletonKey != ""
+}
+
+// keyFromId returns the key of the reference holding the Entity with this id.
+func (def Definition) keyFromId(id entity.Id) string {
+	if def.isSingleton() {
+		return def.SingletonKey
+	}
+	return id.String()
+}
+
+// idFromKey tells what the reference with this key holds. If ok, it holds an Entity,
+// which must have this id, empty for a singleton which can hold any Entity. If not,
+// the key can't hold an Entity and the reference is ignored. The key of an Entity in
+// the outdated repository format gives entity.ErrOutdatedId.
 func (def Definition) idFromKey(key string) (id entity.Id, ok bool, err error) {
+	if def.isSingleton() {
+		return "", key == def.SingletonKey, nil
+	}
 	id = entity.Id(key)
 	err = id.Validate()
 	switch {
@@ -50,8 +74,8 @@ func (def Definition) idFromKey(key string) (id entity.Id, ok bool, err error) {
 }
 
 // listEntities returns the commit the reference of each local Entity points to, by
-// its id. See idFromKey for the references left out, and the error of the outdated
-// repository format.
+// the id the Entity must have, empty for a singleton. See idFromKey for the references
+// left out, and the error of the outdated repository format.
 func (def Definition) listEntities(ctx context.Context, repo repository.RepoData) (map[entity.Id]repository.Hash, error) {
 	refs, err := repo.ListRefs(ctx, def.Namespace)
 	if err != nil {
@@ -81,7 +105,11 @@ func (def Definition) editClock() string {
 	return def.Namespace + "-edit"
 }
 
-// entityName names the Entity with this id in messages.
+// entityName names the Entity with this id in messages. A singleton is named after its
+// type alone, as the only one.
 func (def Definition) entityName(id entity.Id) string {
+	if def.isSingleton() {
+		return def.Typename
+	}
 	return fmt.Sprintf("%s %s", def.Typename, id.Human())
 }
