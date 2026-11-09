@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"reflect"
 	"slices"
 
@@ -196,22 +197,48 @@ func read(ctx context.Context, repo repository.Repo, id entity.Id, lastCommit re
 	return i, nil
 }
 
+// idFromKey tells what the reference with this key holds. If ok, it holds the identity
+// with this id. If not, the key can't hold an identity and the reference is ignored.
+// The key of an identity in the outdated repository format gives entity.ErrOutdatedId.
+func idFromKey(key string) (id entity.Id, ok bool, err error) {
+	id = entity.Id(key)
+	err = id.Validate()
+	switch {
+	case errors.Is(err, entity.ErrOutdatedId):
+		return "", false, err
+	case err != nil:
+		return "", false, nil
+	}
+	return id, true, nil
+}
+
+// headsFromRefs returns the commit of each identity among these references, by id. See
+// idFromKey for the references left out, and the error of the outdated repository format.
+func headsFromRefs(refs map[string]repository.Hash) (map[entity.Id]repository.Hash, error) {
+	heads := make(map[entity.Id]repository.Hash, len(refs))
+	for key, commit := range refs {
+		id, ok, err := idFromKey(key)
+		if err != nil {
+			return nil, fmt.Errorf("invalid id %q: %w", key, err)
+		}
+		if ok {
+			heads[id] = commit
+		}
+	}
+	return heads, nil
+}
+
 // ListLocalIds list all the available local identity ids
 func ListLocalIds(ctx context.Context, repo repository.Repo) ([]entity.Id, error) {
 	refs, err := repo.ListRefs(ctx, Namespace)
 	if err != nil {
 		return nil, err
 	}
-
-	ids := make([]entity.Id, 0, len(refs))
-	for key := range refs {
-		id := entity.Id(key)
-		if err := id.Validate(); err != nil {
-			return nil, fmt.Errorf("invalid id %q: %w", key, err)
-		}
-		ids = append(ids, id)
+	heads, err := headsFromRefs(refs)
+	if err != nil {
+		return nil, err
 	}
-	return ids, nil
+	return slices.Collect(maps.Keys(heads)), nil
 }
 
 // ReadAll read and parse all local Identity
@@ -240,12 +267,17 @@ func readAll(ctx context.Context, repo repository.Repo, listRefs func() (map[str
 			out <- entity.StreamedEntity[*Identity]{Err: err}
 			return
 		}
+		heads, err := headsFromRefs(refs)
+		if err != nil {
+			out <- entity.StreamedEntity[*Identity]{Err: err}
+			return
+		}
 
-		total := int64(len(refs))
+		total := int64(len(heads))
 		current := int64(1)
 
-		for key, commit := range refs {
-			i, err := read(ctx, repo, entity.Id(key), commit)
+		for id, commit := range heads {
+			i, err := read(ctx, repo, id, commit)
 
 			if err != nil {
 				out <- entity.StreamedEntity[*Identity]{Err: err}

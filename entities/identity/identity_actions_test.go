@@ -3,6 +3,7 @@ package identity
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -333,4 +334,100 @@ func TestIdentityMergeUpdateRefFailure(t *testing.T) {
 			}
 		})
 	}
+}
+
+// A reference of the namespace whose key can't hold an identity is ignored
+// everywhere, and the key of an identity in the outdated repository format is an
+// error everywhere.
+func TestIdentityKeysNotEntities(t *testing.T) {
+	// setup returns two repositories sharing a remote, the first one with an
+	// identity and a reference with this key to a commit that isn't an identity,
+	// both pushed and fetched by the second one
+	setup := func(t *testing.T, key string) (repository.Repo, repository.Repo, *Identity) {
+		repoA, repoB, _ := repotest.SetupGoGitReposAndRemote(t)
+
+		i, err := NewIdentity(repoA, "name", "email")
+		require.NoError(t, err)
+		require.NoError(t, i.Commit(t.Context(), repoA))
+
+		tree, err := repoA.StoreTree(t.Context(), nil)
+		require.NoError(t, err)
+		commit, err := repoA.StoreCommit(t.Context(), tree)
+		require.NoError(t, err)
+		require.NoError(t, repoA.UpdateRef(t.Context(), Namespace, key, "", commit))
+
+		_, err = Push(t.Context(), repoA, "origin")
+		require.NoError(t, err)
+		_, err = Fetch(t.Context(), repoB, "origin")
+		require.NoError(t, err)
+
+		return repoA, repoB, i
+	}
+
+	mergeAll := func(t *testing.T, repo repository.Repo) map[entity.Id]entity.MergeStatus {
+		statuses := make(map[entity.Id]entity.MergeStatus)
+		for result := range MergeAll(t.Context(), repo, "origin") {
+			require.NoError(t, result.Err)
+			statuses[result.Id] = result.Status
+		}
+		return statuses
+	}
+
+	t.Run("ignored", func(t *testing.T) {
+		const key = "not-an-id"
+		repoA, repoB, i := setup(t, key)
+
+		ids, err := ListLocalIds(t.Context(), repoA)
+		require.NoError(t, err)
+		require.Equal(t, []entity.Id{i.Id()}, ids)
+
+		var read []*Identity
+		for streamed := range ReadAll(t.Context(), repoA) {
+			require.NoError(t, streamed.Err)
+			require.EqualValues(t, 1, streamed.TotalEntities)
+			read = append(read, streamed.Entity)
+		}
+		require.Len(t, read, 1)
+
+		require.Equal(t, map[entity.Id]entity.MergeStatus{i.Id(): entity.MergeStatusNew}, mergeAll(t, repoB))
+		_, err = repoB.ResolveRef(t.Context(), Namespace, key)
+		require.ErrorIs(t, err, repository.ErrNotFound)
+		require.NoError(t, Pull(t.Context(), repoB, "origin"))
+
+		require.NoError(t, RemoveAll(t.Context(), repoA))
+		ids, err = ListLocalIds(t.Context(), repoA)
+		require.NoError(t, err)
+		require.Empty(t, ids)
+		_, err = repoA.ResolveRef(t.Context(), Namespace, key)
+		require.NoError(t, err)
+	})
+
+	t.Run("outdated format", func(t *testing.T) {
+		key := strings.Repeat("0", 40)
+		repoA, repoB, i := setup(t, key)
+
+		_, err := ListLocalIds(t.Context(), repoA)
+		require.ErrorIs(t, err, entity.ErrOutdatedId)
+
+		var readErr error
+		for streamed := range ReadAll(t.Context(), repoA) {
+			if streamed.Err != nil {
+				readErr = streamed.Err
+			}
+		}
+		require.ErrorIs(t, readErr, entity.ErrOutdatedId)
+
+		require.Equal(t, map[entity.Id]entity.MergeStatus{
+			i.Id():         entity.MergeStatusNew,
+			entity.Id(key): entity.MergeStatusInvalid,
+		}, mergeAll(t, repoB))
+		_, err = repoB.ResolveRef(t.Context(), Namespace, key)
+		require.ErrorIs(t, err, repository.ErrNotFound)
+		require.Error(t, Pull(t.Context(), repoB, "origin"))
+
+		// nothing is removed
+		require.ErrorIs(t, RemoveAll(t.Context(), repoA), entity.ErrOutdatedId)
+		_, err = repoA.ResolveRef(t.Context(), Namespace, i.Id().String())
+		require.NoError(t, err)
+	})
 }

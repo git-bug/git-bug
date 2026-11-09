@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
@@ -12,19 +14,11 @@ import (
 
 // ListLocalIds list all the available local Entity's Id
 func ListLocalIds(ctx context.Context, def Definition, repo repository.RepoData) ([]entity.Id, error) {
-	refs, err := repo.ListRefs(ctx, def.Namespace)
+	heads, err := def.listEntities(ctx, repo)
 	if err != nil {
 		return nil, err
 	}
-	ids := make([]entity.Id, 0, len(refs))
-	for key := range refs {
-		id := entity.Id(key)
-		if err := id.Validate(); err != nil {
-			return nil, fmt.Errorf("invalid id %q: %w", key, err)
-		}
-		ids = append(ids, id)
-	}
-	return ids, nil
+	return slices.Collect(maps.Keys(heads)), nil
 }
 
 // Fetch retrieve updates from a remote
@@ -78,6 +72,9 @@ func Pull[EntityT entity.Interface](ctx context.Context, def Definition, wrapper
 //     a merge commit with an empty operationPack is created to join both branch and form a DAG.
 //     --> emit entity.MergeStatusUpdated
 //
+// A remote reference whose key can't hold an Entity is ignored, and nothing is emitted for it.
+// The key of an Entity in the outdated repository format emits entity.MergeStatusInvalid.
+//
 // Note: an author is necessary for the case where a merge commit is created, as this commit will
 // have an author and may be signed if a signing key is available. The author can be nil, in which
 // case entities that require a merge commit will yield a merge error.
@@ -98,7 +95,15 @@ func MergeAll[EntityT entity.Interface](ctx context.Context, def Definition, wra
 				out <- entity.NewMergeError(err, "")
 				return
 			}
-			result := merge[EntityT](ctx, def, wrapper, repo, resolvers, entity.Id(key), remoteCommit, author)
+			id, ok, err := def.idFromKey(key)
+			if err != nil {
+				out <- entity.NewMergeInvalidStatus(entity.Id(key), fmt.Errorf("invalid id: %w", err).Error())
+				continue
+			}
+			if !ok {
+				continue
+			}
+			result := merge[EntityT](ctx, def, wrapper, repo, resolvers, id, remoteCommit, author)
 			out <- result
 			if result.Err != nil && ctx.Err() != nil {
 				// cut short, already reported
@@ -110,13 +115,9 @@ func MergeAll[EntityT entity.Interface](ctx context.Context, def Definition, wra
 	return out
 }
 
-// merge perform a merge to make sure a local Entity is up-to-date.
+// merge perform a merge to make sure the local Entity with this id is up-to-date.
 // See MergeAll for more details.
 func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, id entity.Id, remoteCommit repository.Hash, author identity.Interface) entity.MergeResult {
-	if err := id.Validate(); err != nil {
-		return entity.NewMergeInvalidStatus(id, fmt.Errorf("invalid id: %w", err).Error())
-	}
-
 	localCommit, err := repo.ResolveRef(ctx, def.Namespace, id.String())
 	localExist := err == nil
 	if err != nil && !errors.Is(err, repository.ErrNotFound) {
@@ -235,6 +236,10 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 // Remove delete an Entity, as well as its tracking refs for every remote.
 // Remove is idempotent.
 func Remove(ctx context.Context, def Definition, repo repository.Repo, id entity.Id) error {
+	if err := id.Validate(); err != nil {
+		return fmt.Errorf("invalid id: %w", err)
+	}
+
 	// list the remotes before deleting anything, to not stop halfway on failure
 	remotes, err := repo.GetRemotes()
 	if err != nil {

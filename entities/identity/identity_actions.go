@@ -43,7 +43,10 @@ func Pull(ctx context.Context, repo repository.Repo, remote string) error {
 	return firstErr
 }
 
-// MergeAll will merge all the available remote identity
+// MergeAll will merge all the available remote identity.
+// A remote reference whose key can't hold an identity is ignored, and nothing is emitted
+// for it. The key of an identity in the outdated repository format emits
+// entity.MergeStatusInvalid.
 func MergeAll(ctx context.Context, repo repository.Repo, remote string) <-chan entity.MergeResult {
 	out := make(chan entity.MergeResult)
 
@@ -63,7 +66,15 @@ func MergeAll(ctx context.Context, repo repository.Repo, remote string) <-chan e
 				return
 			}
 
-			id := entity.Id(key)
+			id, ok, err := idFromKey(key)
+			if err != nil {
+				out <- entity.NewMergeInvalidStatus(entity.Id(key), fmt.Errorf("invalid id: %w", err).Error())
+				continue
+			}
+			if !ok {
+				continue
+			}
+
 			remoteIdentity, err := read(ctx, repo, id, remoteCommit)
 
 			if err != nil {
