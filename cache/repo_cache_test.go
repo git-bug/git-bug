@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/config"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/misc/random_bugs"
@@ -816,7 +817,10 @@ func TestCacheRebuildsUnusableClocks(t *testing.T) {
 		},
 	}
 
-	clocks := []string{bug.Namespace + "-create", bug.Namespace + "-edit"}
+	clocks := []string{
+		bug.Namespace + "-create", bug.Namespace + "-edit",
+		config.Namespace + "-create", config.Namespace + "-edit",
+	}
 
 	clockTimes := func(t *testing.T, repo repository.Repo) map[string]lamport.Time {
 		t.Helper()
