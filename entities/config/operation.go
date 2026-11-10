@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
@@ -52,10 +53,49 @@ var _ Operation = &dag.UnknownOperation[*Snapshot]{}
 // opBase is the common part of the operations of this package. On top of
 // dag.OpBase, it holds the time of every Lamport clock of the repository when the
 // operation was made, which places it relative to the operations of every other
-// entity.
+// entity: the operation applies to those of a later time, see Snapshot.At.
 type opBase struct {
 	dag.OpBase
 	Times map[string]lamport.Time `json:"times"`
+}
+
+// Validate checks the common part of the operation op, of type opType: the one of
+// dag.OpBase, and the times, which every operation records.
+func (base *opBase) Validate(op Operation, opType dag.OperationType) error {
+	if err := base.OpBase.Validate(op, opType); err != nil {
+		return err
+	}
+	if base.Times == nil {
+		return fmt.Errorf("times not set")
+	}
+	return nil
+}
+
+// timed is an operation of this package, recording times, see opBase.
+type timed interface {
+	times() map[string]lamport.Time
+}
+
+func (base *opBase) times() map[string]lamport.Time {
+	return base.Times
+}
+
+// opTimes returns the times recorded by an operation, see opBase. Those of an
+// operation this client doesn't know are read from its JSON, and are none if they
+// can't be read.
+func opTimes(op dag.Operation) map[string]lamport.Time {
+	switch op := op.(type) {
+	case timed:
+		return op.times()
+	case *dag.UnknownOperation[*Snapshot]:
+		var raw struct {
+			Times map[string]lamport.Time `json:"times"`
+		}
+		_ = json.Unmarshal(op.RawJSON, &raw)
+		return raw.Times
+	default:
+		return nil
+	}
 }
 
 func newOpBase(repo repository.RepoClock, opType dag.OperationType, author identity.Interface, unixTime int64) (opBase, error) {
@@ -124,7 +164,7 @@ func (op *CreateOperation) Id() entity.Id {
 func (op *CreateOperation) Apply(_ *Snapshot) {}
 
 func (op *CreateOperation) Validate() error {
-	return op.OpBase.Validate(op, CreateOp)
+	return op.opBase.Validate(op, CreateOp)
 }
 
 func NewCreateOp(repo repository.RepoClock, author identity.Interface, unixTime int64) (*CreateOperation, error) {

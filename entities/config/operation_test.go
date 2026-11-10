@@ -66,6 +66,29 @@ func TestOperations(t *testing.T) {
 		})
 	})
 
+	t.Run("times", func(t *testing.T) {
+		// every operation records times, even with no clock
+		op, err := NewCreateOp(repository.NewMockRepoClock(), rene, unix)
+		require.NoError(t, err)
+		require.NoError(t, op.Validate())
+		data, err := json.Marshal(op)
+		require.NoError(t, err)
+		require.Contains(t, string(data), `"times":{}`)
+
+		create, err := NewCreateOp(clocks, rene, unix)
+		require.NoError(t, err)
+		description, err := NewRepoSetDescriptionOp(clocks, rene, unix, "description")
+		require.NoError(t, err)
+		set, err := NewLabelsSetOp(clocks, rene, unix, "bug", LabelsDefinition{})
+		require.NoError(t, err)
+		remove, err := NewLabelsRemoveOp(clocks, rene, unix, "bug")
+		require.NoError(t, err)
+		create.Times, description.Times, set.Times, remove.Times = nil, nil, nil, nil
+		for _, op := range []Operation{create, description, set, remove} {
+			require.ErrorContains(t, op.Validate(), "times", "operation type %d", op.Type())
+		}
+	})
+
 	t.Run("unknown", func(t *testing.T) {
 		// An operation type that this client doesn't know is kept as it is, in a
 		// known section or not

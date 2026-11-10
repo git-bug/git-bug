@@ -11,6 +11,7 @@ import (
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/repository/repotest"
+	"github.com/git-bug/git-bug/util/lamport"
 )
 
 func TestConfig(t *testing.T) {
@@ -180,6 +181,51 @@ func TestSync(t *testing.T) {
 		require.Contains(t, []string{"from A", "from B"}, snapA.Repo.Description)
 		require.Equal(t, snapA.Labels, snapB.Labels)
 		require.Equal(t, snapA.Repo, snapB.Repo)
+	})
+
+	t.Run("reading raises the clocks", func(t *testing.T) {
+		repoA, repoB, rene := setup(t)
+		bugsEdit := func(t *testing.T, repo repository.Repo) lamport.Time {
+			clock, err := repo.GetClock("bugs-edit")
+			require.NoError(t, err)
+			time, err := clock.Time()
+			require.NoError(t, err)
+			return time
+		}
+
+		for name, time := range map[string]lamport.Time{"bugs-edit": 100, "prs-edit": 100} {
+			_, err := repoA.GetOrCreateClock(name, time)
+			require.NoError(t, err)
+		}
+		_, err := repoB.GetOrCreateClock("bugs-edit", 1)
+		require.NoError(t, err)
+
+		cA, _, err := Create(repoA, rene, unix)
+		require.NoError(t, err)
+		require.NoError(t, cA.Commit(t.Context(), repoA))
+		_, err = Push(t.Context(), repoA, "origin")
+		require.NoError(t, err)
+		require.Equal(t, entity.MergeStatusNew, pull(t, repoB, rene).Status)
+
+		// a bug edited in B after reading the config sorts after it
+		cB := read(t, repoB)
+		require.Equal(t, lamport.Time(100), bugsEdit(t, repoB))
+		// a clock B doesn't have is not created
+		_, err = repoB.GetClock("prs-edit")
+		require.ErrorIs(t, err, lamport.ErrClockNotExist)
+
+		// same when reloading the config
+		require.NoError(t, repoA.Witness("bugs-edit", 200))
+		_, err = RepoSetDescription(cA, repoA, rene, unix, "description")
+		require.NoError(t, err)
+		require.NoError(t, cA.Commit(t.Context(), repoA))
+		_, err = Push(t.Context(), repoA, "origin")
+		require.NoError(t, err)
+		require.Equal(t, entity.MergeStatusUpdated, pull(t, repoB, rene).Status)
+
+		require.NoError(t, cB.Repair(t.Context(), repoB, simpleResolvers(repoB)))
+		require.Equal(t, "description", cB.Compile().Repo.Description)
+		require.Equal(t, lamport.Time(200), bugsEdit(t, repoB))
 	})
 
 	t.Run("another config is a conflict", func(t *testing.T) {

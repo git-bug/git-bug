@@ -38,7 +38,7 @@ func newSetValue[V scalar](repo repository.RepoClock, opType dag.OperationType, 
 // validate checks the operation op embedding this kind, of type opType, and its
 // value with checkValue.
 func (s *setValue[V]) validate(op Operation, opType dag.OperationType, checkValue func(V) error) error {
-	if err := s.OpBase.Validate(op, opType); err != nil {
+	if err := s.opBase.Validate(op, opType); err != nil {
 		return err
 	}
 	if err := validateScalar(s.Value); err != nil {
@@ -71,7 +71,7 @@ func newSetEntry[K ~string, F fields[F]](repo repository.RepoClock, opType dag.O
 // validate checks the operation op embedding this kind, of type opType, its key
 // with checkKey, and its fields.
 func (s *setEntry[K, F]) validate(op Operation, opType dag.OperationType, checkKey func(K) error) error {
-	if err := s.OpBase.Validate(op, opType); err != nil {
+	if err := s.opBase.Validate(op, opType); err != nil {
 		return err
 	}
 	if err := validateKey(s.Key, checkKey); err != nil {
@@ -106,7 +106,7 @@ func newRemoveEntry[K ~string, F fields[F]](repo repository.RepoClock, opType da
 // validate checks the operation op embedding this kind, of type opType, and its
 // key with checkKey.
 func (s *removeEntry[K, F]) validate(op Operation, opType dag.OperationType, checkKey func(K) error) error {
-	if err := s.OpBase.Validate(op, opType); err != nil {
+	if err := s.opBase.Validate(op, opType); err != nil {
 		return err
 	}
 	return validateKey(s.Key, checkKey)
