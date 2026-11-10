@@ -1069,9 +1069,7 @@ func TestSubCacheWorker(t *testing.T) {
 		return err == nil
 	}
 	workerErr := func(c *RepoCache) error {
-		c.bugs.muSyncWorker.Lock()
-		defer c.bugs.muSyncWorker.Unlock()
-		return c.bugs.syncWorkerErr
+		return c.bugs.worker.lastErr()
 	}
 	naming := func(ids ...entity.Id) repository.Change {
 		keys := make([]string, len(ids))

@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 
 	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/config"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
@@ -69,8 +70,9 @@ type RepoCache struct {
 	// resolvers for all known entities and excerpts
 	resolvers entity.Resolvers
 
-	bugs       *RepoCacheBug
-	identities *RepoCacheIdentity
+	bugs          *RepoCacheBug
+	identities    *RepoCacheIdentity
+	projectConfig *RepoCacheConfig
 
 	subcaches []cacheMgmt
 
@@ -105,6 +107,9 @@ func NewRepoCache(r repository.Repo, changes repository.ChangeSource) (*RepoCach
 
 	c.identities = NewRepoCacheIdentity(r, c.getResolvers, c.GetUserIdentity)
 	c.subcaches = append(c.subcaches, c.identities)
+
+	c.projectConfig = NewRepoCacheConfig(r, c.getResolvers, c.GetUserIdentity)
+	c.subcaches = append(c.subcaches, c.projectConfig)
 
 	c.bugs = NewRepoCacheBug(r, c.getResolvers, c.GetUserIdentity)
 	c.subcaches = append(c.subcaches, c.bugs)
@@ -175,6 +180,13 @@ func (c *RepoCache) Bugs() *RepoCacheBug {
 // Identities gives access to the Identity entities
 func (c *RepoCache) Identities() *RepoCacheIdentity {
 	return c.identities
+}
+
+// ProjectConfig gives access to the repository config, the settings shared by
+// every clone of the repository. Not to be confused with Config, the git
+// configuration.
+func (c *RepoCache) ProjectConfig() *RepoCacheConfig {
+	return c.projectConfig
 }
 
 func (c *RepoCache) getResolvers() entity.Resolvers {
@@ -307,6 +319,8 @@ func (c *RepoCache) registerObserver(repoName string, typename string, observer 
 		c.bugs.RegisterObserver(repoName, observer)
 	case identity.Typename:
 		c.identities.RegisterObserver(repoName, observer)
+	case config.Typename:
+		c.projectConfig.RegisterObserver(repoName, observer)
 	default:
 		var allTypenames []string
 		for _, subcache := range c.subcaches {
