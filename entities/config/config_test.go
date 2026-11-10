@@ -45,7 +45,7 @@ func TestConfig(t *testing.T) {
 		require.NoError(t, err)
 		snap := c.Compile()
 
-		require.Empty(t, snap.Repo.Description)
+		require.Empty(t, snap.Repo.Description())
 
 		_, ok := snap.Labels.Get("bug")
 		require.False(t, ok)
@@ -111,7 +111,7 @@ func TestSync(t *testing.T) {
 
 		readC := read(t, repoA)
 		require.Equal(t, c.Id(), readC.Id())
-		require.Equal(t, "description", readC.Compile().Repo.Description)
+		require.Equal(t, "description", readC.Compile().Repo.Description())
 
 		// an operation records the time of the clocks, the config's included
 		op, err := LabelsSet(readC, repoA, rene, unix, "bug", LabelsDefinition{Color: SetField("#f44336"), Description: ClearField[string]()})
@@ -178,26 +178,16 @@ func TestSync(t *testing.T) {
 		crash, ok := snapA.Labels.Get("crash")
 		require.True(t, ok)
 		require.Equal(t, LabelsDefinition{Color: SetField("#ff9800"), Description: SetField("Program exits")}, crash)
-		require.Contains(t, []string{"from A", "from B"}, snapA.Repo.Description)
+		require.Contains(t, []string{"from A", "from B"}, snapA.Repo.Description())
 		require.Equal(t, snapA.Labels, snapB.Labels)
 		require.Equal(t, snapA.Repo, snapB.Repo)
 	})
 
-	t.Run("reading raises the clocks", func(t *testing.T) {
+	t.Run("reading leaves the other clocks alone", func(t *testing.T) {
 		repoA, repoB, rene := setup(t)
-		bugsEdit := func(t *testing.T, repo repository.Repo) lamport.Time {
-			clock, err := repo.GetClock("bugs-edit")
-			require.NoError(t, err)
-			time, err := clock.Time()
-			require.NoError(t, err)
-			return time
-		}
-
-		for name, time := range map[string]lamport.Time{"bugs-edit": 100, "prs-edit": 100} {
-			_, err := repoA.GetOrCreateClock(name, time)
-			require.NoError(t, err)
-		}
-		_, err := repoB.GetOrCreateClock("bugs-edit", 1)
+		_, err := repoA.GetOrCreateClock("bugs-edit", 100)
+		require.NoError(t, err)
+		_, err = repoB.GetOrCreateClock("bugs-edit", 1)
 		require.NoError(t, err)
 
 		cA, _, err := Create(repoA, rene, unix)
@@ -207,25 +197,17 @@ func TestSync(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, entity.MergeStatusNew, pull(t, repoB, rene).Status)
 
-		// a bug edited in B after reading the config sorts after it
-		cB := read(t, repoB)
-		require.Equal(t, lamport.Time(100), bugsEdit(t, repoB))
-		// a clock B doesn't have is not created
-		_, err = repoB.GetClock("prs-edit")
-		require.ErrorIs(t, err, lamport.ErrClockNotExist)
-
-		// same when reloading the config
-		require.NoError(t, repoA.Witness("bugs-edit", 200))
-		_, err = RepoSetDescription(cA, repoA, rene, unix, "description")
+		snap := read(t, repoB).Compile()
+		clock, err := repoB.GetClock("bugs-edit")
 		require.NoError(t, err)
-		require.NoError(t, cA.Commit(t.Context(), repoA))
-		_, err = Push(t.Context(), repoA, "origin")
+		time, err := clock.Time()
 		require.NoError(t, err)
-		require.Equal(t, entity.MergeStatusUpdated, pull(t, repoB, rene).Status)
+		require.Equal(t, lamport.Time(1), time)
 
-		require.NoError(t, cB.Repair(t.Context(), repoB, simpleResolvers(repoB)))
-		require.Equal(t, "description", cB.Compile().Repo.Description)
-		require.Equal(t, lamport.Time(200), bugsEdit(t, repoB))
+		// B doesn't have the bugs A had: its next bug edit is concurrent with the
+		// config, and judged by the era before it
+		require.Empty(t, snap.At("bugs-edit", time+1).Operations)
+		require.Len(t, snap.At("bugs-edit", 101).Operations, 1)
 	})
 
 	t.Run("another config is a conflict", func(t *testing.T) {

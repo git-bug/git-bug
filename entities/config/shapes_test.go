@@ -48,7 +48,7 @@ func TestShapes(t *testing.T) {
 	})
 
 	t.Run("ordered list", func(t *testing.T) {
-		var l list[string, listItem]
+		var l orderedList[string, listItem]
 		set := func(key string, change listItem) {
 			(&setEntry[string, listItem]{Key: key, Fields: change}).apply(&l)
 		}
@@ -56,19 +56,19 @@ func TestShapes(t *testing.T) {
 			(&removeEntry[string, listItem]{Key: key}).apply(&l)
 		}
 
-		set("first", listItem{Position: SetField("V"), Title: SetField("first")})
-		set("second", listItem{Position: SetField("k")})
-		set("third", listItem{Position: SetField("t")})
+		set("first", listItem{Position: SetField("a0"), Title: SetField("first")})
+		set("second", listItem{Position: SetField("a1")})
+		set("third", listItem{Position: SetField("a2")})
 		set("unplaced b", listItem{})
 		set("unplaced a", listItem{})
 		// the same position as second, as two concurrent inserts at the same spot
-		set("also second", listItem{Position: SetField("k")})
+		set("also second", listItem{Position: SetField("a1")})
 		require.Equal(t, []string{"first", "also second", "second", "third", "unplaced a", "unplaced b"}, ordered(l))
 
 		// moving an entry changes only its position
-		set("first", listItem{Position: SetField("x")})
+		set("first", listItem{Position: SetField("a3")})
 		require.Equal(t, []string{"also second", "second", "third", "first", "unplaced a", "unplaced b"}, ordered(l))
-		require.Equal(t, listItem{Position: SetField("x"), Title: SetField("first")}, l["first"])
+		require.Equal(t, listItem{Position: SetField("a3"), Title: SetField("first")}, l["first"])
 
 		// an entry without position anymore comes last
 		set("third", listItem{Position: ClearField[string]()})

@@ -10,9 +10,13 @@ import (
 
 // RepoSection holds the settings describing the repository
 type RepoSection struct {
-	// Description of the repository, a single line of at most
-	// maxRepoDescriptionLength characters, empty by default
-	Description string
+	description register[string]
+}
+
+// Description returns the description of the repository, a single line of at most
+// maxRepoDescriptionLength characters, empty by default.
+func (s RepoSection) Description() string {
+	return s.description.get()
 }
 
 const maxRepoDescriptionLength = 256

@@ -4,14 +4,12 @@ package config
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/git-bug/git-bug/repository"
-	"github.com/git-bug/git-bug/util/lamport"
 )
 
 var _ dag.Mutable[*Snapshot, Operation] = &Config{}
@@ -64,53 +62,9 @@ func Read(ctx context.Context, repo repository.Repo) (*Config, error) {
 	return ReadWithResolver(ctx, repo, simpleResolvers(repo))
 }
 
-// ReadWithResolver will read the config from a repository, with custom resolvers.
-// The clocks of the repository are raised to the times the config recorded, see
-// witnessTimes.
+// ReadWithResolver will read the config from a repository, with custom resolvers
 func ReadWithResolver(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers) (*Config, error) {
-	c, err := dag.ReadSingleton(ctx, def, wrapper, repo, resolvers)
-	if err != nil {
-		return nil, err
-	}
-	if err := witnessTimes(repo, c.Operations()); err != nil {
-		return nil, err
-	}
-	return c, nil
-}
-
-// Repair reloads the committed config from the repository, see dag.Entity.Repair.
-// As when reading the config, the clocks of the repository are raised to the times
-// it recorded.
-func (c *Config) Repair(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers) error {
-	if err := c.Entity.Repair(ctx, repo, resolvers); err != nil {
-		return err
-	}
-	return witnessTimes(repo, c.Operations())
-}
-
-// witnessTimes raises the clocks of the repository to the times recorded by the
-// operations. A client applies the config it has read, so an operation it makes
-// afterward must be of a later time than the operations of that config, to be
-// judged by an era that includes them, see Snapshot.At. A clock that isn't usable
-// is left alone, as when reading an entity, see dag.EnsureClocks.
-func witnessTimes(repo repository.RepoClock, ops []Operation) error {
-	highest := make(map[string]lamport.Time)
-	for _, op := range ops {
-		for name, time := range opTimes(op) {
-			highest[name] = max(highest[name], time)
-		}
-	}
-
-	for name, time := range highest {
-		err := repo.Witness(name, time)
-		if errors.Is(err, lamport.ErrClockNotExist) || errors.Is(err, lamport.ErrClockCorrupt) {
-			continue
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return dag.ReadSingleton(ctx, def, wrapper, repo, resolvers)
 }
 
 // EnsureClocks makes sure that the clocks ordering the config are usable, and

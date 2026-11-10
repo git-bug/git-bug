@@ -49,6 +49,6 @@ func TestRepo(t *testing.T) {
 		_, err = RepoSetDescription(c, clocks, isaac, unix, "second")
 		require.NoError(t, err)
 
-		require.Equal(t, "second", c.Compile().Repo.Description)
+		require.Equal(t, "second", c.Compile().Repo.Description())
 	})
 }

@@ -31,7 +31,7 @@ func (op *RepoSetDescriptionOperation) Id() entity.Id {
 }
 
 func (op *RepoSetDescriptionOperation) Apply(snapshot *Snapshot) {
-	op.apply(&snapshot.Repo.Description)
+	op.apply(&snapshot.Repo.description)
 }
 
 func (op *RepoSetDescriptionOperation) Validate() error {

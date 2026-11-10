@@ -212,7 +212,7 @@ func TestLabels(t *testing.T) {
 		}
 		for _, step := range steps {
 			step.do()
-			require.Equal(t, entries[common.Label, LabelsDefinition](step.want), c.Compile().Labels.definitions, step.name)
+			require.Equal(t, map_[common.Label, LabelsDefinition](step.want), c.Compile().Labels.definitions, step.name)
 		}
 
 		snap := c.Compile()

@@ -10,14 +10,16 @@ import (
 	"unicode/utf8"
 )
 
-// Every setting has one of the shapes below, implemented once here. A shape holds
-// the state of its setting in the Snapshot, changed by the kinds of operations in
-// kinds.go.
+// Every setting has one of the shapes below, the ones of the spec, see config.md
+// §7 in https://github.com/git-bug/spec. A shape holds the state of its setting in the Snapshot,
+// changed by the kinds of operations in kinds.go.
 //
-//   - a register holds one value, of a scalar type
-//   - a map holds entries by key, each holding named fields, see entries
+//   - a register holds one value, of a scalar type, see register
+//   - a map holds entries by key, each holding named fields, see map_ (map is a
+//     keyword of Go)
 //   - a set is a map whose entries have no field, see set
-//   - an ordered list is a map whose entries are sorted by position, see list
+//   - an ordered list is a map whose entries are sorted by position, see
+//     orderedList
 
 // scalar is the type of a value: a string, an integer or a boolean.
 type scalar interface {
@@ -62,9 +64,9 @@ func validateLength(s string, limit int) error {
 //
 // A struct holding Fields tags each with omitzero: an absent Field is left out of
 // the JSON, and a cleared one is null.
-type Field[V scalar] struct {
+type Field[S scalar] struct {
 	state fieldState
-	value V
+	value S
 }
 
 type fieldState uint8
@@ -86,23 +88,23 @@ func ClearField[V scalar]() Field[V] {
 }
 
 // Get returns the value of a Field, false if it is not set.
-func (f Field[V]) Get() (V, bool) {
+func (f Field[S]) Get() (S, bool) {
 	return f.value, f.state == fieldSet
 }
 
 // patch changes the Field of an entry as the same Field of a setEntry operation
 // says.
-func (f *Field[V]) patch(change Field[V]) {
+func (f *Field[S]) patch(change Field[S]) {
 	switch change.state {
 	case fieldCleared:
-		*f = Field[V]{}
+		*f = Field[S]{}
 	case fieldSet:
 		*f = change
 	}
 }
 
 // validate checks the value of a set Field, with the check of its setting.
-func (f Field[V]) validate(check func(V) error) error {
+func (f Field[S]) validate(check func(S) error) error {
 	if f.state != fieldSet {
 		return nil
 	}
@@ -112,7 +114,7 @@ func (f Field[V]) validate(check func(V) error) error {
 	return check(f.value)
 }
 
-func (f Field[V]) MarshalJSON() ([]byte, error) {
+func (f Field[S]) MarshalJSON() ([]byte, error) {
 	switch f.state {
 	case fieldCleared:
 		return []byte("null"), nil
@@ -123,12 +125,12 @@ func (f Field[V]) MarshalJSON() ([]byte, error) {
 	}
 }
 
-func (f *Field[V]) UnmarshalJSON(data []byte) error {
+func (f *Field[S]) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" {
-		*f = ClearField[V]()
+		*f = ClearField[S]()
 		return nil
 	}
-	var value V
+	var value S
 	if err := json.Unmarshal(data, &value); err != nil {
 		return err
 	}
@@ -144,19 +146,29 @@ type fields[F any] interface {
 	Validate() error
 }
 
-// entries is the state of a map: the fields of each entry, by key. A key absent
-// from it has no entry.
-type entries[K ~string, F fields[F]] map[K]F
+// register is the state of a register: one value, its zero value by default.
+type register[V scalar] struct {
+	value V
+}
+
+// get returns the value of a register.
+func (r register[V]) get() V {
+	return r.value
+}
+
+// map_ is the state of a map: the fields of each entry, by key. A key absent from
+// it has no entry.
+type map_[K ~string, F fields[F]] map[K]F
 
 // has tells whether a key has an entry.
-func (e entries[K, F]) has(key K) bool {
-	_, ok := e[key]
+func (m map_[K, F]) has(key K) bool {
+	_, ok := m[key]
 	return ok
 }
 
 // keys returns the keys with an entry, sorted.
-func (e entries[K, F]) keys() []K {
-	return slices.Sorted(maps.Keys(e))
+func (m map_[K, F]) keys() []K {
+	return slices.Sorted(maps.Keys(m))
 }
 
 // noFields is the fields of the entries of a set: there are none.
@@ -172,25 +184,25 @@ func (noFields) Validate() error {
 
 // set is the state of a set: a map whose entries have no field. Its operations are
 // the ones of a map, setEntry adding a key and removeEntry removing it.
-type set[K ~string] = entries[K, noFields]
+type set[K ~string] = map_[K, noFields]
 
-// listFields is the constraint of the fields of the entries of an ordered list: on
+// orderedListFields is the constraint of the fields of the entries of an ordered list: on
 // top of the others, a position, a Field[string] written "position" and checked
 // with fracindex.Validate, returned by position.
-type listFields[F any] interface {
+type orderedListFields[F any] interface {
 	fields[F]
 	position() (string, bool)
 }
 
-// list is the state of an ordered list: a map whose entries have a position, read
+// orderedList is the state of an ordered list: a map whose entries have a position, read
 // with ordered. Its operations are the ones of a map, an entry moving when
 // setEntry changes its position, to one from fracindex.Between.
-type list[K ~string, F listFields[F]] = entries[K, F]
+type orderedList[K ~string, F orderedListFields[F]] = map_[K, F]
 
 // ordered returns the keys of an ordered list in order: by position, compared byte
 // by byte, then by key for the same position. The keys without a position come
 // last, by key.
-func ordered[K ~string, F listFields[F]](l list[K, F]) []K {
+func ordered[K ~string, F orderedListFields[F]](l orderedList[K, F]) []K {
 	keys := l.keys()
 	slices.SortStableFunc(keys, func(a, b K) int {
 		positionA, okA := l[a].position()

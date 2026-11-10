@@ -20,7 +20,7 @@ const (
 // LabelsSection holds the definitions of the labels, and the labels allowed. A label
 // doesn't need a definition to be used, and a definition doesn't allow a label.
 type LabelsSection struct {
-	definitions entries[common.Label, LabelsDefinition]
+	definitions map_[common.Label, LabelsDefinition]
 	allowed     set[common.Label]
 }
 

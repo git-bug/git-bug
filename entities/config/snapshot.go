@@ -58,6 +58,12 @@ func (snap *Snapshot) Clone() *Snapshot {
 // of the same time or earlier was made before it, and is judged without it. A clock
 // that an operation didn't record counts as 0, the operation applying at any time.
 //
+// As for any operation, this order only holds as far as the authors' clocks knew:
+// reading a config doesn't raise the clocks of the other entities. A client that
+// has a config without the operations its author had sees them as concurrent, and
+// may make an operation judged by an era before that config operation. Every client
+// judges it the same way.
+//
 // Along one clock, the times recorded by the config operations cut the timeline
 // into eras: the config is the same for every time of an era. The first era comes
 // before any recorded time, with no config operation: every setting reads as its

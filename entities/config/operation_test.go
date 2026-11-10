@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"maps"
 	"testing"
 	"time"
 
@@ -113,6 +114,53 @@ func TestOperations(t *testing.T) {
 			marshaled, err := json.Marshal(op)
 			require.NoError(t, err)
 			require.JSONEq(t, string(raw), string(marshaled))
+		}
+	})
+
+	t.Run("null", func(t *testing.T) {
+		// marshal returns the JSON of an operation with these members, on top of
+		// the common ones
+		marshal := func(t *testing.T, members map[string]any) json.RawMessage {
+			t.Helper()
+			op := map[string]any{
+				"timestamp": unix,
+				"nonce":     make([]byte, 20),
+				"times":     map[string]lamport.Time{"bugs-edit": 42},
+			}
+			maps.Copy(op, members)
+			raw, err := json.Marshal(op)
+			require.NoError(t, err)
+			return raw
+		}
+
+		// a value or fields that are null don't read
+		for _, c := range []struct {
+			members map[string]any
+			err     string
+		}{
+			{map[string]any{"type": RepoSetDescriptionOp, "value": nil}, "value: null is not allowed"},
+			{map[string]any{"type": LabelsSetOp, "key": "bug", "fields": nil}, "fields: null is not allowed"},
+			{map[string]any{"type": LabelsAllowOp, "key": "bug", "fields": nil}, "fields: null is not allowed"},
+		} {
+			_, err := operationUnmarshaler(t.Context(), marshal(t, c.members), nil)
+			require.EqualError(t, err, c.err, "%v", c.members)
+		}
+
+		// null clears a field
+		op, err := operationUnmarshaler(t.Context(), marshal(t, map[string]any{
+			"type": LabelsSetOp, "key": "bug", "fields": map[string]any{"color": nil},
+		}), nil)
+		require.NoError(t, err)
+		require.Equal(t, LabelsDefinition{Color: ClearField[string]()}, op.(*LabelsSetOperation).Fields)
+
+		// a member that the kind doesn't have is an unknown field, null or not
+		for _, members := range []map[string]any{
+			{"type": CreateOp, "value": nil},
+			{"type": LabelsSetOp, "key": "bug", "value": nil},
+			{"type": LabelsRemoveOp, "key": "bug", "fields": nil},
+		} {
+			_, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
+			require.NoError(t, err, "%v", members)
 		}
 	})
 }
