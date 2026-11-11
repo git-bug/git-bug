@@ -160,6 +160,55 @@ func TestEras(t *testing.T) {
 		require.Equal(t, []common.Label{"bug"}, snap.At("bugs-edit", 43).Labels.Names())
 	})
 
+	t.Run("era ids", func(t *testing.T) {
+		// the operations record bugs-edit at 42, then 50
+		clocks, rene, _ := makeTestContext(t)
+		c, _, err := Create(clocks, rene, unix)
+		require.NoError(t, err)
+		_, err = LabelsSet(c, clocks, rene, unix, "bug", LabelsDefinition{Color: SetField("#f44336")})
+		require.NoError(t, err)
+		require.NoError(t, clocks.Witness("bugs-edit", 50))
+		_, err = LabelsAllow(c, clocks, rene, unix, "bug")
+		require.NoError(t, err)
+		snap := c.Compile()
+		id := func(time lamport.Time) string { return snap.EraId("bugs-edit", time) }
+
+		// none before the config, nor without one
+		require.Empty(t, id(42))
+		require.Empty(t, (&Snapshot{}).EraId("bugs-edit", 1000))
+
+		// one per era
+		require.NotEmpty(t, id(43))
+		require.Equal(t, id(43), id(50))
+		require.NotEmpty(t, id(51))
+		require.NotEqual(t, id(50), id(51))
+		require.Equal(t, id(51), id(1000))
+
+		// made of the operations: the same for another snapshot of the same config,
+		// whatever the clock
+		other := c.Compile()
+		require.Equal(t, id(43), other.EraId("bugs-edit", 43))
+		require.Equal(t, id(51), other.EraId("prs-edit", 1))
+	})
+
+	t.Run("for an operation", func(t *testing.T) {
+		clocks, rene, _ := makeTestContext(t)
+		c, _, err := Create(clocks, rene, unix)
+		require.NoError(t, err)
+		_, err = RepoSetDescription(c, clocks, rene, unix, "description")
+		require.NoError(t, err)
+		snap := c.Compile()
+		other, err := NewRepoSetDescriptionOp(clocks, rene, unix, "other entity")
+		require.NoError(t, err)
+
+		// judged by the era of its edit time, on the edit clock of its namespace
+		require.Equal(t, snap.At("bugs-edit", 42), snap.ForOperation("bugs", editedAt{other, 42}))
+		require.Equal(t, snap.At("bugs-edit", 43), snap.ForOperation("bugs", editedAt{other, 43}))
+		require.Equal(t, snap.At("prs-edit", 1), snap.ForOperation("prs", editedAt{other, 1}))
+		// by the latest settings while not committed
+		require.Equal(t, snap.Settings, snap.ForOperation("bugs", other))
+	})
+
 	t.Run("unrecorded clock", func(t *testing.T) {
 		// a clock that didn't exist when the operations were made counts as 0
 		clocks, rene, _ := makeTestContext(t)
@@ -195,4 +244,14 @@ func TestEras(t *testing.T) {
 		snap.At("bugs-edit", 0)
 		require.Equal(t, []lamport.Time{42, 55}, snap.eras["bugs-edit"].bounds)
 	})
+}
+
+// editedAt is an operation committed at an edit time, see dag.Operation.EditTime.
+type editedAt struct {
+	dag.Operation
+	time lamport.Time
+}
+
+func (op editedAt) EditTime() lamport.Time {
+	return op.time
 }

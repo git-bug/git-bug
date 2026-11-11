@@ -53,5 +53,7 @@ func SerializeRoundTripTest[OpT dag.Operation](
 	require.NoError(t, err)
 	require.Len(t, read.Operations(), 1)
 
-	require.Equal(t, before, read.Operations()[0])
+	// committed with the edit time of its pack, see dag.Operation.EditTime
+	require.Equal(t, e.Operations(), read.Operations())
+	require.Equal(t, before.Id(), read.Operations()[0].Id())
 }

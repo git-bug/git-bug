@@ -37,23 +37,25 @@ const BUG_CHANGE_LABELS_MUTATION = graphql(`
   }
 `);
 
+/** A label as the picker shows it: its name and colour, and its badge. */
+type PickerLabel = { name: string; color: { R: number; G: number; B: number } } & FragmentType<
+  typeof LABEL_FIELDS_FRAGMENT
+>;
+
 interface LabelEditorProps {
   bugPrefix: string;
-  currentLabels: Array<{ name: string } & FragmentType<typeof LABEL_FIELDS_FRAGMENT>>;
+  currentLabels: PickerLabel[];
   /** Current repo slug, passed as `repoRef` to the mutations. */
   repo?: string | null;
-  /** Pre-fetched valid labels for the repository. */
-  validLabels: Array<
-    { name: string; color: { R: number; G: number; B: number } } & FragmentType<
-      typeof LABEL_FIELDS_FRAGMENT
-    >
-  >;
+  /** Pre-fetched valid labels for the repository: those that may be added. */
+  validLabels: PickerLabel[];
 }
 
 // Gear-icon popover in the BugDetailPage sidebar for adding/removing labels.
-// Loads all valid labels from the repo; the labels toggled while it is open
-// are applied together by a single bugChangeLabels when it closes.  Hidden in
-// read-only mode.
+// Lists the valid labels of the repo, and those of the bug that the repo no
+// longer allows, which can be removed but not added back; the labels toggled
+// while it is open are applied together by a single bugChangeLabels when it
+// closes.  Hidden in read-only mode.
 export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: LabelEditorProps) {
   const { user } = useAuth();
   const [changeLabels, { loading: saving }] = useMutation(BUG_CHANGE_LABELS_MUTATION, {
@@ -62,6 +64,14 @@ export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: Lab
   });
 
   const currentNames = new Set(currentLabels.map((l) => l.name));
+
+  // A label of the bug missing from the valid ones is no longer allowed: listed
+  // while the bug has it, so that it can be removed, it is never added.
+  const allowedNames = new Set(validLabels.map((l) => l.name));
+  const options = [
+    ...validLabels,
+    ...currentLabels.filter((l) => !allowedNames.has(l.name)),
+  ].toSorted((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 
   // whether each label toggled is wanted, so that applying them leaves the
   // labels others changed meanwhile as they are
@@ -140,7 +150,7 @@ export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: Lab
     <div>
       <div className="mb-2 flex items-center justify-between">
         <SectionHeading className="mb-0">Labels</SectionHeading>
-        {user && validLabels.length > 0 && (
+        {user && options.length > 0 && (
           <button
             ref={refs.setReference}
             // one change at a time, so that a failed one restores no stale choice
@@ -167,8 +177,9 @@ export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: Lab
                 Apply labels
               </div>
               <Listbox.ScrollArea>
-                {validLabels.map((label, i) => {
+                {options.map((label, i) => {
                   const active = isSelected(label.name);
+                  const allowed = allowedNames.has(label.name);
                   return (
                     <Listbox.Item
                       key={label.name}
@@ -177,6 +188,11 @@ export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: Lab
                       }}
                       active={activeIndex === i}
                       selected={active}
+                      title={
+                        allowed
+                          ? undefined
+                          : "No longer allowed: once removed, it can't be added back"
+                      }
                       tabIndex={activeIndex === i ? 0 : -1}
                       {...getItemProps({
                         onClick: () => toggleLabel(label.name),
@@ -197,6 +213,9 @@ export function LabelEditor({ bugPrefix, currentLabels, repo, validLabels }: Lab
                         }
                       />
                       <LabelBadge label={label} />
+                      {!allowed && (
+                        <span className="text-muted-foreground text-xs">not allowed</span>
+                      )}
                     </Listbox.Item>
                   );
                 })}

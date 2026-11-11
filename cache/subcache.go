@@ -79,7 +79,11 @@ type SubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved] struct {
 	makeView        func(shared SharedT, onCommit func()) ViewT
 	makeExcerpt     func(SharedT) ExcerptT
 	makeIndexData   func(SharedT) []string
-	actions         Actions[SharedT]
+	// stale, if not nil, tells from its excerpt whether the derived state of an
+	// entity is out of date although its reference didn't move: it depends on
+	// something else, which changed since, see syncEntitiesLocked.
+	stale   func(ExcerptT) bool
+	actions Actions[SharedT]
 
 	typename  string
 	namespace string
@@ -123,6 +127,7 @@ func NewSubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved](
 	makeView func(shared SharedT, onCommit func()) ViewT,
 	makeExcerpt func(SharedT) ExcerptT,
 	makeIndexData func(SharedT) []string,
+	stale func(ExcerptT) bool,
 	actions Actions[SharedT],
 	typename, namespace string,
 	version uint, maxLoaded int) *SubCache[SharedT, ExcerptT, ViewT] {
@@ -136,6 +141,7 @@ func NewSubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved](
 		makeView:        makeView,
 		makeExcerpt:     makeExcerpt,
 		makeIndexData:   makeIndexData,
+		stale:           stale,
 		actions:         actions,
 		typename:        typename,
 		namespace:       namespace,
@@ -764,6 +770,12 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncAllLocked(ctx context.Context,
 	return sc.syncEntitiesLocked(ctx, index, candidates, refs, indexBuiltFrom, progress)
 }
 
+// isStale tells whether the derived state of an entity is stale, see
+// SubCache.stale.
+func (sc *SubCache[SharedT, ExcerptT, ViewT]) isStale(excerpt ExcerptT) bool {
+	return sc.stale != nil && sc.stale(excerpt)
+}
+
 // syncEntitiesLocked brings the derived state of the candidates up to date with
 // their references, given in refs, a candidate without one being removed. The
 // excerpts and the index each record the commit they were built from, the
@@ -772,8 +784,10 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncAllLocked(ctx context.Context,
 // see bringToRef, then applied to each store that is behind, or removed from
 // them if its reference is gone, along with its loaded copy. An entity only
 // behind in memory, the index being up to date from another process or an
-// earlier sync, has its excerpt read from the index instead. Nothing is read if
-// everything is up to date. Changes are applied in batches.
+// earlier sync, has its excerpt read from the index instead. An entity whose
+// derived state is stale, see SubCache.stale, is built again from the entity
+// for both stores, whatever commit they recorded. Nothing is read if everything
+// is up to date. Changes are applied in batches.
 //
 // An entity that can't be read, or whose document is refused, is left as it
 // was, and the sync goes on with the others: one broken entity doesn't hold
@@ -797,14 +811,20 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncEntitiesLocked(ctx context.Con
 	var behind []entity.Id
 	// the entities only behind in memory
 	inIndex := make(map[entity.Id]bool)
+	// the entities whose derived state is stale, see SubCache.stale: built
+	// again from the entity, in every store
+	rebuild := make(map[entity.Id]bool)
 	sc.muMaps.RLock()
 	for id := range candidates {
 		ref := refs[id]
 		loaded, isLoaded := sc.cached[id]
 		loadedBehind := isLoaded && loaded.LastCommit() != ref
-		if sc.builtFrom[id] != ref || indexBuiltFrom[id.String()] != ref || loadedBehind {
+		excerpt, known := sc.excerpts[id]
+		stale := known && sc.builtFrom[id] == ref && sc.isStale(excerpt)
+		if sc.builtFrom[id] != ref || indexBuiltFrom[id.String()] != ref || loadedBehind || stale {
 			behind = append(behind, id)
-			inIndex[id] = ref != "" && indexBuiltFrom[id.String()] == ref && !loadedBehind
+			inIndex[id] = ref != "" && indexBuiltFrom[id.String()] == ref && !loadedBehind && !stale
+			rebuild[id] = stale
 		}
 	}
 	sc.muMaps.RUnlock()
@@ -888,7 +908,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncEntitiesLocked(ctx context.Con
 			return err
 		default:
 			d := sc.buildDerived(shared)
-			if indexBuiltFrom[id.String()] != d.commit {
+			if indexBuiltFrom[id.String()] != d.commit || rebuild[id] {
 				excerpt, err := json.Marshal(d.excerpt)
 				if err != nil {
 					return err
@@ -899,7 +919,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncEntitiesLocked(ctx context.Con
 				}
 				batchIndexed++
 			}
-			if sc.builtFrom[id] != d.commit {
+			if sc.builtFrom[id] != d.commit || rebuild[id] {
 				pending[id] = &d
 			}
 		}
@@ -912,7 +932,11 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncEntitiesLocked(ctx context.Con
 		fromIndex := false
 		if inIndex[id] {
 			d, fromIndex = sc.excerptFromIndex(ctx, index, id, ref)
-			if !fromIndex {
+			if fromIndex && sc.isStale(d.excerpt) {
+				// stale in the index too: built from the entity instead, in both
+				fromIndex = false
+				rebuild[id] = true
+			} else if !fromIndex {
 				// gone, replaced or unreadable since: built from the entity instead
 				delete(indexBuiltFrom, id.String())
 			}

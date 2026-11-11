@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entities/config"
 	"github.com/git-bug/git-bug/entities/identity"
@@ -393,5 +394,123 @@ func TestConfigCacheFollowsChanges(t *testing.T) {
 		synctest.Wait()
 		require.Empty(t, c.ProjectConfig().Snapshot().Repo.Description())
 		require.Equal(t, []observerEvent{{config.Typename, outside.Id()}}, obs.removed)
+	})
+}
+
+// The bugs are judged by the config, see judgedBug.
+func TestConfigJudgesBugs(t *testing.T) {
+	t.Run("labels not allowed", func(t *testing.T) {
+		repo := repotest.NewGoGitRepo(t, false)
+		c, _ := newTestCacheWithUser(t, repo)
+		b, _, err := c.Bugs().New(t.Context(), "title", "message")
+		require.NoError(t, err)
+		_, _, err = b.ChangeLabels(t.Context(), []string{"kept"}, nil)
+		require.NoError(t, err)
+		require.NoError(t, b.Commit(t.Context()))
+
+		view := c.ProjectConfig().View()
+		_, err = view.LabelsAllow(t.Context(), "bug")
+		require.NoError(t, err)
+		require.NoError(t, view.Commit(t.Context()))
+		require.Equal(t, []common.Label{"bug"}, c.Bugs().ValidLabels())
+
+		// refused up front
+		results, _, err := b.ChangeLabels(t.Context(), []string{"bug", "wontfix"}, nil)
+		require.NoError(t, err)
+		require.Equal(t, []bug.LabelChangeResult{
+			{Label: "bug", Status: bug.LabelChangeAdded},
+			{Label: "wontfix", Status: bug.LabelChangeNotAllowed},
+		}, results)
+		_, _, err = b.ChangeLabels(t.Context(), []string{"wontfix"}, nil)
+		require.Error(t, err)
+		// or left out once written, as by an import
+		_, err = b.ForceChangeLabels(t.Context(), []string{"forced"}, nil)
+		require.NoError(t, err)
+		require.Equal(t, []common.Label{"bug", "kept"}, b.Snapshot().Labels)
+		require.NoError(t, b.Commit(t.Context()))
+
+		requireLabels := func(c *RepoCache) {
+			t.Helper()
+			resolved, err := c.Bugs().Resolve(t.Context(), b.Id())
+			require.NoError(t, err)
+			require.Equal(t, []common.Label{"bug", "kept"}, resolved.Snapshot().Labels)
+			excerpt, err := c.Bugs().ResolveExcerpt(b.Id())
+			require.NoError(t, err)
+			require.Equal(t, []common.Label{"bug", "kept"}, excerpt.Labels)
+		}
+		requireLabels(c)
+
+		// the same when opened again
+		require.NoError(t, c.Close())
+		requireLabels(createTestRepoCacheNoEvents(t, repo))
+	})
+
+	t.Run("judged again when the config changes", func(t *testing.T) {
+		// time is fake in the bubble, and synctest.Wait returns once every
+		// goroutine of the bubble, the workers included, is idle
+		synctest.Test(t, func(t *testing.T) {
+			repo := repository.NewMockRepo()
+			source := newChanSource()
+			c, err := NewRepoCacheNoEvents(repo, source)
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, c.Close()) })
+			rene := setUser(t, c, "rene")
+
+			b, _, err := c.Bugs().New(t.Context(), "title", "message")
+			require.NoError(t, err)
+			require.NoError(t, b.Commit(t.Context()))
+
+			// a clone with the bugs as they are now
+			clocks, err := repo.AllClocks()
+			require.NoError(t, err)
+			now, err := clocks["bugs-edit"].Time()
+			require.NoError(t, err)
+			behind := repository.NewMockRepoClock()
+			_, err = behind.GetOrCreateClock("bugs-edit", now)
+			require.NoError(t, err)
+
+			_, _, err = b.ChangeLabels(t.Context(), []string{"wontfix"}, nil)
+			require.NoError(t, err)
+			require.NoError(t, b.Commit(t.Context()))
+
+			obs := &observer{}
+			require.NoError(t, c.registerObserver("repo", bug.Typename, obs))
+			synctest.Wait()
+
+			// a change made here applies to the later bug changes only: none to
+			// judge again
+			view := c.ProjectConfig().View()
+			_, err = view.LabelsSet(t.Context(), "wontfix", config.LabelsDefinition{Color: config.SetField("#f44336")})
+			require.NoError(t, err)
+			require.NoError(t, view.Commit(t.Context()))
+			time.Sleep(syncInterval)
+			synctest.Wait()
+			require.Empty(t, obs.updated)
+
+			// the clone, behind, restricted the labels: the label change came after
+			outside, err := config.Read(t.Context(), repo)
+			require.NoError(t, err)
+			_, err = config.LabelsAllow(outside, behind, rene, time.Now().Unix(), "bug")
+			require.NoError(t, err)
+			require.NoError(t, outside.Commit(t.Context(), repo))
+
+			time.Sleep(syncInterval)
+			source.changes <- repository.Change{Keys: map[string][]string{config.Namespace: {"config"}}}
+			synctest.Wait()
+
+			require.Equal(t, []observerEvent{{bug.Typename, b.Id()}}, obs.updated)
+			require.Empty(t, b.Snapshot().Labels)
+			excerpt, err := c.Bugs().ResolveExcerpt(b.Id())
+			require.NoError(t, err)
+			require.Empty(t, excerpt.Labels)
+
+			// the same for another process, from the index
+			other, err := NewRepoCacheNoEvents(repo, nil)
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, other.Close()) })
+			excerpt, err = other.Bugs().ResolveExcerpt(b.Id())
+			require.NoError(t, err)
+			require.Empty(t, excerpt.Labels)
+		})
 	})
 }

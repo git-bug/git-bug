@@ -36,6 +36,8 @@ func TestOperationPackReadWrite(t *testing.T) {
 	for _, op := range opp.Operations {
 		// force the creation of the id
 		op.Id()
+		// read with the edit time of their pack
+		op.setEditTime(opp.EditTime)
 	}
 	require.Equal(t, opp, opp2)
 }
@@ -78,6 +80,8 @@ func TestOperationPackSignedReadWrite(t *testing.T) {
 		for _, op := range opp.Operations {
 			// force the creation of the id
 			op.Id()
+			// read with the edit time of their pack
+			op.setEditTime(opp.EditTime)
 		}
 		require.Equal(t, opp, opp2)
 	}
@@ -114,6 +118,8 @@ func TestOperationPackFiles(t *testing.T) {
 	for _, op := range opp.Operations {
 		// force the creation of the id
 		op.Id()
+		// read with the edit time of their pack
+		op.setEditTime(opp.EditTime)
 	}
 	require.Equal(t, opp, opp2)
 
