@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/git-bug/git-bug/repository"
 )
@@ -61,6 +62,12 @@ func LaunchEditorWithTemplate(repo repository.RepoCommonStorage, fileName string
 // This method returns the text that was read from the temporary file, or
 // an error if any step in the process failed.
 func LaunchEditor(repo repository.RepoCommonStorage, fileName string) (string, error) {
+	root := filepath.Clean(repo.LocalStorage().Root())
+	path := filepath.Join(root, fileName)
+	rel, err := filepath.Rel(root, path)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("security: path traversal attempt")
+	}
 	defer repo.LocalStorage().Remove(fileName)
 
 	editor, err := repo.GetCoreEditor()
@@ -68,12 +75,8 @@ func LaunchEditor(repo repository.RepoCommonStorage, fileName string) (string, e
 		return "", fmt.Errorf("Unable to detect default git editor: %v\n", err)
 	}
 
-	repo.LocalStorage().Root()
-
 	// bypass the interface but that's ok: we need that because we are communicating
 	// the absolute path to an external program
-	path := filepath.Join(repo.LocalStorage().Root(), fileName)
-
 	cmd, err := startInlineCommand(editor, path)
 	if err != nil {
 		// Running the editor directly did not work. This might mean that
