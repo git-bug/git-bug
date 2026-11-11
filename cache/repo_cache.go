@@ -111,7 +111,7 @@ func NewRepoCache(r repository.Repo, changes repository.ChangeSource) (*RepoCach
 	c.projectConfig = NewRepoCacheConfig(r, c.getResolvers, c.GetUserIdentity)
 	c.subcaches = append(c.subcaches, c.projectConfig)
 
-	c.bugs = NewRepoCacheBug(r, c.getResolvers, c.GetUserIdentity)
+	c.bugs = NewRepoCacheBug(r, c.getResolvers, c.GetUserIdentity, c.projectConfig.Snapshot)
 	c.subcaches = append(c.subcaches, c.bugs)
 
 	c.resolvers = entity.Resolvers{
@@ -203,34 +203,54 @@ func (c *RepoCache) setCacheSize(size int) {
 // load reads the excerpts of the index, and brings them up to date with the
 // repository.
 // It returns whether it succeeded.
+//
+// The bugs are judged by the config: it loads first, for them to be built with
+// it, and they follow its changes from then on, see configObserver.
 func (c *RepoCache) load(events chan BuildEvent) bool {
 	// announced once, before the first subcache starts building
 	var announce sync.Once
 	var failed atomic.Bool
 
-	var wg sync.WaitGroup
-	for _, subcache := range c.subcaches {
-		wg.Add(1)
-		go func(subcache cacheMgmt) {
-			defer wg.Done()
-			for event := range subcache.Load() {
-				if event.Event == BuildEventStarted {
-					announce.Do(func() { events <- BuildEvent{Event: BuildEventCacheIsBuilt} })
+	// loadAll loads the subcaches together, and returns whether they all succeeded
+	loadAll := func(subcaches ...cacheMgmt) bool {
+		var wg sync.WaitGroup
+		for _, subcache := range subcaches {
+			wg.Add(1)
+			go func(subcache cacheMgmt) {
+				defer wg.Done()
+				for event := range subcache.Load() {
+					if event.Event == BuildEventStarted {
+						announce.Do(func() { events <- BuildEvent{Event: BuildEventCacheIsBuilt} })
+					}
+					if event.Err != nil {
+						failed.Store(true)
+					}
+					events <- event
 				}
-				if event.Err != nil {
-					failed.Store(true)
-				}
-				events <- event
-			}
-		}(subcache)
+			}(subcache)
+		}
+		wg.Wait()
+		return !failed.Load()
 	}
-	wg.Wait()
+
+	var others []cacheMgmt
+	for _, subcache := range c.subcaches {
+		if subcache != cacheMgmt(c.projectConfig) {
+			others = append(others, subcache)
+		}
+	}
+
+	if !loadAll(c.projectConfig) {
+		return false
+	}
+	// once loaded: its load is no change for the bugs, which load after it
+	c.projectConfig.RegisterObserver("", &configObserver{bugs: c.bugs})
+	if !loadAll(others...) {
+		return false
+	}
 
 	// only once every subcache loaded: a failed load leaves nothing running,
 	// as the caller gets no cache to close
-	if failed.Load() {
-		return false
-	}
 	for _, subcache := range c.subcaches {
 		subcache.startSyncWorker()
 	}
@@ -341,4 +361,14 @@ func (c *RepoCache) unregisterAllObservers(observer Observer) {
 	for _, subcache := range c.subcaches {
 		subcache.UnregisterObserver(observer)
 	}
+}
+
+// configObserver has the bugs judged again when the config changes: the next
+// sync of every bug rebuilds those it judges differently, see NewRepoCacheBug.
+type configObserver struct {
+	bugs *RepoCacheBug
+}
+
+func (o *configObserver) EntityEvent(EntityEventType, string, string, entity.Id) {
+	o.bugs.requestSync()
 }

@@ -5,6 +5,7 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/git-bug/git-bug/util/lamport"
 )
@@ -85,6 +86,37 @@ func (snap *Snapshot) Clone() *Snapshot {
 // The eras of a clock are built on the first call for it, and kept with the
 // snapshot.
 func (snap *Snapshot) At(clockName string, time lamport.Time) Settings {
+	e := snap.erasOf(clockName)
+	return e.settings[e.index(time)]
+}
+
+// EraId returns the id of the era holding a lamport time on a clock, see At. Two
+// eras with the same id have the same settings, made of the same operations: for
+// an entity judged by the config, the id at the edit time of its latest operation
+// tells whether it is judged as before, see ForOperation. The first era, with no
+// operation, has an empty id, as has a repository without a config.
+func (snap *Snapshot) EraId(clockName string, time lamport.Time) string {
+	e := snap.erasOf(clockName)
+	return e.ids[e.index(time)]
+}
+
+// ForOperation returns the settings judging an operation of another entity, of
+// the namespace namespace: the ones of the era of its edit time, on the edit clock
+// of the namespace, see At.
+//
+// An operation not committed yet has no edit time: it is judged by the latest
+// settings, the ones its author sees. Once committed, it is judged by the era of
+// its edit time, an earlier one if a config operation recorded a later time than
+// this client's clock, see At.
+func (snap *Snapshot) ForOperation(namespace string, op dag.Operation) Settings {
+	if op.EditTime() == 0 {
+		return snap.Settings
+	}
+	return snap.At(dag.EditClock(namespace), op.EditTime())
+}
+
+// erasOf returns the eras of a clock, built on the first call for it.
+func (snap *Snapshot) erasOf(clockName string) *eras {
 	snap.mu.Lock()
 	defer snap.mu.Unlock()
 
@@ -96,7 +128,7 @@ func (snap *Snapshot) At(clockName string, time lamport.Time) Settings {
 		}
 		snap.eras[clockName] = e
 	}
-	return e.at(time)
+	return e
 }
 
 // eras are the settings of the eras of one clock.
@@ -107,6 +139,8 @@ type eras struct {
 	bounds []lamport.Time
 	// settings holds the settings of each era, one more than bounds
 	settings []Settings
+	// ids holds the id of each era, see EraId
+	ids []string
 }
 
 // newEras returns the eras of the clock clockName, made by the operations of a
@@ -124,21 +158,28 @@ func newEras(operations []dag.Operation, clockName string) *eras {
 
 	// each era replays the operations: there are few of them in a config
 	settings := make([]Settings, len(bounds)+1)
+	ids := make([]string, len(bounds)+1)
 	for i := range settings {
 		era := &Snapshot{}
+		// the ids of the operations applied, in order
+		var applied []byte
 		for j, op := range ops {
 			if i > 0 && stamps[j] <= bounds[i-1] {
 				op.Apply(era)
+				applied = append(applied, op.Id()...)
 			}
 		}
 		settings[i] = era.Settings
+		if len(applied) > 0 {
+			ids[i] = entity.DeriveId(applied).String()
+		}
 	}
 
-	return &eras{bounds: bounds, settings: settings}
+	return &eras{bounds: bounds, settings: settings, ids: ids}
 }
 
-// at returns the settings of the era holding a time.
-func (e *eras) at(time lamport.Time) Settings {
+// index returns the index of the era holding a time.
+func (e *eras) index(time lamport.Time) int {
 	i, _ := slices.BinarySearch(e.bounds, time)
-	return e.settings[i]
+	return i
 }

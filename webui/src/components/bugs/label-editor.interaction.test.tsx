@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Suspense } from "react";
 import { describe, it, expect, onTestFinished, vi } from "vitest";
 
+import { LabelChangeStatus } from "@/__generated__/enums";
 import type { FragmentType } from "@/__generated__/fragment-masking";
 import { BugChangeLabelsDocument } from "@/__generated__/graphql";
 import type { LABEL_FIELDS_FRAGMENT } from "@/components/shared/label-badge";
@@ -112,7 +113,7 @@ describe("LabelEditor — applying labels", () => {
     const matchVars = vi.fn().mockReturnValue(true);
     const mock = {
       request: { query: BugChangeLabelsDocument, variables: matchVars },
-      result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] } } } },
+      result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] }, results: [] } } },
     };
     return { matchVars, mock };
   }
@@ -232,7 +233,7 @@ describe("LabelEditor — failed save", () => {
   it("can't be reopened while saving", async () => {
     const mock = {
       request: { query: BugChangeLabelsDocument, variables: () => true },
-      result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] } } } },
+      result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] }, results: [] } } },
       delay: 50,
     };
     renderEditor({ currentLabels: [], mocks: [mock] });
@@ -250,7 +251,7 @@ describe("LabelEditor — leaving with the picker open", () => {
     const matchVars = vi.fn().mockReturnValue(true);
     const mock = {
       request: { query: BugChangeLabelsDocument, variables: matchVars },
-      result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] } } } },
+      result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] }, results: [] } } },
     };
     const { unmount } = renderEditor({ currentLabels: [], mocks: [mock] });
     openPopover();
@@ -269,12 +270,82 @@ describe("LabelEditor — leaving with the picker open", () => {
     const matchVars = vi.fn().mockReturnValue(true);
     const mock = {
       request: { query: BugChangeLabelsDocument, variables: matchVars },
-      result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] } } } },
+      result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] }, results: [] } } },
     };
     const { unmount } = renderEditor({ currentLabels: [], mocks: [mock] });
     openPopover();
     unmount();
 
     expect(matchVars).not.toHaveBeenCalled();
+  });
+});
+
+describe("LabelEditor — labels no longer allowed", () => {
+  // on the bug, but not among the valid labels: the repository restricted them since
+  const LABEL_WONTFIX: LabelData = { name: "wontfix", color: { R: 0, G: 0, B: 255 } };
+  const wontfix = () => screen.getByRole("option", { name: /^wontfix/ });
+
+  it("lists them among the valid labels, marked", () => {
+    renderEditor({ currentLabels: [LABEL_WONTFIX], validLabels: [LABEL_BUG, LABEL_URGENT] });
+    openPopover();
+    const names = screen.getAllByRole("option").map((option) => option.textContent);
+    expect(names).toEqual(["bug", "urgent", "wontfixnot allowed"]);
+    expect(wontfix()).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("removes them", async () => {
+    const matchVars = vi.fn().mockReturnValue(true);
+    const mock = {
+      request: { query: BugChangeLabelsDocument, variables: matchVars },
+      result: { data: { bugChangeLabels: { bug: { id: "1", labels: [] }, results: [] } } },
+    };
+    renderEditor({ currentLabels: [LABEL_WONTFIX], mocks: [mock] });
+    openPopover();
+    fireEvent.click(wontfix());
+    fireEvent.keyDown(document.body, { key: "Escape" });
+
+    await waitFor(() =>
+      expect(matchVars).toHaveBeenCalledWith({
+        input: { prefix: "bug1", repoRef: "myrepo", added: [], Removed: ["wontfix"] },
+      }),
+    );
+  });
+
+  it("reports those refused when applying, the repository restricting them meanwhile", async () => {
+    const addToast = vi.spyOn(toastManager, "add");
+    onTestFinished(() => addToast.mockRestore());
+    const mock = {
+      request: { query: BugChangeLabelsDocument, variables: () => true },
+      result: {
+        data: {
+          bugChangeLabels: {
+            bug: { id: "1", labels: [LABEL_BUG] },
+            results: [
+              { label: { name: "bug" }, status: LabelChangeStatus.Added },
+              { label: { name: "urgent" }, status: LabelChangeStatus.NotAllowed },
+            ],
+          },
+        },
+      },
+    };
+    renderEditor({ currentLabels: [], mocks: [mock] });
+    openPopover();
+    fireEvent.click(screen.getByRole("option", { name: "bug" }));
+    fireEvent.click(screen.getByRole("option", { name: "urgent" }));
+    fireEvent.keyDown(document.body, { key: "Escape" });
+
+    await waitFor(() =>
+      expect(addToast).toHaveBeenCalledWith({
+        title: "Some labels weren't added",
+        description: "Not allowed by the repository: urgent",
+      }),
+    );
+  });
+
+  it("lists no other label than the valid ones", () => {
+    renderEditor({ currentLabels: [LABEL_BUG], validLabels: [LABEL_BUG, LABEL_URGENT] });
+    openPopover();
+    expect(screen.getAllByRole("option")).toHaveLength(2);
+    expect(screen.queryByText("not allowed")).toBeNull();
   });
 });

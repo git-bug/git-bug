@@ -108,7 +108,7 @@ func Label(env *execenv.Env) ValidArgsFunction {
 			_ = env.Backend.Close()
 		}()
 
-		labels := env.Backend.Bugs().ValidLabels()
+		labels := env.Backend.Bugs().KnownLabels()
 		completions = make([]string, len(labels))
 		for i, label := range labels {
 			if strings.Contains(label.String(), " ") {
@@ -174,7 +174,7 @@ func Ls(env *execenv.Env) ValidArgsFunction {
 			if !strings.HasPrefix(toComplete, key) {
 				continue
 			}
-			labels := env.Backend.Bugs().ValidLabels()
+			labels := env.Backend.Bugs().KnownLabels()
 			completions = make([]string, len(labels))
 			for i, label := range labels {
 				if strings.Contains(label.String(), " ") {

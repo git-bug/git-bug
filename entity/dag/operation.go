@@ -11,6 +11,7 @@ import (
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/lamport"
 )
 
 // OperationType is an operation type identifier
@@ -47,6 +48,12 @@ type Operation interface {
 	Author() identity.Interface
 	// Time return the time when the operation was added
 	Time() time.Time
+	// EditTime returns the Lamport time of the pack holding the operation, on the
+	// edit clock of its namespace: the time the operation was made, relative to the
+	// operations of every entity of the namespace. It is 0 for an operation not
+	// committed yet. Committing an operation leaves it as it is: the entity holds
+	// a copy of it, with its edit time.
+	EditTime() lamport.Time
 
 	// SetMetadata store arbitrary metadata about the operation
 	SetMetadata(key string, value string)
@@ -59,6 +66,9 @@ type Operation interface {
 	setId(id entity.Id)
 	// setAuthor allow to set the author, used when unmarshalling only
 	setAuthor(author identity.Interface)
+	// setEditTime sets the edit time, used when reading a pack, or on a copy, see
+	// withEditTime
+	setEditTime(time lamport.Time)
 	// addExtraMetadataImmutable adds metadata not carried by the operation itself
 	// on the operation, see withExtraMetadata
 	addExtraMetadataImmutable(metadata map[string]string)
@@ -102,6 +112,9 @@ type OpBase struct {
 	id entity.Id
 	// Not serialized
 	author identity.Interface
+	// Not serialized. The edit time of the pack holding the operation, see
+	// Operation.EditTime.
+	editTime lamport.Time
 
 	OperationType OperationType `json:"type"`
 	UnixTime      int64         `json:"timestamp"`
@@ -273,6 +286,18 @@ func (base *OpBase) setAuthor(author identity.Interface) {
 	base.author = author
 }
 
+// EditTime returns the Lamport time of the pack holding the operation, see
+// Operation.EditTime.
+func (base *OpBase) EditTime() lamport.Time {
+	return base.editTime
+}
+
+// setEditTime sets the edit time, used when reading a pack, or on a copy, see
+// withEditTime
+func (base *OpBase) setEditTime(time lamport.Time) {
+	base.editTime = time
+}
+
 // addExtraMetadataImmutable sets the given metadata that the operation doesn't
 // have already. The map is replaced, not modified: a copy of the operation made
 // before shares the previous one, see withExtraMetadata.
@@ -295,12 +320,26 @@ func (base *OpBase) addExtraMetadataImmutable(metadata map[string]string) {
 // modified once created.
 // The copy is shallow and of the same concrete type, with the same id.
 func withExtraMetadata(op Operation, metadata map[string]string) Operation {
+	result := shallowCopy(op)
+	result.addExtraMetadataImmutable(metadata)
+	return result
+}
+
+// withEditTime returns a copy of op with the given edit time, for an operation
+// just committed. op itself is left untouched, see withExtraMetadata: while
+// staged, it may be in snapshots handed out already.
+func withEditTime(op Operation, time lamport.Time) Operation {
+	result := shallowCopy(op)
+	result.setEditTime(time)
+	return result
+}
+
+// shallowCopy returns a shallow copy of op, of the same concrete type, with the
+// same id.
+func shallowCopy(op Operation) Operation {
 	// operations are pointers, as OpBase's methods have pointer receivers
 	orig := reflect.ValueOf(op).Elem()
 	cpy := reflect.New(orig.Type())
 	cpy.Elem().Set(orig)
-
-	result := cpy.Interface().(Operation)
-	result.addExtraMetadataImmutable(metadata)
-	return result
+	return cpy.Interface().(Operation)
 }

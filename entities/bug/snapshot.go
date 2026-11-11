@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/git-bug/git-bug/entities/common"
+	"github.com/git-bug/git-bug/entities/config"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
@@ -29,6 +30,9 @@ type Snapshot struct {
 	Timeline []TimelineItem
 
 	Operations []dag.Operation
+
+	// config judges the operations, see Config. Nil is no config.
+	config *config.Snapshot
 }
 
 // Id returns the Bug identifier
@@ -38,6 +42,26 @@ func (snap *Snapshot) Id() entity.Id {
 		panic("no id")
 	}
 	return snap.id
+}
+
+// noConfig is the config of a repository without one: every setting at its
+// default.
+var noConfig = &config.Snapshot{}
+
+// Config returns the config the operations of the bug are judged by: the latest
+// one, each operation being judged by the config of its era, see configFor. It
+// is shared, and must not be modified.
+func (snap *Snapshot) Config() *config.Snapshot {
+	if snap.config == nil {
+		return noConfig
+	}
+	return snap.config
+}
+
+// configFor returns the settings judging an operation of the bug, see
+// config.Snapshot.ForOperation.
+func (snap *Snapshot) configFor(op dag.Operation) config.Settings {
+	return snap.Config().ForOperation(Namespace, op)
 }
 
 func (snap *Snapshot) AllOperations() []dag.Operation {
@@ -51,7 +75,8 @@ func (snap *Snapshot) AppendOperation(op dag.Operation) {
 // Clone returns a copy of the snapshot that operations can be applied to without
 // the original noticing, and conversely: the slices and the timeline items that
 // applying an operation modifies are copied, the rest is shared.
-// Operations and identities are shared, as they don't change once created.
+// Operations, identities and the config are shared, as they don't change once
+// created.
 func (snap *Snapshot) Clone() *Snapshot {
 	clone := *snap
 	clone.Comments = slices.Clone(snap.Comments)

@@ -137,7 +137,7 @@ function RouteComponent() {
   const openCount = data?.repository?.openCount.totalCount ?? 0;
   const closedCount = data?.repository?.closedCount.totalCount ?? 0;
   const bugs = data?.repository?.bugs;
-  const validLabels = labelsData?.repository?.validLabels.nodes;
+  const knownLabels = labelsData?.repository?.knownLabels.nodes;
   const allIdentities = identitiesData?.repository?.allIdentities.nodes;
 
   // Resolve the author query value (login/name) back to a humanId for the filter UI
@@ -158,7 +158,7 @@ function RouteComponent() {
         prefix: "label:",
         highlightClass: "text-yellow-600 dark:text-yellow-500",
         getSuggestions: (query: string) =>
-          (validLabels ?? [])
+          (knownLabels ?? [])
             .filter((l) => query === "" || l.name.toLowerCase().includes(query.toLowerCase()))
             .slice(0, 8)
             .map((l) => ({
@@ -197,7 +197,7 @@ function RouteComponent() {
             }),
       },
     ],
-    [validLabels, allIdentities],
+    [knownLabels, allIdentities],
   );
 
   const totalCount = bugs?.totalCount ?? 0;
@@ -282,7 +282,7 @@ function RouteComponent() {
 
           <div className="ml-auto">
             <IssueFilters
-              labels={validLabels ?? []}
+              labels={knownLabels ?? []}
               identities={allIdentities ?? []}
               selectedLabels={selectedLabels}
               onLabelsChange={(labels) =>

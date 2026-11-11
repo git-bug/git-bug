@@ -173,6 +173,14 @@ func (repoResolver) UserIdentity(ctx context.Context, obj *models.Repository) (m
 }
 
 func (repoResolver) ValidLabels(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.LabelConnection, error) {
+	return labelConnection(obj.Repo.Bugs().ValidLabels(), after, before, first, last)
+}
+
+func (repoResolver) KnownLabels(_ context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (*models.LabelConnection, error) {
+	return labelConnection(obj.Repo.Bugs().KnownLabels(), after, before, first, last)
+}
+
+func labelConnection(labels []common.Label, after *string, before *string, first *int, last *int) (*models.LabelConnection, error) {
 	input := models.ConnectionInput{
 		Before: before,
 		After:  after,
@@ -196,7 +204,7 @@ func (repoResolver) ValidLabels(_ context.Context, obj *models.Repository, after
 		}, nil
 	}
 
-	return connections.Connection(obj.Repo.Bugs().ValidLabels(), edger, conMaker, input)
+	return connections.Connection(labels, edger, conMaker, input)
 }
 
 func (repoResolver) Refs(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int, typeArg *repository.GitRefType) (*models.GitRefConnection, error) {

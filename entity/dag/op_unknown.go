@@ -28,6 +28,8 @@ func NewUnknownOp[SnapT Snapshot](raw json.RawMessage) (*UnknownOperation[SnapT]
 	if err := json.Unmarshal(raw, &op.OpBase); err != nil {
 		return nil, err
 	}
+	// derived from the raw JSON on first use, as the one of an operation read
+	op.id = entity.UnsetId
 	return op, nil
 }
 

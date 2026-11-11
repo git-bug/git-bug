@@ -102,7 +102,13 @@ func (def Definition) creationClock() string {
 
 // editClock returns the name of the Lamport clock ordering the edition of the Entities.
 func (def Definition) editClock() string {
-	return def.Namespace + "-edit"
+	return EditClock(def.Namespace)
+}
+
+// EditClock returns the name of the Lamport clock ordering the edition of the
+// Entities of a namespace, the one of Operation.EditTime.
+func EditClock(namespace string) string {
+	return namespace + "-edit"
 }
 
 // entityName names the Entity with this id in messages. A singleton is named after its
