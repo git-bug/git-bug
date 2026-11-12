@@ -243,6 +243,16 @@ func TestHeads(t *testing.T) {
 		_, err = Head(t.Context(), def, repo, entity.DeriveId([]byte("missing")))
 		require.ErrorIs(t, err, repository.ErrNotFound)
 	})
+
+	t.Run("singleton", func(t *testing.T) {
+		singleton := def
+		singleton.SingletonKey = "config"
+		_, err := ListHeads(t.Context(), singleton, repo)
+		require.Error(t, err)
+		_, err = Head(t.Context(), singleton, repo, e1.Id())
+		require.Error(t, err)
+		require.Empty(t, IdsFromKeys(singleton, []string{"config", e1.Id().String()}))
+	})
 }
 
 func listLocalIds(t *testing.T, def Definition, repo repository.RepoData, expectedCount int) {
@@ -968,4 +978,282 @@ func TestRemoveAll(t *testing.T) {
 	// Remove is idempotent
 	err = RemoveAll(t.Context(), def, repoA)
 	require.NoError(t, err)
+}
+
+func TestSingleton(t *testing.T) {
+	const key = "config"
+
+	// setup returns two repositories sharing a remote, and a singleton definition
+	setup := func(t *testing.T) (repository.Repo, repository.Repo, identity.Interface, entity.Resolvers, Definition) {
+		repoA, repoB, _, id1, _, resolvers, def := makeTestContextRemote(t)
+		def.Namespace = "single"
+		def.SingletonKey = key
+		return repoA, repoB, id1, resolvers, def
+	}
+
+	create := func(t *testing.T, repo repository.Repo, author identity.Interface, def Definition, field string) *Entity {
+		e := New(def)
+		e.Append(newOp1(author, field))
+		require.NoError(t, e.Commit(t.Context(), repo))
+		return e
+	}
+
+	pull := func(t *testing.T, repo repository.Repo, author identity.Interface, resolvers entity.Resolvers, def Definition) []entity.MergeResult {
+		_, err := Fetch(t.Context(), def, repo, "remote")
+		require.NoError(t, err)
+		var all []entity.MergeResult
+		for result := range MergeAll(t.Context(), def, wrapper, repo, resolvers, "remote", author) {
+			require.NoError(t, result.Err)
+			all = append(all, result)
+		}
+		return all
+	}
+
+	readSingleton := func(t *testing.T, repo repository.Repo, resolvers entity.Resolvers, def Definition) *Foo {
+		e, err := ReadSingleton(t.Context(), def, wrapper, repo, resolvers)
+		require.NoError(t, err)
+		return e
+	}
+
+	t.Run("commit and read", func(t *testing.T) {
+		repoA, _, id1, resolvers, def := setup(t)
+
+		_, err := ReadSingleton(t.Context(), def, wrapper, repoA, resolvers)
+		require.True(t, entity.IsErrNotFound(err))
+
+		e := create(t, repoA, id1, def, "foo")
+		require.Equal(t, e.FirstOp().Id(), e.Id())
+
+		// stored under the key, not the id
+		commit, err := repoA.ResolveRef(t.Context(), def.Namespace, key)
+		require.NoError(t, err)
+		require.Equal(t, e.LastCommit(), commit)
+		_, err = repoA.ResolveRef(t.Context(), def.Namespace, e.Id().String())
+		require.ErrorIs(t, err, repository.ErrNotFound)
+
+		read := readSingleton(t, repoA, resolvers, def)
+		require.Equal(t, e.Id(), read.Id())
+		require.Equal(t, e.Operations(), read.Operations())
+
+		read.Append(newOp1(id1, "bar"))
+		require.NoError(t, read.Commit(t.Context(), repoA))
+
+		entities := allEntities(t, ReadAll(t.Context(), def, wrapper, repoA, resolvers))
+		require.Len(t, entities, 1)
+		require.Equal(t, e.Id(), entities[0].Id())
+		require.Len(t, entities[0].Operations(), 2)
+	})
+
+	t.Run("not addressed by id", func(t *testing.T) {
+		repoA, _, id1, resolvers, def := setup(t)
+		e := create(t, repoA, id1, def, "foo")
+
+		_, err := Read(t.Context(), def, wrapper, repoA, resolvers, e.Id())
+		require.Error(t, err)
+		require.Error(t, Remove(t.Context(), def, repoA, e.Id()))
+		_, err = ListLocalIds(t.Context(), def, repoA)
+		require.Error(t, err)
+		_, err = repoA.ResolveRef(t.Context(), def.Namespace, key)
+		require.NoError(t, err)
+
+		// a regular Definition doesn't see the singleton reference as an entity
+		notSingleton := def
+		notSingleton.SingletonKey = ""
+		_, err = Read(t.Context(), notSingleton, wrapper, repoA, resolvers, e.Id())
+		require.True(t, entity.IsErrNotFound(err))
+		ids, err := ListLocalIds(t.Context(), notSingleton, repoA)
+		require.NoError(t, err)
+		require.Empty(t, ids)
+	})
+
+	t.Run("a second creation is refused", func(t *testing.T) {
+		repoA, _, id1, resolvers, def := setup(t)
+		first := create(t, repoA, id1, def, "foo")
+
+		second := New(def)
+		second.Append(newOp1(id1, "bar"))
+		require.ErrorIs(t, second.Commit(t.Context(), repoA), repository.ErrRefChanged)
+
+		// the existing singleton is another Entity: repairing doesn't join it
+		require.True(t, entity.IsErrNotFound(second.Repair(t.Context(), repoA, resolvers)))
+		require.ErrorIs(t, second.Commit(t.Context(), repoA), repository.ErrRefChanged)
+
+		read := readSingleton(t, repoA, resolvers, def)
+		require.Equal(t, first.Id(), read.Id())
+		require.Equal(t, first.Operations(), read.Operations())
+	})
+
+	t.Run("repair after a concurrent commit", func(t *testing.T) {
+		repoA, _, id1, resolvers, def := setup(t)
+		first := create(t, repoA, id1, def, "foo")
+
+		other := readSingleton(t, repoA, resolvers, def)
+		other.Append(newOp1(id1, "other"))
+		require.NoError(t, other.Commit(t.Context(), repoA))
+
+		first.Append(newOp1(id1, "pending"))
+		require.ErrorIs(t, first.Commit(t.Context(), repoA), repository.ErrRefChanged)
+		require.NoError(t, first.Repair(t.Context(), repoA, resolvers))
+		require.NoError(t, first.Commit(t.Context(), repoA))
+
+		read := readSingleton(t, repoA, resolvers, def)
+		require.Equal(t, first.Id(), read.Id())
+		require.Len(t, read.Operations(), 3)
+	})
+
+	t.Run("pull with the same root", func(t *testing.T) {
+		repoA, repoB, id1, resolvers, def := setup(t)
+		eA := create(t, repoA, id1, def, "foo")
+
+		_, err := Push(t.Context(), def, repoA, "remote")
+		require.NoError(t, err)
+		require.Equal(t, []entity.MergeResult{{Status: entity.MergeStatusNew}}, pull(t, repoB, id1, resolvers, def))
+
+		// concurrent edition, joined by a merge commit
+		eA.Append(newOp1(id1, "remote"))
+		require.NoError(t, eA.Commit(t.Context(), repoA))
+		eB := readSingleton(t, repoB, resolvers, def)
+		eB.Append(newOp1(id1, "local"))
+		require.NoError(t, eB.Commit(t.Context(), repoB))
+
+		_, err = Push(t.Context(), def, repoA, "remote")
+		require.NoError(t, err)
+		require.Equal(t, []entity.MergeResult{{Status: entity.MergeStatusUpdated}}, pull(t, repoB, id1, resolvers, def))
+
+		merged := readSingleton(t, repoB, resolvers, def)
+		require.Equal(t, eA.Id(), merged.Id())
+		require.Len(t, merged.Operations(), 3)
+
+		// up to date
+		require.Equal(t, []entity.MergeResult{{Status: entity.MergeStatusNothing}}, pull(t, repoB, id1, resolvers, def))
+	})
+
+	t.Run("pull fast-forward and local ahead", func(t *testing.T) {
+		repoA, repoB, id1, resolvers, def := setup(t)
+		eA := create(t, repoA, id1, def, "foo")
+
+		_, err := Push(t.Context(), def, repoA, "remote")
+		require.NoError(t, err)
+		require.Equal(t, []entity.MergeResult{{Status: entity.MergeStatusNew}}, pull(t, repoB, id1, resolvers, def))
+
+		// the remote is ahead: fast-forward
+		eA.Append(newOp1(id1, "remote"))
+		require.NoError(t, eA.Commit(t.Context(), repoA))
+		_, err = Push(t.Context(), def, repoA, "remote")
+		require.NoError(t, err)
+		require.Equal(t, []entity.MergeResult{{Status: entity.MergeStatusUpdated}}, pull(t, repoB, id1, resolvers, def))
+
+		local, err := repoB.ResolveRef(t.Context(), def.Namespace, key)
+		require.NoError(t, err)
+		require.Equal(t, eA.LastCommit(), local)
+
+		// the local is ahead: nothing changes
+		eB := readSingleton(t, repoB, resolvers, def)
+		eB.Append(newOp1(id1, "local"))
+		require.NoError(t, eB.Commit(t.Context(), repoB))
+		require.Equal(t, []entity.MergeResult{{Status: entity.MergeStatusNothing}}, pull(t, repoB, id1, resolvers, def))
+
+		local, err = repoB.ResolveRef(t.Context(), def.Namespace, key)
+		require.NoError(t, err)
+		require.Equal(t, eB.LastCommit(), local)
+	})
+
+	t.Run("pull with another root is a conflict", func(t *testing.T) {
+		repoA, repoB, id1, resolvers, def := setup(t)
+		create(t, repoA, id1, def, "foo")
+		eB := create(t, repoB, id1, def, "bar")
+
+		_, err := Push(t.Context(), def, repoA, "remote")
+		require.NoError(t, err)
+
+		all := pull(t, repoB, id1, resolvers, def)
+		require.Len(t, all, 1)
+		require.Equal(t, entity.MergeStatusConflict, all[0].Status)
+		require.Empty(t, all[0].Id)
+
+		// nothing changed locally
+		local, err := repoB.ResolveRef(t.Context(), def.Namespace, key)
+		require.NoError(t, err)
+		require.Equal(t, eB.LastCommit(), local)
+
+		// Pull reports it as a failure
+		require.Error(t, Pull(t.Context(), def, wrapper, repoB, resolvers, "remote", id1))
+
+		// pushing the other root is refused by the remote
+		_, err = Push(t.Context(), def, repoB, "remote")
+		require.Error(t, err)
+	})
+
+	t.Run("a replaced root is another entity", func(t *testing.T) {
+		repoA, repoB, id1, resolvers, def := setup(t)
+		eA := create(t, repoA, id1, def, "foo")
+		eB := create(t, repoB, id1, def, "bar")
+
+		_, err := Push(t.Context(), def, repoA, "remote")
+		require.NoError(t, err)
+		_, err = Fetch(t.Context(), def, repoB, "remote")
+		require.NoError(t, err)
+
+		// B drops its own root for the remote one
+		remote, err := repoB.ResolveTrackingRef(t.Context(), "remote", def.Namespace, key)
+		require.NoError(t, err)
+		require.NoError(t, repoB.UpdateRef(t.Context(), def.Namespace, key, eB.LastCommit(), remote))
+
+		// the old one is gone, and can't follow
+		eB.Append(newOp1(id1, "pending"))
+		require.ErrorIs(t, eB.Commit(t.Context(), repoB), repository.ErrRefChanged)
+		require.True(t, entity.IsErrNotFound(eB.Repair(t.Context(), repoB, resolvers)))
+
+		read := readSingleton(t, repoB, resolvers, def)
+		require.Equal(t, eA.Id(), read.Id())
+		require.Len(t, read.Operations(), 1)
+	})
+
+	t.Run("other references in the namespace are ignored", func(t *testing.T) {
+		repoA, repoB, id1, resolvers, def := setup(t)
+		eA := create(t, repoA, id1, def, "foo")
+		require.NoError(t, repoA.UpdateRef(t.Context(), def.Namespace, "stray", "", eA.LastCommit()))
+
+		entities := allEntities(t, ReadAll(t.Context(), def, wrapper, repoA, resolvers))
+		require.Len(t, entities, 1)
+		require.Equal(t, eA.Id(), entities[0].Id())
+
+		// the stray reference is pushed along, and ignored on merge
+		_, err := Push(t.Context(), def, repoA, "remote")
+		require.NoError(t, err)
+		require.Equal(t, []entity.MergeResult{{Status: entity.MergeStatusNew}}, pull(t, repoB, id1, resolvers, def))
+		_, err = repoB.ResolveRef(t.Context(), def.Namespace, "stray")
+		require.ErrorIs(t, err, repository.ErrNotFound)
+
+		require.NoError(t, RemoveAll(t.Context(), def, repoA))
+		_, err = repoA.ResolveRef(t.Context(), def.Namespace, key)
+		require.ErrorIs(t, err, repository.ErrNotFound)
+		_, err = repoA.ResolveRef(t.Context(), def.Namespace, "stray")
+		require.NoError(t, err)
+	})
+
+	t.Run("remove all", func(t *testing.T) {
+		repoA, _, id1, resolvers, def := setup(t)
+		create(t, repoA, id1, def, "foo")
+
+		_, err := Push(t.Context(), def, repoA, "remote")
+		require.NoError(t, err)
+
+		require.NoError(t, RemoveAll(t.Context(), def, repoA))
+
+		_, err = ReadSingleton(t.Context(), def, wrapper, repoA, resolvers)
+		require.True(t, entity.IsErrNotFound(err))
+		_, err = repoA.ResolveTrackingRef(t.Context(), "remote", def.Namespace, key)
+		require.ErrorIs(t, err, repository.ErrNotFound)
+
+		// RemoveAll is idempotent
+		require.NoError(t, RemoveAll(t.Context(), def, repoA))
+	})
+
+	t.Run("ReadSingleton needs a singleton", func(t *testing.T) {
+		repoA, _, _, resolvers, def := setup(t)
+		def.SingletonKey = ""
+		_, err := ReadSingleton(t.Context(), def, wrapper, repoA, resolvers)
+		require.Error(t, err)
+	})
 }

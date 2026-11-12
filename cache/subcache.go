@@ -38,7 +38,8 @@ type getUserIdentityFunc func(ctx context.Context) (*IdentityCache, error)
 // functions from this package, but right now identities are not using that framework.
 //
 // The cache knows the entities by id only: how they are stored in references is left
-// to the entity type, through ListHeads, Head and IdsFromKeys.
+// to the entity type, through ListHeads, Head and IdsFromKeys. A singleton entity (see
+// dag.Definition.SingletonKey) is not addressed by id and can't be held by a SubCache.
 type Actions[SharedT Shared] struct {
 	// ListHeads returns every entity, with the commit its reference points to
 	ListHeads func(ctx context.Context, repo repository.Repo) (map[entity.Id]repository.Hash, error)
