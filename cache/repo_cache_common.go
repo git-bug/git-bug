@@ -63,7 +63,7 @@ func (c *RepoCache) StoreData(ctx context.Context, data []byte) (repository.Hash
 }
 
 // Fetch retrieve updates from a remote
-// This does not change the local bugs or identities state
+// This does not change the local entities
 func (c *RepoCache) Fetch(ctx context.Context, remote string) (string, error) {
 	prefixes := make([]string, len(c.subcaches))
 	for i, subcache := range c.subcaches {
@@ -89,13 +89,13 @@ func (c *RepoCache) RemoveAll(ctx context.Context) error {
 	return nil
 }
 
-// MergeAll will merge all the available remote bug and identities
+// MergeAll will merge all the available remote entities
 func (c *RepoCache) MergeAll(ctx context.Context, remote string) <-chan entity.MergeResult {
 	out := make(chan entity.MergeResult)
 
 	dependency := [][]cacheMgmt{
 		{c.identities},
-		{c.bugs},
+		{c.projectConfig, c.bugs},
 	}
 
 	// run MergeAll according to entities dependencies and merge the results

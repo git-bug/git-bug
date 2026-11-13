@@ -62,6 +62,12 @@ func Read(ctx context.Context, repo repository.Repo) (*Config, error) {
 	return ReadWithResolver(ctx, repo, simpleResolvers(repo))
 }
 
+// Head returns the commit the reference of the config points to, or
+// repository.ErrNotFound if there is none
+func Head(ctx context.Context, repo repository.Repo) (repository.Hash, error) {
+	return repo.ResolveRef(ctx, def.Namespace, def.SingletonKey)
+}
+
 // ReadWithResolver will read the config from a repository, with custom resolvers
 func ReadWithResolver(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers) (*Config, error) {
 	return dag.ReadSingleton(ctx, def, wrapper, repo, resolvers)

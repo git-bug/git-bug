@@ -9,7 +9,6 @@ import (
 	"slices"
 	"strings"
 	"sync"
-	"time"
 
 	"resenje.org/singleflight"
 
@@ -114,20 +113,8 @@ type SubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved] struct {
 	muObservers sync.RWMutex
 	observers   map[Observer]string // observer --> repo name
 
-	// syncTrigger asks the worker for a sync of what is pending, see
-	// requestSync and startSyncWorker.
-	syncTrigger    chan struct{}
-	syncWorkerDone sync.WaitGroup
-	// muSyncWorker guards the state of the worker below, and the cancellation
-	// of ctx, for the worker not to start once closed. It is only held briefly.
-	muSyncWorker sync.Mutex
-	// syncWorkerPendingAll and syncWorkerPendingIds are what the next sync of
-	// the worker covers: every entity, or those ids.
-	syncWorkerPendingAll bool
-	syncWorkerPendingIds map[entity.Id]struct{}
-	// syncWorkerErr is the error of the latest sync of the worker, nil if it
-	// succeeded.
-	syncWorkerErr error
+	// worker syncs in the background, see requestSync and startSyncWorker
+	worker *syncWorker
 }
 
 func NewSubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved](
@@ -140,7 +127,7 @@ func NewSubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved](
 	typename, namespace string,
 	version uint, maxLoaded int) *SubCache[SharedT, ExcerptT, ViewT] {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &SubCache[SharedT, ExcerptT, ViewT]{
+	sc := &SubCache[SharedT, ExcerptT, ViewT]{
 		repo:            repo,
 		ctx:             ctx,
 		cancel:          cancel,
@@ -157,9 +144,15 @@ func NewSubCache[SharedT Shared, ExcerptT Excerpt, ViewT entity.Resolved](
 		excerpts:        make(map[entity.Id]ExcerptT),
 		builtFrom:       make(map[entity.Id]repository.Hash),
 		cached:          make(map[entity.Id]SharedT),
-		syncTrigger:     make(chan struct{}, 1),
 		lru:             newLRUIdCache(),
 	}
+	sc.worker = newSyncWorker(ctx, cancel, func(all bool, ids []entity.Id) error {
+		if all {
+			return sc.syncAll(nil)
+		}
+		return sc.syncIds(ids)
+	})
+	return sc
 }
 
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) Typename() string {
@@ -279,7 +272,7 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) SetCacheSize(size int) {
 }
 
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) Close() error {
-	sc.closeSyncWorker()
+	sc.worker.close()
 
 	sc.muDerived.Lock()
 	defer sc.muDerived.Unlock()
@@ -635,27 +628,6 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) syncAll(progress func(BuildEvent))
 	return err
 }
 
-// syncInterval is the shortest time between two syncs of the worker, see
-// startSyncWorker. It bounds the cost of a source reporting changes in quick
-// succession.
-//
-// TODO: shrink it, or drop it, once a sync that finds nothing to do is cheap.
-// With 10k bugs it takes ~60ms and allocates ~19MB: ~30ms in ListRefs, which
-// reads every loose ref file, on a worker per CPU, and ~25ms reading the
-// commit of every document of the index. Levers, by expected gain:
-//   - go-git keeping the refs it lists, and reading them again only when the
-//     stat of their directory or of packed-refs changed: no read at all when
-//     nothing changed;
-//   - packing the refs: listing 10k packed refs takes ~3ms instead of ~30ms,
-//     until new writes make them loose again;
-//   - keeping the record of the index in memory rather than reading it on each
-//     sync.
-const syncInterval = time.Second
-
-// syncRetryMaxDelay is the longest the worker waits before retrying a failed
-// sync, see startSyncWorker. It bounds the cost of a failure that lasts.
-const syncRetryMaxDelay = time.Minute
-
 // refsChanged asks the worker for a sync of the entities stored in the references
 // with these keys, see requestSync. A key that can't hold an entity is ignored.
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) refsChanged(keys []string) {
@@ -665,128 +637,14 @@ func (sc *SubCache[SharedT, ExcerptT, ViewT]) refsChanged(keys []string) {
 }
 
 // requestSync asks the worker for a sync of the given entities, or of every
-// entity if none is given, to bring the cache up to date with changes made to
-// the references outside of it, by another process or the git binary. It never
-// waits, and any number of requests collapse into one sync, of every entity
-// they named.
+// entity if none is given, see syncWorker.request.
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) requestSync(ids ...entity.Id) {
-	sc.muSyncWorker.Lock()
-	sc.addPendingLocked(ids...)
-	sc.muSyncWorker.Unlock()
-
-	select {
-	case sc.syncTrigger <- struct{}{}:
-	default:
-	}
+	sc.worker.request(ids...)
 }
 
-// addPendingLocked adds the given entities, or every entity if none is given,
-// to what the next sync of the worker covers. muSyncWorker must be held.
-func (sc *SubCache[SharedT, ExcerptT, ViewT]) addPendingLocked(ids ...entity.Id) {
-	switch {
-	case len(ids) == 0:
-		sc.syncWorkerPendingAll = true
-		sc.syncWorkerPendingIds = nil
-	case !sc.syncWorkerPendingAll:
-		if sc.syncWorkerPendingIds == nil {
-			sc.syncWorkerPendingIds = make(map[entity.Id]struct{}, len(ids))
-		}
-		for _, id := range ids {
-			sc.syncWorkerPendingIds[id] = struct{}{}
-		}
-	}
-}
-
-// startSyncWorker starts the worker, until Close. It syncs in the background,
-// one sync at a time, what requestSync asked for. A request received less than
-// syncInterval after the latest sync ended is postponed until then, not
-// dropped.
-//
-// A failed sync is kept in syncWorkerErr. The entities it was for stay pending,
-// and are synced again with the next request, or else on their own, after a
-// delay doubling with each failure, from syncInterval to syncRetryMaxDelay: with
-// no source to report changes, nothing else would.
+// startSyncWorker starts the worker, until Close, see syncWorker.start.
 func (sc *SubCache[SharedT, ExcerptT, ViewT]) startSyncWorker() {
-	sc.muSyncWorker.Lock()
-	defer sc.muSyncWorker.Unlock()
-	if sc.ctx.Err() != nil {
-		return
-	}
-
-	sc.syncWorkerDone.Go(func() {
-		// started right after the sync of Load
-		lastSync := time.Now()
-		// postponed fires when a request received too soon after the latest
-		// sync can be served, or a failed sync retried, nil if there is none
-		var postponed <-chan time.Time
-		// retryDelay is the delay before the latest retry, 0 if the latest
-		// sync succeeded
-		var retryDelay time.Duration
-
-		for {
-			select {
-			case <-sc.ctx.Done():
-				return
-			case <-postponed:
-			case <-sc.syncTrigger:
-				if wait := syncInterval - time.Since(lastSync); wait > 0 {
-					// replaces a retry, due later
-					postponed = time.After(wait)
-					continue
-				}
-			}
-
-			// the sync serves any postponed request
-			postponed = nil
-			sc.muSyncWorker.Lock()
-			all := sc.syncWorkerPendingAll
-			ids := slices.Collect(maps.Keys(sc.syncWorkerPendingIds))
-			sc.syncWorkerPendingAll = false
-			sc.syncWorkerPendingIds = nil
-			sc.muSyncWorker.Unlock()
-
-			var err error
-			switch {
-			case all:
-				err = sc.syncAll(nil)
-			case len(ids) > 0:
-				err = sc.syncIds(ids)
-			default:
-				// served by the previous sync
-				continue
-			}
-			lastSync = time.Now()
-
-			sc.muSyncWorker.Lock()
-			sc.syncWorkerErr = err
-			if err != nil {
-				// only the entities that failed, if the others were synced
-				var failed syncEntitiesError
-				if errors.As(err, &failed) {
-					ids = slices.Collect(maps.Keys(failed))
-				}
-				// no ids for a sync of every entity
-				sc.addPendingLocked(ids...)
-			}
-			sc.muSyncWorker.Unlock()
-
-			if err != nil {
-				retryDelay = min(max(2*retryDelay, syncInterval), syncRetryMaxDelay)
-				postponed = time.After(retryDelay)
-			} else {
-				retryDelay = 0
-			}
-		}
-	})
-}
-
-// closeSyncWorker cancels ctx, which interrupts a sync in progress and stops the
-// worker, and waits for it to end. It won't start again.
-func (sc *SubCache[SharedT, ExcerptT, ViewT]) closeSyncWorker() {
-	sc.muSyncWorker.Lock()
-	sc.cancel()
-	sc.muSyncWorker.Unlock()
-	sc.syncWorkerDone.Wait()
+	sc.worker.start()
 }
 
 // syncBatchSize is the number of entities applied to the index at once.
