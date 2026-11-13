@@ -3169,6 +3169,7 @@ enum LabelChangeStatus {
     DUPLICATE_IN_OP
     ALREADY_SET
     DOESNT_EXIST
+    NOT_ALLOWED
 }
 
 type LabelChangeResult {

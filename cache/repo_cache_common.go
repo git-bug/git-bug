@@ -93,9 +93,11 @@ func (c *RepoCache) RemoveAll(ctx context.Context) error {
 func (c *RepoCache) MergeAll(ctx context.Context, remote string) <-chan entity.MergeResult {
 	out := make(chan entity.MergeResult)
 
+	// the bugs are judged by the config: merged after it, they are built with it
 	dependency := [][]cacheMgmt{
 		{c.identities},
-		{c.projectConfig, c.bugs},
+		{c.projectConfig},
+		{c.bugs},
 	}
 
 	// run MergeAll according to entities dependencies and merge the results

@@ -32,6 +32,8 @@ func TestNewUnknownOpPreservesRawJSON(t *testing.T) {
 	op, err := NewUnknownOp[*snapshotMock](raw)
 	require.NoError(t, err)
 	require.Equal(t, raw, op.RawJSON)
+	// the id a read would set
+	require.Equal(t, entity.DeriveId(raw), op.Id())
 }
 
 func TestUnknownOpType(t *testing.T) {

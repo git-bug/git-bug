@@ -30,6 +30,10 @@ type BugExcerpt struct {
 	Participants []entity.Id
 
 	CreateMetadata map[string]string
+
+	// ConfigEra is the id of the era of the config judging the bug at its
+	// EditLamportTime, when the excerpt was built, see configEra. Empty for none.
+	ConfigEra string `json:",omitempty"`
 }
 
 func newBugExcerpt(b *sharedBug) *BugExcerpt {
@@ -58,6 +62,7 @@ func newBugExcerpt(b *sharedBug) *BugExcerpt {
 		Title:             snap.Title,
 		LenComments:       len(snap.Comments),
 		CreateMetadata:    snap.Operations[0].AllMetadata(),
+		ConfigEra:         configEra(snap.Config(), b.EditLamportTime()),
 	}
 
 	return e

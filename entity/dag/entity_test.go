@@ -295,7 +295,15 @@ func TestCommitOperations(t *testing.T) {
 		ops := []Operation{create, newOp2(id1, "bar"), newOp2(id2, "foobar")}
 		require.NoError(t, e.CommitOperations(t.Context(), repo, ops))
 		require.Equal(t, id, e.Id())
-		require.Equal(t, ops, e.Operations())
+		require.Equal(t, opIds(ops), opIds(e.Operations()))
+
+		// committed with the edit time of their pack, one per author
+		committed := e.Operations()
+		require.Equal(t, committed[0].EditTime(), committed[1].EditTime())
+		require.Equal(t, committed[1].EditTime()+1, committed[2].EditTime())
+		require.Equal(t, e.EditLamportTime(), committed[2].EditTime())
+		// the operations given are left untouched
+		require.Zero(t, ops[0].EditTime())
 
 		// one operation pack per author
 		last, err := repo.ReadCommit(t.Context(), e.LastCommit())
@@ -375,7 +383,7 @@ func TestRepair(t *testing.T) {
 
 		read, err := Read(t.Context(), def, wrapper, repo, resolver, stale.Id())
 		require.NoError(t, err)
-		require.Equal(t, append(moved.Operations(), op), read.Operations())
+		require.Equal(t, opIds(append(moved.Operations(), op)), opIds(read.Operations()))
 		assertEqualEntities(t, stale.Entity, read.Entity)
 	})
 
@@ -393,11 +401,11 @@ func TestRepair(t *testing.T) {
 
 		// the pending operation is still there
 		require.True(t, stale.NeedCommit())
-		require.Equal(t, append(moved.Operations(), op, pending), stale.Operations())
+		require.Equal(t, opIds(append(moved.Operations(), op, pending)), opIds(stale.Operations()))
 
 		read, err := Read(t.Context(), def, wrapper, repo, resolver, stale.Id())
 		require.NoError(t, err)
-		require.Equal(t, append(moved.Operations(), op), read.Operations())
+		require.Equal(t, opIds(append(moved.Operations(), op)), opIds(read.Operations()))
 	})
 
 	// Only the new commits are read when they descend from the last known one.
@@ -578,6 +586,16 @@ func TestRepair(t *testing.T) {
 
 		assertEqualEntities(t, moved.Entity, stale.Entity)
 	})
+}
+
+// opIds returns the ids of operations, to compare operations as given with the
+// same once committed, which carry the edit time of their pack.
+func opIds(ops []Operation) []entity.Id {
+	ids := make([]entity.Id, len(ops))
+	for i, op := range ops {
+		ids[i] = op.Id()
+	}
+	return ids
 }
 
 func assertEqualEntities(t *testing.T, a, b *Entity) {

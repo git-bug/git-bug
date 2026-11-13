@@ -26,13 +26,28 @@ func (op *LabelChangeOperation) Id() entity.Id {
 	return dag.IdOperation(op, &op.OpBase)
 }
 
-// Apply applies the operation
+// Apply applies the operation. A label it adds that the config of its era
+// doesn't allow is not added, see config.LabelsSection.Allowed: it is left out of
+// the snapshot, timeline included. Its other added labels, and the labels it
+// removes, apply.
 func (op *LabelChangeOperation) Apply(snapshot *Snapshot) {
+	labels := snapshot.configFor(op).Labels
+	added := make([]common.Label, 0, len(op.Added))
+	for _, label := range op.Added {
+		if labels.Allowed(label) {
+			added = append(added, label)
+		}
+	}
+	if len(added) == 0 && len(op.Removed) == 0 {
+		// refused as a whole
+		return
+	}
+
 	snapshot.addActor(op.Author())
 
 	// Add in the set
 AddLoop:
-	for _, added := range op.Added {
+	for _, added := range added {
 		for _, label := range snapshot.Labels {
 			if label == added {
 				// Already exist
@@ -64,7 +79,7 @@ AddLoop:
 		combinedId: entity.CombineIds(snapshot.Id(), id),
 		Author:     op.Author(),
 		UnixTime:   timestamp.Timestamp(op.UnixTime),
-		Added:      op.Added,
+		Added:      added,
 		Removed:    op.Removed,
 	}
 
@@ -118,12 +133,16 @@ func (l LabelChangeTimelineItem) CombinedId() entity.CombinedId {
 // IsAuthored is a sign post-method for gqlgen, to mark compliance to an interface.
 func (l *LabelChangeTimelineItem) IsAuthored() {}
 
-// ChangeLabels is a convenience function to change labels on a bug
+// ChangeLabels is a convenience function to change labels on a bug. A label to
+// add that the config doesn't allow is refused, as the operation would be judged
+// by it, see LabelChangeOperation.Apply.
 func ChangeLabels(b Mutable, author identity.Interface, unixTime int64, add, remove []string, metadata map[string]string) ([]LabelChangeResult, *LabelChangeOperation, error) {
 	var added, removed []common.Label
 	var results []LabelChangeResult
 
 	snap := b.Compile()
+	// the operation is not committed yet: judged by the latest config
+	allowed := snap.Config().Labels
 
 	for _, str := range add {
 		label := common.Label(str)
@@ -137,6 +156,11 @@ func ChangeLabels(b Mutable, author identity.Interface, unixTime int64, add, rem
 		// check that the label doesn't already exist
 		if labelExist(snap.Labels, label) {
 			results = append(results, LabelChangeResult{Label: label, Status: LabelChangeAlreadySet})
+			continue
+		}
+
+		if !allowed.Allowed(label) {
+			results = append(results, LabelChangeResult{Label: label, Status: LabelChangeNotAllowed})
 			continue
 		}
 
@@ -229,6 +253,7 @@ const (
 	LabelChangeDuplicateInOp
 	LabelChangeAlreadySet
 	LabelChangeDoesntExist
+	LabelChangeNotAllowed
 )
 
 func (l LabelChangeStatus) MarshalGQL(w io.Writer) {
@@ -243,6 +268,8 @@ func (l LabelChangeStatus) MarshalGQL(w io.Writer) {
 		_, _ = w.Write([]byte(strconv.Quote("ALREADY_EXIST")))
 	case LabelChangeDoesntExist:
 		_, _ = w.Write([]byte(strconv.Quote("DOESNT_EXIST")))
+	case LabelChangeNotAllowed:
+		_, _ = w.Write([]byte(strconv.Quote("NOT_ALLOWED")))
 	default:
 		panic("missing case")
 	}
@@ -264,6 +291,8 @@ func (l *LabelChangeStatus) UnmarshalGQL(v any) error {
 		*l = LabelChangeAlreadySet
 	case "DOESNT_EXIST":
 		*l = LabelChangeDoesntExist
+	case "NOT_ALLOWED":
+		*l = LabelChangeNotAllowed
 	default:
 		return fmt.Errorf("%s is not a valid LabelChangeStatus", str)
 	}
@@ -287,6 +316,8 @@ func (l LabelChangeResult) String() string {
 		return fmt.Sprintf("label %s was already set", l.Label)
 	case LabelChangeDoesntExist:
 		return fmt.Sprintf("label %s doesn't exist on this bug", l.Label)
+	case LabelChangeNotAllowed:
+		return fmt.Sprintf("label %s is not allowed", l.Label)
 	default:
 		panic(fmt.Sprintf("unknown label change status %v", l.Status))
 	}

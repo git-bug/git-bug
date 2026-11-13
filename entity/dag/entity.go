@@ -650,6 +650,8 @@ func (e *Entity) commitOperationsLocked(ctx context.Context, repo repository.Rep
 	// work on copies, the entity is only updated once the reference is
 	createTime, editTime, lastCommit := e.createTime, e.editTime, e.lastCommit
 	staging := ops
+	// the operations as committed, with the edit time of their pack
+	committed := make([]Operation, 0, len(ops))
 
 	for len(staging) > 0 {
 		var author identity.Interface
@@ -694,6 +696,9 @@ func (e *Entity) commitOperationsLocked(ctx context.Context, repo repository.Rep
 		if err != nil {
 			return err
 		}
+		for _, op := range toCommit {
+			committed = append(committed, withEditTime(op, editTime))
+		}
 	}
 
 	// Create or update the Git reference for this entity
@@ -713,7 +718,7 @@ func (e *Entity) commitOperationsLocked(ctx context.Context, repo repository.Rep
 	}
 
 	e.createTime, e.editTime, e.lastCommit = createTime, editTime, lastCommit
-	e.ops = append(e.ops, ops...)
+	e.ops = append(e.ops, committed...)
 
 	return nil
 }

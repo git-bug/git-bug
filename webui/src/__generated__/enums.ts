@@ -64,6 +64,7 @@ export const LabelChangeStatus = {
   AlreadySet: 'ALREADY_SET',
   DoesntExist: 'DOESNT_EXIST',
   DuplicateInOp: 'DUPLICATE_IN_OP',
+  NotAllowed: 'NOT_ALLOWED',
   Removed: 'REMOVED'
 } as const;
 

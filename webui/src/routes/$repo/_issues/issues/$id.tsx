@@ -19,6 +19,11 @@ const BUG_DETAIL_QUERY = graphql(`
         createdAt
         labels {
           name
+          color {
+            R
+            G
+            B
+          }
           ...LabelFields
         }
         author {

@@ -10,26 +10,59 @@ import (
 
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entities/common"
+	"github.com/git-bug/git-bug/entities/config"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/git-bug/git-bug/query"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/lamport"
 )
 
-// sharedBug is the single loaded copy of a bug, see sharedEntity.
+// sharedBug is the single loaded copy of a bug, see sharedEntity. It is compiled
+// with the repository config, see judgedBug, and compiled again when the config
+// changes.
 type sharedBug = sharedEntity[*bug.Snapshot, bug.Operation]
 
-func newSharedBug(b *bug.Bug) *sharedBug {
-	return &sharedBug{Tracked: b}
+func newSharedBug(b *bug.Bug, cfg func() *config.Snapshot) *sharedBug {
+	return &sharedBug{
+		Tracked: judgedBug{Bug: b, config: cfg},
+		depends: func() any { return cfg() },
+	}
+}
+
+// judgedBug is a bug whose operations are judged by the repository config, see
+// bug.Bug.CompileWith.
+type judgedBug struct {
+	*bug.Bug
+	config func() *config.Snapshot
+}
+
+func (b judgedBug) Compile() *bug.Snapshot {
+	return b.CompileWith(b.config())
+}
+
+// configEra returns the id of the era of the config cfg judging a bug of edit
+// time editTime, see config.Snapshot.EraId: the snapshot of the bug only changes
+// with it.
+func configEra(cfg *config.Snapshot, editTime lamport.Time) string {
+	return cfg.EraId(dag.EditClock(bug.Namespace), editTime)
 }
 
 type RepoCacheBug struct {
 	*SubCache[*sharedBug, *BugExcerpt, *BugCache]
+
+	// config returns the latest repository config, which judges the bugs
+	config func() *config.Snapshot
 }
 
+// NewRepoCacheBug returns the subcache of the bugs, judged by the repository
+// config that cfg returns, see judgedBug. After the config changed, the next
+// sync of every bug rebuilds those it judges differently, see configEra.
 func NewRepoCacheBug(repo repository.Repo,
 	resolvers func() entity.Resolvers,
-	getUserIdentity getUserIdentityFunc) *RepoCacheBug {
+	getUserIdentity getUserIdentityFunc,
+	cfg func() *config.Snapshot) *RepoCacheBug {
 
 	makeView := func(shared *sharedBug, onCommit func()) *BugCache {
 		return newBugCache(shared, repo, resolvers, getUserIdentity, onCommit)
@@ -54,7 +87,7 @@ func NewRepoCacheBug(repo repository.Repo,
 			if err != nil {
 				return nil, err
 			}
-			return newSharedBug(b), nil
+			return newSharedBug(b, cfg), nil
 		},
 		Refresh: func(ctx context.Context, repo repository.Repo, resolvers entity.Resolvers, shared *sharedBug) (*sharedBug, error) {
 			return shared, shared.Repair(ctx, repo, resolvers)
@@ -65,14 +98,19 @@ func NewRepoCacheBug(repo repository.Repo,
 		EnsureClocks: bug.EnsureClocks,
 	}
 
+	// judged by another era of the config than when it was built
+	stale := func(excerpt *BugExcerpt) bool {
+		return excerpt.ConfigEra != configEra(cfg(), excerpt.EditLamportTime)
+	}
+
 	sc := NewSubCache[*sharedBug, *BugExcerpt, *BugCache](
 		repo, resolvers, getUserIdentity,
-		makeView, newBugExcerpt, makeIndexData, actions,
+		makeView, newBugExcerpt, makeIndexData, stale, actions,
 		bug.Typename, bug.Namespace,
 		formatVersion, defaultMaxLoadedBugs,
 	)
 
-	return &RepoCacheBug{SubCache: sc}
+	return &RepoCacheBug{SubCache: sc, config: cfg}
 }
 
 // ResolveBugCreateMetadata retrieve a bug that has the exact given metadata on
@@ -210,37 +248,29 @@ func (c *RepoCacheBug) Query(ctx context.Context, q *query.Query) ([]entity.Id, 
 	return result, nil
 }
 
-// ValidLabels list valid labels
-//
-// Note: in the future, a proper label policy could be implemented where valid
-// labels are defined in a configuration file. Until that, the default behavior
-// is to return the list of labels already used.
+// ValidLabels returns the labels that may be added to a bug, sorted: the labels
+// the config allows if it restricts them, otherwise the labels it defines and
+// those already used.
 func (c *RepoCacheBug) ValidLabels() []common.Label {
-	c.muMaps.RLock()
-	defer c.muMaps.RUnlock()
+	labels := c.config().Labels
+	if allowed := labels.AllowedNames(); len(allowed) > 0 {
+		return allowed
+	}
 
 	set := map[common.Label]struct{}{}
+	for _, l := range labels.Names() {
+		set[l] = struct{}{}
+	}
 
+	c.muMaps.RLock()
 	for _, excerpt := range c.excerpts {
 		for _, l := range excerpt.Labels {
 			set[l] = struct{}{}
 		}
 	}
+	c.muMaps.RUnlock()
 
-	result := make([]common.Label, len(set))
-
-	i := 0
-	for l := range set {
-		result[i] = l
-		i++
-	}
-
-	// Sort
-	sort.Slice(result, func(i, j int) bool {
-		return string(result[i]) < string(result[j])
-	})
-
-	return result
+	return slices.Sorted(maps.Keys(set))
 }
 
 // New create a new bug
@@ -275,7 +305,7 @@ func (c *RepoCacheBug) NewRaw(author identity.Interface, unixTime int64, title s
 		return nil, nil, err
 	}
 
-	cached := c.newView(newSharedBug(bug.NewBug()))
+	cached := c.newView(newSharedBug(bug.NewBug(), c.config))
 	cached.Append(op)
 	return cached, op, nil
 }
