@@ -219,11 +219,11 @@ func (c *RepoCacheBug) ValidLabels() []common.Label {
 	c.muMaps.RLock()
 	defer c.muMaps.RUnlock()
 
-	set := map[common.Label]interface{}{}
+	set := map[common.Label]struct{}{}
 
 	for _, excerpt := range c.excerpts {
 		for _, l := range excerpt.Labels {
-			set[l] = nil
+			set[l] = struct{}{}
 		}
 	}
 
