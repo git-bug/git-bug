@@ -29,7 +29,8 @@ func TestSnapshot(t *testing.T) {
 		_, err = LabelsAllow(c, clocks, rene, unix, "bug")
 		require.NoError(t, err)
 		snap := c.Compile()
-		era := snap.At("bugs-edit", 43)
+		snap.At("bugs-edit", 43)
+		built := snap.eras["bugs-edit"]
 
 		// operations applied to the clone leave the original as it was
 		clone := snap.Clone()
@@ -48,7 +49,7 @@ func TestSnapshot(t *testing.T) {
 		require.Equal(t, []common.Label{"bug"}, snap.Labels.AllowedNames())
 		require.Empty(t, snap.Repo.Description())
 		require.Len(t, snap.Operations, 3)
-		require.Same(t, era, snap.At("bugs-edit", 43))
+		require.Same(t, built, snap.eras["bugs-edit"])
 
 		// the clone builds its own eras
 		require.Equal(t, blue, clone.Labels.Color("bug"))
@@ -77,7 +78,7 @@ func TestEras(t *testing.T) {
 		require.NoError(t, err)
 
 		snap := c.Compile()
-		at := func(time lamport.Time) *Snapshot { return snap.At("bugs-edit", time) }
+		at := func(time lamport.Time) Settings { return snap.At("bugs-edit", time) }
 
 		red := common.LabelColor{R: 0xf4, G: 0x43, B: 0x36, A: 255}
 		blue := common.LabelColor{R: 0x21, G: 0x96, B: 0xf3, A: 255}
@@ -86,14 +87,13 @@ func TestEras(t *testing.T) {
 			description string
 			color       common.LabelColor
 			restricted  bool
-			operations  int
 		}{
 			// before the config, every setting has its default
-			{times: []lamport.Time{0, 1, 42}, color: common.Label("bug").Color(), operations: 0},
+			{times: []lamport.Time{0, 1, 42}, color: common.Label("bug").Color()},
 			// an operation applies strictly after the time it recorded
-			{times: []lamport.Time{43, 50}, color: red, operations: 2},
-			{times: []lamport.Time{51, 60}, description: "description", color: red, restricted: true, operations: 4},
-			{times: []lamport.Time{61, 1000}, description: "description", color: blue, restricted: true, operations: 5},
+			{times: []lamport.Time{43, 50}, color: red},
+			{times: []lamport.Time{51, 60}, description: "description", color: red, restricted: true},
+			{times: []lamport.Time{61, 1000}, description: "description", color: blue, restricted: true},
 		}
 		for _, want := range cases {
 			for _, time := range want.times {
@@ -101,13 +101,11 @@ func TestEras(t *testing.T) {
 				require.Equal(t, want.description, era.Repo.Description(), "time %d", time)
 				require.Equal(t, want.color, era.Labels.Color("bug"), "time %d", time)
 				require.Equal(t, want.restricted, !era.Labels.Allowed("anything"), "time %d", time)
-				require.Len(t, era.Operations, want.operations, "time %d", time)
 			}
 		}
 
 		// the last era is the latest config
-		require.Equal(t, snap.Repo, at(61).Repo)
-		require.Equal(t, snap.Labels, at(61).Labels)
+		require.Equal(t, snap.Settings, at(61))
 	})
 
 	t.Run("kept with the snapshot", func(t *testing.T) {
@@ -116,18 +114,17 @@ func TestEras(t *testing.T) {
 		require.NoError(t, err)
 		snap := c.Compile()
 
-		// built once, from any goroutine
-		eras := make([]*Snapshot, 8)
+		// built from any goroutine
 		var wg sync.WaitGroup
-		for i := range eras {
-			wg.Go(func() { eras[i] = snap.At("bugs-edit", 43) })
+		for range 8 {
+			wg.Go(func() { snap.At("bugs-edit", 43) })
 		}
 		wg.Wait()
-		for _, era := range eras {
-			require.Same(t, eras[0], era)
-		}
-		// the times of an era share its config
-		require.Same(t, eras[0], snap.At("bugs-edit", 1000))
+		built := snap.eras["bugs-edit"]
+		require.NotNil(t, built)
+		// then reused for any time
+		snap.At("bugs-edit", 1000)
+		require.Same(t, built, snap.eras["bugs-edit"])
 
 		// appending an operation builds them again
 		op, err := NewRepoSetDescriptionOp(clocks, rene, unix, "description")
@@ -148,6 +145,8 @@ func TestEras(t *testing.T) {
 		require.NoError(t, err)
 		_, err = RepoSetDescription(c, clocks, rene, unix, "current")
 		require.NoError(t, err)
+		_, err = LabelsSet(c, clocks, rene, unix, "bug", LabelsDefinition{})
+		require.NoError(t, err)
 		_, err = RepoSetDescription(c, behind, rene, unix, "behind")
 		require.NoError(t, err)
 
@@ -156,9 +155,9 @@ func TestEras(t *testing.T) {
 		// it applies alone from its own time, and wins where both apply, as it sorts
 		// last in the config
 		require.Equal(t, "behind", snap.At("bugs-edit", 11).Repo.Description())
-		require.Len(t, snap.At("bugs-edit", 11).Operations, 1)
+		require.Empty(t, snap.At("bugs-edit", 11).Labels.Names())
 		require.Equal(t, "behind", snap.At("bugs-edit", 43).Repo.Description())
-		require.Len(t, snap.At("bugs-edit", 43).Operations, 3)
+		require.Equal(t, []common.Label{"bug"}, snap.At("bugs-edit", 43).Labels.Names())
 	})
 
 	t.Run("unrecorded clock", func(t *testing.T) {
@@ -193,8 +192,7 @@ func TestEras(t *testing.T) {
 		c.Append(unknown.(Operation))
 
 		snap := c.Compile()
-		require.Len(t, snap.At("bugs-edit", 55).Operations, 1)
-		require.Len(t, snap.At("bugs-edit", 56).Operations, 2)
-		require.Same(t, unknown, snap.At("bugs-edit", 56).Operations[1])
+		snap.At("bugs-edit", 0)
+		require.Equal(t, []lamport.Time{42, 55}, snap.eras["bugs-edit"].bounds)
 	})
 }

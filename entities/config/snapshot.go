@@ -11,11 +11,17 @@ import (
 
 var _ dag.Snapshot = &Snapshot{}
 
-// Snapshot is a compiled form of the Config data structure, made of its sections.
-// A setting that was never set reads as its default.
-type Snapshot struct {
+// Settings is the config at one point of its history, made of its sections. A
+// setting that was never set reads as its default.
+type Settings struct {
 	Repo   RepoSection
 	Labels LabelsSection
+}
+
+// Snapshot is a compiled form of the Config data structure: the latest settings,
+// and the operations in effect.
+type Snapshot struct {
+	Settings // latest version
 
 	Operations []dag.Operation
 
@@ -42,10 +48,12 @@ func (snap *Snapshot) AppendOperation(op dag.Operation) {
 // the original. The copy builds its own eras.
 func (snap *Snapshot) Clone() *Snapshot {
 	return &Snapshot{
-		Repo: snap.Repo,
-		Labels: LabelsSection{
-			definitions: maps.Clone(snap.Labels.definitions),
-			allowed:     maps.Clone(snap.Labels.allowed),
+		Settings: Settings{
+			Repo: snap.Repo,
+			Labels: LabelsSection{
+				definitions: maps.Clone(snap.Labels.definitions),
+				allowed:     maps.Clone(snap.Labels.allowed),
+			},
 		},
 		Operations: slices.Clone(snap.Operations),
 	}
@@ -69,14 +77,14 @@ func (snap *Snapshot) Clone() *Snapshot {
 // before any recorded time, with no config operation: every setting reads as its
 // default.
 
-// At returns the config judging an operation of another entity of lamport time t
-// on the clock clockName: the one of the era holding t. The operations of an
+// At returns the settings judging an operation of another entity of lamport time t
+// on the clock clockName: the ones of the era holding t. The operations of an
 // entity are judged on the edit clock of its namespace, by the edit time of their
-// pack. The result must not be modified.
+// pack.
 //
 // The eras of a clock are built on the first call for it, and kept with the
 // snapshot.
-func (snap *Snapshot) At(clockName string, time lamport.Time) *Snapshot {
+func (snap *Snapshot) At(clockName string, time lamport.Time) Settings {
 	snap.mu.Lock()
 	defer snap.mu.Unlock()
 
@@ -91,14 +99,14 @@ func (snap *Snapshot) At(clockName string, time lamport.Time) *Snapshot {
 	return e.at(time)
 }
 
-// eras are the configs of the eras of one clock.
+// eras are the settings of the eras of one clock.
 type eras struct {
 	// bounds are the distinct times of the clock recorded by the operations, in
 	// increasing order. Era i holds the times above bounds[i-1] and up to bounds[i],
 	// the last era the times above the last bound.
 	bounds []lamport.Time
-	// snapshots holds the config of each era, one more than bounds
-	snapshots []*Snapshot
+	// settings holds the settings of each era, one more than bounds
+	settings []Settings
 }
 
 // newEras returns the eras of the clock clockName, made by the operations of a
@@ -115,23 +123,22 @@ func newEras(operations []dag.Operation, clockName string) *eras {
 	bounds := slices.Compact(slices.Sorted(slices.Values(stamps)))
 
 	// each era replays the operations: there are few of them in a config
-	snapshots := make([]*Snapshot, len(bounds)+1)
-	for i := range snapshots {
+	settings := make([]Settings, len(bounds)+1)
+	for i := range settings {
 		era := &Snapshot{}
 		for j, op := range ops {
 			if i > 0 && stamps[j] <= bounds[i-1] {
 				op.Apply(era)
-				era.Operations = append(era.Operations, op)
 			}
 		}
-		snapshots[i] = era
+		settings[i] = era.Settings
 	}
 
-	return &eras{bounds: bounds, snapshots: snapshots}
+	return &eras{bounds: bounds, settings: settings}
 }
 
-// at returns the config of the era holding a time.
-func (e *eras) at(time lamport.Time) *Snapshot {
+// at returns the settings of the era holding a time.
+func (e *eras) at(time lamport.Time) Settings {
 	i, _ := slices.BinarySearch(e.bounds, time)
-	return e.snapshots[i]
+	return e.settings[i]
 }

@@ -192,6 +192,8 @@ func TestSync(t *testing.T) {
 
 		cA, _, err := Create(repoA, rene, unix)
 		require.NoError(t, err)
+		_, err = RepoSetDescription(cA, repoA, rene, unix, "description")
+		require.NoError(t, err)
 		require.NoError(t, cA.Commit(t.Context(), repoA))
 		_, err = Push(t.Context(), repoA, "origin")
 		require.NoError(t, err)
@@ -206,8 +208,8 @@ func TestSync(t *testing.T) {
 
 		// B doesn't have the bugs A had: its next bug edit is concurrent with the
 		// config, and judged by the era before it
-		require.Empty(t, snap.At("bugs-edit", time+1).Operations)
-		require.Len(t, snap.At("bugs-edit", 101).Operations, 1)
+		require.Empty(t, snap.At("bugs-edit", time+1).Repo.Description())
+		require.Equal(t, "description", snap.At("bugs-edit", 101).Repo.Description())
 	})
 
 	t.Run("another config is a conflict", func(t *testing.T) {

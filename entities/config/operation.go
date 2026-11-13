@@ -13,8 +13,8 @@ import (
 )
 
 // The settings of the config are grouped in sections, a feature area each. A
-// section owns its part of the Snapshot, with its rules, defaults and queries, in
-// <section>.go, and its operations in <section>_ops.go. The Snapshot gathers the
+// section owns its part of the Settings, with its rules, defaults and queries, in
+// <section>.go, and its operations in <section>_ops.go. The Settings gather the
 // sections, and the shapes and kinds of operations they are built from are in
 // shapes.go and kinds.go.
 //
