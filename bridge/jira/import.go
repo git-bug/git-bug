@@ -90,15 +90,6 @@ func (ji *jiraImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, si
 	go func() {
 		defer close(ji.out)
 
-		message, err := ji.client.Search(
-			fmt.Sprintf("project=%s AND updatedDate>\"%s\"", project, sinceStr), 0, 0)
-		if err != nil {
-			out <- core.NewImportError(err, "")
-			return
-		}
-
-		fmt.Printf("So far so good. Have %d issues to import\n", message.Total)
-
 		jql := fmt.Sprintf("project=%s AND updatedDate>\"%s\"", project, sinceStr)
 		var searchIter *SearchIterator
 		for searchIter =
