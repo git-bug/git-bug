@@ -79,7 +79,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitest/browser-playwright": "^4.1.12",
     "@vitest/coverage-v8": "^4.1.12",
-    "@vitest/ui": "^4.1.12",
+    "@vitest/ui": "^5.0.4",
     "eslint-plugin-storybook": "^10.6.5",
     "happy-dom": "^21.0.4",
     "oxfmt": "^0.74.0",
