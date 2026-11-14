@@ -6,7 +6,6 @@ import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import compression from "vite-plugin-compression";
-import svgr from "vite-plugin-svgr";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -16,7 +15,6 @@ const API_URL = process.env.VITE_API_URL || "http://localhost:3000";
 export default defineConfig({
   plugins: [
     tanstackRouter({ target: "react", autoCodeSplitting: true }),
-    svgr(),
     tailwindcss(),
     react(),
     compression({

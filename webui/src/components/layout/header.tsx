@@ -6,7 +6,6 @@
 import { Link, useParams, useRouterState } from "@tanstack/react-router";
 import { Check, Contrast, Plus } from "lucide-react";
 
-import Logo from "@/assets/logo.svg?react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
@@ -14,6 +13,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useAuth } from "@/lib/auth";
 import { useTheme, THEMES } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+
+import { Logo } from "./logo";
 
 export function Header() {
   const { user } = useAuth();

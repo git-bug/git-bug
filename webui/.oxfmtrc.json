@@ -8,5 +8,5 @@
   "trailingComma": "all",
   "sortImports": {},
   "sortTailwindcss": {},
-  "ignorePatterns": ["src/__generated__/**", "src/routeTree.gen.ts", "dist/**"]
+  "ignorePatterns": ["src/__generated__/**", "src/routeTree.gen.ts", "src/vendor/**", "dist/**"]
 }

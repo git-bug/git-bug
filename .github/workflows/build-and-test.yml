@@ -121,6 +121,38 @@ jobs:
       - name: Test
         run: pnpm run test
 
+  # Distribution packagers build the web UI offline from a production-only
+  # install (npm ci --omit=dev), so everything `vite build` reads must be in
+  # "dependencies": "devDependencies" holds only lint, format, test, storybook
+  # and codegen tooling. This job fails when a build input lands in
+  # "devDependencies", the default of `pnpm add -D`.
+  with-node-prod:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webui
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          package_json_file: webui/package.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: webui/pnpm-lock.yaml
+
+      - name: Install production dependencies only
+        run: pnpm install --prod --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -155,8 +187,15 @@ jobs:
       # pulls in //commands, which pulls in //webui and its //go:embed.
       # //api/graphql is regenerated too, so that a gqlgen update reaching its
       # generated code or the static playground page is not left behind.
+      # the web UI's graphql client code in //webui/src:__generated__ is
+      # committed because distributions build the web UI from a
+      # production-only install, which has no graphql-codegen.
+      # //webui/src:routeTree.gen.ts is rewritten by the webui build above, so
+      # a stale committed copy shows up in the diff as well.
       - name: Check generated files are up to date
         run: |
           make webui/dist
           go generate . ./api/graphql/...
-          git diff --exit-code -- doc/man doc/md misc/completion api/graphql
+          pnpm --dir webui run codegen
+          git diff --exit-code -- doc/man doc/md misc/completion api/graphql \
+            webui/src/__generated__ webui/src/routeTree.gen.ts
