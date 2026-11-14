@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
+/* A verbatim copy of shadcn's tailwind.css, so that building the web UI does not need the shadcn
+   CLI and its dependencies. `pnpm vendor:sync` refreshes it from the installed shadcn package;
+   `pnpm check` fails when the two differ. */
+@import "./vendor/shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
 @plugin "@tailwindcss/typography";
 

@@ -1,3 +1,8 @@
 overrides:
   js-yaml@4: ^4.3.2
   postcss-selector-parser@6: ^6.1.5
+  # Since 4.3.4 Tailwind publishes this WASM build of its engine without a cpu
+  # field, so it installs on every platform although it only loads where no
+  # native build exists: Linux, macOS and Windows on x64 and arm64 have one,
+  # and distributions compile the engine from source.
+  "@tailwindcss/oxide>@tailwindcss/oxide-wasm32-wasi": "-"
