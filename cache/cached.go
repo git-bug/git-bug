@@ -48,11 +48,12 @@ type CachedEntityBase[SnapT cloneable[SnapT], OpT dag.OperationWithApply[SnapT]]
 
 	mu     sync.Mutex
 	staged []OpT
-	// snap is the shared snapshot as of the commit base, with the staged
-	// operations applied. It is nil when nothing is staged, or when it has to be
-	// rebuilt because an operation was staged or the shared copy moved.
+	// snap is the shared snapshot of generation base, see sharedEntity.state,
+	// with the staged operations applied. It is nil when nothing is staged, or
+	// when it has to be rebuilt because an operation was staged or the shared
+	// snapshot was rebuilt.
 	snap *SnapT
-	base repository.Hash
+	base uint64
 }
 
 // Id returns the id of the entity, the one of its first operation, which for a
@@ -82,7 +83,7 @@ func (e *CachedEntityBase[SnapT, OpT]) Snapshot() SnapT {
 // Compile returns the state of the entity, staged operations included. With none,
 // it is the shared snapshot of the committed state, which must not be modified.
 // Otherwise, it is a copy of it with the staged operations applied, rebuilt when
-// the committed state moved.
+// the shared snapshot is.
 func (e *CachedEntityBase[SnapT, OpT]) Compile() SnapT {
 	e.mu.Lock()
 	defer e.mu.Unlock()

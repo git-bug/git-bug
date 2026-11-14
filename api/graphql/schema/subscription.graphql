@@ -11,6 +11,7 @@ type Subscription {
 enum EntityType {
   BUG
   IDENTITY
+  CONFIG
 }
 
 enum EntityEventType {

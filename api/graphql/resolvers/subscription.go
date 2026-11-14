@@ -9,6 +9,7 @@ import (
 	"github.com/git-bug/git-bug/api/graphql/models"
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/config"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 )
@@ -23,6 +24,7 @@ const entitiesChangedInterval = time.Second
 var cacheTypenames = map[models.EntityType]string{
 	models.EntityTypeBug:      bug.Typename,
 	models.EntityTypeIdentity: identity.Typename,
+	models.EntityTypeConfig:   config.Typename,
 }
 
 type subscriptionResolver struct {

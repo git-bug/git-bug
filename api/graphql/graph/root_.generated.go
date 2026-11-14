@@ -464,6 +464,7 @@ type ComplexityRoot struct {
 		Commits       func(childComplexity int, after *string, first *int, ref string, path *string, since *time.Time, until *time.Time) int
 		Head          func(childComplexity int) int
 		Identity      func(childComplexity int, prefix string) int
+		KnownLabels   func(childComplexity int, after *string, before *string, first *int, last *int) int
 		LastCommits   func(childComplexity int, ref string, path *string, names []string) int
 		Name          func(childComplexity int) int
 		Refs          func(childComplexity int, after *string, before *string, first *int, last *int, typeArg *repository.GitRefType) int
@@ -2141,6 +2142,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Repository.Identity(childComplexity, args["prefix"].(string)), true
+	case "Repository.knownLabels":
+		if e.ComplexityRoot.Repository.KnownLabels == nil {
+			break
+		}
+
+		args, err := ec.field_Repository_knownLabels_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Repository.KnownLabels(childComplexity, args["after"].(*string), args["before"].(*string), args["first"].(*int), args["last"].(*int)), true
 	case "Repository.lastCommits":
 		if e.ComplexityRoot.Repository.LastCommits == nil {
 			break
@@ -3169,6 +3181,7 @@ enum LabelChangeStatus {
     DUPLICATE_IN_OP
     ALREADY_SET
     DOESNT_EXIST
+    NOT_ALLOWED
 }
 
 type LabelChangeResult {
@@ -3297,8 +3310,21 @@ type OperationEdge {
     repository, or if HEAD is missing or invalid."""
     head: GitRef
 
-    """List of valid labels."""
+    """List of valid labels: those that may be added to a bug."""
     validLabels(
+        """Returns the elements in the list that come after the specified cursor."""
+        after: String
+        """Returns the elements in the list that come before the specified cursor."""
+        before: String
+        """Returns the first _n_ elements from the list."""
+        first: Int
+        """Returns the last _n_ elements from the list."""
+        last: Int
+    ): LabelConnection!
+
+    """List of known labels: those bugs can be searched by. They include the
+    labels used by a bug that are no longer valid."""
+    knownLabels(
         """Returns the elements in the list that come after the specified cursor."""
         after: String
         """Returns the elements in the list that come before the specified cursor."""
@@ -3360,6 +3386,7 @@ type Subscription {
 enum EntityType {
   BUG
   IDENTITY
+  CONFIG
 }
 
 enum EntityEventType {
@@ -4123,6 +4150,8 @@ func (ec *executionContext) childFields_Repository(ctx context.Context, field gr
 		return ec.fieldContext_Repository_head(ctx, field)
 	case "validLabels":
 		return ec.fieldContext_Repository_validLabels(ctx, field)
+	case "knownLabels":
+		return ec.fieldContext_Repository_knownLabels(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Repository", field.Name)
 }

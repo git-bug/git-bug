@@ -274,6 +274,10 @@ func readOperationPack(ctx context.Context, def Definition, repo repository.Repo
 		}
 	}
 
+	for _, op := range ops {
+		op.setEditTime(editTime)
+	}
+
 	// Verify signature if we expect one
 	keys := author.ValidKeysAtTime(def.editClock(), editTime)
 	if len(keys) > 0 {

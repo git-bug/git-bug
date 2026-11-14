@@ -396,16 +396,18 @@ type EntityType string
 const (
 	EntityTypeBug      EntityType = "BUG"
 	EntityTypeIdentity EntityType = "IDENTITY"
+	EntityTypeConfig   EntityType = "CONFIG"
 )
 
 var AllEntityType = []EntityType{
 	EntityTypeBug,
 	EntityTypeIdentity,
+	EntityTypeConfig,
 }
 
 func (e EntityType) IsValid() bool {
 	switch e {
-	case EntityTypeBug, EntityTypeIdentity:
+	case EntityTypeBug, EntityTypeIdentity, EntityTypeConfig:
 		return true
 	}
 	return false

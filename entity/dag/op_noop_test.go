@@ -27,5 +27,6 @@ func TestNoopSerialize(t *testing.T) {
 
 	after, err := Read(t.Context(), def, wrapper, repo, resolvers, e.Id())
 	require.NoError(t, err)
-	require.Equal(t, []Operation{before}, after.Operations())
+	// committed with the edit time of its pack, see Operation.EditTime
+	require.Equal(t, e.Operations(), after.Operations())
 }

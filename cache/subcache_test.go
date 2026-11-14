@@ -451,7 +451,7 @@ func TestSubCacheDerived(t *testing.T) {
 
 		// another process sees the change first, and updates the index
 		changeOutside(t, repo, rene, id, "markeroutside")
-		other := NewRepoCacheBug(repo, c.getResolvers, c.GetUserIdentity)
+		other := NewRepoCacheBug(repo, c.getResolvers, c.GetUserIdentity, c.ProjectConfig().Snapshot)
 		require.NoError(t, other.syncAll(nil))
 
 		obs := &observer{}

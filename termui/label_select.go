@@ -3,6 +3,8 @@ package termui
 import (
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/awesome-gocui/gocui"
@@ -25,9 +27,12 @@ type labelSelect struct {
 	bug         *cache.BugCache
 	labels      []common.Label
 	labelSelect []bool
-	selected    int
-	scroll      int
-	childViews  []string
+	// allowed tells, for each label, whether the config allows adding it. One
+	// it doesn't allow is only listed while the bug has it, to be removed.
+	allowed    []bool
+	selected   int
+	scroll     int
+	childViews []string
 }
 
 func newLabelSelect() *labelSelect {
@@ -37,22 +42,29 @@ func newLabelSelect() *labelSelect {
 func (ls *labelSelect) SetBug(cache *cache.RepoCache, bug *cache.BugCache) {
 	ls.cache = cache
 	ls.bug = bug
-	ls.labels = cache.Bugs().ValidLabels()
-
-	// Find which labels are currently applied to the bug
+	// the labels that may be added, and those of the bug, which can be removed
+	// even if the config no longer allows them
 	bugLabels := bug.Snapshot().Labels
-	labelSelect := make([]bool, len(ls.labels))
+	set := make(map[common.Label]struct{})
+	for _, label := range cache.Bugs().ValidLabels() {
+		set[label] = struct{}{}
+	}
+	for _, label := range bugLabels {
+		set[label] = struct{}{}
+	}
+	ls.labels = slices.Sorted(maps.Keys(set))
+
+	// Find which labels are currently applied to the bug, and which the config
+	// allows
+	allowed := cache.ProjectConfig().Snapshot().Labels
+	ls.labelSelect = make([]bool, len(ls.labels))
+	ls.allowed = make([]bool, len(ls.labels))
 	for i, label := range ls.labels {
-		for _, bugLabel := range bugLabels {
-			if label == bugLabel {
-				labelSelect[i] = true
-				break
-			}
-		}
+		ls.labelSelect[i] = slices.Contains(bugLabels, label)
+		ls.allowed[i] = allowed.Allowed(label)
 	}
 
-	ls.labelSelect = labelSelect
-	if len(labelSelect) > 0 {
+	if len(ls.labels) > 0 {
 		ls.selected = 0
 	} else {
 		ls.selected = -1
@@ -106,8 +118,8 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 	ls.childViews = nil
 
 	width := 5
-	for _, label := range ls.labels {
-		width = maxInt(width, len(label.String()))
+	for i, label := range ls.labels {
+		width = maxInt(width, len(label.String()+ls.note(i)))
 	}
 	width += 10
 	x0 := 1
@@ -138,7 +150,7 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 
 		lc := label.Color()
 		lc256 := lc.Term256()
-		labelStr := lc256.Escape() + "◼ " + lc256.Unescape() + label.String()
+		labelStr := lc256.Escape() + "◼ " + lc256.Unescape() + label.String() + ls.note(i)
 		_, _ = fmt.Fprint(v, selectBox, labelStr)
 
 		y0 += 2
@@ -162,6 +174,14 @@ func (ls *labelSelect) layout(g *gocui.Gui) error {
 		return err
 	}
 	return nil
+}
+
+// note returns what is shown after a label: whether the config allows it.
+func (ls *labelSelect) note(i int) string {
+	if ls.allowed[i] {
+		return ""
+	}
+	return " (not allowed)"
 }
 
 func (ls *labelSelect) disable(g *gocui.Gui) error {
@@ -253,9 +273,19 @@ func (ls *labelSelect) addItem(g *gocui.Gui, v *gocui.View) error {
 			}
 		}
 
+		// A label the config doesn't allow can't be added
+		if !ls.cache.ProjectConfig().Snapshot().Labels.Allowed(common.Label(input)) {
+			g.Update(func(g *gocui.Gui) error {
+				ui.msgPopup.Activate(msgPopupErrorTitle, fmt.Sprintf("Label %s is not allowed.", input))
+				return nil
+			})
+			return
+		}
+
 		// Add new label, make it selected, and focus
 		ls.labels = append(ls.labels, common.Label(input))
 		ls.labelSelect = append(ls.labelSelect, true)
+		ls.allowed = append(ls.allowed, true)
 		ls.selected = len(ls.labels) - 1
 
 		g.Update(func(g *gocui.Gui) error {

@@ -59,7 +59,7 @@ func NewRepoCacheIdentity(repo repository.Repo,
 
 	sc := NewSubCache[*identity.Identity, *IdentityExcerpt, *IdentityCache](
 		repo, resolvers, getUserIdentity,
-		makeView, newIdentityExcerpt, makeIndex, actions,
+		makeView, newIdentityExcerpt, makeIndex, nil, actions,
 		identity.Typename, identity.Namespace,
 		formatVersion, defaultMaxLoadedBugs,
 	)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/git-bug/git-bug/entities/common"
+	"github.com/git-bug/git-bug/entities/config"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
@@ -148,11 +149,20 @@ func (bug *Bug) Operations() []Operation {
 	return result
 }
 
-// Compile a bug in an easily usable snapshot
+// Compile a bug in an easily usable snapshot, with no config: every setting at
+// its default. See CompileWith.
 func (bug *Bug) Compile() *Snapshot {
+	return bug.CompileWith(nil)
+}
+
+// CompileWith compiles a bug in an easily usable snapshot, its operations judged
+// by the config cfg of the repository, see Snapshot.Config. A nil cfg is no
+// config: every setting at its default.
+func (bug *Bug) CompileWith(cfg *config.Snapshot) *Snapshot {
 	snap := &Snapshot{
 		id:     bug.Id(),
 		Status: common.OpenStatus,
+		config: cfg,
 	}
 
 	for _, op := range bug.Operations() {
