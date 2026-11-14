@@ -48,6 +48,14 @@ func (s *sharedEntity[SnapT, OpT]) state() (SnapT, repository.Hash) {
 	return *s.snap, s.Tracked.LastCommit()
 }
 
+// committed returns the id of the entity along with the commit of its committed
+// state, both read from the same state.
+func (s *sharedEntity[SnapT, OpT]) committed() (entity.Id, repository.Hash) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.Tracked.Id(), s.Tracked.LastCommit()
+}
+
 // CommitOperations writes the given operations on top of the committed state, see
 // dag.Tracked. The memoized snapshot is rebuilt on the next read.
 //
