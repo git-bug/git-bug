@@ -1,0 +1,433 @@
+{
+  "_comment": "Test vectors for the board entity format. IDs are computed by the reference implementation (Go encoding/json + crypto/sha256). Git object hashes are the ones of a SHA-1 repository.",
+
+  "operation_pack_examples": [
+    {
+      "description": "First pack: the CreateOperation, followed by an AddColumnOperation for each of the three columns of the board",
+      "tree_entries": [
+        {"name": "create-clock-1", "type": "blob", "hash": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"},
+        {"name": "edit-clock-1",   "type": "blob", "hash": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"},
+        {"name": "ops",            "type": "blob", "hash": "4ede79091b4f53fa90178d755c6ad109e9e1e602"},
+        {"name": "version-1",      "type": "blob", "hash": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"}
+      ],
+      "ops_blob": {
+        "author": {"id": "b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7"},
+        "ops": [
+          {
+            "type": 1,
+            "timestamp": 1609459200,
+            "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "title": "Roadmap",
+            "description": "What we work on, and in what order"
+          },
+          {
+            "type": 4,
+            "timestamp": 1609459200,
+            "nonce": "BBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+            "name": "Backlog",
+            "position": "a0",
+            "priority_ordered": true
+          },
+          {
+            "type": 4,
+            "timestamp": 1609459200,
+            "nonce": "CCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+            "name": "In progress",
+            "position": "a1"
+          },
+          {
+            "type": 4,
+            "timestamp": 1609459200,
+            "nonce": "DDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "name": "Done",
+            "position": "a2"
+          }
+        ]
+      },
+      "ids": {
+        "board":                "21720892ee59e7a71479f744c7fde6dbabcf383d36203af5eb5c921fe9a34404",
+        "column 'Backlog'":     "de1085803e7aa8dc3ac45d21965c7257746beb990c2cfc6f4e78ea3fc94a1e04",
+        "column 'In progress'": "f3eca469c1ec0a1fe82af38ea3b978e51248419b009e7de9f93458a2cc0c883b",
+        "column 'Done'":        "95b08a331a2be67c9c548155ad771e782053ff1f40a4bcd36798d0230065aee7"
+      },
+      "note": "The board ID equals the ID of the CreateOperation, and the ID of each column the ID of its AddColumnOperation: hex(sha256(raw bytes of the operation))."
+    },
+    {
+      "description": "Second pack: a bug and a draft added to 'Backlog', and a draft added without a column",
+      "tree_entries": [
+        {"name": "edit-clock-2", "type": "blob", "hash": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"},
+        {"name": "ops",          "type": "blob", "hash": "6abfb24e7e30cdb05c97e3d0c4bee7b9dd52ab9a"},
+        {"name": "version-1",    "type": "blob", "hash": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"}
+      ],
+      "ops_blob": {
+        "author": {"id": "b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7"},
+        "ops": [
+          {
+            "type": 8,
+            "timestamp": 1609462800,
+            "nonce": "EEEEEEEEEEEEEEEEEEEEEEEEEEEE",
+            "namespace": "bugs",
+            "entity": "ad3fe2d371f680ae2b9d012631fe2602ebf99efedcb8fdca7a926d65ba85056e",
+            "column": "de1085803e7aa8dc3ac45d21965c7257746beb990c2cfc6f4e78ea3fc94a1e04",
+            "position": "a0"
+          },
+          {
+            "type": 7,
+            "timestamp": 1609462800,
+            "nonce": "FFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+            "title": "Write the release notes",
+            "column": "de1085803e7aa8dc3ac45d21965c7257746beb990c2cfc6f4e78ea3fc94a1e04",
+            "position": "a1"
+          },
+          {
+            "type": 7,
+            "timestamp": 1609462800,
+            "nonce": "GGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+            "title": "Try the new parser",
+            "position": "a2"
+          }
+        ]
+      },
+      "ids": {
+        "item of the bug":                       "71e8220dd1a57ed3890bdc535baed11b6c0ed7e470ad05b6c9badab36c3291e6",
+        "item 'Write the release notes'":        "c2fc7f4eb28bd8a7620da96f38dd86f9814497951dd2961cb47501e17160d0f0",
+        "item 'Try the new parser'":             "48986d2de0a9c09a49068fe7d4b1dcb3612fed3a5de5569b9bdcb1202204726a"
+      },
+      "note": "The ID of each item is the ID of the operation that added it. The bug is the one of bug.json."
+    },
+    {
+      "description": "Third pack: 'Write the release notes' moved above the bug, within 'Backlog': column is absent, the item keeps its column",
+      "ops_blob": {
+        "author": {"id": "b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7"},
+        "ops": [
+          {
+            "type": 9,
+            "timestamp": 1609466400,
+            "nonce": "HHHHHHHHHHHHHHHHHHHHHHHHHHHH",
+            "item": "c2fc7f4eb28bd8a7620da96f38dd86f9814497951dd2961cb47501e17160d0f0",
+            "position": "Zz"
+          }
+        ]
+      }
+    },
+    {
+      "description": "Fourth pack: the bug moved to 'In progress'. Its item is designated by the ID of the bug, not by its own. The column has no other item, and the writer left the position as it was",
+      "ops_blob": {
+        "author": {"id": "b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7"},
+        "ops": [
+          {
+            "type": 9,
+            "timestamp": 1609470000,
+            "nonce": "IIIIIIIIIIIIIIIIIIIIIIIIIIII",
+            "item": "ad3fe2d371f680ae2b9d012631fe2602ebf99efedcb8fdca7a926d65ba85056e",
+            "column": "f3eca469c1ec0a1fe82af38ea3b978e51248419b009e7de9f93458a2cc0c883b",
+            "position": "a0"
+          }
+        ]
+      }
+    },
+    {
+      "description": "Fifth pack: 'Try the new parser' moved to 'Backlog', below 'Write the release notes', which is then moved out of its column: column is null",
+      "ops_blob": {
+        "author": {"id": "b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7"},
+        "ops": [
+          {
+            "type": 9,
+            "timestamp": 1609473600,
+            "nonce": "JJJJJJJJJJJJJJJJJJJJJJJJJJJJ",
+            "item": "48986d2de0a9c09a49068fe7d4b1dcb3612fed3a5de5569b9bdcb1202204726a",
+            "column": "de1085803e7aa8dc3ac45d21965c7257746beb990c2cfc6f4e78ea3fc94a1e04",
+            "position": "ZzV"
+          },
+          {
+            "type": 9,
+            "timestamp": 1609473600,
+            "nonce": "KKKKKKKKKKKKKKKKKKKKKKKKKKKK",
+            "item": "c2fc7f4eb28bd8a7620da96f38dd86f9814497951dd2961cb47501e17160d0f0",
+            "column": null,
+            "position": "Zz"
+          }
+        ]
+      }
+    },
+    {
+      "description": "Sixth pack: 'In progress' renamed to 'Doing', and the title of a draft changed",
+      "ops_blob": {
+        "author": {"id": "b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7"},
+        "ops": [
+          {
+            "type": 5,
+            "timestamp": 1609477200,
+            "nonce": "LLLLLLLLLLLLLLLLLLLLLLLLLLLL",
+            "column": "f3eca469c1ec0a1fe82af38ea3b978e51248419b009e7de9f93458a2cc0c883b",
+            "name": "Doing"
+          },
+          {
+            "type": 11,
+            "timestamp": 1609477200,
+            "nonce": "MMMMMMMMMMMMMMMMMMMMMMMMMMMM",
+            "item": "48986d2de0a9c09a49068fe7d4b1dcb3612fed3a5de5569b9bdcb1202204726a",
+            "title": "Try the new parser on the test suite"
+          }
+        ]
+      }
+    },
+    {
+      "description": "Seventh pack: the draft 'Try the new parser on the test suite' converted into a bug, created separately under refs/bugs/",
+      "ops_blob": {
+        "author": {"id": "b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7"},
+        "ops": [
+          {
+            "type": 12,
+            "timestamp": 1609480800,
+            "nonce": "NNNNNNNNNNNNNNNNNNNNNNNNNNNN",
+            "item": "48986d2de0a9c09a49068fe7d4b1dcb3612fed3a5de5569b9bdcb1202204726a",
+            "namespace": "bugs",
+            "entity": "ac3def8400785cfe8c07ffcfd1e92bd9134dc6ddb598ab5ef4f056b88b3c9dc0"
+          }
+        ]
+      }
+    },
+    {
+      "description": "Eighth pack: the column 'Doing' removed, and the item 'Write the release notes' removed",
+      "ops_blob": {
+        "author": {"id": "b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7"},
+        "ops": [
+          {
+            "type": 6,
+            "timestamp": 1609484400,
+            "nonce": "OOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+            "column": "f3eca469c1ec0a1fe82af38ea3b978e51248419b009e7de9f93458a2cc0c883b"
+          },
+          {
+            "type": 10,
+            "timestamp": 1609484400,
+            "nonce": "PPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+            "item": "c2fc7f4eb28bd8a7620da96f38dd86f9814497951dd2961cb47501e17160d0f0"
+          }
+        ]
+      }
+    },
+    {
+      "description": "Ninth pack: the title changed, the description emptied, and the CreateOperation annotated with metadata",
+      "ops_blob": {
+        "author": {"id": "b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7"},
+        "ops": [
+          {
+            "type": 2,
+            "timestamp": 1609488000,
+            "nonce": "QQQQQQQQQQQQQQQQQQQQQQQQQQQQ",
+            "title": "Roadmap 2021",
+            "was": "Roadmap"
+          },
+          {
+            "type": 3,
+            "timestamp": 1609488000,
+            "nonce": "RRRRRRRRRRRRRRRRRRRRRRRRRRRR",
+            "description": "",
+            "was": "What we work on, and in what order"
+          },
+          {
+            "type": 13,
+            "timestamp": 1609488000,
+            "nonce": "SSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+            "target": "21720892ee59e7a71479f744c7fde6dbabcf383d36203af5eb5c921fe9a34404",
+            "new_metadata": {
+              "origin": "github"
+            }
+          }
+        ]
+      }
+    }
+  ],
+
+  "snapshot_examples": [
+    {
+      "description": "After the first two packs",
+      "after_packs": 2,
+      "title": "Roadmap",
+      "description_field": "What we work on, and in what order",
+      "columns": [
+        {"id": "de1085803e7aa8dc3ac45d21965c7257746beb990c2cfc6f4e78ea3fc94a1e04", "name": "Backlog",     "position": "a0", "priority_ordered": true},
+        {"id": "f3eca469c1ec0a1fe82af38ea3b978e51248419b009e7de9f93458a2cc0c883b", "name": "In progress", "position": "a1", "priority_ordered": false},
+        {"id": "95b08a331a2be67c9c548155ad771e782053ff1f40a4bcd36798d0230065aee7", "name": "Done",        "position": "a2", "priority_ordered": false}
+      ],
+      "items": [
+        {"id": "71e8220dd1a57ed3890bdc535baed11b6c0ed7e470ad05b6c9badab36c3291e6", "content": {"namespace": "bugs", "entity": "ad3fe2d371f680ae2b9d012631fe2602ebf99efedcb8fdca7a926d65ba85056e"}, "column": "Backlog", "position": "a0"},
+        {"id": "c2fc7f4eb28bd8a7620da96f38dd86f9814497951dd2961cb47501e17160d0f0", "content": {"draft": "Write the release notes"}, "column": "Backlog", "position": "a1"},
+        {"id": "48986d2de0a9c09a49068fe7d4b1dcb3612fed3a5de5569b9bdcb1202204726a", "content": {"draft": "Try the new parser"}, "column": null, "position": "a2"}
+      ],
+      "note": "Columns and items are listed in their order. In this example and the next ones, the column of an item is given by its name instead of its ID, and null stands for no column."
+    },
+    {
+      "description": "After the first five packs",
+      "after_packs": 5,
+      "title": "Roadmap",
+      "description_field": "What we work on, and in what order",
+      "columns": [
+        {"id": "de1085803e7aa8dc3ac45d21965c7257746beb990c2cfc6f4e78ea3fc94a1e04", "name": "Backlog",     "position": "a0", "priority_ordered": true},
+        {"id": "f3eca469c1ec0a1fe82af38ea3b978e51248419b009e7de9f93458a2cc0c883b", "name": "In progress", "position": "a1", "priority_ordered": false},
+        {"id": "95b08a331a2be67c9c548155ad771e782053ff1f40a4bcd36798d0230065aee7", "name": "Done",        "position": "a2", "priority_ordered": false}
+      ],
+      "items": [
+        {"id": "c2fc7f4eb28bd8a7620da96f38dd86f9814497951dd2961cb47501e17160d0f0", "content": {"draft": "Write the release notes"}, "column": null, "position": "Zz"},
+        {"id": "48986d2de0a9c09a49068fe7d4b1dcb3612fed3a5de5569b9bdcb1202204726a", "content": {"draft": "Try the new parser"}, "column": "Backlog", "position": "ZzV"},
+        {"id": "71e8220dd1a57ed3890bdc535baed11b6c0ed7e470ad05b6c9badab36c3291e6", "content": {"namespace": "bugs", "entity": "ad3fe2d371f680ae2b9d012631fe2602ebf99efedcb8fdca7a926d65ba85056e"}, "column": "In progress", "position": "a0"}
+      ],
+      "note": "The order of the items is the one of the board, whatever their column: Zz, ZzV, a0."
+    },
+    {
+      "description": "After the first seven packs",
+      "after_packs": 7,
+      "title": "Roadmap",
+      "description_field": "What we work on, and in what order",
+      "columns": [
+        {"id": "de1085803e7aa8dc3ac45d21965c7257746beb990c2cfc6f4e78ea3fc94a1e04", "name": "Backlog", "position": "a0", "priority_ordered": true},
+        {"id": "f3eca469c1ec0a1fe82af38ea3b978e51248419b009e7de9f93458a2cc0c883b", "name": "Doing",   "position": "a1", "priority_ordered": false},
+        {"id": "95b08a331a2be67c9c548155ad771e782053ff1f40a4bcd36798d0230065aee7", "name": "Done",    "position": "a2", "priority_ordered": false}
+      ],
+      "items": [
+        {"id": "c2fc7f4eb28bd8a7620da96f38dd86f9814497951dd2961cb47501e17160d0f0", "content": {"draft": "Write the release notes"}, "column": null, "position": "Zz"},
+        {"id": "48986d2de0a9c09a49068fe7d4b1dcb3612fed3a5de5569b9bdcb1202204726a", "content": {"namespace": "bugs", "entity": "ac3def8400785cfe8c07ffcfd1e92bd9134dc6ddb598ab5ef4f056b88b3c9dc0"}, "column": "Backlog", "position": "ZzV"},
+        {"id": "71e8220dd1a57ed3890bdc535baed11b6c0ed7e470ad05b6c9badab36c3291e6", "content": {"namespace": "bugs", "entity": "ad3fe2d371f680ae2b9d012631fe2602ebf99efedcb8fdca7a926d65ba85056e"}, "column": "Doing", "position": "a0"}
+      ],
+      "note": "The converted item kept its ID, its column and its position. The column kept its ID under its new name."
+    },
+    {
+      "description": "After all nine packs",
+      "after_packs": 9,
+      "title": "Roadmap 2021",
+      "description_field": "",
+      "columns": [
+        {"id": "de1085803e7aa8dc3ac45d21965c7257746beb990c2cfc6f4e78ea3fc94a1e04", "name": "Backlog", "position": "a0", "priority_ordered": true},
+        {"id": "95b08a331a2be67c9c548155ad771e782053ff1f40a4bcd36798d0230065aee7", "name": "Done",    "position": "a2", "priority_ordered": false}
+      ],
+      "items": [
+        {"id": "48986d2de0a9c09a49068fe7d4b1dcb3612fed3a5de5569b9bdcb1202204726a", "content": {"namespace": "bugs", "entity": "ac3def8400785cfe8c07ffcfd1e92bd9134dc6ddb598ab5ef4f056b88b3c9dc0"}, "column": "Backlog", "position": "ZzV"},
+        {"id": "71e8220dd1a57ed3890bdc535baed11b6c0ed7e470ad05b6c9badab36c3291e6", "content": {"namespace": "bugs", "entity": "ad3fe2d371f680ae2b9d012631fe2602ebf99efedcb8fdca7a926d65ba85056e"}, "column": null, "position": "a0"}
+      ],
+      "note": "The bug that was in 'Doing' stays on the board, with no column, as its column was removed."
+    }
+  ],
+
+  "order_example": {
+    "description": "Items with the same position are listed by ID.",
+    "items": [
+      {"id": "c2fc7f4eb28bd8a7620da96f38dd86f9814497951dd2961cb47501e17160d0f0", "position": "a0V"},
+      {"id": "71e8220dd1a57ed3890bdc535baed11b6c0ed7e470ad05b6c9badab36c3291e6", "position": "a1"},
+      {"id": "48986d2de0a9c09a49068fe7d4b1dcb3612fed3a5de5569b9bdcb1202204726a", "position": "a0V"}
+    ],
+    "order": [
+      "48986d2de0a9c09a49068fe7d4b1dcb3612fed3a5de5569b9bdcb1202204726a",
+      "c2fc7f4eb28bd8a7620da96f38dd86f9814497951dd2961cb47501e17160d0f0",
+      "71e8220dd1a57ed3890bdc535baed11b6c0ed7e470ad05b6c9badab36c3291e6"
+    ]
+  },
+
+  "apply_examples": {
+    "description": "Operations applied in the order given, as the total operation order sorts them, on a board with the columns Backlog, Doing and Done. Operations are abbreviated, and columns, items and bugs are given by a name instead of their ID.",
+    "examples": [
+      {
+        "description": "An item moved to a column that was removed has no column",
+        "operations": [
+          {"op": "AddItemDraftOperation", "id": "X", "title": "Fix the build", "column": "Backlog", "position": "a0"},
+          {"op": "RemoveColumnOperation", "column": "Doing"},
+          {"op": "MoveItemOperation", "item": "X", "column": "Doing", "position": "a3"}
+        ],
+        "items": [{"id": "X", "column": null, "position": "a3"}]
+      },
+      {
+        "description": "A column removed after an item was moved to it: the same result",
+        "operations": [
+          {"op": "AddItemDraftOperation", "id": "X", "title": "Fix the build", "column": "Backlog", "position": "a0"},
+          {"op": "MoveItemOperation", "item": "X", "column": "Doing", "position": "a3"},
+          {"op": "RemoveColumnOperation", "column": "Doing"}
+        ],
+        "items": [{"id": "X", "column": null, "position": "a3"}]
+      },
+      {
+        "description": "A move of an item that was removed does nothing",
+        "operations": [
+          {"op": "AddItemDraftOperation", "id": "X", "title": "Fix the build", "column": "Backlog", "position": "a0"},
+          {"op": "RemoveItemOperation", "item": "X"},
+          {"op": "MoveItemOperation", "item": "X", "column": "Done", "position": "a3"}
+        ],
+        "items": []
+      },
+      {
+        "description": "A bug added twice is held once: the second operation adds no item, and the move that follows it, designating the bug, applies to the item of the first",
+        "operations": [
+          {"op": "AddItemEntityOperation", "id": "X", "namespace": "bugs", "entity": "P", "column": "Backlog", "position": "a0"},
+          {"op": "AddItemEntityOperation", "id": "Y", "namespace": "bugs", "entity": "P", "column": "Done", "position": "a5"},
+          {"op": "MoveItemOperation", "item": "P", "column": "Doing", "position": "a6"}
+        ],
+        "items": [{"id": "X", "column": "Doing", "position": "a6"}]
+      },
+      {
+        "description": "A converted draft is designated by its own ID and by the ID of the bug: a move made on the draft applies after the conversion",
+        "operations": [
+          {"op": "AddItemDraftOperation", "id": "X", "title": "Fix the build", "column": "Backlog", "position": "a0"},
+          {"op": "ConvertDraftOperation", "item": "X", "namespace": "bugs", "entity": "P"},
+          {"op": "MoveItemOperation", "item": "X", "column": "Doing", "position": "a3"},
+          {"op": "MoveItemOperation", "item": "P", "position": "a4"}
+        ],
+        "items": [{"id": "X", "content": {"namespace": "bugs", "entity": "P"}, "column": "Doing", "position": "a4"}]
+      },
+      {
+        "description": "A bug removed and added again is a new item, which the ID of the bug designates",
+        "operations": [
+          {"op": "AddItemEntityOperation", "id": "X", "namespace": "bugs", "entity": "P", "column": "Backlog", "position": "a0"},
+          {"op": "RemoveItemOperation", "item": "P"},
+          {"op": "AddItemEntityOperation", "id": "Y", "namespace": "bugs", "entity": "P", "column": "Done", "position": "a5"},
+          {"op": "MoveItemOperation", "item": "P", "position": "a6"}
+        ],
+        "items": [{"id": "Y", "column": "Done", "position": "a6"}]
+      },
+      {
+        "description": "A move within a column does not undo a move to another column: the last move gives the position, the last one that sets a column gives the column",
+        "operations": [
+          {"op": "AddItemDraftOperation", "id": "X", "title": "Fix the build", "column": "Backlog", "position": "a0"},
+          {"op": "MoveItemOperation", "item": "X", "column": "Done", "position": "a4"},
+          {"op": "MoveItemOperation", "item": "X", "position": "a1"}
+        ],
+        "items": [{"id": "X", "column": "Done", "position": "a1"}]
+      },
+      {
+        "description": "The edit of a draft that was converted does nothing, as does a second conversion",
+        "operations": [
+          {"op": "AddItemDraftOperation", "id": "X", "title": "Fix the build", "column": "Backlog", "position": "a0"},
+          {"op": "ConvertDraftOperation", "item": "X", "namespace": "bugs", "entity": "P"},
+          {"op": "EditDraftOperation", "item": "X", "title": "Fix the build on macOS"},
+          {"op": "ConvertDraftOperation", "item": "X", "namespace": "bugs", "entity": "Q"}
+        ],
+        "items": [{"id": "X", "content": {"namespace": "bugs", "entity": "P"}, "column": "Backlog", "position": "a0"}]
+      },
+      {
+        "description": "A column renamed and moved by two operations keeps both changes; its edit after its removal does nothing",
+        "operations": [
+          {"op": "EditColumnOperation", "column": "Doing", "name": "In review"},
+          {"op": "EditColumnOperation", "column": "Doing", "position": "a3"},
+          {"op": "RemoveColumnOperation", "column": "Backlog"},
+          {"op": "EditColumnOperation", "column": "Backlog", "name": "Later"}
+        ],
+        "columns": ["Done", "In review"],
+        "note": "Backlog was at a0, Doing at a1 and Done at a2."
+      }
+    ]
+  },
+
+  "id_derivation": [
+    {
+      "description": "Board ID equals the ID of its CreateOperation: hex(sha256(raw bytes of ops[0])) in the first pack.",
+      "raw": "{\"type\":1,\"timestamp\":1609459200,\"nonce\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"title\":\"Roadmap\",\"description\":\"What we work on, and in what order\"}",
+      "note": "raw is ops[0] of the first pack as written in git: compact JSON, with the keys in this order. expected_id is the SHA-256 of raw.",
+      "expected_id": "21720892ee59e7a71479f744c7fde6dbabcf383d36203af5eb5c921fe9a34404"
+    },
+    {
+      "description": "Column ID equals the ID of its AddColumnOperation: hex(sha256(raw bytes of ops[1])) in the first pack.",
+      "raw": "{\"type\":4,\"timestamp\":1609459200,\"nonce\":\"BBBBBBBBBBBBBBBBBBBBBBBBBBBB\",\"name\":\"Backlog\",\"position\":\"a0\",\"priority_ordered\":true}",
+      "note": "expected_id is the 'column' of the operations that add an item to 'Backlog', or move one to it.",
+      "expected_id": "de1085803e7aa8dc3ac45d21965c7257746beb990c2cfc6f4e78ea3fc94a1e04"
+    }
+  ]
+}
