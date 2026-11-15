@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/git-bug/git-bug/entities/identity"
@@ -40,23 +39,6 @@ func newSetValue[V scalar](repo repository.RepoClock, opType dag.OperationType, 
 	return setValue[V]{opBase: base, Value: value}, nil
 }
 
-// UnmarshalJSON reads the operation embedding this kind, whose value can't be
-// null.
-func (s *setValue[V]) UnmarshalJSON(data []byte) error {
-	var aux struct {
-		opBase
-		Value json.RawMessage `json:"value"`
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-	s.opBase = aux.opBase
-	if err := unmarshalNonNull(aux.Value, &s.Value); err != nil {
-		return fmt.Errorf("value: %w", err)
-	}
-	return nil
-}
-
 // validate checks the operation op embedding this kind, of type opType, and its
 // value with checkValue.
 func (s *setValue[V]) validate(op Operation, opType dag.OperationType, checkValue func(V) error) error {
@@ -75,11 +57,21 @@ func (s *setValue[V]) apply(setting *register[V]) {
 }
 
 // setEntry is the kind of the operations adding the entry of a key if it is
-// absent, then changing the fields they list.
+// absent, then changing the fields they list. In the JSON, "fields" holds the
+// Fields that are set, and "clear" the names of those that are cleared.
 type setEntry[K ~string, F fields[F]] struct {
 	opBase
-	Key    K `json:"key"`
-	Fields F `json:"fields,omitzero"`
+	Key    K
+	Fields F
+}
+
+// setEntryJSON is the JSON of a setEntry. The names in Clear are pointers, for a
+// null name to be told apart.
+type setEntryJSON[K ~string, F fields[F]] struct {
+	opBase
+	Key    K         `json:"key"`
+	Fields F         `json:"fields,omitzero"`
+	Clear  []*string `json:"clear,omitempty"`
 }
 
 func newSetEntry[K ~string, F fields[F]](repo repository.RepoClock, opType dag.OperationType, author identity.Interface, unixTime int64, key K, change F) (setEntry[K, F], error) {
@@ -90,21 +82,35 @@ func newSetEntry[K ~string, F fields[F]](repo repository.RepoClock, opType dag.O
 	return setEntry[K, F]{opBase: base, Key: key, Fields: change}, nil
 }
 
-// UnmarshalJSON reads the operation embedding this kind, whose fields can't be
-// null, while each of them can.
+func (s setEntry[K, F]) MarshalJSON() ([]byte, error) {
+	aux := setEntryJSON[K, F]{opBase: s.opBase, Key: s.Key, Fields: s.Fields}
+	eachFieldState(&aux.Fields, func(name string, state *fieldState) {
+		if *state == fieldCleared {
+			*state = fieldAbsent
+			aux.Clear = append(aux.Clear, new(name))
+		}
+	})
+	return json.Marshal(aux)
+}
+
+// UnmarshalJSON reads the operation embedding this kind. A name in "clear" clears
+// its field unless "fields" sets it, and is ignored if no field has it.
 func (s *setEntry[K, F]) UnmarshalJSON(data []byte) error {
-	var aux struct {
-		opBase
-		Key    K               `json:"key"`
-		Fields json.RawMessage `json:"fields"`
-	}
+	var aux setEntryJSON[K, F]
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	s.opBase, s.Key = aux.opBase, aux.Key
-	if err := unmarshalNonNull(aux.Fields, &s.Fields); err != nil {
-		return fmt.Errorf("fields: %w", err)
+	for _, name := range aux.Clear {
+		if name == nil {
+			return fmt.Errorf("clear: null name")
+		}
+		eachFieldState(&aux.Fields, func(field string, state *fieldState) {
+			if field == *name && *state == fieldAbsent {
+				*state = fieldCleared
+			}
+		})
 	}
+	s.opBase, s.Key, s.Fields = aux.opBase, aux.Key, aux.Fields
 	return nil
 }
 
@@ -155,18 +161,4 @@ func (s *removeEntry[K, F]) validate(op Operation, opType dag.OperationType, che
 // apply removes the entry of the key, with all its fields.
 func (s *removeEntry[K, F]) apply(setting *map_[K, F]) {
 	delete(*setting, s.Key)
-}
-
-// unmarshalNonNull reads a member of the JSON of an operation that can't be null:
-// in that JSON, null only clears a field of a setEntry. An absent member leaves v
-// as it is.
-func unmarshalNonNull(data json.RawMessage, v any) error {
-	switch {
-	case data == nil:
-		return nil
-	case string(data) == "null":
-		return errors.New("null is not allowed")
-	default:
-		return json.Unmarshal(data, v)
-	}
 }
