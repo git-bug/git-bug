@@ -116,13 +116,13 @@ type OpBase struct {
 	// Operation.EditTime.
 	editTime lamport.Time
 
-	OperationType OperationType `json:"type"`
-	UnixTime      int64         `json:"timestamp"`
+	OperationType OperationType `json:"type" jsondoc:"required"`
+	UnixTime      int64         `json:"timestamp" jsondoc:"required"`
 
 	// mandatory random bytes to ensure a better randomness of the data used to later generate the ID
 	// len(Nonce) should be > 20 and < 64 bytes
 	// It has no functional purpose and should be ignored.
-	Nonce []byte `json:"nonce"`
+	Nonce []byte `json:"nonce" jsondoc:"required"`
 
 	Metadata map[string]string `json:"metadata,omitempty"`
 	// Not serialized. Store the extra metadata in memory,
@@ -213,6 +213,10 @@ func (base *OpBase) Validate(op Operation, opType OperationType) error {
 	}
 	if len(base.Nonce) < 20 {
 		return fmt.Errorf("nonce is too small")
+	}
+
+	if err := validateMetadata(base.Metadata); err != nil {
+		return fmt.Errorf("metadata: %w", err)
 	}
 
 	return nil

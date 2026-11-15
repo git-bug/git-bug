@@ -10,6 +10,7 @@ import (
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
@@ -71,4 +72,29 @@ func TestVersionJSON(t *testing.T) {
 	expected.Id()
 
 	assert.Equal(t, expected, &after)
+}
+
+func TestVersionUnmarshal(t *testing.T) {
+	t.Run("null key", func(t *testing.T) {
+		// an array holding null makes the version invalid
+		raw := `{"version": 2, "name": "René", "times": {}, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=", "pub_keys": [null]}`
+		var v version
+		require.ErrorContains(t, jsondoc.Unmarshal([]byte(raw), &v), "null in an array")
+	})
+	t.Run("nonce", func(t *testing.T) {
+		// a nonce is strict base64: its unused bits are 0
+		raw := `{"version": 2, "name": "René", "times": {}, "unix_time": 1609459200, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAB="}`
+		var v version
+		require.ErrorContains(t, jsondoc.Unmarshal([]byte(raw), &v), "not base64")
+	})
+	t.Run("null in a map", func(t *testing.T) {
+		// a map holding null makes the version invalid
+		for _, raw := range []string{
+			`{"version": 2, "name": "René", "times": {"bugs": null}, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA="}`,
+			`{"version": 2, "name": "René", "times": {}, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=", "metadata": {"k": null}}`,
+		} {
+			var v version
+			require.ErrorContains(t, jsondoc.Unmarshal([]byte(raw), &v), "null in a map", raw)
+		}
+	})
 }

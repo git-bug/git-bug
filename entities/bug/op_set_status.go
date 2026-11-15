@@ -14,7 +14,7 @@ var _ Operation = &SetStatusOperation{}
 // SetStatusOperation will change the status of a bug
 type SetStatusOperation struct {
 	dag.OpBase
-	Status common.Status `json:"status"`
+	Status common.Status `json:"status" jsondoc:"required"`
 }
 
 func (op *SetStatusOperation) Id() entity.Id {

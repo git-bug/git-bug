@@ -16,8 +16,8 @@ var _ Operation = &SetTitleOperation{}
 // SetTitleOperation will change the title of a bug
 type SetTitleOperation struct {
 	dag.OpBase
-	Title string `json:"title"`
-	Was   string `json:"was"`
+	Title string `json:"title" jsondoc:"required"`
+	Was   string `json:"was" jsondoc:"required"`
 }
 
 func (op *SetTitleOperation) Id() entity.Id {

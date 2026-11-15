@@ -9,6 +9,7 @@ import (
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 	"github.com/git-bug/git-bug/util/lamport"
 	"github.com/git-bug/git-bug/util/text"
 )
@@ -80,16 +81,16 @@ func newVersion(repo repository.RepoClock, name string, email string, login stri
 
 type versionJSON struct {
 	// Additional field to version the data
-	FormatVersion uint `json:"version"`
+	FormatVersion uint `json:"version" jsondoc:"required"`
 
-	Times     map[string]lamport.Time `json:"times"`
-	UnixTime  int64                   `json:"unix_time"`
+	Times     map[string]lamport.Time `json:"times" jsondoc:"required"`
+	UnixTime  int64                   `json:"unix_time" jsondoc:"required"`
 	Name      string                  `json:"name,omitempty"`
 	Email     string                  `json:"email,omitempty"`
 	Login     string                  `json:"login,omitempty"`
 	AvatarUrl string                  `json:"avatar_url,omitempty"`
 	Keys      []*Key                  `json:"pub_keys,omitempty"`
-	Nonce     []byte                  `json:"nonce"`
+	Nonce     []byte                  `json:"nonce" jsondoc:"required"`
 	Metadata  map[string]string       `json:"metadata,omitempty"`
 }
 
@@ -161,7 +162,7 @@ func (v *version) MarshalJSON() ([]byte, error) {
 func (v *version) UnmarshalJSON(data []byte) error {
 	var aux versionJSON
 
-	if err := json.Unmarshal(data, &aux); err != nil {
+	if err := jsondoc.Unmarshal(data, &aux); err != nil {
 		return err
 	}
 
@@ -204,8 +205,17 @@ func (v *version) Validate() error {
 		return fmt.Errorf("email has unsafe characters")
 	}
 
-	if v.avatarURL != "" && !text.ValidUrl(v.avatarURL) {
-		return fmt.Errorf("avatarUrl is not a valid URL")
+	if v.avatarURL != "" && !text.ValidHTTPSURL(v.avatarURL) {
+		return fmt.Errorf("avatarUrl is not an HTTPS URL")
+	}
+
+	for key, val := range v.metadata {
+		if !text.SafeOneLine(key) {
+			return fmt.Errorf("metadata key %q has unsafe characters", key)
+		}
+		if !text.Safe(val) {
+			return fmt.Errorf("metadata value of %q has unsafe characters", key)
+		}
 	}
 
 	if len(v.nonce) > 64 {

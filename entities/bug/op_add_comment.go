@@ -17,9 +17,9 @@ var _ dag.OperationWithFiles = &AddCommentOperation{}
 // AddCommentOperation will add a new comment in the bug
 type AddCommentOperation struct {
 	dag.OpBase
-	Message string `json:"message"`
+	Message string `json:"message" jsondoc:"required"`
 	// TODO: change for a map[string]util.hash to store the filename ?
-	Files []repository.Hash `json:"files"`
+	Files []repository.Hash `json:"files,omitempty"`
 }
 
 func (op *AddCommentOperation) Id() entity.Id {

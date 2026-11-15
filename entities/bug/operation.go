@@ -6,6 +6,7 @@ import (
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
+	"github.com/git-bug/git-bug/util/jsondoc"
 )
 
 const (
@@ -33,7 +34,7 @@ func operationUnmarshaler(_ context.Context, raw json.RawMessage, resolvers enti
 		OperationType dag.OperationType `json:"type"`
 	}
 
-	if err := json.Unmarshal(raw, &t); err != nil {
+	if err := jsondoc.Unmarshal(raw, &t); err != nil {
 		return nil, err
 	}
 
@@ -60,7 +61,7 @@ func operationUnmarshaler(_ context.Context, raw json.RawMessage, resolvers enti
 		return dag.NewUnknownOp[*Snapshot](raw)
 	}
 
-	err := json.Unmarshal(raw, &op)
+	err := jsondoc.Unmarshal(raw, op)
 	if err != nil {
 		return nil, err
 	}

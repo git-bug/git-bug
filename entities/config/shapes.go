@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/git-bug/git-bug/util/jsondoc"
 )
 
 // Every setting has one of the shapes below, the ones of the spec, see config.md
@@ -126,13 +128,13 @@ func (f Field[S]) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON reads a set Field. null reads as absent, leaving the Field as it
-// is, see dag-entity.md §6 in the spec.
+// is, see values.md §3 in the spec.
 func (f *Field[S]) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" {
 		return nil
 	}
 	var value S
-	if err := json.Unmarshal(data, &value); err != nil {
+	if err := jsondoc.Unmarshal(data, &value); err != nil {
 		return err
 	}
 	*f = SetField(value)

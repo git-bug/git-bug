@@ -14,6 +14,7 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 )
 
 var errNoPrivateKey = fmt.Errorf("no private key")
@@ -111,7 +112,7 @@ func (k *Key) MarshalJSON() ([]byte, error) {
 func (k *Key) UnmarshalJSON(data []byte) error {
 	// De-serialize only the public key, in the armored format.
 	var armored string
-	err := json.Unmarshal(data, &armored)
+	err := jsondoc.Unmarshal(data, &armored)
 	if err != nil {
 		return err
 	}
