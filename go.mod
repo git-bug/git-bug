@@ -1,6 +1,6 @@
 module github.com/git-bug/git-bug
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/99designs/gqlgen v0.17.98
@@ -36,7 +36,6 @@ require (
 	golang.org/x/sync v0.24.0
 	golang.org/x/sys v0.49.0
 	golang.org/x/term v0.47.0
-	golang.org/x/text v0.43.0
 	modernc.org/sqlite v1.61.0
 	resenje.org/singleflight v0.4.3
 )
@@ -95,6 +94,7 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/telemetry v0.0.0-20261009151841-97e8ea77aa2a // indirect
+	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	golang.org/x/tools v0.52.0 // indirect
 	golang.org/x/vuln v1.8.0 // indirect

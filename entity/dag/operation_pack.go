@@ -13,6 +13,7 @@ import (
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
@@ -56,13 +57,19 @@ func (opp *operationPack) Id() entity.Id {
 	return opp.id
 }
 
+// MarshalJSON writes the pack. "ops" is an array even when the pack has no
+// operation, as in a merge commit: a writer never writes null.
 func (opp *operationPack) MarshalJSON() ([]byte, error) {
+	ops := opp.Operations
+	if ops == nil {
+		ops = []Operation{}
+	}
 	return json.Marshal(struct {
 		Author     identity.Interface `json:"author"`
 		Operations []Operation        `json:"ops"`
 	}{
 		Author:     opp.Author,
-		Operations: opp.Operations,
+		Operations: ops,
 	})
 }
 
@@ -334,17 +341,27 @@ func readOperationPackClock(ctx context.Context, repo repository.RepoData, commi
 	return createTime, editTime, nil
 }
 
-// unmarshallPack delegate the unmarshalling of the Operation's JSON to the decoding
-// function provided by the concrete entity. This gives access to the concrete type of each
-// Operation.
+// unmarshallPack checks data, a JSON document (see jsondoc), then delegates the
+// unmarshalling of the Operation's JSON to the decoding function provided by the
+// concrete entity. This gives access to the concrete type of each Operation.
 func unmarshallPack(ctx context.Context, def Definition, resolvers entity.Resolvers, data []byte) ([]Operation, identity.Interface, error) {
+	if err := jsondoc.Check(data); err != nil {
+		return nil, nil, fmt.Errorf("invalid operation pack: %w", err)
+	}
+
 	aux := struct {
 		Author     identity.IdentityStub `json:"author"`
 		Operations []json.RawMessage     `json:"ops"`
 	}{}
 
-	if err := json.Unmarshal(data, &aux); err != nil {
+	if err := jsondoc.Unmarshal(data, &aux); err != nil {
 		return nil, nil, err
+	}
+
+	for i, raw := range aux.Operations {
+		if kind := jsontext.Value(raw).Kind(); kind != '{' {
+			return nil, nil, fmt.Errorf("invalid operation pack: element %d of ops is a JSON %s, not an object", i, kind)
+		}
 	}
 
 	if aux.Author.Id() == "" || aux.Author.Id() == entity.UnsetId {

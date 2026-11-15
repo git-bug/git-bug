@@ -20,7 +20,7 @@ type EditCommentOperation struct {
 	dag.OpBase
 	Target  entity.Id         `json:"target"`
 	Message string            `json:"message"`
-	Files   []repository.Hash `json:"files"`
+	Files   []repository.Hash `json:"files,omitempty"`
 }
 
 func (op *EditCommentOperation) Id() entity.Id {

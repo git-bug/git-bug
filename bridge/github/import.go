@@ -535,7 +535,7 @@ func (gi *githubImporter) ensurePerson(ctx context.Context, repo *cache.RepoCach
 		name,
 		email,
 		string(actor.Login),
-		string(actor.AvatarUrl),
+		text.CleanupHTTPSURL(string(actor.AvatarUrl)),
 		nil,
 		map[string]string{
 			metaKeyGithubLogin: string(actor.Login),
@@ -573,7 +573,7 @@ func (gi *githubImporter) getGhost(ctx context.Context, repo *cache.RepoCache) (
 		userName,
 		"",
 		string(user.Login),
-		string(user.AvatarUrl),
+		text.CleanupHTTPSURL(string(user.AvatarUrl)),
 		nil,
 		map[string]string{
 			metaKeyGithubLogin: string(user.Login),

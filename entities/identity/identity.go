@@ -6,12 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"maps"
 	"reflect"
 	"slices"
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 	"github.com/git-bug/git-bug/util/lamport"
 	"github.com/git-bug/git-bug/util/timestamp"
 )
@@ -177,10 +179,16 @@ func read(ctx context.Context, repo repository.Repo, id entity.Id, lastCommit re
 			return nil, fmt.Errorf("failed to read git blob data: %w", err)
 		}
 
-		var version version
-		err = json.NewDecoder(data).Decode(&version)
+		raw, err := io.ReadAll(data)
 		_ = data.Close()
 		if err != nil {
+			return nil, fmt.Errorf("failed to read git blob data: %w", err)
+		}
+		if err := jsondoc.Check(raw); err != nil {
+			return nil, fmt.Errorf("invalid Identity version json %s: %w", hash, err)
+		}
+		var version version
+		if err := jsondoc.Unmarshal(raw, &version); err != nil {
 			return nil, fmt.Errorf("failed to decode Identity version json %s: %w", hash, err)
 		}
 

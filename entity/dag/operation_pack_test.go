@@ -1,6 +1,7 @@
 package dag
 
 import (
+	"encoding/json"
 	"math/rand"
 	"testing"
 
@@ -40,6 +41,16 @@ func TestOperationPackReadWrite(t *testing.T) {
 		op.setEditTime(opp.EditTime)
 	}
 	require.Equal(t, opp, opp2)
+
+	t.Run("no operation", func(t *testing.T) {
+		// a merge commit holds a pack without operation, written as an empty
+		// array: a writer never writes null
+		data, err := json.Marshal(&operationPack{Author: author, EditTime: 456})
+		require.NoError(t, err)
+		var raw map[string]json.RawMessage
+		require.NoError(t, json.Unmarshal(data, &raw))
+		require.Equal(t, `[]`, string(raw["ops"]))
+	})
 }
 
 func TestOperationPackSignedReadWrite(t *testing.T) {

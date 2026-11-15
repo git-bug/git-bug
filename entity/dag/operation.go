@@ -215,6 +215,10 @@ func (base *OpBase) Validate(op Operation, opType OperationType) error {
 		return fmt.Errorf("nonce is too small")
 	}
 
+	if err := validateMetadata(base.Metadata); err != nil {
+		return fmt.Errorf("metadata: %w", err)
+	}
+
 	return nil
 }
 
