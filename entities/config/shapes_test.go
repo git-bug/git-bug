@@ -31,10 +31,12 @@ func (i listItem) position() (string, bool) {
 }
 
 func TestShapes(t *testing.T) {
-	t.Run("absent field", func(t *testing.T) {
-		// an absent field is left out of the JSON, as written it would read as cleared
-		_, err := json.Marshal(Field[string]{})
-		require.Error(t, err)
+	t.Run("unset field", func(t *testing.T) {
+		// only a set field has a value to write
+		for _, f := range []Field[string]{{}, ClearField[string]()} {
+			_, err := json.Marshal(f)
+			require.Error(t, err)
+		}
 	})
 
 	t.Run("integer range", func(t *testing.T) {

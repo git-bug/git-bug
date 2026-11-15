@@ -62,8 +62,9 @@ func validateLength(s string, limit int) error {
 // cleared for the field to read as its default, or set to a value. In the
 // Snapshot, a Field is absent or set.
 //
-// A struct holding Fields tags each with omitzero: an absent Field is left out of
-// the JSON, and a cleared one is null.
+// A struct holding Fields tags each with its name and omitzero: an absent Field is
+// left out of the JSON. A setEntry writes the set Fields in its "fields", and the
+// names of the cleared ones in its "clear".
 type Field[S scalar] struct {
 	state fieldState
 	value S
@@ -114,20 +115,20 @@ func (f Field[S]) validate(check func(S) error) error {
 	return check(f.value)
 }
 
+// MarshalJSON writes the value of a set Field. Only setEntry writes Fields, and
+// only set ones: omitzero leaves out the absent ones, and setEntry writes the
+// names of the cleared ones in its "clear".
 func (f Field[S]) MarshalJSON() ([]byte, error) {
-	switch f.state {
-	case fieldCleared:
-		return []byte("null"), nil
-	case fieldSet:
-		return json.Marshal(f.value)
-	default:
-		return nil, fmt.Errorf("an absent field is not written, tag it omitzero")
+	if f.state != fieldSet {
+		return nil, fmt.Errorf("only a set Field has a value to write")
 	}
+	return json.Marshal(f.value)
 }
 
+// UnmarshalJSON reads a set Field. null reads as absent, leaving the Field as it
+// is, see dag-entity.md §6 in the spec.
 func (f *Field[S]) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" {
-		*f = ClearField[S]()
 		return nil
 	}
 	var value S
@@ -138,9 +139,29 @@ func (f *Field[S]) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (f *Field[S]) statePtr() *fieldState {
+	return &f.state
+}
+
+// eachFieldState calls fn with the JSON name and the state of each Field of the
+// struct pointed to by change, in the order of the struct. A cleared or absent
+// Field holds no value, so changing one to the other is changing its state.
+func eachFieldState(change any, fn func(name string, state *fieldState)) {
+	v := reflect.ValueOf(change).Elem()
+	for i := range v.NumField() {
+		// statePtr tells a Field of any type, and reaches its unexported state
+		f, ok := v.Field(i).Addr().Interface().(interface{ statePtr() *fieldState })
+		if !ok {
+			continue
+		}
+		name, _, _ := strings.Cut(v.Type().Field(i).Tag.Get("json"), ",")
+		fn(name, f.statePtr())
+	}
+}
+
 // fields is the constraint of the fields of a map entry: a struct of Field, each
-// tagged omitzero. In a setEntry operation, it holds the changes to the fields of
-// the entry, applied by patch.
+// tagged with its name and omitzero. In a setEntry operation, it holds the changes
+// to the fields of the entry, applied by patch.
 type fields[F any] interface {
 	patch(change F) F
 	Validate() error

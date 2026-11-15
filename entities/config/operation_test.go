@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
@@ -133,25 +134,18 @@ func TestOperations(t *testing.T) {
 			return raw
 		}
 
-		// a value or fields that are null don't read
-		for _, c := range []struct {
-			members map[string]any
-			err     string
-		}{
-			{map[string]any{"type": RepoSetDescriptionOp, "value": nil}, "value: null is not allowed"},
-			{map[string]any{"type": LabelsSetOp, "key": "bug", "fields": nil}, "fields: null is not allowed"},
-			{map[string]any{"type": LabelsAllowOp, "key": "bug", "fields": nil}, "fields: null is not allowed"},
-		} {
-			_, err := operationUnmarshaler(t.Context(), marshal(t, c.members), nil)
-			require.EqualError(t, err, c.err, "%v", c.members)
-		}
-
-		// null clears a field
-		op, err := operationUnmarshaler(t.Context(), marshal(t, map[string]any{
-			"type": LabelsSetOp, "key": "bug", "fields": map[string]any{"color": nil},
-		}), nil)
+		// a member that is null reads as absent
+		op, err := operationUnmarshaler(t.Context(), marshal(t, map[string]any{"type": RepoSetDescriptionOp, "value": nil}), nil)
 		require.NoError(t, err)
-		require.Equal(t, LabelsDefinition{Color: ClearField[string]()}, op.(*LabelsSetOperation).Fields)
+		require.Equal(t, "", op.(*RepoSetDescriptionOperation).Value)
+		for _, members := range []map[string]any{
+			{"type": LabelsSetOp, "key": "bug", "fields": nil, "clear": nil},
+			{"type": LabelsSetOp, "key": "bug", "fields": map[string]any{"color": nil}},
+		} {
+			op, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
+			require.NoError(t, err, "%v", members)
+			require.Equal(t, LabelsDefinition{}, op.(*LabelsSetOperation).Fields, "%v", members)
+		}
 
 		// a member that the kind doesn't have is an unknown field, null or not
 		for _, members := range []map[string]any{
@@ -161,6 +155,48 @@ func TestOperations(t *testing.T) {
 		} {
 			_, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
 			require.NoError(t, err, "%v", members)
+		}
+
+		// clear is an array of names
+		for _, clear := range []any{"color", []any{42}, []any{nil}} {
+			members := map[string]any{"type": LabelsSetOp, "key": "bug", "clear": clear}
+			_, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
+			require.Error(t, err, "%v", members)
+		}
+	})
+
+	t.Run("clear", func(t *testing.T) {
+		dagtest.SerializeRoundTripTest(t, operationUnmarshaler, func(author identity.Interface, unixTime int64) (*LabelsSetOperation, entity.Resolvers) {
+			op, err := NewLabelsSetOp(clocks, author, unixTime, "crash", LabelsDefinition{Color: SetField("#ff9800"), Description: ClearField[string]()})
+			require.NoError(t, err)
+			return op, nil
+		})
+
+		// the set entry examples of testdata/config.json in the spec: the
+		// definition of crash after one operation, from the same one each time
+		before := LabelsDefinition{Color: SetField("#f44336"), Description: SetField("Program dies")}
+		for _, c := range []struct {
+			members string
+			after   LabelsDefinition
+		}{
+			{`"key": "crash"`, before},
+			{`"key": "crash", "fields": {"color": "#ff9800"}`, LabelsDefinition{Color: SetField("#ff9800"), Description: SetField("Program dies")}},
+			{`"key": "crash", "clear": ["description"]`, LabelsDefinition{Color: SetField("#f44336")}},
+			{`"key": "crash", "fields": {"color": "#ff9800"}, "clear": ["description"]`, LabelsDefinition{Color: SetField("#ff9800")}},
+			{`"key": "crash", "fields": {"description": null}`, before},
+			{`"key": "crash", "fields": {"color": "#ff9800"}, "clear": ["color"]`, LabelsDefinition{Color: SetField("#ff9800"), Description: SetField("Program dies")}},
+			{`"key": "crash", "clear": ["color", "description"]`, LabelsDefinition{}},
+			{`"key": "crash", "clear": ["priority"]`, before},
+		} {
+			raw := `{"type": 20001, "timestamp": 1609459200, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAAA", "times": {"bugs-edit": 137}, ` + c.members + `}`
+			op, err := operationUnmarshaler(t.Context(), json.RawMessage(raw), nil)
+			require.NoError(t, err, c.members)
+			snapshot := &Snapshot{}
+			snapshot.Labels.definitions = map_[common.Label, LabelsDefinition]{"crash": before}
+			op.(*LabelsSetOperation).Apply(snapshot)
+			after, ok := snapshot.Labels.Get("crash")
+			require.True(t, ok, c.members)
+			require.Equal(t, c.after, after, c.members)
 		}
 	})
 }

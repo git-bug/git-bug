@@ -102,31 +102,43 @@ func TestLabels(t *testing.T) {
 	})
 
 	t.Run("json", func(t *testing.T) {
-		// fieldsOf returns the "fields" of the JSON of an operation, false if absent
-		fieldsOf := func(t *testing.T, op Operation) (string, bool) {
+		// memberOf returns a member of the JSON of an operation, false if absent
+		memberOf := func(t *testing.T, op Operation, name string) (string, bool) {
 			data, err := json.Marshal(op)
 			require.NoError(t, err)
 			var raw map[string]json.RawMessage
 			require.NoError(t, json.Unmarshal(data, &raw))
-			fields, ok := raw["fields"]
-			return string(fields), ok
+			member, ok := raw[name]
+			return string(member), ok
 		}
 
-		// a field set is written with its value, a cleared one as null, an absent
-		// one not at all
-		fields, ok := fieldsOf(t, must(NewLabelsSetOp(clocks, rene, unix, "crash", LabelsDefinition{Color: SetField(red), Description: ClearField[string]()})))
-		require.True(t, ok)
-		require.JSONEq(t, `{"color": "#f44336", "description": null}`, fields)
-
-		fields, ok = fieldsOf(t, must(NewLabelsSetOp(clocks, rene, unix, "crash", LabelsDefinition{Color: SetField(red)})))
+		// a field set is written in "fields" with its value, a cleared one by name
+		// in "clear", an absent one not at all
+		set := must(NewLabelsSetOp(clocks, rene, unix, "crash", LabelsDefinition{Color: SetField(red), Description: ClearField[string]()}))
+		fields, ok := memberOf(t, set, "fields")
 		require.True(t, ok)
 		require.JSONEq(t, `{"color": "#f44336"}`, fields)
+		cleared, ok := memberOf(t, set, "clear")
+		require.True(t, ok)
+		require.JSONEq(t, `["description"]`, cleared)
 
-		// with no field, "fields" is left out
-		_, ok = fieldsOf(t, must(NewLabelsSetOp(clocks, rene, unix, "crash", LabelsDefinition{})))
+		set = must(NewLabelsSetOp(clocks, rene, unix, "crash", LabelsDefinition{Color: SetField(red)}))
+		fields, ok = memberOf(t, set, "fields")
+		require.True(t, ok)
+		require.JSONEq(t, `{"color": "#f44336"}`, fields)
+		_, ok = memberOf(t, set, "clear")
 		require.False(t, ok)
-		_, ok = fieldsOf(t, must(NewLabelsAllowOp(clocks, rene, unix, "crash")))
-		require.False(t, ok)
+
+		// with no field, "fields" and "clear" are left out
+		for _, op := range []Operation{
+			must(NewLabelsSetOp(clocks, rene, unix, "crash", LabelsDefinition{})),
+			must(NewLabelsAllowOp(clocks, rene, unix, "crash")),
+		} {
+			for _, name := range []string{"fields", "clear"} {
+				_, ok = memberOf(t, op, name)
+				require.False(t, ok, name)
+			}
+		}
 
 		// a field this client doesn't know is ignored, and the others apply
 		raw := `{"type": 20001, "timestamp": 1609459200, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=", "key": "crash", "fields": {"color": "#f44336", "priority": 1}}`
