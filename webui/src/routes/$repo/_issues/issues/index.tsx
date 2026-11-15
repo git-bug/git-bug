@@ -68,7 +68,12 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePendingChanges } from "@/lib/live-updates";
 import type { SortValue, StatusFilter } from "@/lib/query-utils";
-import { buildBaseQuery, buildQueryString, parseQueryString } from "@/lib/query-utils";
+import {
+  buildBaseQuery,
+  buildQueryString,
+  parseQueryString,
+  quoteQueryValue,
+} from "@/lib/query-utils";
 
 const issuesSearchSchema = v.object({
   q: v.fallback(v.string(), "status:open"),
@@ -162,7 +167,7 @@ function RouteComponent() {
             .filter((l) => query === "" || l.name.toLowerCase().includes(query.toLowerCase()))
             .slice(0, 8)
             .map((l) => ({
-              value: l.name.includes(" ") ? `"${l.name}"` : l.name,
+              value: quoteQueryValue(l.name),
               label: l.name,
               icon: (
                 <span
@@ -190,7 +195,7 @@ function RouteComponent() {
             .map((a) => {
               const qv = a.login || a.name || a.humanId;
               return {
-                value: qv.includes(" ") ? `"${qv}"` : qv,
+                value: quoteQueryValue(qv),
                 label: a.displayName,
                 description: a.login && a.login !== a.displayName ? `@${a.login}` : undefined,
               };

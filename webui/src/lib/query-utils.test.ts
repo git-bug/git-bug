@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { buildBaseQuery, buildQueryString, parseQueryString, tokenizeQuery } from "./query-utils";
+import {
+  buildBaseQuery,
+  buildQueryString,
+  parseQueryString,
+  quoteQueryValue,
+  tokenizeQuery,
+} from "./query-utils";
 
 // ─── tokenizeQuery ────────────────────────────────────────────────────────────
 
@@ -88,6 +94,12 @@ describe("parseQueryString", () => {
     expect(parseQueryString('label:"bug fix"').labels).toEqual(["bug fix"]);
   });
 
+  it("round-trips a label containing a colon", () => {
+    const q = buildBaseQuery(["type:bug"], null, "");
+    expect(q).toBe('label:"type:bug"');
+    expect(parseQueryString(q).labels).toEqual(["type:bug"]);
+  });
+
   it("parses an unquoted author", () => {
     expect(parseQueryString("author:jane").author).toBe("jane");
   });
@@ -131,6 +143,24 @@ describe("parseQueryString", () => {
 
 // ─── buildBaseQuery ───────────────────────────────────────────────────────────
 
+describe("quoteQueryValue", () => {
+  it("leaves plain values unquoted", () => {
+    expect(quoteQueryValue("bug")).toBe("bug");
+  });
+
+  it("quotes values containing a colon", () => {
+    expect(quoteQueryValue("type:bug")).toBe('"type:bug"');
+  });
+
+  it("quotes values containing whitespace", () => {
+    expect(quoteQueryValue("bug fix")).toBe('"bug fix"');
+  });
+
+  it("quotes values containing both", () => {
+    expect(quoteQueryValue("type: needs triage")).toBe('"type: needs triage"');
+  });
+});
+
 describe("buildBaseQuery", () => {
   it("returns empty string when all inputs are empty", () => {
     expect(buildBaseQuery([], null, "")).toBe("");
@@ -152,6 +182,14 @@ describe("buildBaseQuery", () => {
 
   it("builds an unquoted author when no spaces", () => {
     expect(buildBaseQuery([], "jane", "")).toBe("author:jane");
+  });
+
+  it("quotes a label containing a colon", () => {
+    expect(buildBaseQuery(["type:bug", "bug"], null, "")).toBe('label:"type:bug" label:bug');
+  });
+
+  it("quotes an author containing a colon", () => {
+    expect(buildBaseQuery([], "a:b", "")).toBe('author:"a:b"');
   });
 
   it("quotes an author containing spaces", () => {
