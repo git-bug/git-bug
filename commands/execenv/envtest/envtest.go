@@ -13,6 +13,7 @@ import (
 
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/commands/execenv"
+	"github.com/git-bug/git-bug/repository"
 	"github.com/git-bug/git-bug/repository/repotest"
 )
 
@@ -77,17 +78,23 @@ func (te *TestOut) ForceIsTerminal(value bool) {
 
 func NewEnv(t *testing.T) *execenv.Env {
 	t.Helper()
-	return newEnv(t, false)
+	return newEnv(t, repotest.NewGoGitRepo(t, false), false)
 }
 
 func NewEnvTerminal(t *testing.T) *execenv.Env {
 	t.Helper()
-	return newEnv(t, true)
+	return newEnv(t, repotest.NewGoGitRepo(t, false), true)
 }
 
-func newEnv(t *testing.T, isTerminal bool) *execenv.Env {
-	repo := repotest.NewGoGitRepo(t, false)
+// NewEnvWithRepo creates a test environment over repo. The caller owns repo;
+// the environment's cache is closed when the test ends.
+func NewEnvWithRepo(t *testing.T, repo repository.Repo) *execenv.Env {
+	t.Helper()
+	return newEnv(t, repo, false)
+}
 
+func newEnv(t *testing.T, repo repository.Repo, isTerminal bool) *execenv.Env {
+	t.Helper()
 	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
 	require.NoError(t, err)
 
