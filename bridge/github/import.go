@@ -306,8 +306,12 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 		gi.out <- core.NewImportLabelChange(b.Id(), op.Id())
 		return nil
 
-	case "ClosedEvent":
-		id := parseId(item.ClosedEvent.Id)
+	case "ClosedEvent", "ConvertedToDiscussionEvent":
+		closed := item.ClosedEvent.actorEvent
+		if item.Typename == "ConvertedToDiscussionEvent" {
+			closed = item.ConvertedToDiscussionEvent.actorEvent
+		}
+		id := parseId(closed.Id)
 		_, err := b.ResolveOperationWithMetadata(metaKeyGithubId, id)
 		if err != cache.ErrNoMatchingOp {
 			return err
@@ -315,13 +319,13 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 		if err == nil {
 			return nil
 		}
-		author, err := gi.ensurePerson(ctx, repo, item.ClosedEvent.Actor)
+		author, err := gi.ensurePerson(ctx, repo, closed.Actor)
 		if err != nil {
 			return err
 		}
 		op, err := b.CloseRaw(
 			author,
-			item.ClosedEvent.CreatedAt.Unix(),
+			closed.CreatedAt.Unix(),
 			map[string]string{metaKeyGithubId: id},
 		)
 
