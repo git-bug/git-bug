@@ -2,6 +2,7 @@ package bug
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 	"time"
 
@@ -178,5 +179,77 @@ func TestID(t *testing.T) {
 		id3 := op3.Id()
 		require.NoError(t, id3.Validate())
 		require.Equal(t, id1, id3)
+	}
+}
+
+func TestValidityExamples(t *testing.T) {
+	repo := repository.NewMockRepoClock()
+	rene, err := identity.NewIdentity(repo, "René Descartes", "rene@descartes.fr")
+	require.NoError(t, err)
+
+	// the validity examples of testdata/bug.json in the spec, each completed with
+	// the common members it doesn't set
+	common := map[string]json.RawMessage{
+		"timestamp": json.RawMessage(`1609459200`),
+		"nonce":     json.RawMessage(`"AAAAAAAAAAAAAAAAAAAAAAAAAAAA"`),
+	}
+	cases := []struct {
+		name  string
+		op    string
+		valid bool
+	}{
+		{"message and files are omitted: an empty message, no file", `{"type":1,"title":"crash"}`, true},
+		{"null reads as absent", `{"type":1,"title":"crash","message":null,"files":null}`, true},
+		{"an isolate that is closed", `{"type":1,"title":"\u05d0 \u2067b\u2069"}`, true},
+		{"was is omitted: empty", `{"type":2,"title":"crash on start"}`, true},
+		{"a comment may be blank", `{"type":3,"message":""}`, true},
+		{"a comment is multi-line text: U+2028 is allowed", `{"type":3,"message":"line one\u2028line two"}`, true},
+		{"removed is omitted: no label removed", `{"type":5,"added":["bug"]}`, true},
+		{"a metadata value is multi-line text", `{"type":1,"title":"crash","metadata":{"github-id":"I_1","note":"a\nb"}}`, true},
+		{"a value that is null in a map reads as empty: github-id is set to the empty string", `{"type":8,"target":"ad3fe2d371f680ae2b9d012631fe2602ebf99efedcb8fdca7a926d65ba85056e","new_metadata":{"github-id":null}}`, true},
+		{"without a title", `{"type":1}`, false},
+		{"a title that is null is absent", `{"type":1,"title":null}`, false},
+		{"a blank title", `{"type":1,"title":"   "}`, false},
+		{"a title of a Hangul filler is blank", `{"type":1,"title":"\u3164"}`, false},
+		{"a title is text: no tab", `{"type":1,"title":"a\tb"}`, false},
+		{"a title is text: no line separator", `{"type":1,"title":"a\u2028b"}`, false},
+		{"an isolate left open", `{"type":1,"title":"a\u2067b"}`, false},
+		{"an element of an array is never null", `{"type":1,"title":"crash","files":[null]}`, false},
+		{"a right-to-left override", `{"type":3,"message":"a\u202eb"}`, false},
+		{"neither added nor removed", `{"type":5}`, false},
+		{"a blank label", `{"type":5,"added":[" "]}`, false},
+		{"an element of an array is never null", `{"type":5,"added":[null]}`, false},
+		{"a metadata key is text: no line break", `{"type":1,"title":"crash","metadata":{"a\nb":"x"}}`, false},
+		{"a metadata value holds no NUL", `{"type":8,"target":"ad3fe2d371f680ae2b9d012631fe2602ebf99efedcb8fdca7a926d65ba85056e","new_metadata":{"k":"a\u0000b"}}`, false},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			var members map[string]json.RawMessage
+			require.NoError(t, json.Unmarshal([]byte(c.op), &members))
+			for name, value := range common {
+				if _, ok := members[name]; !ok {
+					members[name] = value
+				}
+			}
+			raw, err := json.Marshal(members)
+			require.NoError(t, err)
+
+			op, err := operationUnmarshaler(t.Context(), raw, nil)
+			if err == nil {
+				// a read takes the author from the operation pack: give the
+				// operation one, keeping what it decoded
+				base := reflect.ValueOf(op).Elem().FieldByName("OpBase").Addr().Interface().(*dag.OpBase)
+				authored := dag.NewOpBase(base.OperationType, rene, base.UnixTime)
+				authored.Nonce, authored.Metadata = base.Nonce, base.Metadata
+				*base = authored
+				err = op.Validate()
+			}
+			if c.valid {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+		})
 	}
 }

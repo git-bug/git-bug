@@ -10,6 +10,7 @@ import (
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
@@ -71,4 +72,13 @@ func TestVersionJSON(t *testing.T) {
 	expected.Id()
 
 	assert.Equal(t, expected, &after)
+}
+
+func TestVersionUnmarshal(t *testing.T) {
+	t.Run("null key", func(t *testing.T) {
+		// an array holding null makes the version invalid
+		raw := `{"version": 2, "name": "René", "times": {}, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=", "pub_keys": [null]}`
+		var v version
+		require.ErrorContains(t, jsondoc.Unmarshal([]byte(raw), &v), "null in an array")
+	})
 }

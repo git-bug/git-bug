@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/git-bug/git-bug/entity"
+	"github.com/git-bug/git-bug/util/jsondoc"
 )
 
 var _ Operation = &UnknownOperation[Snapshot]{}
@@ -18,19 +19,36 @@ type UnknownOperation[SnapT Snapshot] struct {
 	RawJSON json.RawMessage
 }
 
-// NewUnknownOp creates an UnknownOperation from raw JSON.
-// The common OpBase fields (type, timestamp, nonce, metadata) are decoded from
-// the raw JSON; entity-specific fields are left in RawJSON.
+// NewUnknownOp creates an UnknownOperation from raw JSON, a part of a document
+// that jsondoc.Check accepted. The common OpBase fields (type, timestamp, nonce,
+// metadata) are decoded from the raw JSON when they can be; entity-specific
+// fields are left in RawJSON. An operation of an unknown type is kept verbatim
+// whatever it holds, so only its type is decoded when the other fields can't be,
+// see dag-entity.md §6.4 in the spec.
 func NewUnknownOp[SnapT Snapshot](raw json.RawMessage) (*UnknownOperation[SnapT], error) {
-	op := &UnknownOperation[SnapT]{
-		RawJSON: raw,
-	}
-	if err := json.Unmarshal(raw, &op.OpBase); err != nil {
+	base, err := rawOpBase(raw)
+	if err != nil {
 		return nil, err
 	}
+	return &UnknownOperation[SnapT]{OpBase: base, RawJSON: raw}, nil
+}
+
+// rawOpBase decodes the common OpBase fields of the raw JSON of an operation kept
+// verbatim, or only its type when the other fields can't be decoded.
+func rawOpBase(raw json.RawMessage) (OpBase, error) {
+	var base OpBase
+	if err := jsondoc.Unmarshal(raw, &base); err != nil {
+		var t struct {
+			OperationType OperationType `json:"type"`
+		}
+		if err := jsondoc.Unmarshal(raw, &t); err != nil {
+			return OpBase{}, err
+		}
+		base = OpBase{OperationType: t.OperationType}
+	}
 	// derived from the raw JSON on first use, as the one of an operation read
-	op.id = entity.UnsetId
-	return op, nil
+	base.id = entity.UnsetId
+	return base, nil
 }
 
 func (op *UnknownOperation[SnapT]) Id() entity.Id {

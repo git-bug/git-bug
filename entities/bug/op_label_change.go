@@ -18,8 +18,8 @@ var _ Operation = &LabelChangeOperation{}
 // LabelChangeOperation define a Bug operation to add or remove labels
 type LabelChangeOperation struct {
 	dag.OpBase
-	Added   []common.Label `json:"added"`
-	Removed []common.Label `json:"removed"`
+	Added   []common.Label `json:"added,omitempty"`
+	Removed []common.Label `json:"removed,omitempty"`
 }
 
 func (op *LabelChangeOperation) Id() entity.Id {

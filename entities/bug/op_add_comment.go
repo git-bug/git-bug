@@ -19,7 +19,7 @@ type AddCommentOperation struct {
 	dag.OpBase
 	Message string `json:"message"`
 	// TODO: change for a map[string]util.hash to store the filename ?
-	Files []repository.Hash `json:"files"`
+	Files []repository.Hash `json:"files,omitempty"`
 }
 
 func (op *AddCommentOperation) Id() entity.Id {
