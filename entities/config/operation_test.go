@@ -157,11 +157,14 @@ func TestOperations(t *testing.T) {
 			require.NoError(t, err, "%v", members)
 		}
 
-		// clear is an array of names
+		// clear is an array of names: an operation that can't be decoded is an
+		// InvalidOperation, which doesn't validate
 		for _, clear := range []any{"color", []any{42}, []any{nil}} {
 			members := map[string]any{"type": LabelsSetOp, "key": "bug", "clear": clear}
-			_, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
-			require.Error(t, err, "%v", members)
+			op, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
+			require.NoError(t, err, "%v", members)
+			require.IsType(t, &dag.InvalidOperation[*Snapshot]{}, op, "%v", members)
+			require.Error(t, op.Validate(), "%v", members)
 		}
 	})
 

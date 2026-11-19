@@ -143,7 +143,8 @@ func (c *Config) Compile() *Snapshot {
 	snap := &Snapshot{}
 
 	for _, op := range c.Operations() {
-		if !allowed(op, snap) {
+		// an invalid operation has no effect, see dag.Operation.Invalid
+		if op.Invalid() != nil || !allowed(op, snap) {
 			continue
 		}
 		op.Apply(snap)

@@ -28,6 +28,7 @@ type Operation = dag.OperationWithApply[*Snapshot]
 var _ Operation = &dag.NoOpOperation[*Snapshot]{}
 var _ Operation = &dag.SetMetadataOperation[*Snapshot]{}
 var _ Operation = &dag.UnknownOperation[*Snapshot]{}
+var _ Operation = &dag.InvalidOperation[*Snapshot]{}
 
 func operationUnmarshaler(_ context.Context, raw json.RawMessage, resolvers entity.Resolvers) (dag.Operation, error) {
 	var t struct {
@@ -61,9 +62,10 @@ func operationUnmarshaler(_ context.Context, raw json.RawMessage, resolvers enti
 		return dag.NewUnknownOp[*Snapshot](raw)
 	}
 
-	err := jsondoc.Unmarshal(raw, op)
-	if err != nil {
-		return nil, err
+	// an operation of a known type that can't be decoded is invalid, see
+	// dag.InvalidOperation
+	if err := jsondoc.Unmarshal(raw, op); err != nil {
+		return dag.NewInvalidOp[*Snapshot](raw, err)
 	}
 
 	return op, nil

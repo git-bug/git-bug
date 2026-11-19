@@ -50,6 +50,7 @@ type Operation = dag.OperationWithApply[*Snapshot]
 
 // make sure that package external operations do conform to our interface
 var _ Operation = &dag.UnknownOperation[*Snapshot]{}
+var _ Operation = &dag.InvalidOperation[*Snapshot]{}
 
 // opBase is the common part of the operations of this package. On top of
 // dag.OpBase, it holds the time of every Lamport clock of the repository when the
@@ -142,9 +143,10 @@ func operationUnmarshaler(_ context.Context, raw json.RawMessage, resolvers enti
 		op = newOp()
 	}
 
-	err := jsondoc.Unmarshal(raw, op)
-	if err != nil {
-		return nil, err
+	// an operation of a known type that can't be decoded is invalid, see
+	// dag.InvalidOperation
+	if err := jsondoc.Unmarshal(raw, op); err != nil {
+		return dag.NewInvalidOp[*Snapshot](raw, err)
 	}
 
 	return op, nil

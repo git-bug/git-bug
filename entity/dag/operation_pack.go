@@ -3,6 +3,7 @@ package dag
 import (
 	"context"
 	"encoding/json"
+	"encoding/json/jsontext"
 	"fmt"
 	"io"
 	"strconv"
@@ -385,6 +386,10 @@ func unmarshallPack(ctx context.Context, def Definition, resolvers entity.Resolv
 		op.setId(entity.DeriveId(raw))
 		// Set the author, taken from the OperationPack
 		op.setAuthor(author)
+		// An invalid operation is kept, flagged, see Operation.Invalid
+		if err := op.Validate(); err != nil {
+			op.setInvalid(err)
+		}
 
 		ops = append(ops, op)
 	}
