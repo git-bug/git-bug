@@ -53,6 +53,24 @@ func TestOperationPackReadWrite(t *testing.T) {
 	})
 }
 
+func TestReadPackOpsNotObjects(t *testing.T) {
+	_, id1, _, resolvers, def := makeTestContext()
+
+	pack := func(ops string) []byte {
+		return []byte(`{"author":{"id":"` + id1.Id().String() + `"},"ops":` + ops + `}`)
+	}
+
+	ops, _, err := unmarshallPack(t.Context(), def, resolvers, pack(`null`))
+	require.NoError(t, err)
+	require.Empty(t, ops)
+
+	_, _, err = unmarshallPack(t.Context(), def, resolvers, pack(`[null]`))
+	require.ErrorContains(t, err, "null in an array")
+
+	_, _, err = unmarshallPack(t.Context(), def, resolvers, pack(`[1]`))
+	require.ErrorContains(t, err, "element 0 of ops is a JSON number, not an object")
+}
+
 func TestOperationPackSignedReadWrite(t *testing.T) {
 	type makerFn func() (repository.Repo, identity.Interface, identity.Interface, entity.Resolvers, Definition)
 

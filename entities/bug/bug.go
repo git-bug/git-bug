@@ -166,6 +166,10 @@ func (bug *Bug) CompileWith(cfg *config.Snapshot) *Snapshot {
 	}
 
 	for _, op := range bug.Operations() {
+		// an invalid operation has no effect, see dag.Operation.Invalid
+		if op.Invalid() != nil {
+			continue
+		}
 		op.Apply(snap)
 		snap.Operations = append(snap.Operations, op)
 	}

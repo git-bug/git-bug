@@ -90,18 +90,27 @@ func ReadSingleton[EntityT entity.Interface](ctx context.Context, def Definition
 // that it is the Entity with the expected id, if not empty.
 // It also returns the commits of the Entity.
 func read[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, expected entity.Id, lastCommit repository.Hash) (EntityT, map[repository.Hash]repository.Commit, error) {
-	ops, createTime, editTime, commits, err := readSince(ctx, def, repo, resolvers, expected, lastCommit, "", 0)
+	e, commits, err := readEntity(ctx, def, repo, resolvers, expected, lastCommit)
 	if err != nil {
 		return *new(EntityT), nil, err
 	}
+	return wrapper(e), commits, nil
+}
 
-	return wrapper(&Entity{
+// readEntity is read, without the wrapper.
+func readEntity(ctx context.Context, def Definition, repo repository.Repo, resolvers entity.Resolvers, expected entity.Id, lastCommit repository.Hash) (*Entity, map[repository.Hash]repository.Commit, error) {
+	ops, createTime, editTime, commits, err := readSince(ctx, def, repo, resolvers, expected, lastCommit, "", 0)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &Entity{
 		Definition: def,
 		ops:        ops,
 		lastCommit: lastCommit,
 		createTime: createTime,
 		editTime:   editTime,
-	}), commits, nil
+	}, commits, nil
 }
 
 // walkHistory performs a breadth-first search to read lastCommit and its ancestors,
@@ -300,6 +309,12 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 		}
 		if isFirstCommit && expected != "" && opp.Operations[0].Id() != expected {
 			return nil, 0, 0, nil, fmt.Errorf("the %s doesn't match its id %s", def.Typename, expected)
+		}
+		// Without a valid first operation, the Entity has no state to start from.
+		if isFirstCommit {
+			if err := opp.Operations[0].Invalid(); err != nil {
+				return nil, 0, 0, nil, fmt.Errorf("the first operation of the %s is invalid: %w", def.Typename, err)
+			}
 		}
 
 		// make sure that the lamport clocks causality match the DAG topology
@@ -508,20 +523,26 @@ func (e *Entity) Validate() error {
 	return validateOperations(e.ops, e.staging)
 }
 
-// validateOperations checks that each operation is valid, and that there is
-// no colliding operation's ID across all the given lists.
-func validateOperations(lists ...[]Operation) error {
+// validateOperations checks that each added operation is valid, and that there
+// is no colliding operation's ID across held and added. The held operations,
+// read from the Entity, were judged when taken in: one that is invalid stays,
+// flagged, see Operation.Invalid and dag-entity.md §6 in the spec.
+func validateOperations(held []Operation, added []Operation) error {
 	ids := make(map[entity.Id]struct{})
-	for _, list := range lists {
-		for _, op := range list {
-			if err := op.Validate(); err != nil {
-				return err
-			}
-			if _, ok := ids[op.Id()]; ok {
-				return fmt.Errorf("id collision: %s", op.Id())
-			}
-			ids[op.Id()] = struct{}{}
+	for _, op := range held {
+		if _, ok := ids[op.Id()]; ok {
+			return fmt.Errorf("id collision: %s", op.Id())
 		}
+		ids[op.Id()] = struct{}{}
+	}
+	for _, op := range added {
+		if err := op.Validate(); err != nil {
+			return err
+		}
+		if _, ok := ids[op.Id()]; ok {
+			return fmt.Errorf("id collision: %s", op.Id())
+		}
+		ids[op.Id()] = struct{}{}
 	}
 	return nil
 }

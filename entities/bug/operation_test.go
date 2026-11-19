@@ -237,6 +237,11 @@ func TestValidityExamples(t *testing.T) {
 
 			op, err := operationUnmarshaler(t.Context(), raw, nil)
 			if err == nil {
+				// an operation that can't be decoded is flagged invalid already,
+				// which replacing its OpBase below would lose
+				err = op.Invalid()
+			}
+			if err == nil {
 				// a read takes the author from the operation pack: give the
 				// operation one, keeping what it decoded
 				base := reflect.ValueOf(op).Elem().FieldByName("OpBase").Addr().Interface().(*dag.OpBase)
