@@ -184,12 +184,9 @@ func read(ctx context.Context, repo repository.Repo, id entity.Id, lastCommit re
 		if err != nil {
 			return nil, fmt.Errorf("failed to read git blob data: %w", err)
 		}
-		if err := jsondoc.Check(raw); err != nil {
-			return nil, fmt.Errorf("invalid Identity version json %s: %w", hash, err)
-		}
 		var version version
 		if err := jsondoc.Unmarshal(raw, &version); err != nil {
-			return nil, fmt.Errorf("failed to decode Identity version json %s: %w", hash, err)
+			return nil, fmt.Errorf("invalid Identity version json %s: %w", hash, err)
 		}
 
 		// tag the version with the commit hash

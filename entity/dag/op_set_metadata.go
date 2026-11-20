@@ -13,7 +13,7 @@ var _ OperationDoesntChangeSnapshot = &SetMetadataOperation[Snapshot]{}
 
 type SetMetadataOperation[SnapT Snapshot] struct {
 	OpBase
-	Target      entity.Id         `json:"target" jsondoc:"required"`
+	Target      entity.Id         `json:"target"`
 	NewMetadata map[string]string `json:"new_metadata,omitempty"`
 }
 

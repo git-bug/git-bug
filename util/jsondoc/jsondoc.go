@@ -1,79 +1,39 @@
 // Package jsondoc reads JSON documents, the ops blob of an entity and the
 // version blob of an identity, by the rules of values.md §2 to §4 in the spec.
-// JSON libraries disagree on invalid UTF-8, repeated names, the case of names,
-// large integers or deep nesting, so every client applies these rules to reach
-// the same verdict on a document.
+// JSON libraries disagree on invalid UTF-8, repeated names, the case of names
+// or large integers, so every client applies these rules to reach the same
+// verdict on a document.
 //
-// A reader calls Check on the whole document, then Unmarshal for each part it
-// decodes. A type with its own UnmarshalJSON method decodes its members with
-// Unmarshal too, for the rules to apply within it.
+// A reader decodes a document, and each part of it that it decodes further,
+// with Unmarshal. A type with its own UnmarshalJSON method decodes its members
+// with Unmarshal too, for the rules to apply within it.
 package jsondoc
 
 import (
 	"bytes"
 	"encoding"
-	"encoding/base64"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
 	"errors"
 	"fmt"
-	"io"
 	"reflect"
+	"slices"
 	"strconv"
-	"strings"
 )
-
-// maxDepth is how deep objects and arrays nest at most in a document, the
-// outermost value counting as 1.
-const maxDepth = 64
 
 // maxInt is the largest integer, and -maxInt the smallest: every JSON
 // implementation reads them exactly.
 const maxInt = 1<<53 - 1
 
-// Check returns an error if data is not a JSON document: valid UTF-8, without an
-// escaped surrogate other than a pair, without a byte order mark, without an
-// object holding two members of the same name, nesting at most maxDepth deep.
-func Check(data []byte) error {
-	// the decoder rejects invalid UTF-8, lone surrogates, a byte order mark and
-	// repeated names by default
-	dec := jsontext.NewDecoder(bytes.NewReader(data))
-	for {
-		if _, err := dec.ReadToken(); err != nil {
-			return err
-		}
-		depth := dec.StackDepth()
-		if depth > maxDepth {
-			return fmt.Errorf("nested more than %d deep at %s", maxDepth, dec.StackPointer())
-		}
-		if depth == 0 {
-			break
-		}
-	}
-	if _, err := dec.ReadToken(); err != io.EOF {
-		return errors.New("data after the document")
-	}
-	return nil
-}
-
-// Unmarshal decodes data, a part of a document that Check accepted, into v.
-// Names match exactly, case included. A member that is null sets its Go value to
+// Unmarshal decodes data, a JSON document or a part of one, into v. It rejects
+// invalid UTF-8, an escaped surrogate other than a pair, a byte order mark, an
+// object holding two members of the same name, and data after the document,
+// even within what v keeps as raw JSON. Names match exactly, case included. A member that is null sets its Go value to
 // zero, as an absent member leaves it in a new value: v is new, or a member that
 // is null isn't absent. An integer has neither a fraction nor an exponent, and
-// lies between -maxInt and maxInt. A byte slice is strict base64, see
-// unmarshalBytes. An array or a map holding null is an error.
-//
-// When v points to a struct, a member whose field has the tag
-// `jsondoc:"required"` is an error when absent or null, as null reads as absent,
-// see values.md §3 in the spec. The members of an embedded struct are those of
-// v, as json inlines them. Only the members of v itself are checked: a nested
-// struct, or one with its own UnmarshalJSON method, checks its own with
-// Unmarshal.
+// lies between -maxInt and maxInt. An array or a map holding null is an error.
 func Unmarshal(data []byte, v any) error {
-	if err := json.Unmarshal(data, v, unmarshalers); err != nil {
-		return err
-	}
-	return checkRequired(data, v)
+	return json.Unmarshal(data, v, unmarshalers)
 }
 
 var unmarshalers = json.WithUnmarshalers(json.UnmarshalFromFunc(unmarshalValue))
@@ -96,8 +56,8 @@ func semanticError(t reflect.Type, value jsontext.Value, reason string) error {
 }
 
 // unmarshalValue is called for every value that Unmarshal decodes, v pointing to
-// its Go value. It rejects a null element of an array, and decodes the integers,
-// the byte slices and the maps, for their rules. It leaves any other value, and a value whose
+// its Go value. It rejects a null element of an array, and decodes the integers
+// and the maps, for their rules. It leaves any other value, and a value whose
 // type has its own method, to the default decoding, by returning
 // errors.ErrUnsupported.
 func unmarshalValue(dec *jsontext.Decoder, v any) error {
@@ -110,10 +70,6 @@ func unmarshalValue(dec *jsontext.Decoder, v any) error {
 	case jsontext.KindNumber:
 		if e := reflect.ValueOf(v).Elem(); isInteger(e.Kind()) && !hasMethod(v) {
 			return unmarshalInteger(dec, e)
-		}
-	case jsontext.KindString:
-		if e := reflect.ValueOf(v).Elem(); isBytes(e.Type()) && !hasMethod(v) {
-			return unmarshalBytes(dec, e)
 		}
 	case jsontext.KindBeginObject:
 		if e := reflect.ValueOf(v).Elem(); isStringMap(e.Type()) && !hasMethod(v) {
@@ -166,76 +122,38 @@ func unmarshalInteger(dec *jsontext.Decoder, e reflect.Value) error {
 	return nil
 }
 
-func isBytes(t reflect.Type) bool {
-	return t.Kind() == reflect.Slice && t.Elem().Kind() == reflect.Uint8
-}
-
-// unmarshalBytes decodes a string into e, a byte slice, as base64 by the rules of
-// values.md §10 in the spec: the standard alphabet, padded, the unused bits of the
-// last character being 0, and nothing else, no line break in particular.
-func unmarshalBytes(dec *jsontext.Decoder, e reflect.Value) error {
-	value, err := dec.ReadValue()
-	if err != nil {
-		return err
-	}
-	text, err := jsontext.AppendUnquote(nil, value)
-	if err != nil {
-		return err
-	}
-	// Strict rejects unused bits that aren't 0, but skips line breaks
-	if bytes.ContainsAny(text, "\r\n") {
-		return semanticError(e.Type(), value, "not base64")
-	}
-	b, err := base64.StdEncoding.Strict().AppendDecode(nil, text)
-	if err != nil {
-		return semanticError(e.Type(), value, "not base64")
-	}
-	e.SetBytes(b)
-	return nil
-}
-
-// checkRequired returns an error if data, decoded into v, lacks a member that v
-// requires, or holds it as null, see Unmarshal.
-func checkRequired(data []byte, v any) error {
-	t := reflect.TypeOf(v).Elem()
-	if t.Kind() != reflect.Struct || hasMethod(v) {
+// Require returns an error unless data, an object, has each of names as a
+// member that isn't null, as null reads as absent. A reader calls it for the
+// members that a format requires and whose zero value is valid, such as an
+// empty message: decoding can't tell them from absent ones. A required member
+// whose zero value is invalid needs no call, as validating rejects it. See
+// values.md §3 in the spec.
+func Require(data []byte, names ...string) error {
+	if len(names) == 0 {
 		return nil
 	}
-	required := requiredMembers(t, nil)
-	if len(required) == 0 {
-		return nil
-	}
-	// a member that is null decodes to nil, as an absent one
-	var values map[string]*jsontext.Value
-	if err := json.Unmarshal(data, &values); err != nil {
+	missing := slices.Clone(names)
+	dec := jsontext.NewDecoder(bytes.NewReader(data))
+	if _, err := dec.ReadToken(); err != nil {
 		return err
 	}
-	for _, name := range required {
-		if values[name] == nil {
-			return fmt.Errorf("missing member %q", name)
+	for len(missing) > 0 && dec.PeekKind() == jsontext.KindString {
+		token, err := dec.ReadToken()
+		if err != nil {
+			return err
 		}
+		// the token is valid until the next call to dec
+		if name := token.String(); dec.PeekKind() != jsontext.KindNull {
+			missing = slices.DeleteFunc(missing, func(required string) bool { return required == name })
+		}
+		if err := dec.SkipValue(); err != nil {
+			return err
+		}
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("missing member %q", missing[0])
 	}
 	return nil
-}
-
-// requiredMembers appends to names those of the required members of t, a
-// struct, as json reads them: its exported fields with the tag
-// `jsondoc:"required"`, and those of its embedded structs.
-func requiredMembers(t reflect.Type, names []string) []string {
-	for field := range t.Fields() {
-		name, _, _ := strings.Cut(field.Tag.Get("json"), ",")
-		switch {
-		case name == "-":
-		case field.Anonymous && name == "" && field.Type.Kind() == reflect.Struct:
-			names = requiredMembers(field.Type, names)
-		case field.IsExported() && field.Tag.Get("jsondoc") == "required":
-			if name == "" {
-				name = field.Name
-			}
-			names = append(names, name)
-		}
-	}
-	return names
 }
 
 var textUnmarshaler = reflect.TypeFor[encoding.TextUnmarshaler]()

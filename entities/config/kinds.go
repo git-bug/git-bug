@@ -28,7 +28,13 @@ import (
 // setValue is the kind of the operations replacing the value of a register.
 type setValue[V scalar] struct {
 	opBase
-	Value V `json:"value" jsondoc:"required"`
+	Value V `json:"value"`
+}
+
+// requiredMembers lists the members of the operation that the unmarshaler checks
+// with jsondoc.Require: the value is required, and its zero value is valid.
+func (s *setValue[V]) requiredMembers() []string {
+	return []string{"value"}
 }
 
 func newSetValue[V scalar](repo repository.RepoClock, opType dag.OperationType, author identity.Interface, unixTime int64, value V) (setValue[V], error) {
@@ -68,7 +74,7 @@ type setEntry[K ~string, F fields[F]] struct {
 // setEntryJSON is the JSON of a setEntry.
 type setEntryJSON[K ~string, F fields[F]] struct {
 	opBase
-	Key    K        `json:"key" jsondoc:"required"`
+	Key    K        `json:"key"`
 	Fields F        `json:"fields,omitzero"`
 	Clear  []string `json:"clear,omitempty"`
 }
@@ -134,7 +140,7 @@ func (s *setEntry[K, F]) apply(setting *map_[K, F]) {
 // its fields. F is the type of the fields of the entries.
 type removeEntry[K ~string, F fields[F]] struct {
 	opBase
-	Key K `json:"key" jsondoc:"required"`
+	Key K `json:"key"`
 }
 
 func newRemoveEntry[K ~string, F fields[F]](repo repository.RepoClock, opType dag.OperationType, author identity.Interface, unixTime int64, key K) (removeEntry[K, F], error) {

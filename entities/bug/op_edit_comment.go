@@ -18,8 +18,8 @@ var _ dag.OperationWithFiles = &EditCommentOperation{}
 // EditCommentOperation will change a comment in the bug
 type EditCommentOperation struct {
 	dag.OpBase
-	Target  entity.Id         `json:"target" jsondoc:"required"`
-	Message string            `json:"message" jsondoc:"required"`
+	Target  entity.Id         `json:"target"`
+	Message string            `json:"message"`
 	Files   []repository.Hash `json:"files,omitempty"`
 }
 

@@ -81,11 +81,20 @@ func TestVersionUnmarshal(t *testing.T) {
 		var v version
 		require.ErrorContains(t, jsondoc.Unmarshal([]byte(raw), &v), "null in an array")
 	})
-	t.Run("nonce", func(t *testing.T) {
-		// a nonce is strict base64: its unused bits are 0
-		raw := `{"version": 2, "name": "René", "times": {}, "unix_time": 1609459200, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAB="}`
+	t.Run("times", func(t *testing.T) {
+		// times is required: absent or null, it is nil and doesn't validate
+		for _, raw := range []string{
+			`{"version": 2, "name": "René", "unix_time": 1609459200, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA="}`,
+			`{"version": 2, "name": "René", "times": null, "unix_time": 1609459200, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA="}`,
+		} {
+			var v version
+			require.NoError(t, jsondoc.Unmarshal([]byte(raw), &v), raw)
+			require.ErrorContains(t, v.Validate(), "lamport times not set", raw)
+		}
+		raw := `{"version": 2, "name": "René", "times": {}, "unix_time": 1609459200, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA="}`
 		var v version
-		require.ErrorContains(t, jsondoc.Unmarshal([]byte(raw), &v), "not base64")
+		require.NoError(t, jsondoc.Unmarshal([]byte(raw), &v))
+		require.NoError(t, v.Validate())
 	})
 	t.Run("null in a map", func(t *testing.T) {
 		// a map holding null makes the version invalid

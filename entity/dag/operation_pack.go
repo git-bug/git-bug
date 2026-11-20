@@ -341,31 +341,37 @@ func readOperationPackClock(ctx context.Context, repo repository.RepoData, commi
 	return createTime, editTime, nil
 }
 
-// unmarshallPack checks data, a JSON document (see jsondoc), then delegates the
-// unmarshalling of the Operation's JSON to the decoding function provided by the
-// concrete entity. This gives access to the concrete type of each Operation.
+// unmarshallPack checks data by the pack rules of dag-entity.md §5 in the spec:
+// a JSON document (see jsondoc), an author id, and in ops an object with an
+// integer type for each operation. It then delegates the unmarshalling of the
+// Operation's JSON to the decoding function provided by the concrete entity.
+// This gives access to the concrete type of each Operation.
 func unmarshallPack(ctx context.Context, def Definition, resolvers entity.Resolvers, data []byte) ([]Operation, identity.Interface, error) {
-	if err := jsondoc.Check(data); err != nil {
-		return nil, nil, fmt.Errorf("invalid operation pack: %w", err)
-	}
-
 	aux := struct {
 		Author     identity.IdentityStub `json:"author"`
 		Operations []json.RawMessage     `json:"ops"`
 	}{}
 
 	if err := jsondoc.Unmarshal(data, &aux); err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("invalid operation pack: %w", err)
+	}
+
+	if err := aux.Author.Id().Validate(); err != nil {
+		return nil, nil, fmt.Errorf("invalid operation pack: author id: %w", err)
 	}
 
 	for i, raw := range aux.Operations {
-		if kind := raw.Kind(); kind != '{' {
-			return nil, nil, fmt.Errorf("invalid operation pack: element %d of ops is a JSON %s, not an object", i, kind)
+		// an element of ops is an object whose type is an integer: decoding
+		// rejects any other value, and leaves the type nil when absent or null
+		var op struct {
+			Type *OperationType `json:"type"`
 		}
-	}
-
-	if aux.Author.Id() == "" || aux.Author.Id() == entity.UnsetId {
-		return nil, nil, fmt.Errorf("missing author")
+		if err := jsondoc.Unmarshal(raw, &op); err != nil {
+			return nil, nil, fmt.Errorf("invalid operation pack: element %d of ops: %w", i, err)
+		}
+		if op.Type == nil {
+			return nil, nil, fmt.Errorf("invalid operation pack: element %d of ops: missing type", i)
+		}
 	}
 
 	author, err := entity.Resolve[identity.Interface](ctx, resolvers, aux.Author.Id())

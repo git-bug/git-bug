@@ -20,7 +20,7 @@ type UnknownOperation[SnapT Snapshot] struct {
 }
 
 // NewUnknownOp creates an UnknownOperation from raw JSON, a part of a document
-// that jsondoc.Check accepted. The common OpBase fields (type, timestamp, nonce,
+// that jsondoc.Unmarshal decoded. The common OpBase fields (type, timestamp, nonce,
 // metadata) are decoded from the raw JSON when they can be; entity-specific
 // fields are left in RawJSON. An operation of an unknown type is kept verbatim
 // whatever it holds, so only its type is decoded when the other fields can't be,

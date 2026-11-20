@@ -116,13 +116,13 @@ type OpBase struct {
 	// Operation.EditTime.
 	editTime lamport.Time
 
-	OperationType OperationType `json:"type" jsondoc:"required"`
-	UnixTime      int64         `json:"timestamp" jsondoc:"required"`
+	OperationType OperationType `json:"type"`
+	UnixTime      int64         `json:"timestamp"`
 
 	// mandatory random bytes to ensure a better randomness of the data used to later generate the ID
 	// len(Nonce) should be > 20 and < 64 bytes
 	// It has no functional purpose and should be ignored.
-	Nonce []byte `json:"nonce" jsondoc:"required"`
+	Nonce []byte `json:"nonce"`
 
 	Metadata map[string]string `json:"metadata,omitempty"`
 	// Not serialized. Store the extra metadata in memory,

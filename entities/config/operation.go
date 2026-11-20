@@ -57,7 +57,7 @@ var _ Operation = &dag.UnknownOperation[*Snapshot]{}
 // entity: the operation applies to those of a later time, see Snapshot.At.
 type opBase struct {
 	dag.OpBase
-	Times map[string]lamport.Time `json:"times" jsondoc:"required"`
+	Times map[string]lamport.Time `json:"times"`
 }
 
 // Validate checks the common part of the operation op, of type opType: the one of
@@ -142,9 +142,13 @@ func operationUnmarshaler(_ context.Context, raw json.RawMessage, resolvers enti
 		op = newOp()
 	}
 
-	err := jsondoc.Unmarshal(raw, op)
-	if err != nil {
+	if err := jsondoc.Unmarshal(raw, op); err != nil {
 		return nil, err
+	}
+	if op, ok := op.(interface{ requiredMembers() []string }); ok {
+		if err := jsondoc.Require(raw, op.requiredMembers()...); err != nil {
+			return nil, err
+		}
 	}
 
 	return op, nil

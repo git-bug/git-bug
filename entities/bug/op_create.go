@@ -17,8 +17,8 @@ var _ dag.OperationWithFiles = &CreateOperation{}
 // CreateOperation define the initial creation of a bug
 type CreateOperation struct {
 	dag.OpBase
-	Title   string            `json:"title" jsondoc:"required"`
-	Message string            `json:"message" jsondoc:"required"`
+	Title   string            `json:"title"`
+	Message string            `json:"message"`
 	Files   []repository.Hash `json:"files,omitempty"`
 }
 

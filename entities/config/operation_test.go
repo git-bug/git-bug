@@ -19,6 +19,19 @@ import (
 
 // makeTestContext returns clocks with a time each, recorded by every operation,
 // and two identities.
+// readBase gives the tests the opBase of an operation, see validateRead.
+func (base *opBase) readBase() *opBase { return base }
+
+// validateRead validates op, decoded from its JSON, with the author that a
+// reader takes from its pack.
+func validateRead(op dag.Operation, author identity.Interface) error {
+	base := op.(interface{ readBase() *opBase }).readBase()
+	authored := dag.NewOpBase(base.OperationType, author, base.UnixTime)
+	authored.Nonce, authored.Metadata = base.Nonce, base.Metadata
+	base.OpBase = authored
+	return op.Validate()
+}
+
 func makeTestContext(t *testing.T) (repository.RepoClock, identity.Interface, identity.Interface) {
 	t.Helper()
 
@@ -148,18 +161,28 @@ func TestOperations(t *testing.T) {
 
 		t.Run("required member", func(t *testing.T) {
 			// a required member that is null is absent, which makes the operation
-			// invalid
+			// invalid: a value, as the zero value is one, can't be absent
 			for _, members := range []map[string]any{
 				{"type": RepoSetDescriptionOp},
 				{"type": RepoSetDescriptionOp, "value": nil},
+			} {
+				_, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
+				require.ErrorContains(t, err, "missing member", "%v", members)
+			}
+			// a key or times, empty or nil when absent, doesn't validate
+			for _, members := range []map[string]any{
 				{"type": LabelsAllowOp},
 				{"type": LabelsAllowOp, "key": nil},
 				{"type": LabelsSetOp, "key": nil},
 				{"type": LabelsAllowOp, "key": "bug", "times": nil},
 			} {
-				_, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
-				require.ErrorContains(t, err, "missing member", "%v", members)
+				op, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
+				require.NoError(t, err, "%v", members)
+				require.Error(t, validateRead(op, rene), "%v", members)
 			}
+			op, err := operationUnmarshaler(t.Context(), marshal(t, map[string]any{"type": LabelsAllowOp, "key": "bug"}), nil)
+			require.NoError(t, err)
+			require.NoError(t, validateRead(op, rene))
 		})
 
 		t.Run("unknown member", func(t *testing.T) {

@@ -42,8 +42,6 @@ func TestJsondoc(t *testing.T) {
 			{"an overlong encoding of /, invalid in UTF-8", "{\"author\":{\"id\":\"b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7\"},\"ops\":[{\"type\":1,\"timestamp\":1609459200,\"nonce\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"title\":\"a}]}\xc0\xafb\"}]}", false},
 			{"U+D800 encoded in UTF-8, invalid in UTF-8", "{\"author\":{\"id\":\"b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7\"},\"ops\":[{\"type\":1,\"timestamp\":1609459200,\"nonce\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"title\":\"a}]}\xed\xa0\x80b\"}]}", false},
 			{"a byte order mark before the document", "\ufeff{\"author\":{\"id\":\"b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7\"},\"ops\":[{\"type\":1,\"timestamp\":1609459200,\"nonce\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"title\":\"test bug\"}]}", false},
-			{"nested 64 deep, in an operation of an unknown type", "{\"author\":{\"id\":\"b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7\"},\"ops\":[{\"type\":99,\"timestamp\":1609459200,\"nonce\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"x\":[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]}]}", true},
-			{"nested 65 deep, in an operation of an unknown type", "{\"author\":{\"id\":\"b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7\"},\"ops\":[{\"type\":99,\"timestamp\":1609459200,\"nonce\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"x\":[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]}]}", false},
 			{"a timestamp of 2^53 - 1, the largest integer", "{\"author\":{\"id\":\"b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7\"},\"ops\":[{\"type\":1,\"timestamp\":9007199254740991,\"nonce\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"title\":\"test bug\"}]}", true},
 			{"a timestamp of 2^53, beyond the integers", "{\"author\":{\"id\":\"b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7\"},\"ops\":[{\"type\":1,\"timestamp\":9007199254740992,\"nonce\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"title\":\"test bug\"}]}", false},
 			{"a timestamp with a fraction", "{\"author\":{\"id\":\"b29b7b2e0acb0a91dcf3c6c9d8e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7\"},\"ops\":[{\"type\":1,\"timestamp\":1609459200.0,\"nonce\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"title\":\"test bug\"}]}", false},
@@ -56,10 +54,7 @@ func TestJsondoc(t *testing.T) {
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
 				var p pack
-				err := Check([]byte(c.raw))
-				if err == nil {
-					err = Unmarshal([]byte(c.raw), &p)
-				}
+				err := Unmarshal([]byte(c.raw), &p)
 				if !c.valid {
 					require.Error(t, err)
 					return
@@ -73,11 +68,12 @@ func TestJsondoc(t *testing.T) {
 		}
 	})
 
-	t.Run("check", func(t *testing.T) {
+	t.Run("document", func(t *testing.T) {
+		var v any
 		for _, raw := range []string{``, `{"a": 1} {"b": 2}`, `{"a": 1`, `[1, 2,]`} {
-			require.Error(t, Check([]byte(raw)), raw)
+			require.Error(t, Unmarshal([]byte(raw), &v), raw)
 		}
-		require.NoError(t, Check([]byte(" {\"a\": [1, {}]}\n")))
+		require.NoError(t, Unmarshal([]byte(" {\"a\": [1, {}]}\n"), &v))
 	})
 
 	t.Run("integers", func(t *testing.T) {
@@ -180,6 +176,9 @@ func TestJsondoc(t *testing.T) {
 				`{"nonce": "AAE="}`: {0, 1},
 				`{"nonce": "AA=="}`: {0},
 				`{"nonce": "+/+/"}`: {0xfb, 0xff, 0xbf},
+				// unused bits are ignored
+				`{"nonce": "AAF="}`: {0, 1},
+				`{"nonce": "AB=="}`: {0},
 			} {
 				var v nonce
 				require.NoError(t, Unmarshal([]byte(raw), &v), raw)
@@ -192,9 +191,6 @@ func TestJsondoc(t *testing.T) {
 				// unpadded
 				`{"nonce": "AAE"}`,
 				`{"nonce": "AA"}`,
-				// unused bits that are not 0
-				`{"nonce": "AAF="}`,
-				`{"nonce": "AB=="}`,
 				// URL-safe alphabet
 				`{"nonce": "-_-_"}`,
 				// a line break, or any other character
@@ -230,56 +226,32 @@ func TestJsondoc(t *testing.T) {
 		require.Equal(t, []json.RawMessage{json.RawMessage(`{"a": null}`), json.RawMessage(`[null]`)}, v.Raws)
 	})
 
-	t.Run("required", func(t *testing.T) {
+	t.Run("require", func(t *testing.T) {
 		t.Run("present", func(t *testing.T) {
 			// a required member may hold its zero value
-			var v requiredOp
-			require.NoError(t, Unmarshal([]byte(`{"type": 3, "message": "", "count": 0}`), &v))
-			require.Equal(t, requiredOp{base: base{Type: 3}}, v)
+			require.NoError(t, Require([]byte(`{"type": 3, "message": "", "count": 0}`), "message", "count"))
+			require.NoError(t, Require([]byte(`{"type": 3}`)))
 		})
 
 		t.Run("absent or null", func(t *testing.T) {
 			for _, raw := range []string{
-				`{"message": "", "count": 0}`,
 				`{"type": 3, "count": 0}`,
+				`{"type": 3, "message": null, "count": 0}`,
 				`{"type": 3, "message": "", "count": null}`,
-				`{"type": null, "message": "", "count": 0}`,
+				`{}`,
 				`null`,
 			} {
-				var v requiredOp
-				require.ErrorContains(t, Unmarshal([]byte(raw), &v), "missing member", raw)
+				require.ErrorContains(t, Require([]byte(raw), "message", "count"), "missing member", raw)
 			}
 		})
 
 		t.Run("names match exactly", func(t *testing.T) {
-			var v requiredOp
-			require.ErrorContains(t, Unmarshal([]byte(`{"type": 3, "Message": "", "count": 0}`), &v), `missing member "message"`)
+			require.ErrorContains(t, Require([]byte(`{"Message": ""}`), "message"), `missing member "message"`)
 		})
 
-		t.Run("own unmarshaler", func(t *testing.T) {
-			// a type with its own method checks its members itself
-			var v ownUnmarshaler
-			require.NoError(t, Unmarshal([]byte(`{}`), &v))
+		t.Run("top-level members only", func(t *testing.T) {
+			require.Error(t, Require([]byte(`{"meta": {"message": ""}}`), "message"))
 		})
 	})
 
 }
-
-// base is embedded in requiredOp, as json inlines it.
-type base struct {
-	Type int               `json:"type" jsondoc:"required"`
-	Meta map[string]string `json:"meta,omitempty"`
-}
-
-type requiredOp struct {
-	base
-	Message string   `json:"message" jsondoc:"required"`
-	Count   int      `json:"count" jsondoc:"required"`
-	Files   []string `json:"files,omitempty"`
-}
-
-type ownUnmarshaler struct {
-	Title string `json:"title" jsondoc:"required"`
-}
-
-func (o *ownUnmarshaler) UnmarshalJSON([]byte) error { return nil }

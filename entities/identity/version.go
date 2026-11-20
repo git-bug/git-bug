@@ -81,16 +81,16 @@ func newVersion(repo repository.RepoClock, name string, email string, login stri
 
 type versionJSON struct {
 	// Additional field to version the data
-	FormatVersion uint `json:"version" jsondoc:"required"`
+	FormatVersion uint `json:"version"`
 
-	Times     map[string]lamport.Time `json:"times" jsondoc:"required"`
-	UnixTime  int64                   `json:"unix_time" jsondoc:"required"`
+	Times     map[string]lamport.Time `json:"times"`
+	UnixTime  int64                   `json:"unix_time"`
 	Name      string                  `json:"name,omitempty"`
 	Email     string                  `json:"email,omitempty"`
 	Login     string                  `json:"login,omitempty"`
 	AvatarUrl string                  `json:"avatar_url,omitempty"`
 	Keys      []*Key                  `json:"pub_keys,omitempty"`
-	Nonce     []byte                  `json:"nonce" jsondoc:"required"`
+	Nonce     []byte                  `json:"nonce"`
 	Metadata  map[string]string       `json:"metadata,omitempty"`
 }
 
@@ -188,6 +188,11 @@ func (v *version) Validate() error {
 	// time must be set after a commit
 	if v.commitHash != "" && v.unixTime == 0 {
 		return fmt.Errorf("unix time not set")
+	}
+
+	// absent or null when nil, empty when no clock is known
+	if v.times == nil {
+		return fmt.Errorf("lamport times not set")
 	}
 
 	if text.Empty(v.name) && text.Empty(v.login) {
