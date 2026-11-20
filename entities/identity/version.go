@@ -9,6 +9,7 @@ import (
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 	"github.com/git-bug/git-bug/util/lamport"
 	"github.com/git-bug/git-bug/util/text"
 )
@@ -161,7 +162,7 @@ func (v *version) MarshalJSON() ([]byte, error) {
 func (v *version) UnmarshalJSON(data []byte) error {
 	var aux versionJSON
 
-	if err := json.Unmarshal(data, &aux); err != nil {
+	if err := jsondoc.Unmarshal(data, &aux); err != nil {
 		return err
 	}
 
@@ -189,6 +190,11 @@ func (v *version) Validate() error {
 		return fmt.Errorf("unix time not set")
 	}
 
+	// absent or null when nil, empty when no clock is known
+	if v.times == nil {
+		return fmt.Errorf("lamport times not set")
+	}
+
 	if text.Empty(v.name) && text.Empty(v.login) {
 		return fmt.Errorf("either name or login should be set")
 	}
@@ -204,8 +210,17 @@ func (v *version) Validate() error {
 		return fmt.Errorf("email has unsafe characters")
 	}
 
-	if v.avatarURL != "" && !text.ValidUrl(v.avatarURL) {
-		return fmt.Errorf("avatarUrl is not a valid URL")
+	if v.avatarURL != "" && !text.ValidHTTPSURL(v.avatarURL) {
+		return fmt.Errorf("avatarUrl is not an HTTPS URL")
+	}
+
+	for key, val := range v.metadata {
+		if !text.SafeOneLine(key) {
+			return fmt.Errorf("metadata key %q has unsafe characters", key)
+		}
+		if !text.Safe(val) {
+			return fmt.Errorf("metadata value of %q has unsafe characters", key)
+		}
 	}
 
 	if len(v.nonce) > 64 {

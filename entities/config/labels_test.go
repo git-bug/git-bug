@@ -141,7 +141,7 @@ func TestLabels(t *testing.T) {
 		}
 
 		// a field this client doesn't know is ignored, and the others apply
-		raw := `{"type": 20001, "timestamp": 1609459200, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=", "key": "crash", "fields": {"color": "#f44336", "priority": 1}}`
+		raw := `{"type": 20001, "timestamp": 1609459200, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=", "times": {"bugs-edit": 42}, "key": "crash", "fields": {"color": "#f44336", "priority": 1}}`
 		op, err := operationUnmarshaler(t.Context(), json.RawMessage(raw), nil)
 		require.NoError(t, err)
 		require.Equal(t, LabelsDefinition{Color: SetField(red)}, op.(*LabelsSetOperation).Fields)

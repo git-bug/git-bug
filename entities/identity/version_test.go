@@ -10,6 +10,7 @@ import (
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
@@ -71,4 +72,38 @@ func TestVersionJSON(t *testing.T) {
 	expected.Id()
 
 	assert.Equal(t, expected, &after)
+}
+
+func TestVersionUnmarshal(t *testing.T) {
+	t.Run("null key", func(t *testing.T) {
+		// an array holding null makes the version invalid
+		raw := `{"version": 2, "name": "René", "times": {}, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=", "pub_keys": [null]}`
+		var v version
+		require.ErrorContains(t, jsondoc.Unmarshal([]byte(raw), &v), "null in an array")
+	})
+	t.Run("times", func(t *testing.T) {
+		// times is required: absent or null, it is nil and doesn't validate
+		for _, raw := range []string{
+			`{"version": 2, "name": "René", "unix_time": 1609459200, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA="}`,
+			`{"version": 2, "name": "René", "times": null, "unix_time": 1609459200, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA="}`,
+		} {
+			var v version
+			require.NoError(t, jsondoc.Unmarshal([]byte(raw), &v), raw)
+			require.ErrorContains(t, v.Validate(), "lamport times not set", raw)
+		}
+		raw := `{"version": 2, "name": "René", "times": {}, "unix_time": 1609459200, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA="}`
+		var v version
+		require.NoError(t, jsondoc.Unmarshal([]byte(raw), &v))
+		require.NoError(t, v.Validate())
+	})
+	t.Run("null in a map", func(t *testing.T) {
+		// a map holding null makes the version invalid
+		for _, raw := range []string{
+			`{"version": 2, "name": "René", "times": {"bugs": null}, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA="}`,
+			`{"version": 2, "name": "René", "times": {}, "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAA=", "metadata": {"k": null}}`,
+		} {
+			var v version
+			require.ErrorContains(t, jsondoc.Unmarshal([]byte(raw), &v), "null in a map", raw)
+		}
+	})
 }

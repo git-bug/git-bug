@@ -19,6 +19,19 @@ import (
 
 // makeTestContext returns clocks with a time each, recorded by every operation,
 // and two identities.
+// readBase gives the tests the opBase of an operation, see validateRead.
+func (base *opBase) readBase() *opBase { return base }
+
+// validateRead validates op, decoded from its JSON, with the author that a
+// reader takes from its pack.
+func validateRead(op dag.Operation, author identity.Interface) error {
+	base := op.(interface{ readBase() *opBase }).readBase()
+	authored := dag.NewOpBase(base.OperationType, author, base.UnixTime)
+	authored.Nonce, authored.Metadata = base.Nonce, base.Metadata
+	base.OpBase = authored
+	return op.Validate()
+}
+
 func makeTestContext(t *testing.T) (repository.RepoClock, identity.Interface, identity.Interface) {
 	t.Helper()
 
@@ -134,28 +147,72 @@ func TestOperations(t *testing.T) {
 			return raw
 		}
 
-		// a member that is null reads as absent
-		op, err := operationUnmarshaler(t.Context(), marshal(t, map[string]any{"type": RepoSetDescriptionOp, "value": nil}), nil)
-		require.NoError(t, err)
-		require.Equal(t, "", op.(*RepoSetDescriptionOperation).Value)
-		for _, members := range []map[string]any{
-			{"type": LabelsSetOp, "key": "bug", "fields": nil, "clear": nil},
-			{"type": LabelsSetOp, "key": "bug", "fields": map[string]any{"color": nil}},
-		} {
-			op, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
-			require.NoError(t, err, "%v", members)
-			require.Equal(t, LabelsDefinition{}, op.(*LabelsSetOperation).Fields, "%v", members)
-		}
+		t.Run("optional member", func(t *testing.T) {
+			// an optional member that is null reads as absent
+			for _, members := range []map[string]any{
+				{"type": LabelsSetOp, "key": "bug", "fields": nil, "clear": nil},
+				{"type": LabelsSetOp, "key": "bug", "fields": map[string]any{"color": nil}},
+			} {
+				op, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
+				require.NoError(t, err, "%v", members)
+				require.Equal(t, LabelsDefinition{}, op.(*LabelsSetOperation).Fields, "%v", members)
+			}
+		})
 
-		// a member that the kind doesn't have is an unknown field, null or not
-		for _, members := range []map[string]any{
-			{"type": CreateOp, "value": nil},
-			{"type": LabelsSetOp, "key": "bug", "value": nil},
-			{"type": LabelsRemoveOp, "key": "bug", "fields": nil},
-		} {
-			_, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
-			require.NoError(t, err, "%v", members)
-		}
+		t.Run("required member", func(t *testing.T) {
+			// a required member that is null is absent, which makes the operation
+			// invalid: a value, as the zero value is one, can't be absent
+			for _, members := range []map[string]any{
+				{"type": RepoSetDescriptionOp},
+				{"type": RepoSetDescriptionOp, "value": nil},
+			} {
+				_, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
+				require.ErrorContains(t, err, "missing member", "%v", members)
+			}
+			// a key or times, empty or nil when absent, doesn't validate
+			for _, members := range []map[string]any{
+				{"type": LabelsAllowOp},
+				{"type": LabelsAllowOp, "key": nil},
+				{"type": LabelsSetOp, "key": nil},
+				{"type": LabelsAllowOp, "key": "bug", "times": nil},
+			} {
+				op, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
+				require.NoError(t, err, "%v", members)
+				require.Error(t, validateRead(op, rene), "%v", members)
+			}
+			op, err := operationUnmarshaler(t.Context(), marshal(t, map[string]any{"type": LabelsAllowOp, "key": "bug"}), nil)
+			require.NoError(t, err)
+			require.NoError(t, validateRead(op, rene))
+		})
+
+		t.Run("unknown member", func(t *testing.T) {
+			// a member that the kind doesn't have is an unknown field, null or not
+			for _, members := range []map[string]any{
+				{"type": CreateOp, "value": nil},
+				{"type": LabelsSetOp, "key": "bug", "value": nil},
+				{"type": LabelsRemoveOp, "key": "bug", "fields": nil},
+			} {
+				_, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
+				require.NoError(t, err, "%v", members)
+			}
+		})
+
+		t.Run("null in a map", func(t *testing.T) {
+			_, err := operationUnmarshaler(t.Context(), marshal(t, map[string]any{"type": LabelsAllowOp, "key": "bug", "times": map[string]any{"bugs-edit": nil}}), nil)
+			require.ErrorContains(t, err, "null in a map")
+		})
+
+		t.Run("zero value", func(t *testing.T) {
+			// a set value writes its value, even the zero one, which reads back
+			op, err := NewRepoSetDescriptionOp(clocks, rene, unix, "")
+			require.NoError(t, err)
+			data, err := json.Marshal(op)
+			require.NoError(t, err)
+			require.Contains(t, string(data), `"value":""`)
+			read, err := operationUnmarshaler(t.Context(), data, nil)
+			require.NoError(t, err)
+			require.Equal(t, "", read.(*RepoSetDescriptionOperation).Value)
+		})
 
 		// clear is an array of names
 		for _, clear := range []any{"color", []any{42}, []any{nil}} {

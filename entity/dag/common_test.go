@@ -40,7 +40,15 @@ func (op *op1) Id() entity.Id {
 	return IdOperation(op, &op.OpBase)
 }
 
-func (op *op1) Validate() error { return nil }
+// invalidField1 makes an op1 invalid
+const invalidField1 = "<invalid>"
+
+func (op *op1) Validate() error {
+	if op.Field1 == invalidField1 {
+		return fmt.Errorf("field_1 is invalid")
+	}
+	return nil
+}
 
 func (op *op1) GetFiles() []repository.Hash {
 	return op.Files
