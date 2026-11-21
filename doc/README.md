@@ -18,6 +18,9 @@ The documentation listed below aims to help provide insight into the usage of
 ## For developers
 
 - Read through [`//:CONTRIBUTING.md`][contrib]
+- Read the [threat model](./threat-model.md) to learn who `git-bug` trusts and
+  what it guarantees, and the [security policy][security] to report a
+  vulnerability
 - See an [overview of the internal architecture](./design/architecture.md)
 - Read about the [data model](./design/data-model.md) to gain a deeper
   understanding of the internals that comprise `git-bug`
@@ -27,3 +30,4 @@ The documentation listed below aims to help provide insight into the usage of
   bridge
 
 [contrib]: ../CONTRIBUTING.md
+[security]: ../SECURITY.md
