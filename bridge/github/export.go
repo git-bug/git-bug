@@ -219,13 +219,6 @@ func (ge *githubExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 	createOp := snapshot.Operations[0].(*bug.CreateOperation)
 	author := snapshot.Author
 
-	// skip bug if origin is not allowed
-	origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin)
-	if ok && origin != target {
-		out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue tagged with origin: %s", origin))
-		return
-	}
-
 	// get github bug ID
 	githubID, ok := snapshot.GetCreateMetadata(metaKeyGithubId)
 	if ok {

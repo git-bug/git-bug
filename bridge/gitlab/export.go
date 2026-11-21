@@ -156,7 +156,6 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 	var err error
 	var bugGitlabID int64
 	var bugGitlabIDString string
-	var GitlabBaseUrl string
 	var bugCreationId string
 
 	// Once a change is made on Gitlab, saving its ID locally must not be
@@ -166,13 +165,6 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 	// Special case:
 	// if a user try to export a bug that is not already exported to Gitlab (or imported
 	// from Gitlab) and we do not have the token of the bug author, there is nothing we can do.
-
-	// skip bug if origin is not allowed
-	origin, ok := snapshot.GetCreateMetadata(core.MetaKeyOrigin)
-	if ok && origin != target {
-		out <- core.NewExportNothing(b.Id(), fmt.Sprintf("issue tagged with origin: %s", origin))
-		return
-	}
 
 	// first operation is always createOp
 	createOp := snapshot.Operations[0].(*bug.CreateOperation)
@@ -234,7 +226,7 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 				metaKeyGitlabId:      idString,
 				metaKeyGitlabUrl:     url,
 				metaKeyGitlabProject: ge.repositoryID,
-				metaKeyGitlabBaseUrl: GitlabBaseUrl,
+				metaKeyGitlabBaseUrl: ge.conf[confKeyGitlabBaseUrl],
 			},
 		)
 		if err != nil {
@@ -269,6 +261,14 @@ func (ge *gitlabExporter) exportBug(ctx context.Context, b *cache.BugCache, out 
 		// ignore operations already existing in gitlab (due to import or export)
 		// cache the ID of already exported or imported issues and events from Gitlab
 		if id, ok := op.GetMetadata(metaKeyGitlabId); ok {
+			if labelOp, ok := op.(*bug.LabelChangeOperation); ok {
+				for _, label := range labelOp.Added {
+					labelSet[label.String()] = struct{}{}
+				}
+				for _, label := range labelOp.Removed {
+					delete(labelSet, label.String())
+				}
+			}
 			ge.cachedOperationIDs[op.Id().String()] = id
 			continue
 		}

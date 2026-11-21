@@ -10,6 +10,8 @@ import (
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/util/text"
 )
@@ -28,6 +30,9 @@ type githubImporter struct {
 
 	// send only channel
 	out chan<- core.ImportResult
+
+	// maps remote timeline event ID -> matched exported operation entry key
+	matchedExported map[string]string
 }
 
 func (gi *githubImporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
@@ -52,6 +57,7 @@ func (gi *githubImporter) Init(_ context.Context, repo *cache.RepoCache, conf co
 // missing issues / timeline items / edits / label events ...
 func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
 	gi.mediator = NewImportMediator(ctx, gi.client, gi.conf[confKeyOwner], gi.conf[confKeyProject], since)
+	gi.matchedExported = make(map[string]string)
 	out := make(chan core.ImportResult)
 	gi.out = out
 
@@ -103,16 +109,21 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 				if err != nil {
 					err := fmt.Errorf("issue creation: %v", err)
 					out <- core.NewImportError(err, "")
-					return
+					currBug = nil
 				}
 			case IssueEditEvent:
+				if currBug == nil {
+					continue
+				}
 				err = gi.ensureIssueEdit(ctx, repo, currBug, event.issueId, &event.userContentEdit)
 				if err != nil {
 					err = fmt.Errorf("issue edit: %v", err)
 					out <- core.NewImportError(err, "")
-					return
 				}
 			case TimelineEvent:
+				if currBug == nil {
+					continue
+				}
 				if next, ok := nextEvent.(CommentEditEvent); ok && event.Typename == "IssueComment" {
 					// consuming and using next event
 					nextEvent = nil
@@ -123,14 +134,15 @@ func (gi *githubImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, 
 				if err != nil {
 					err = fmt.Errorf("timeline item creation: %v", err)
 					out <- core.NewImportError(err, "")
-					return
 				}
 			case CommentEditEvent:
+				if currBug == nil {
+					continue
+				}
 				err = gi.ensureCommentEdit(ctx, repo, currBug, event.commentId, &event.userContentEdit)
 				if err != nil {
 					err = fmt.Errorf("comment edit: %v", err)
 					out <- core.NewImportError(err, "")
-					return
 				}
 			default:
 				panic("Unknown event type")
@@ -252,9 +264,12 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 		if err == nil {
 			return nil
 		}
-
 		if err != cache.ErrNoMatchingOp {
 			return err
+		}
+		labelName := text.CleanupOneLine(string(item.LabeledEvent.Label.Name))
+		if gi.matchExportedLabelChange(b, id, labelName, true) {
+			return nil
 		}
 		author, err := gi.ensurePerson(ctx, repo, item.LabeledEvent.Actor)
 		if err != nil {
@@ -264,7 +279,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 			author,
 			item.LabeledEvent.CreatedAt.Unix(),
 			[]string{
-				text.CleanupOneLine(string(item.LabeledEvent.Label.Name)),
+				labelName,
 			},
 			nil,
 			map[string]string{metaKeyGithubId: id},
@@ -285,6 +300,10 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 		if err != cache.ErrNoMatchingOp {
 			return err
 		}
+		labelName := text.CleanupOneLine(string(item.UnlabeledEvent.Label.Name))
+		if gi.matchExportedLabelChange(b, id, labelName, false) {
+			return nil
+		}
 		author, err := gi.ensurePerson(ctx, repo, item.UnlabeledEvent.Actor)
 		if err != nil {
 			return err
@@ -295,7 +314,7 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 			item.UnlabeledEvent.CreatedAt.Unix(),
 			nil,
 			[]string{
-				text.CleanupOneLine(string(item.UnlabeledEvent.Label.Name)),
+				labelName,
 			},
 			map[string]string{metaKeyGithubId: id},
 		)
@@ -313,6 +332,9 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 			return err
 		}
 		if err == nil {
+			return nil
+		}
+		if gi.matchExportedStatusChange(b, id, common.ClosedStatus) {
 			return nil
 		}
 		author, err := gi.ensurePerson(ctx, repo, item.ClosedEvent.Actor)
@@ -341,6 +363,9 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 		if err == nil {
 			return nil
 		}
+		if gi.matchExportedStatusChange(b, id, common.OpenStatus) {
+			return nil
+		}
 		author, err := gi.ensurePerson(ctx, repo, item.ReopenedEvent.Actor)
 		if err != nil {
 			return err
@@ -367,11 +392,6 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 		if err == nil {
 			return nil
 		}
-		author, err := gi.ensurePerson(ctx, repo, item.RenamedTitleEvent.Actor)
-		if err != nil {
-			return err
-		}
-
 		// At Github there exist issues with seemingly empty titles. An example is
 		// https://github.com/NixOS/nixpkgs/issues/72730 (here the title is actually
 		// a zero width space U+200B).
@@ -379,6 +399,13 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 		title := text.CleanupOneLine(string(item.RenamedTitleEvent.CurrentTitle))
 		if text.Empty(title) {
 			title = EmptyTitlePlaceholder
+		}
+		if gi.matchExportedTitleChange(b, id, title) {
+			return nil
+		}
+		author, err := gi.ensurePerson(ctx, repo, item.RenamedTitleEvent.Actor)
+		if err != nil {
+			return err
 		}
 
 		op, err := b.SetTitleRaw(
@@ -399,13 +426,16 @@ func (gi *githubImporter) ensureTimelineItem(ctx context.Context, repo *cache.Re
 }
 
 func (gi *githubImporter) ensureCommentEdit(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, ghTargetId githubv4.ID, edit *userContentEdit) error {
-	// find comment
-	target, err := b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(ghTargetId))
+	// find comment target only among CreateOperation and AddCommentOperation,
+	// because exported LabelChange/SetStatus/SetTitle/EditComment operations
+	// also carry metaKeyGithubId == issueID.
+	target, err := resolveCommentTargetWithMetadata(b, metaKeyGithubId, parseId(ghTargetId))
 	if err != nil {
 		return err
 	}
+	editID := parseId(edit.Id)
 	// check if the comment edition already exist
-	_, err = b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(edit.Id))
+	_, err = b.ResolveOperationWithMetadata(metaKeyGithubId, editID)
 	if err == nil {
 		return nil
 	}
@@ -414,14 +444,19 @@ func (gi *githubImporter) ensureCommentEdit(ctx context.Context, repo *cache.Rep
 		return err
 	}
 
-	editor, err := gi.ensurePerson(ctx, repo, edit.Editor)
-	if err != nil {
-		return err
-	}
-
 	if edit.DeletedAt != nil {
 		// comment deletion, not supported yet
 		return nil
+	}
+
+	cleanMsg := text.Cleanup(string(*edit.Diff))
+	if gi.matchExportedCommentEdit(b, editID, target, cleanMsg) {
+		return nil
+	}
+
+	editor, err := gi.ensurePerson(ctx, repo, edit.Editor)
+	if err != nil {
+		return err
 	}
 
 	commentId := entity.CombineIds(b.Id(), target)
@@ -431,9 +466,9 @@ func (gi *githubImporter) ensureCommentEdit(ctx context.Context, repo *cache.Rep
 		editor,
 		edit.CreatedAt.Unix(),
 		commentId,
-		text.Cleanup(string(*edit.Diff)),
+		cleanMsg,
 		map[string]string{
-			metaKeyGithubId: parseId(edit.Id),
+			metaKeyGithubId: editID,
 		},
 	)
 
@@ -451,7 +486,7 @@ func (gi *githubImporter) ensureComment(ctx context.Context, repo *cache.RepoCac
 		return err
 	}
 
-	_, err = b.ResolveOperationWithMetadata(metaKeyGithubId, parseId(comment.Id))
+	_, err = resolveCommentTargetWithMetadata(b, metaKeyGithubId, parseId(comment.Id))
 	if err == nil {
 		return nil
 	}
@@ -584,4 +619,180 @@ func (gi *githubImporter) getGhost(ctx context.Context, repo *cache.RepoCache) (
 // parseId converts the unusable githubv4.ID (an interface{}) into a string
 func parseId(id githubv4.ID) string {
 	return fmt.Sprintf("%v", id)
+}
+
+func resolveCommentTargetWithMetadata(b *cache.BugCache, key, value string) (entity.Id, error) {
+	matching := make([]entity.Id, 0, 1)
+	for _, op := range b.Snapshot().AllOperations() {
+		switch op.(type) {
+		case *bug.CreateOperation, *bug.AddCommentOperation:
+			if opVal, ok := op.GetMetadata(key); ok && opVal == value {
+				matching = append(matching, op.Id())
+			}
+		}
+	}
+	if len(matching) == 0 {
+		return "", cache.ErrNoMatchingOp
+	}
+	if len(matching) > 1 {
+		return "", entity.NewErrMultipleMatch("operation", matching)
+	}
+	return matching[0], nil
+}
+
+func (gi *githubImporter) matchExportedCommentEdit(b *cache.BugCache, eventID string, target entity.Id, message string) bool {
+	eventKey := fmt.Sprintf("%s:edit:%s", b.Id(), eventID)
+	if gi.matchedExported != nil {
+		if _, ok := gi.matchedExported[eventKey]; ok {
+			return true
+		}
+	}
+	snap := b.Snapshot()
+	var targetRemoteID string
+	for _, op := range snap.Operations {
+		if op.Id() == target {
+			targetRemoteID, _ = op.GetMetadata(metaKeyGithubId)
+			break
+		}
+	}
+	if targetRemoteID == "" {
+		return false
+	}
+	for _, op := range snap.Operations {
+		editOp, ok := op.(*bug.EditCommentOperation)
+		if !ok || editOp.Target != target || editOp.Message != message {
+			continue
+		}
+		if id, ok := editOp.GetMetadata(metaKeyGithubId); !ok || id != targetRemoteID {
+			continue
+		}
+		entryKey := editOp.Id().String()
+		if gi.isOpEntryClaimed(entryKey, eventKey) {
+			continue
+		}
+		gi.matchedExported[eventKey] = entryKey
+		return true
+	}
+	return false
+}
+
+func (gi *githubImporter) isOpEntryClaimed(entryKey, eventKey string) bool {
+	if gi.matchedExported == nil {
+		gi.matchedExported = make(map[string]string)
+	}
+	for evKey, key := range gi.matchedExported {
+		if key == entryKey && evKey != eventKey {
+			return true
+		}
+	}
+	return false
+}
+
+func (gi *githubImporter) matchExportedStatusChange(b *cache.BugCache, eventID string, status common.Status) bool {
+	eventKey := fmt.Sprintf("%s:status:%s", b.Id(), eventID)
+	if gi.matchedExported != nil {
+		if _, ok := gi.matchedExported[eventKey]; ok {
+			return true
+		}
+	}
+	snap := b.Snapshot()
+	issueID, ok := snap.GetCreateMetadata(metaKeyGithubId)
+	if !ok {
+		return false
+	}
+	for _, op := range snap.Operations {
+		statusOp, ok := op.(*bug.SetStatusOperation)
+		if !ok || statusOp.Status != status {
+			continue
+		}
+		if id, ok := statusOp.GetMetadata(metaKeyGithubId); !ok || id != issueID {
+			continue
+		}
+		entryKey := statusOp.Id().String()
+		if gi.isOpEntryClaimed(entryKey, eventKey) {
+			continue
+		}
+		gi.matchedExported[eventKey] = entryKey
+		return true
+	}
+	return false
+}
+
+func (gi *githubImporter) matchExportedTitleChange(b *cache.BugCache, eventID, title string) bool {
+	eventKey := fmt.Sprintf("%s:title:%s", b.Id(), eventID)
+	if gi.matchedExported != nil {
+		if _, ok := gi.matchedExported[eventKey]; ok {
+			return true
+		}
+	}
+	snap := b.Snapshot()
+	issueID, ok := snap.GetCreateMetadata(metaKeyGithubId)
+	if !ok {
+		return false
+	}
+	for _, op := range snap.Operations {
+		titleOp, ok := op.(*bug.SetTitleOperation)
+		if !ok || titleOp.Title != title {
+			continue
+		}
+		if id, ok := titleOp.GetMetadata(metaKeyGithubId); !ok || id != issueID {
+			continue
+		}
+		entryKey := titleOp.Id().String()
+		if gi.isOpEntryClaimed(entryKey, eventKey) {
+			continue
+		}
+		gi.matchedExported[eventKey] = entryKey
+		return true
+	}
+	return false
+}
+
+func (gi *githubImporter) matchExportedLabelChange(b *cache.BugCache, eventID, label string, added bool) bool {
+	eventKey := fmt.Sprintf("%s:label:%s", b.Id(), eventID)
+	if gi.matchedExported != nil {
+		if _, ok := gi.matchedExported[eventKey]; ok {
+			return true
+		}
+	}
+	snap := b.Snapshot()
+	issueID, ok := snap.GetCreateMetadata(metaKeyGithubId)
+	if !ok {
+		return false
+	}
+	for _, op := range snap.Operations {
+		labelOp, ok := op.(*bug.LabelChangeOperation)
+		if !ok {
+			continue
+		}
+		if id, ok := labelOp.GetMetadata(metaKeyGithubId); !ok || id != issueID {
+			continue
+		}
+		hasLabel := false
+		if added {
+			for _, l := range labelOp.Added {
+				if string(l) == label {
+					hasLabel = true
+					break
+				}
+			}
+		} else {
+			for _, l := range labelOp.Removed {
+				if string(l) == label {
+					hasLabel = true
+					break
+				}
+			}
+		}
+		if !hasLabel {
+			continue
+		}
+		entryKey := fmt.Sprintf("%s:%t:%s", labelOp.Id().String(), added, label)
+		if gi.isOpEntryClaimed(entryKey, eventKey) {
+			continue
+		}
+		gi.matchedExported[eventKey] = entryKey
+		return true
+	}
+	return false
 }

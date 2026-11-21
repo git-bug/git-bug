@@ -11,6 +11,8 @@ import (
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
 	"github.com/git-bug/git-bug/cache"
+	"github.com/git-bug/git-bug/entities/bug"
+	"github.com/git-bug/git-bug/entities/common"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/util/text"
 )
@@ -24,6 +26,9 @@ type gitlabImporter struct {
 
 	// send only channel
 	out chan<- core.ImportResult
+
+	// maps remote timeline event ID -> matched exported operation entry key
+	matchedExported map[string]string
 }
 
 func (gi *gitlabImporter) Init(_ context.Context, repo *cache.RepoCache, conf core.Configuration) error {
@@ -54,6 +59,7 @@ func (gi *gitlabImporter) Init(_ context.Context, repo *cache.RepoCache, conf co
 // ImportAll iterate over all the configured repository issues (notes) and ensure the creation
 // of the missing issues / comments / label events / title changes ...
 func (gi *gitlabImporter) ImportAll(ctx context.Context, repo *cache.RepoCache, since time.Time) (<-chan core.ImportResult, error) {
+	gi.matchedExported = make(map[string]string)
 	out := make(chan core.ImportResult)
 	gi.out = out
 
@@ -115,8 +121,7 @@ func (gi *gitlabImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 
 	// resolve bug
 	b, err := repo.Bugs().ResolveMatcher(ctx, func(excerpt *cache.BugExcerpt) bool {
-		return excerpt.CreateMetadata[core.MetaKeyOrigin] == target &&
-			excerpt.CreateMetadata[metaKeyGitlabId] == fmt.Sprintf("%d", issue.IID) &&
+		return excerpt.CreateMetadata[metaKeyGitlabId] == fmt.Sprintf("%d", issue.IID) &&
 			excerpt.CreateMetadata[metaKeyGitlabBaseUrl] == gi.conf[confKeyGitlabBaseUrl] &&
 			excerpt.CreateMetadata[metaKeyGitlabProject] == gi.conf[confKeyProjectID]
 	})
@@ -154,7 +159,13 @@ func (gi *gitlabImporter) ensureIssue(ctx context.Context, repo *cache.RepoCache
 }
 
 func (gi *gitlabImporter) ensureIssueEvent(ctx context.Context, repo *cache.RepoCache, b *cache.BugCache, issue *gitlab.Issue, event Event) error {
-	id, errResolve := b.ResolveOperationWithMetadata(metaKeyGitlabId, event.ID())
+	var id entity.Id
+	var errResolve error
+	if event.Kind() == EventComment {
+		id, errResolve = resolveCommentTargetWithMetadata(b, metaKeyGitlabId, event.ID())
+	} else {
+		id, errResolve = b.ResolveOperationWithMetadata(metaKeyGitlabId, event.ID())
+	}
 	if errResolve != nil && errResolve != cache.ErrNoMatchingOp {
 		return errResolve
 	}
@@ -167,7 +178,7 @@ func (gi *gitlabImporter) ensureIssueEvent(ctx context.Context, repo *cache.Repo
 
 	switch event.Kind() {
 	case EventClosed:
-		if errResolve == nil {
+		if errResolve == nil || gi.matchExportedStatusChange(b, event.ID(), common.ClosedStatus) {
 			return nil
 		}
 
@@ -186,7 +197,7 @@ func (gi *gitlabImporter) ensureIssueEvent(ctx context.Context, repo *cache.Repo
 		gi.out <- core.NewImportStatusChange(b.Id(), op.Id())
 
 	case EventReopened:
-		if errResolve == nil {
+		if errResolve == nil || gi.matchExportedStatusChange(b, event.ID(), common.OpenStatus) {
 			return nil
 		}
 
@@ -287,6 +298,9 @@ func (gi *gitlabImporter) ensureIssueEvent(ctx context.Context, repo *cache.Repo
 		if err != nil {
 			return err
 		}
+		if gi.matchExportedTitleChange(b, event.ID(), title) {
+			return nil
+		}
 
 		op, err := b.SetTitleRaw(
 			author,
@@ -303,10 +317,14 @@ func (gi *gitlabImporter) ensureIssueEvent(ctx context.Context, repo *cache.Repo
 		gi.out <- core.NewImportTitleEdition(b.Id(), op.Id())
 
 	case EventAddLabel:
+		labelName := event.(LabelEvent).Label.Name
+		if errResolve == nil || gi.matchExportedLabelChange(b, event.ID(), labelName, true) {
+			return nil
+		}
 		_, err = b.ForceChangeLabelsRaw(
 			author,
 			event.CreatedAt().Unix(),
-			[]string{event.(LabelEvent).Label.Name},
+			[]string{labelName},
 			nil,
 			map[string]string{
 				metaKeyGitlabId: event.ID(),
@@ -315,11 +333,15 @@ func (gi *gitlabImporter) ensureIssueEvent(ctx context.Context, repo *cache.Repo
 		return err
 
 	case EventRemoveLabel:
+		labelName := event.(LabelEvent).Label.Name
+		if errResolve == nil || gi.matchExportedLabelChange(b, event.ID(), labelName, false) {
+			return nil
+		}
 		_, err = b.ForceChangeLabelsRaw(
 			author,
 			event.CreatedAt().Unix(),
 			nil,
-			[]string{event.(LabelEvent).Label.Name},
+			[]string{labelName},
 			map[string]string{
 				metaKeyGitlabId: event.ID(),
 			},
@@ -381,4 +403,144 @@ func (gi *gitlabImporter) ensurePerson(ctx context.Context, repo *cache.RepoCach
 
 	gi.out <- core.NewImportIdentity(i.Id())
 	return i, nil
+}
+
+func resolveCommentTargetWithMetadata(b *cache.BugCache, key, value string) (entity.Id, error) {
+	matching := make([]entity.Id, 0, 1)
+	for _, op := range b.Snapshot().AllOperations() {
+		switch op.(type) {
+		case *bug.CreateOperation, *bug.AddCommentOperation:
+			if opVal, ok := op.GetMetadata(key); ok && opVal == value {
+				matching = append(matching, op.Id())
+			}
+		}
+	}
+	if len(matching) == 0 {
+		return "", cache.ErrNoMatchingOp
+	}
+	if len(matching) > 1 {
+		return "", entity.NewErrMultipleMatch("operation", matching)
+	}
+	return matching[0], nil
+}
+
+func (gi *gitlabImporter) isOpEntryClaimed(entryKey, eventKey string) bool {
+	if gi.matchedExported == nil {
+		gi.matchedExported = make(map[string]string)
+	}
+	for evKey, key := range gi.matchedExported {
+		if key == entryKey && evKey != eventKey {
+			return true
+		}
+	}
+	return false
+}
+
+func (gi *gitlabImporter) matchExportedStatusChange(b *cache.BugCache, eventID string, status common.Status) bool {
+	eventKey := fmt.Sprintf("%s:status:%s", b.Id(), eventID)
+	if gi.matchedExported != nil {
+		if _, ok := gi.matchedExported[eventKey]; ok {
+			return true
+		}
+	}
+	snap := b.Snapshot()
+	issueID, ok := snap.GetCreateMetadata(metaKeyGitlabId)
+	if !ok {
+		return false
+	}
+	for _, op := range snap.Operations {
+		statusOp, ok := op.(*bug.SetStatusOperation)
+		if !ok || statusOp.Status != status {
+			continue
+		}
+		if id, ok := statusOp.GetMetadata(metaKeyGitlabId); !ok || id != issueID {
+			continue
+		}
+		entryKey := statusOp.Id().String()
+		if gi.isOpEntryClaimed(entryKey, eventKey) {
+			continue
+		}
+		gi.matchedExported[eventKey] = entryKey
+		return true
+	}
+	return false
+}
+
+func (gi *gitlabImporter) matchExportedTitleChange(b *cache.BugCache, eventID, title string) bool {
+	eventKey := fmt.Sprintf("%s:title:%s", b.Id(), eventID)
+	if gi.matchedExported != nil {
+		if _, ok := gi.matchedExported[eventKey]; ok {
+			return true
+		}
+	}
+	snap := b.Snapshot()
+	issueID, ok := snap.GetCreateMetadata(metaKeyGitlabId)
+	if !ok {
+		return false
+	}
+	for _, op := range snap.Operations {
+		titleOp, ok := op.(*bug.SetTitleOperation)
+		if !ok || titleOp.Title != title {
+			continue
+		}
+		if id, ok := titleOp.GetMetadata(metaKeyGitlabId); !ok || id != issueID {
+			continue
+		}
+		entryKey := titleOp.Id().String()
+		if gi.isOpEntryClaimed(entryKey, eventKey) {
+			continue
+		}
+		gi.matchedExported[eventKey] = entryKey
+		return true
+	}
+	return false
+}
+
+func (gi *gitlabImporter) matchExportedLabelChange(b *cache.BugCache, eventID, label string, added bool) bool {
+	eventKey := fmt.Sprintf("%s:label:%s", b.Id(), eventID)
+	if gi.matchedExported != nil {
+		if _, ok := gi.matchedExported[eventKey]; ok {
+			return true
+		}
+	}
+	snap := b.Snapshot()
+	issueID, ok := snap.GetCreateMetadata(metaKeyGitlabId)
+	if !ok {
+		return false
+	}
+	for _, op := range snap.Operations {
+		labelOp, ok := op.(*bug.LabelChangeOperation)
+		if !ok {
+			continue
+		}
+		if id, ok := labelOp.GetMetadata(metaKeyGitlabId); !ok || id != issueID {
+			continue
+		}
+		hasLabel := false
+		if added {
+			for _, l := range labelOp.Added {
+				if string(l) == label {
+					hasLabel = true
+					break
+				}
+			}
+		} else {
+			for _, l := range labelOp.Removed {
+				if string(l) == label {
+					hasLabel = true
+					break
+				}
+			}
+		}
+		if !hasLabel {
+			continue
+		}
+		entryKey := fmt.Sprintf("%s:%t:%s", labelOp.Id().String(), added, label)
+		if gi.isOpEntryClaimed(entryKey, eventKey) {
+			continue
+		}
+		gi.matchedExported[eventKey] = entryKey
+		return true
+	}
+	return false
 }

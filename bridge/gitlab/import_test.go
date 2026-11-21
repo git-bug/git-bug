@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
@@ -162,4 +163,234 @@ func TestGitlabImport(t *testing.T) {
 			}
 		})
 	}
+}
+
+func countNonMetadataOps(b *cache.BugCache) int {
+	count := 0
+	for _, op := range b.Snapshot().Operations {
+		if _, ok := op.(dag.OperationDoesntChangeSnapshot); !ok {
+			count++
+		}
+	}
+	return count
+}
+
+func TestGitlabImporterCrossBridgeAndDeduplicateExportedOps(t *testing.T) {
+	repo := repotest.NewGoGitRepo(t, false)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
+	require.NoError(t, err)
+	defer func() { _ = backend.Close() }()
+
+	ctx := context.Background()
+	author, err := backend.Identities().NewRaw(ctx, "Amine Hilaly", "hilalyamine@gmail.com", "ahilaly", "", nil, map[string]string{
+		metaKeyGitlabId:    "42",
+		metaKeyGitlabLogin: "ahilaly",
+	})
+	require.NoError(t, err)
+	require.NoError(t, backend.SetUserIdentity(ctx, author))
+
+	// Create bug originally imported from GitHub (origin: github) and exported to GitLab
+	const issueGitlabID = "7"
+	const issueGitlabURL = "https://gitlab.com/git-bug/test/-/issues/7"
+	const projectID = "12345"
+	b, createOp, err := backend.Bugs().NewRaw(
+		author,
+		100,
+		"initial title",
+		"initial body",
+		nil,
+		map[string]string{
+			core.MetaKeyOrigin: "github",
+		},
+	)
+	require.NoError(t, err)
+	_, err = b.SetMetadata(ctx, createOp.Id(), map[string]string{
+		metaKeyGitlabId:      issueGitlabID,
+		metaKeyGitlabUrl:     issueGitlabURL,
+		metaKeyGitlabProject: projectID,
+		metaKeyGitlabBaseUrl: defaultBaseURL,
+	})
+	require.NoError(t, err)
+
+	// Simulate exported operations tagged with issue ID (metaKeyGitlabId: issueGitlabID)
+	closeOp, err := b.CloseRaw(author, 101, nil)
+	require.NoError(t, err)
+	require.NoError(t, markOperationAsExported(ctx, b, closeOp.Id(), issueGitlabID, ""))
+
+	titleOp, err := b.SetTitleRaw(author, 102, "renamed title", nil)
+	require.NoError(t, err)
+	require.NoError(t, markOperationAsExported(ctx, b, titleOp.Id(), issueGitlabID, ""))
+
+	_, labelAddOp, err := b.ChangeLabelsRaw(author, 103, []string{"bug", "core"}, nil, nil)
+	require.NoError(t, err)
+	require.NoError(t, markOperationAsExported(ctx, b, labelAddOp.Id(), issueGitlabID, ""))
+
+	_, labelRmOp, err := b.ChangeLabelsRaw(author, 104, nil, []string{"core"}, nil)
+	require.NoError(t, err)
+	require.NoError(t, markOperationAsExported(ctx, b, labelRmOp.Id(), issueGitlabID, ""))
+
+	require.NoError(t, b.Commit(ctx))
+	initialNonMetaOps := countNonMetadataOps(b)
+
+	out := make(chan core.ImportResult, 32)
+	importer := &gitlabImporter{
+		conf: core.Configuration{
+			confKeyProjectID:     projectID,
+			confKeyGitlabBaseUrl: defaultBaseURL,
+		},
+		out: out,
+	}
+
+	now := time.Unix(200, 0)
+	glIssue := &gitlab.Issue{
+		IID:         7,
+		Title:       "renamed title",
+		Description: "initial body",
+		WebURL:      issueGitlabURL,
+		CreatedAt:   &now,
+		Author:      &gitlab.IssueAuthor{ID: 42},
+	}
+
+	// 1. ensureIssue must resolve the existing bug even though origin == "github"
+	resolvedBug, err := importer.ensureIssue(ctx, backend, glIssue)
+	require.NoError(t, err)
+	require.Equal(t, b.Id(), resolvedBug.Id())
+
+	// 2. Echoed events from the export above should be matched to the exported operations
+	echoedClose := StateEvent{gitlab.StateEvent{
+		ID:        901,
+		State:     "closed",
+		CreatedAt: &now,
+		User:      &gitlab.BasicUser{ID: 42},
+	}}
+	require.NoError(t, importer.ensureIssueEvent(ctx, backend, b, glIssue, echoedClose))
+	var echoedTitleNote gitlab.Note
+	echoedTitleNote.ID = 902
+	echoedTitleNote.System = true
+	echoedTitleNote.Body = "changed title from **initial title** to **renamed title**"
+	echoedTitleNote.CreatedAt = &now
+	echoedTitleNote.UpdatedAt = &now
+	echoedTitleNote.Author.ID = 42
+	require.NoError(t, importer.ensureIssueEvent(ctx, backend, b, glIssue, NoteEvent{echoedTitleNote}))
+	var echoedAddLabelBug gitlab.LabelEvent
+	echoedAddLabelBug.ID = 903
+	echoedAddLabelBug.Action = "add"
+	echoedAddLabelBug.CreatedAt = &now
+	echoedAddLabelBug.Label.Name = "bug"
+	echoedAddLabelBug.User.ID = 42
+	require.NoError(t, importer.ensureIssueEvent(ctx, backend, b, glIssue, LabelEvent{echoedAddLabelBug}))
+	var echoedAddLabelCore gitlab.LabelEvent
+	echoedAddLabelCore.ID = 9031
+	echoedAddLabelCore.Action = "add"
+	echoedAddLabelCore.CreatedAt = &now
+	echoedAddLabelCore.Label.Name = "core"
+	echoedAddLabelCore.User.ID = 42
+	require.NoError(t, importer.ensureIssueEvent(ctx, backend, b, glIssue, LabelEvent{echoedAddLabelCore}))
+	var echoedRmLabel gitlab.LabelEvent
+	echoedRmLabel.ID = 904
+	echoedRmLabel.Action = "remove"
+	echoedRmLabel.CreatedAt = &now
+	echoedRmLabel.Label.Name = "core"
+	echoedRmLabel.User.ID = 42
+	require.NoError(t, importer.ensureIssueEvent(ctx, backend, b, glIssue, LabelEvent{echoedRmLabel}))
+	require.Equal(t, initialNonMetaOps, countNonMetadataOps(b))
+
+	// 3. Subsequent legitimate remote events (reopen -> close, new title, re-add core) must be imported
+	reopenEvt := StateEvent{gitlab.StateEvent{
+		ID:        905,
+		State:     "reopened",
+		CreatedAt: &now,
+		User:      &gitlab.BasicUser{ID: 42},
+	}}
+	require.NoError(t, importer.ensureIssueEvent(ctx, backend, b, glIssue, reopenEvt))
+	require.Equal(t, initialNonMetaOps+1, countNonMetadataOps(b))
+	require.Equal(t, common.OpenStatus, b.Snapshot().Status)
+
+	// Re-importing the earlier echoed close event (ID 901) must still be skipped!
+	require.NoError(t, importer.ensureIssueEvent(ctx, backend, b, glIssue, echoedClose))
+	require.Equal(t, initialNonMetaOps+1, countNonMetadataOps(b))
+	require.Equal(t, common.OpenStatus, b.Snapshot().Status)
+
+	closeEvt2 := StateEvent{gitlab.StateEvent{
+		ID:        906,
+		State:     "closed",
+		CreatedAt: &now,
+		User:      &gitlab.BasicUser{ID: 42},
+	}}
+	require.NoError(t, importer.ensureIssueEvent(ctx, backend, b, glIssue, closeEvt2))
+	require.Equal(t, initialNonMetaOps+2, countNonMetadataOps(b))
+	require.Equal(t, common.ClosedStatus, b.Snapshot().Status)
+
+	var titleNote gitlab.Note
+	titleNote.ID = 907
+	titleNote.System = true
+	titleNote.Body = "changed title from **renamed title** to **third title**"
+	titleNote.CreatedAt = &now
+	titleNote.UpdatedAt = &now
+	titleNote.Author.ID = 42
+	require.NoError(t, importer.ensureIssueEvent(ctx, backend, b, glIssue, NoteEvent{titleNote}))
+	require.Equal(t, initialNonMetaOps+3, countNonMetadataOps(b))
+	require.Equal(t, "third title", b.Snapshot().Title)
+
+	// Re-importing the earlier echoed title event (ID 902) must still be skipped!
+	require.NoError(t, importer.ensureIssueEvent(ctx, backend, b, glIssue, NoteEvent{echoedTitleNote}))
+	require.Equal(t, initialNonMetaOps+3, countNonMetadataOps(b))
+	require.Equal(t, "third title", b.Snapshot().Title)
+
+	var addLabelEvt gitlab.LabelEvent
+	addLabelEvt.ID = 908
+	addLabelEvt.Action = "add"
+	addLabelEvt.CreatedAt = &now
+	addLabelEvt.Label.Name = "core"
+	addLabelEvt.User.ID = 42
+	require.NoError(t, importer.ensureIssueEvent(ctx, backend, b, glIssue, LabelEvent{addLabelEvt}))
+	require.Equal(t, initialNonMetaOps+4, countNonMetadataOps(b))
+
+	// Re-importing the earlier echoed label removal event (ID 904) must still be skipped!
+	require.NoError(t, importer.ensureIssueEvent(ctx, backend, b, glIssue, LabelEvent{echoedRmLabel}))
+	require.Equal(t, initialNonMetaOps+4, countNonMetadataOps(b))
+
+	// Re-importing the exact same label event by ID must be deduplicated via errResolve == nil
+	require.NoError(t, importer.ensureIssueEvent(ctx, backend, b, glIssue, LabelEvent{addLabelEvt}))
+	require.Equal(t, initialNonMetaOps+4, countNonMetadataOps(b))
+
+	// 4. Simulate a fresh ImportAll run (new matchedExported map) replaying the entire remote timeline in chronological order
+	importer.matchedExported = make(map[string]string)
+	fullTimeline := []Event{
+		echoedClose,
+		NoteEvent{echoedTitleNote},
+		LabelEvent{echoedAddLabelBug},
+		LabelEvent{echoedAddLabelCore},
+		LabelEvent{echoedRmLabel},
+		reopenEvt,
+		closeEvt2,
+		NoteEvent{titleNote},
+		LabelEvent{addLabelEvt},
+	}
+	for _, ev := range fullTimeline {
+		require.NoError(t, importer.ensureIssueEvent(ctx, backend, b, glIssue, ev))
+	}
+	require.Equal(t, initialNonMetaOps+4, countNonMetadataOps(b))
+
+	// 5. Verify EventComment does not fail with "Multiple matching operation found" when
+	// both AddCommentOperation and an exported EditCommentOperation share metaKeyGitlabId == noteID.
+	commentCombinedID, commentOp, err := b.AddCommentRaw(author, 105, "comment 1", nil, nil)
+	require.NoError(t, err)
+	const noteGitlabID = "555"
+	require.NoError(t, markOperationAsExported(ctx, b, commentOp.Id(), noteGitlabID, ""))
+
+	editCommentOp, err := b.EditCommentRaw(author, 106, commentCombinedID, "comment 1 edited", nil)
+	require.NoError(t, err)
+	require.NoError(t, markOperationAsExported(ctx, b, editCommentOp.Id(), noteGitlabID, ""))
+
+	opsAfterLocalCommentEdit := countNonMetadataOps(b)
+	var commentNote gitlab.Note
+	commentNote.ID = 555
+	commentNote.System = false
+	commentNote.Body = "comment 1 edited"
+	commentNote.CreatedAt = &now
+	commentNote.UpdatedAt = &now
+	commentNote.Author.ID = 42
+	require.NoError(t, importer.ensureIssueEvent(ctx, backend, b, glIssue, NoteEvent{commentNote}))
+	require.Equal(t, opsAfterLocalCommentEdit, countNonMetadataOps(b))
 }

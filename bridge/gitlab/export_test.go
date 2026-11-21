@@ -2,11 +2,15 @@ package gitlab
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
@@ -334,4 +338,107 @@ func deleteRepository(ctx context.Context, project int64, token *auth.Token) err
 
 	_, err = client.Projects.DeleteProject(project, nil, gitlab.WithContext(ctx))
 	return err
+}
+
+func TestGitlabExportCrossBridgeBaseURLAndLabels(t *testing.T) {
+	var createdIssues int
+	var lastUpdatedLabels []string
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v4/projects/999/issues", func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, http.MethodPost, r.Method)
+		createdIssues++
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"id":      1001,
+			"iid":     42,
+			"web_url": "http://example.com/group/proj/-/issues/42",
+		})
+	})
+	mux.HandleFunc("/api/v4/projects/999/issues/42", func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, http.MethodPut, r.Method)
+		var body struct {
+			Labels string `json:"labels"`
+		}
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+		lastUpdatedLabels = strings.Split(body.Labels, ",")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"id":      1001,
+			"iid":     42,
+			"web_url": "http://example.com/group/proj/-/issues/42",
+		})
+	})
+
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	repo := repotest.NewGoGitRepo(t, false)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
+	require.NoError(t, err)
+	defer func() { _ = backend.Close() }()
+
+	ctx := context.Background()
+	author, err := backend.Identities().New(ctx, "test identity", "test@test.org")
+	require.NoError(t, err)
+	author.SetMetadata(metaKeyGitlabLogin, "test-login")
+	require.NoError(t, author.Commit(ctx))
+	require.NoError(t, backend.SetUserIdentity(ctx, author))
+
+	// Create bug with origin=github and one already-synced label ("bug"), plus one unsynced label ("enhancement")
+	b, _, err := backend.Bugs().NewRaw(
+		author,
+		100,
+		"cross-bridge issue",
+		"issue body",
+		nil,
+		map[string]string{
+			core.MetaKeyOrigin: "github",
+		},
+	)
+	require.NoError(t, err)
+
+	_, firstLabelOp, err := b.ChangeLabelsRaw(author, 101, []string{"bug"}, nil, nil)
+	require.NoError(t, err)
+	// Mark firstLabelOp as already synced to GitLab
+	require.NoError(t, markOperationAsExported(ctx, b, firstLabelOp.Id(), "42", ""))
+
+	_, _, err = b.ChangeLabelsRaw(author, 102, []string{"enhancement"}, nil, nil)
+	require.NoError(t, err)
+	require.NoError(t, b.Commit(ctx))
+
+	token := auth.NewToken(target, "test-token")
+	client, err := buildClient(server.URL, token)
+	require.NoError(t, err)
+
+	exporter := &gitlabExporter{
+		conf: core.Configuration{
+			confKeyProjectID:     "999",
+			confKeyGitlabBaseUrl: server.URL,
+			confKeyDefaultLogin:  "test-login",
+		},
+		identityClient: map[entity.Id]*gitlab.Client{
+			author.Id(): client,
+		},
+		repositoryID:       "999",
+		cachedOperationIDs: make(map[string]string),
+	}
+
+	out := make(chan core.ExportResult, 16)
+	exporter.exportBug(ctx, b, out)
+	close(out)
+	for res := range out {
+		require.NoError(t, res.Err)
+	}
+
+	require.Equal(t, 1, createdIssues)
+	// Verify base URL metadata was properly stored on createOp
+	baseURL, ok := b.Snapshot().GetCreateMetadata(metaKeyGitlabBaseUrl)
+	require.True(t, ok)
+	require.Equal(t, server.URL, baseURL)
+
+	// Verify both the already-synced label ("bug") and new label ("enhancement") were sent to GitLab
+	require.ElementsMatch(t, []string{"bug", "enhancement"}, lastUpdatedLabels)
 }

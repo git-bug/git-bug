@@ -16,10 +16,12 @@ import (
 	"time"
 
 	"github.com/shurcooL/githubv4"
+	m "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/bridge/core"
 	"github.com/git-bug/git-bug/bridge/core/auth"
+	"github.com/git-bug/git-bug/bridge/github/mocks"
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/bug"
 	"github.com/git-bug/git-bug/entity"
@@ -542,4 +544,68 @@ func deleteRepository(ctx context.Context, project, owner, token string) error {
 	}
 
 	return nil
+}
+
+func TestGithubExportCrossBridgeOrigin(t *testing.T) {
+	repo := repotest.NewGoGitRepo(t, false)
+	backend, err := cache.NewRepoCacheNoEvents(repo, nil)
+	require.NoError(t, err)
+	defer func() { _ = backend.Close() }()
+
+	ctx := context.Background()
+	author, err := backend.Identities().New(ctx, "test identity", "test@test.org")
+	require.NoError(t, err)
+	author.SetMetadata(metaKeyGithubLogin, "test-login")
+	require.NoError(t, author.Commit(ctx))
+	require.NoError(t, backend.SetUserIdentity(ctx, author))
+
+	// Bug originally imported from GitLab (origin: gitlab)
+	b, _, err := backend.Bugs().NewRaw(
+		author,
+		100,
+		"gitlab origin issue",
+		"issue body",
+		nil,
+		map[string]string{
+			core.MetaKeyOrigin: "gitlab",
+		},
+	)
+	require.NoError(t, err)
+	require.NoError(t, b.Commit(ctx))
+
+	clientMock := &mocks.Client{}
+	clientMock.On("Mutate", m.Anything, m.AnythingOfType("*github.createIssueMutation"), m.Anything, m.Anything).Return(nil).Run(
+		func(args m.Arguments) {
+			mut := args.Get(1).(*createIssueMutation)
+			mut.CreateIssue.Issue.ID = "gh-issue-42"
+			mut.CreateIssue.Issue.URL = "https://github.com/owner/project/issues/42"
+		},
+	).Once()
+
+	exporter := &githubExporter{
+		conf: core.Configuration{
+			confKeyOwner:        "owner",
+			confKeyProject:      "project",
+			confKeyDefaultLogin: "test-login",
+		},
+		identityClient: map[entity.Id]*rateLimitHandlerClient{
+			author.Id(): {sc: clientMock},
+		},
+		repositoryID:       "repo-1",
+		cachedOperationIDs: make(map[entity.Id]string),
+		cachedLabels:       make(map[string]string),
+	}
+
+	out := make(chan core.ExportResult, 16)
+	exporter.out = out
+	exporter.exportBug(ctx, b, out)
+	close(out)
+	for res := range out {
+		require.NoError(t, res.Err)
+	}
+
+	clientMock.AssertExpectations(t)
+	ghID, ok := b.Snapshot().GetCreateMetadata(metaKeyGithubId)
+	require.True(t, ok)
+	require.Equal(t, "gh-issue-42", ghID)
 }
