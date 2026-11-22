@@ -12,6 +12,7 @@ import (
 
 	"github.com/git-bug/git-bug/cache"
 	"github.com/git-bug/git-bug/entities/identity"
+	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
 )
 
@@ -158,6 +159,10 @@ func LoadBackend(env *Env, opts ...LoadOption) func(*cobra.Command, []string) er
 
 		if o.ensureUser {
 			_, err = identity.GetUserIdentity(env.Ctx, env.Repo)
+			if entity.IsErrNotFound(err) {
+				return fmt.Errorf("the configured user identity doesn't exist in this repository and has been unset; " +
+					"select an existing one with \"git bug user adopt\" or create one with \"git bug user new\"")
+			}
 			return err
 		}
 		return nil
