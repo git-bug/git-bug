@@ -41,7 +41,13 @@ func runBridgeAuthShow(env *execenv.Env, args []string) error {
 
 	switch cred := cred.(type) {
 	case *auth.Token:
-		env.Out.Printf("Value: %s\n", cred.Value)
+		// Mask the token value to prevent accidental exposure of sensitive
+		// authentication credentials in console output or logs.
+		val := cred.Value
+		if len(val) > 8 {
+			val = val[:4] + strings.Repeat("*", len(val)-8) + val[len(val)-4:]
+		}
+		env.Out.Printf("Value: %s\n", val)
 	}
 
 	env.Out.Println("Metadata:")
