@@ -19,6 +19,12 @@ function isValidSort(val: string): val is SortValue {
   return VALID_SORTS.has(val);
 }
 
+// Quote a qualifier value when it contains whitespace or a colon, which the
+// backend query lexer would otherwise treat as a separator (e.g. label "type:bug").
+export function quoteQueryValue(value: string): string {
+  return /[\s:]/.test(value) ? `"${value}"` : value;
+}
+
 // Tokenize a query string, keeping quoted spans as single tokens.
 export function tokenizeQuery(input: string): string[] {
   const tokens: string[] = [];
@@ -72,10 +78,10 @@ export function parseQueryString(input: string): {
 export function buildBaseQuery(labels: string[], author: string | null, freeText: string): string {
   const parts: string[] = [];
   for (const label of labels) {
-    parts.push(label.includes(" ") ? `label:"${label}"` : `label:${label}`);
+    parts.push(`label:${quoteQueryValue(label)}`);
   }
   if (author) {
-    parts.push(author.includes(" ") ? `author:"${author}"` : `author:${author}`);
+    parts.push(`author:${quoteQueryValue(author)}`);
   }
   if (freeText.trim()) parts.push(freeText.trim());
   return parts.join(" ");
