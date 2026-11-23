@@ -1,29 +1,32 @@
 # webui
 
-Web interface for git-bug. Built with Vite 8 + React 19 + TypeScript 6 + Tailwind v4 + shadcn/ui + TanStack Router + Apollo Client 4.
+Web interface for git-bug. Built with Vite 8 + React 19 + TypeScript 7 + Tailwind v4 + shadcn/ui + TanStack Router + Apollo Client 4.
 
 ## Quickstart
 
-You need two processes running:
+Use the Go, Node.js 22 and pnpm versions pinned in the root [`.tool-versions`](../.tool-versions). In one terminal, build and start the backend from the repository root.
 
 ```bash
-# 1. Go backend (from repo root)
-go run . webui --no-open --port 3000
+make build
+# If this repository needs a git-bug identity, run ./git-bug user new first.
+./git-bug webui --dev --no-open --port 3000
+```
 
-# 2. Vite dev server (from this directory)
-pnpm install
+To browse without an identity, add `--read-only` to the server command. In a second terminal at the repository root, start Vite.
+
+```bash
+cd webui
 pnpm dev
 ```
 
-Open http://localhost:5173. Vite proxies `/graphql`, `/gitfile`, and `/upload` to the Go server on port 3000.
-
-Node 22 is required. If you use asdf, `.tool-versions` pins the right version automatically.
+Open http://localhost:5173. Vite proxies `/graphql`, `/gitfile`, and `/upload` to the Go server on port 3000. The `--dev` flag lets GraphQL subscriptions connect from Vite's port. Vite picks up frontend edits while both processes are running.
 
 ## Routes
 
 | Path                           | Page                                         |
 | ------------------------------ | -------------------------------------------- |
 | `/`                            | Repo picker — auto-redirects for single repo |
+| `/$repo`                       | Redirect to the tree at the default ref      |
 | `/$repo/tree/$ref/...path`     | Code browser — directory listing             |
 | `/$repo/blob/$ref/...path`     | Code browser — file viewer                   |
 | `/$repo/commits/$ref?path=...` | Commit history (optionally scoped to a path) |
@@ -43,23 +46,23 @@ src/
 │   ├── __root.tsx      # Root layout (Shell + error boundary)
 │   ├── index.tsx       # Repo picker (/)
 │   ├── $repo.tsx       # Repo layout — normalizes slug, preloads refs
-│   ├── $repo/
-│   │   ├── index.tsx   # Redirect to tree/{defaultRef}
-│   │   ├── _code.tsx   # Code browser layout (breadcrumb, ref selector)
-│   │   ├── _code/      # tree/$ref/$, blob/$ref/$, commits/$ref
-│   │   ├── _issues.tsx # Issues layout — preloads labels + identities
-│   │   ├── _issues/    # issues/, issues/new, issues/$id, user/$id
-│   │   └── commit/     # commit/$hash
+│   └── $repo/
+│       ├── index.tsx   # Redirect to tree/{defaultRef}
+│       ├── _code.tsx   # Code browser layout (breadcrumb, ref selector)
+│       ├── _code/      # tree/$ref/$, blob/$ref/$, commits/$ref
+│       ├── _issues.tsx # Issues layout — preloads labels + identities
+│       ├── _issues/    # issues/, issues/new, issues/$id, user/$id
+│       └── commit/     # commit/$hash
 ├── components/
 │   ├── ui/             # shadcn/ui primitives (button, input, avatar, ...)
 │   ├── shared/         # Reusable app components with composition APIs
 │   ├── bugs/           # Bug-feature components with data fetching
 │   ├── code/           # Code browser components
 │   ├── content/        # Markdown renderer
-│   └── layout/         # Header + Shell
-├── __generated__/      # Generated typed hooks — do not edit
-├── assets/             # Logo SVG
-├── lib/                # apollo.ts, auth.tsx, theme.tsx, utils.ts, query-utils.ts, shiki.ts
+│   └── layout/         # Header, Shell and logo.tsx
+├── __generated__/      # Typed GraphQL documents, types and fragment helpers
+├── lib/                # Apollo client, auth, live updates, drafts, theming and utilities
+├── vendor/shadcn/      # Vendored Tailwind CSS and license
 ├── routeTree.gen.ts    # Auto-generated route tree — do not edit
 └── App.tsx             # Router instance + context
 ```
@@ -76,13 +79,13 @@ Components are organized in three layers:
 
 ### GraphQL fragments
 
-Fragments are defined inline using the `graphql()` tagged template in the component file that consumes them:
+Define each fragment with `graphql()` in the component file that reads it.
 
 ```tsx
 // src/components/shared/label-badge.tsx
 import { graphql } from "@/__generated__/gql";
 
-graphql(`
+export const LABEL_FIELDS_FRAGMENT = graphql(`
   fragment LabelFields on Label {
     name
     color {
@@ -94,17 +97,13 @@ graphql(`
 `);
 ```
 
-Components are typed against their fragments:
+The parent query spreads `...LabelFields` and passes the resulting label to the component. `LabelBadge` types its `label` prop as `FragmentType<typeof LABEL_FIELDS_FRAGMENT>` and reads the fields with `useFragment(LABEL_FIELDS_FRAGMENT, label)`.
 
 ```tsx
-import type { LabelFieldsFragment } from "@/__generated__/graphql";
-import { LabelBadge } from "@/components/shared/label-badge";
-
-// Spread fragment data directly onto the component
-<LabelBadge {...label} />;
+<LabelBadge label={label} />
 ```
 
-Codegen scans all `src/**/*.{ts,tsx}` files for `graphql()` calls. After changing any fragment or query, regenerate typed hooks:
+After changing a GraphQL operation, fragment or schema, regenerate the typed documents and types from `webui/`.
 
 ```bash
 pnpm codegen
@@ -120,6 +119,7 @@ The router context provides:
 
 - `preloadQuery` — Apollo `createQueryPreloader` for data loading in route loaders
 - `ref` — normalized repo slug (null for default repo), set by `$repo.tsx` `beforeLoad`
+- `refsRef` — preloaded Git refs shared by the repo's code pages
 - `labelsRef`, `identitiesRef` — preloaded shared queries, set by `_issues.tsx` `beforeLoad`
 
 Custom link components:
@@ -135,9 +135,10 @@ Custom link components:
 Data is loaded in route loaders using Apollo's `preloadQuery` + `useReadQuery` pattern:
 
 ```ts
-export const Route = createFileRoute("/$repo/issues/$id")({
+export const Route = createFileRoute("/$repo/_issues/issues/$id")({
   loader: async ({ context: { preloadQuery, ref }, params: { id } }) => {
-    const bugDetailRef = preloadQuery<BugDetailQuery>(BugDetailDocument, {
+    const bugDetailRef = preloadQuery(BUG_DETAIL_QUERY, {
+      fetchPolicy: "network-only",
       variables: { ref, prefix: id },
     });
     return { bugDetailRef: await preloadQuery.toPromise(bugDetailRef) };
@@ -149,6 +150,8 @@ The router waits for `toPromise()` before transitioning, then the component read
 
 Search params that affect data loading use `loaderDeps` so the loader re-runs when they change (e.g. issue filters, pagination cursors).
 
+Issue pages subscribe to repository changes over the `/graphql` WebSocket. The detail page refetches when the issue changes. The issue list shows a refresh banner so the reader can choose when to update the results.
+
 ## Storybook
 
 [Storybook 10](https://storybook.js.org/) is set up for component development and testing:
@@ -158,27 +161,29 @@ pnpm storybook        # Dev server on http://localhost:6006
 pnpm build-storybook  # Production build
 ```
 
-Every presentational component has stories. Stories use the CSF3 format with `satisfies Meta<typeof Component>` for full type inference. Mock data is typed against GraphQL fragment types.
+Component stories live alongside the components in `*.stories.tsx` files. They use CSF3 with `satisfies Meta<typeof Component>` for type inference.
 
 ## Testing
 
-Tests run via [Vitest 4](https://vitest.dev/) with two projects:
+Vitest 5 runs two test projects.
 
-| Project       | Environment           | What it does                                                                       |
-| ------------- | --------------------- | ---------------------------------------------------------------------------------- |
-| **storybook** | Chromium (Playwright) | Smoke tests every story + a11y checks (axe-core) + play function interaction tests |
-| **snapshot**  | happy-dom             | DOM snapshot tests via portable stories API                                        |
+| Project       | Environment           | What it does                                                                    |
+| ------------- | --------------------- | ------------------------------------------------------------------------------- |
+| **storybook** | Chromium (Playwright) | Story smoke tests, accessibility checks (axe-core) and `play` interaction tests |
+| **snapshot**  | happy-dom             | Unit tests and DOM snapshots from portable stories in `src/**/*.test.{ts,tsx}`  |
+
+Before the first browser run, install Chromium with `pnpm exec playwright install chromium` from `webui/`. The browser project skips `file-viewer.stories.tsx` because Shiki's WebAssembly engine fails in Vitest browser mode.
 
 ```bash
-pnpm test                          # Run all tests
-pnpm test -- --project=storybook   # Storybook tests only
-pnpm test -- --project=snapshot    # Snapshot tests only
-pnpm test -- -u                    # Update snapshots
+pnpm test run                       # Run all tests once
+pnpm test run --project=storybook   # Run browser tests
+pnpm test run --project=snapshot    # Run unit and snapshot tests
+pnpm test run --project=snapshot -u # Update DOM snapshots
 ```
 
 ### Adding tests
 
-Every story automatically becomes a smoke test and an a11y test. For snapshot tests, add a `*.test.tsx` file next to the story:
+Storybook runs smoke and accessibility checks for included stories. To add a DOM snapshot, create a `*.test.tsx` file next to the story.
 
 ```tsx
 import { composeStories } from "@storybook/react-vite";
@@ -210,22 +215,23 @@ export const MyInteraction: Story = {
 
 ## Tooling
 
-| Tool                                                                           | Purpose                                                  |
-| ------------------------------------------------------------------------------ | -------------------------------------------------------- |
-| [oxlint](https://oxc.rs)                                                       | Linter with type-aware rules + storybook/router plugins  |
-| [oxfmt](https://oxc.rs)                                                        | Formatter with import + Tailwind class sorting           |
-| [Storybook 10](https://storybook.js.org)                                       | Component development + visual testing                   |
-| [Vitest 4](https://vitest.dev)                                                 | Test runner (browser + happy-dom)                        |
-| [@storybook/addon-a11y](https://storybook.js.org/addons/@storybook/addon-a11y) | Accessibility testing via axe-core                       |
-| [valibot](https://valibot.dev)                                                 | Runtime validation for search params and fetch responses |
-| [@tsconfig/bases](https://github.com/tsconfig/bases)                           | Shared tsconfig presets (vite-react + strictest)         |
+| Tool                                                                           | Purpose                                                 |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| [oxlint](https://oxc.rs)                                                       | Linter with type-aware rules + storybook/router plugins |
+| [oxfmt](https://oxc.rs)                                                        | Formatter with import + Tailwind class sorting          |
+| [Storybook 10](https://storybook.js.org)                                       | Component development + visual testing                  |
+| [Vitest 5](https://vitest.dev)                                                 | Test runner (browser + happy-dom)                       |
+| [@storybook/addon-a11y](https://storybook.js.org/addons/@storybook/addon-a11y) | Accessibility testing via axe-core                      |
+| [valibot](https://valibot.dev)                                                 | Runtime validation for route search parameters          |
+| [@tsconfig/bases](https://github.com/tsconfig/bases)                           | Shared tsconfig presets (vite-react + strictest)        |
 
 ```bash
 pnpm lint        # oxlint (type-aware, 0 warnings target)
 pnpm lint:fix    # oxlint with auto-fix
 pnpm fmt         # oxfmt format
 pnpm fmt:check   # oxfmt check only
-pnpm check       # lint + format check
+pnpm check       # lint, check formatting and verify vendored shadcn files
+pnpm vendor:sync # refresh vendored CSS and license after a shadcn upgrade
 pnpm test        # vitest (all projects)
 pnpm storybook   # storybook dev server
 pnpm codegen     # regenerate GraphQL types
@@ -233,17 +239,18 @@ pnpm codegen     # regenerate GraphQL types
 
 ## Auth
 
-Currently local-only: the server injects the git config identity for every request. `useAuth()` (`src/lib/auth.tsx`) fetches the user identity via a GraphQL `useSuspenseQuery`, preloaded in the root route loader so it's always resolved before components render.
+In writable mode, the server uses the repository's configured git-bug identity for all requests. In `--read-only` mode, requests are anonymous and `useAuth()` returns `{ user: null }`. The root route preloads the `UserIdentity` query, which `useAuth()` reads with `useSuspenseQuery`.
 
 ## Build for production
 
-The Go binary embeds the compiled frontend via `//go:embed all:dist` in `webui/handler.go`:
+From the repository root, run the same build used in the quickstart.
 
 ```bash
-pnpm build           # outputs to webui/dist/
-cd .. && go build .  # embeds dist/ into the binary
+make build
 ```
+
+`make build` installs frontend dependencies, builds `webui/dist/`, and compiles `./git-bug` with `go build -tags webui`. The build tag enables `//go:embed all:dist` in [assets.go](assets.go).
 
 ## Theming
 
-`ThemeProvider` (`src/lib/theme.tsx`) toggles the `dark` class on `<html>`. CSS variables for both modes are defined in `src/index.css` using Tailwind v4's `@theme inline` block. Components pick them up automatically.
+`ThemeProvider` saves the selected theme in local storage. On first use it follows the system preference, choosing Light or Dark soft. The header also offers Light soft and Dark. In `src/index.css`, `:root` defines Light and the `.light-soft`, `.dark-soft` and `.dark` classes on `<html>` override its variables. Tailwind's `@theme inline` maps those variables to utilities.
