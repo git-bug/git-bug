@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"maps"
 	"reflect"
 	"slices"
@@ -177,11 +178,15 @@ func read(ctx context.Context, repo repository.Repo, id entity.Id, lastCommit re
 			return nil, fmt.Errorf("failed to read git blob data: %w", err)
 		}
 
-		var version version
-		err = json.NewDecoder(data).Decode(&version)
+		raw, err := io.ReadAll(data)
 		_ = data.Close()
 		if err != nil {
-			return nil, fmt.Errorf("failed to decode Identity version json %s: %w", hash, err)
+			return nil, fmt.Errorf("failed to read git blob data: %w", err)
+		}
+		var version version
+		// The version ID includes any whitespace surrounding the JSON object.
+		if err := version.UnmarshalJSON(raw); err != nil {
+			return nil, fmt.Errorf("invalid Identity version json %s: %w", hash, err)
 		}
 
 		// tag the version with the commit hash
