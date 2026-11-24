@@ -399,7 +399,9 @@ func (i *Identity) Commit(ctx context.Context, repo repository.Repo) error {
 		return fmt.Errorf("can't commit an identity with no pending version")
 	}
 
-	if err := i.Validate(); err != nil {
+	// the committed versions were judged when taken in
+	pending := slices.IndexFunc(i.versions, func(v *version) bool { return v.commitHash == "" })
+	if err := i.validateFrom(pending); err != nil {
 		return fmt.Errorf("can't commit an identity with invalid data: %w", err)
 	}
 
@@ -545,15 +547,26 @@ func (i *Identity) Merge(ctx context.Context, repo repository.Repo, other *Ident
 
 // Validate check if the Identity data is valid
 func (i *Identity) Validate() error {
+	return i.validateFrom(0)
+}
+
+// validateFrom checks the chain of versions, and the data of the versions from
+// index from on: those that a commit or a merge takes in. The versions before
+// were judged when taken in, and are kept even if invalid, see identity.md §4.5
+// in the spec: an identity would otherwise become unreadable for good, and with
+// it every entity it authored.
+func (i *Identity) validateFrom(from int) error {
 	lastTimes := make(map[string]lamport.Time)
 
 	if len(i.versions) == 0 {
 		return fmt.Errorf("no version")
 	}
 
-	for _, v := range i.versions {
-		if err := v.Validate(); err != nil {
-			return err
+	for j, v := range i.versions {
+		if j >= from {
+			if err := v.Validate(); err != nil {
+				return err
+			}
 		}
 
 		// check for always increasing lamport time

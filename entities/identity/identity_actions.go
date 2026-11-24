@@ -87,16 +87,16 @@ func MergeAll(ctx context.Context, repo repository.Repo, remote string) <-chan e
 				continue
 			}
 
-			// Check for error in remote data
-			if err := remoteIdentity.Validate(); err != nil {
-				out <- entity.NewMergeInvalidStatus(id, fmt.Errorf("remote identity is invalid: %w", err).Error())
-				continue
-			}
-
 			localCommit, err := repo.ResolveRef(ctx, Namespace, id.String())
 
 			// the identity is not local yet, simply create it
 			if errors.Is(err, repository.ErrNotFound) {
+				// every version is taken in
+				if err := remoteIdentity.validateFrom(0); err != nil {
+					out <- entity.NewMergeInvalidStatus(id, fmt.Errorf("remote identity is invalid: %w", err).Error())
+					continue
+				}
+
 				err := repo.UpdateRef(ctx, Namespace, id.String(), "", remoteCommit)
 
 				if err != nil {
@@ -129,6 +129,13 @@ func MergeAll(ctx context.Context, repo repository.Repo, remote string) <-chan e
 					// cut short, already reported
 					return
 				}
+				continue
+			}
+
+			// only the versions past the local ones are taken in: those held were
+			// judged when taken in, see identity.md §4.5 in the spec
+			if err := remoteIdentity.validateFrom(len(localIdentity.versions)); err != nil {
+				out <- entity.NewMergeInvalidStatus(id, fmt.Errorf("remote identity is invalid: %w", err).Error())
 				continue
 			}
 
