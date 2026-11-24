@@ -92,7 +92,10 @@ func newEnv(t *testing.T, isTerminal bool) *execenv.Env {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		backend.Close()
+		err := backend.Close()
+		if err != nil {
+			t.Errorf("error during cleanup: %v", err)
+		}
 	})
 
 	return &execenv.Env{

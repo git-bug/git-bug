@@ -37,7 +37,9 @@ func NewUserCommand(env *execenv.Env) *cobra.Command {
 
 	flags.StringVarP(&options.format, "format", "f", "default",
 		"Select the output formatting style. Valid values are [default,json]")
-	cmd.RegisterFlagCompletionFunc("format", completion.From([]string{"default", "json"}))
+	if err := cmd.RegisterFlagCompletionFunc("format", completion.From([]string{"default", "json"})); err != nil {
+		panic(err)
+	}
 
 	return cmd
 }
