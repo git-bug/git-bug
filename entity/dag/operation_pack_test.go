@@ -187,6 +187,8 @@ func TestUnmarshallPack(t *testing.T) {
 	}{
 		{"the reference: every rule followed", `{"author":{"id":"` + id + `"},"ops":[` + op + `]}`, true},
 		{"a member of author that the reader does not know is ignored", `{"author":{"id":"` + id + `","name":"Alice"},"ops":[` + op + `]}`, true},
+		{"ops that is absent, as in a merge commit", `{"author":{"id":"` + id + `"}}`, true},
+		{"ops that is null is absent", `{"author":{"id":"` + id + `"},"ops":null}`, true},
 		{"a pack without author", `{"ops":[` + op + `]}`, false},
 		{"an author that is null is absent", `{"author":null,"ops":[` + op + `]}`, false},
 		{"an author without id", `{"author":{},"ops":[` + op + `]}`, false},

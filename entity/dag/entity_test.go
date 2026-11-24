@@ -85,6 +85,49 @@ func TestReadIdMismatch(t *testing.T) {
 	require.ErrorContains(t, readAllErr, "doesn't match its id")
 }
 
+func TestReadInvalidOperation(t *testing.T) {
+	repo, id1, _, resolvers, def := makeTestContext()
+
+	e := New(def)
+	e.Append(newOp1(id1, "foo"))
+	require.NoError(t, e.Commit(t.Context(), repo))
+	writeInvalid(t, def, repo, e, id1)
+
+	// the invalid operation is kept, flagged
+	read, err := Read(t.Context(), def, wrapper, repo, resolvers, e.Id())
+	require.NoError(t, err)
+	ops := read.Operations()
+	require.Len(t, ops, 2)
+	require.NoError(t, ops[0].Invalid())
+	require.ErrorContains(t, ops[1].Invalid(), "field_1 is invalid")
+	require.Equal(t, invalidField1, ops[1].(*op1).Field1)
+
+	// it was judged when taken in: an operation is committed after it all the same
+	read.Append(newOp2(id1, "bar"))
+	require.NoError(t, read.Commit(t.Context(), repo))
+
+	read, err = Read(t.Context(), def, wrapper, repo, resolvers, e.Id())
+	require.NoError(t, err)
+	ops = read.Operations()
+	require.Len(t, ops, 3)
+	require.Error(t, ops[1].Invalid())
+	require.NoError(t, ops[2].Invalid())
+}
+
+func TestReadInvalidFirstOperation(t *testing.T) {
+	repo, id1, _, resolvers, def := makeTestContext()
+
+	// without a valid first operation, the entity has no state to start from
+	op := newOp1(id1, invalidField1)
+	opp := &operationPack{Author: id1, Operations: []Operation{op}, CreateTime: 1, EditTime: 1}
+	hash, err := opp.Write(t.Context(), def, repo)
+	require.NoError(t, err)
+	require.NoError(t, repo.UpdateRef(t.Context(), def.Namespace, op.Id().String(), "", hash))
+
+	_, err = Read(t.Context(), def, wrapper, repo, resolvers, op.Id())
+	require.ErrorContains(t, err, "the first operation of the foo is invalid")
+}
+
 func TestCommitStaleCopy(t *testing.T) {
 	repo, id1, _, resolver, def := makeTestContext()
 
@@ -321,6 +364,14 @@ func TestCommitOperations(t *testing.T) {
 
 // Repair reloads the committed state after the ref moved, so that the pending
 // or write-through operations can be committed on top of it.
+func TestCommitRefusesInvalidOperation(t *testing.T) {
+	repo, id1, _, _, def := makeTestContext()
+
+	e := New(def)
+	e.Append(newOp1(id1, invalidField1))
+	require.ErrorContains(t, e.Commit(t.Context(), repo), "field_1 is invalid")
+}
+
 func TestRepair(t *testing.T) {
 	// setup returns a stale copy of an entity, and the up-to-date one
 	setup := func(t *testing.T) (repository.Repo, entity.Resolvers, Definition, *Foo, *Foo, identity.Interface, identity.Interface) {

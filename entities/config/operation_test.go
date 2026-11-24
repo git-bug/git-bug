@@ -167,8 +167,10 @@ func TestOperations(t *testing.T) {
 				{"type": RepoSetDescriptionOp},
 				{"type": RepoSetDescriptionOp, "value": nil},
 			} {
-				_, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
-				require.ErrorContains(t, err, "missing member", "%v", members)
+				op, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
+				require.NoError(t, err, "%v", members)
+				require.IsType(t, &dag.InvalidOperation[*Snapshot]{}, op, "%v", members)
+				require.ErrorContains(t, op.Validate(), "missing member", "%v", members)
 			}
 			// a key or times, empty or nil when absent, doesn't validate
 			for _, members := range []map[string]any{
@@ -199,8 +201,10 @@ func TestOperations(t *testing.T) {
 		})
 
 		t.Run("null in a map", func(t *testing.T) {
-			_, err := operationUnmarshaler(t.Context(), marshal(t, map[string]any{"type": LabelsAllowOp, "key": "bug", "times": map[string]any{"bugs-edit": nil}}), nil)
-			require.ErrorContains(t, err, "null in a map")
+			op, err := operationUnmarshaler(t.Context(), marshal(t, map[string]any{"type": LabelsAllowOp, "key": "bug", "times": map[string]any{"bugs-edit": nil}}), nil)
+			require.NoError(t, err)
+			require.IsType(t, &dag.InvalidOperation[*Snapshot]{}, op)
+			require.ErrorContains(t, op.Validate(), "null in a map")
 		})
 
 		t.Run("zero value", func(t *testing.T) {
@@ -215,11 +219,14 @@ func TestOperations(t *testing.T) {
 			require.Equal(t, "", read.(*RepoSetDescriptionOperation).Value)
 		})
 
-		// clear is an array of names
+		// clear is an array of names: an operation that can't be decoded is an
+		// InvalidOperation, which doesn't validate
 		for _, clear := range []any{"color", []any{42}, []any{nil}} {
 			members := map[string]any{"type": LabelsSetOp, "key": "bug", "clear": clear}
-			_, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
-			require.Error(t, err, "%v", members)
+			op, err := operationUnmarshaler(t.Context(), marshal(t, members), nil)
+			require.NoError(t, err, "%v", members)
+			require.IsType(t, &dag.InvalidOperation[*Snapshot]{}, op, "%v", members)
+			require.Error(t, op.Validate(), "%v", members)
 		}
 	})
 

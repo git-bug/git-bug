@@ -40,7 +40,15 @@ func (op *op1) Id() entity.Id {
 	return IdOperation(op, &op.OpBase)
 }
 
-func (op *op1) Validate() error { return nil }
+// invalidField1 makes an op1 invalid
+const invalidField1 = "<invalid>"
+
+func (op *op1) Validate() error {
+	if op.Field1 == invalidField1 {
+		return fmt.Errorf("field_1 is invalid")
+	}
+	return nil
+}
 
 func (op *op1) GetFiles() []repository.Hash {
 	return op.Files
@@ -168,4 +176,20 @@ func makeTestContextInternal(repo repository.Repo) (identity.Interface, identity
 	}
 
 	return id1, id2, resolvers, def
+}
+
+// writeInvalid writes on top of e a pack holding an invalid operation, as a client
+// with earlier rules could have: Commit refuses to.
+func writeInvalid(t *testing.T, def Definition, repo repository.Repo, e *Entity, author identity.Interface) {
+	t.Helper()
+	editTime, err := incrementClock(t.Context(), def, repo, def.editClock())
+	require.NoError(t, err)
+	opp := &operationPack{
+		Author:     author,
+		Operations: []Operation{newOp1(author, invalidField1)},
+		EditTime:   editTime,
+	}
+	hash, err := opp.Write(t.Context(), def, repo, e.lastCommit)
+	require.NoError(t, err)
+	require.NoError(t, repo.UpdateRef(t.Context(), def.Namespace, e.Id().String(), e.lastCommit, hash))
 }
