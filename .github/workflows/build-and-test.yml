@@ -28,7 +28,7 @@ jobs:
       matrix:
         # Keep the newest Go version and ubuntu-latest first: the first job of
         # the matrix (strategy.job-index == 0) runs the e2e bridge tests.
-        go-version: [1.27.x, 1.26.x]
+        go-version: [1.27.x]
         platform: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
     steps:
