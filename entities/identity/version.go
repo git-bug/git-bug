@@ -175,7 +175,12 @@ func (v *version) UnmarshalJSON(data []byte) error {
 	v.name = aux.Name
 	v.email = aux.Email
 	v.login = aux.Login
-	v.avatarURL = aux.AvatarUrl
+	// An avatar URL that isn't an HTTPS URL reads as absent, see identity.md §4 in
+	// the spec: git-bug v0.12.0 wrote any URL, and an avatar alone doesn't make a
+	// version invalid.
+	if text.ValidHTTPSURL(aux.AvatarUrl) {
+		v.avatarURL = aux.AvatarUrl
+	}
 	v.keys = aux.Keys
 	v.nonce = aux.Nonce
 	v.metadata = aux.Metadata
@@ -204,8 +209,8 @@ func (v *version) Validate() error {
 		return fmt.Errorf("email has unsafe characters")
 	}
 
-	if v.avatarURL != "" && !text.ValidUrl(v.avatarURL) {
-		return fmt.Errorf("avatarUrl is not a valid URL")
+	if v.avatarURL != "" && !text.ValidHTTPSURL(v.avatarURL) {
+		return fmt.Errorf("avatarUrl is not an HTTPS URL")
 	}
 
 	if len(v.nonce) > 64 {

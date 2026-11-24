@@ -1,8 +1,6 @@
 package text
 
 import (
-	"net/url"
-	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -146,14 +144,4 @@ func endsLine(r rune) bool {
 // opensIsolate tells if a character opens an isolate, which U+2069 closes.
 func opensIsolate(r rune) bool {
 	return r >= '\u2066' && r <= '\u2068'
-}
-
-// ValidUrl will tell if the string contains what seems to be a valid URL
-func ValidUrl(s string) bool {
-	if strings.Contains(s, "\n") {
-		return false
-	}
-
-	_, err := url.ParseRequestURI(s)
-	return err == nil
 }

@@ -33,7 +33,7 @@ func TestVersionJSON(t *testing.T) {
 		generatePublicKey(),
 	}
 
-	before, err := newVersion(repo, "name", "email", "login", "avatarUrl", keys)
+	before, err := newVersion(repo, "name", "email", "login", "https://example.com/avatar.png", keys)
 	require.NoError(t, err)
 
 	before.SetMetadata("key1", "value1")
@@ -44,7 +44,7 @@ func TestVersionJSON(t *testing.T) {
 		name:      "name",
 		email:     "email",
 		login:     "login",
-		avatarURL: "avatarUrl",
+		avatarURL: "https://example.com/avatar.png",
 		unixTime:  time.Now().Unix(),
 		times: map[string]lamport.Time{
 			"foo": 42,
@@ -71,4 +71,45 @@ func TestVersionJSON(t *testing.T) {
 	expected.Id()
 
 	assert.Equal(t, expected, &after)
+}
+
+func TestVersionAvatarURL(t *testing.T) {
+	// a stored avatar URL that isn't an HTTPS URL reads as absent, and the
+	// version stays valid
+	cases := []struct {
+		name   string
+		url    string
+		readAs string
+	}{
+		{"an HTTPS URL", "https://example.com/avatar.png", "https://example.com/avatar.png"},
+		{"a port, as a self-hosted GitLab gave", "https://gitlab.example.org:8929/avatar.png", ""},
+		{"http, as a self-hosted GitLab gave", "http://gitlab.example.org/avatar.png", ""},
+		{"a path, as user new accepted", "/me.png", ""},
+		{"a javascript URL", "javascript:alert(1)", ""},
+		{"an IP address", "https://127.0.0.1/avatar.png", ""},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			raw, err := json.Marshal(map[string]any{
+				"version":    2,
+				"times":      map[string]any{},
+				"unix_time":  1609459200,
+				"name":       "Alice",
+				"avatar_url": c.url,
+				"nonce":      "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+			})
+			require.NoError(t, err)
+			var v version
+			require.NoError(t, json.Unmarshal(raw, &v))
+			require.Equal(t, c.readAs, v.avatarURL)
+			require.NoError(t, v.Validate())
+		})
+	}
+
+	t.Run("a writer never writes one", func(t *testing.T) {
+		v, err := newVersion(makeIdentityTestRepo(t), "Alice", "", "", "http://example.com/avatar.png", nil)
+		require.NoError(t, err)
+		require.ErrorContains(t, v.Validate(), "avatarUrl is not an HTTPS URL")
+	})
 }

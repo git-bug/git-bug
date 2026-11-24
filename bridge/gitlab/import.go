@@ -367,7 +367,7 @@ func (gi *gitlabImporter) ensurePerson(ctx context.Context, repo *cache.RepoCach
 		user.Name,
 		user.PublicEmail,
 		user.Username,
-		user.AvatarURL,
+		text.CleanupHTTPSURL(user.AvatarURL),
 		nil,
 		map[string]string{
 			// because Gitlab
