@@ -20,18 +20,20 @@ import (
 )
 
 type bugOptions struct {
-	statusQuery         []string
-	authorQuery         []string
-	metadataQuery       []string
-	participantQuery    []string
-	actorQuery          []string
-	labelQuery          []string
-	titleQuery          []string
-	noQuery             []string
-	sortBy              string
-	sortDirection       string
-	outputFormat        string
-	outputFormatChanged bool
+	statusQuery          []string
+	authorQuery          []string
+	metadataQuery        []string
+	participantQuery     []string
+	actorQuery           []string
+	labelQuery           []string
+	titleQuery           []string
+	noQuery              []string
+	sortBy               string
+	sortDirection        string
+	sortByChanged        bool
+	sortDirectionChanged bool
+	outputFormat         string
+	outputFormatChanged  bool
 }
 
 func NewBugCommand(env *execenv.Env) *cobra.Command {
@@ -57,6 +59,8 @@ git bug status:open --by creation "foo bar" baz
 `,
 		PreRunE: execenv.LoadBackend(env),
 		RunE: execenv.CloseBackend(env, func(cmd *cobra.Command, args []string) error {
+			options.sortByChanged = cmd.Flags().Changed("by")
+			options.sortDirectionChanged = cmd.Flags().Changed("direction")
 			options.outputFormatChanged = cmd.Flags().Changed("format")
 			return runBug(env, options, args)
 		}),
@@ -390,24 +394,30 @@ func completeQuery(q *query.Query, opts bugOptions) error {
 		}
 	}
 
-	switch opts.sortBy {
-	case "id":
-		q.OrderBy = query.OrderById
-	case "creation":
-		q.OrderBy = query.OrderByCreation
-	case "edit":
-		q.OrderBy = query.OrderByEdit
-	default:
-		return fmt.Errorf("unknown sort flag %s", opts.sortBy)
+	// A flag given on the command line takes precedence over the query, but
+	// the flag defaults must not erase the ordering of a "sort:" qualifier.
+	if opts.sortByChanged || !q.Sorted {
+		switch opts.sortBy {
+		case "id":
+			q.OrderBy = query.OrderById
+		case "creation":
+			q.OrderBy = query.OrderByCreation
+		case "edit":
+			q.OrderBy = query.OrderByEdit
+		default:
+			return fmt.Errorf("unknown sort flag %s", opts.sortBy)
+		}
 	}
 
-	switch opts.sortDirection {
-	case "asc":
-		q.OrderDirection = query.OrderAscending
-	case "desc":
-		q.OrderDirection = query.OrderDescending
-	default:
-		return fmt.Errorf("unknown sort direction %s", opts.sortDirection)
+	if opts.sortDirectionChanged || !q.Sorted {
+		switch opts.sortDirection {
+		case "asc":
+			q.OrderDirection = query.OrderAscending
+		case "desc":
+			q.OrderDirection = query.OrderDescending
+		default:
+			return fmt.Errorf("unknown sort direction %s", opts.sortDirection)
+		}
 	}
 
 	return nil

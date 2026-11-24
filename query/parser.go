@@ -21,7 +21,6 @@ func Parse(query string) (*Query, error) {
 		OrderBy:        OrderByCreation,
 		OrderDirection: OrderDescending,
 	}
-	sortingDone := false
 
 	for _, t := range tokens {
 		switch t.kind {
@@ -55,14 +54,14 @@ func Parse(query string) (*Query, error) {
 					return nil, fmt.Errorf("unknown \"no\" filter \"%s\"", t.value)
 				}
 			case "sort":
-				if sortingDone {
+				if q.Sorted {
 					return nil, fmt.Errorf("multiple sorting")
 				}
 				err = parseSorting(q, t.value)
 				if err != nil {
 					return nil, err
 				}
-				sortingDone = true
+				q.Sorted = true
 
 			default:
 				return nil, fmt.Errorf("unknown qualifier \"%s\"", t.qualifier)
