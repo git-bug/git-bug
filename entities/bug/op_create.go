@@ -19,7 +19,7 @@ type CreateOperation struct {
 	dag.OpBase
 	Title   string            `json:"title"`
 	Message string            `json:"message"`
-	Files   []repository.Hash `json:"files"`
+	Files   []repository.Hash `json:"files,omitempty"`
 }
 
 func (op *CreateOperation) Id() entity.Id {

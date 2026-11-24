@@ -6,6 +6,7 @@ import (
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
+	"github.com/git-bug/git-bug/util/jsondoc"
 )
 
 const (
@@ -33,19 +34,22 @@ func operationUnmarshaler(_ context.Context, raw json.RawMessage, resolvers enti
 		OperationType dag.OperationType `json:"type"`
 	}
 
-	if err := json.Unmarshal(raw, &t); err != nil {
+	if err := jsondoc.Unmarshal(raw, &t); err != nil {
 		return nil, err
 	}
 
 	var op dag.Operation
+	// the required members whose zero value is valid, which decoding can't tell
+	// from absent ones, see jsondoc.Require
+	var required []string
 
 	switch t.OperationType {
 	case AddCommentOp:
-		op = &AddCommentOperation{}
+		op, required = &AddCommentOperation{}, []string{"message"}
 	case CreateOp:
-		op = &CreateOperation{}
+		op, required = &CreateOperation{}, []string{"message"}
 	case EditCommentOp:
-		op = &EditCommentOperation{}
+		op, required = &EditCommentOperation{}, []string{"message"}
 	case LabelChangeOp:
 		op = &LabelChangeOperation{}
 	case NoOpOp:
@@ -55,13 +59,15 @@ func operationUnmarshaler(_ context.Context, raw json.RawMessage, resolvers enti
 	case SetStatusOp:
 		op = &SetStatusOperation{}
 	case SetTitleOp:
-		op = &SetTitleOperation{}
+		op, required = &SetTitleOperation{}, []string{"was"}
 	default:
 		return dag.NewUnknownOp[*Snapshot](raw)
 	}
 
-	err := json.Unmarshal(raw, &op)
-	if err != nil {
+	if err := jsondoc.Unmarshal(raw, op); err != nil {
+		return nil, err
+	}
+	if err := jsondoc.Require(raw, required...); err != nil {
 		return nil, err
 	}
 
