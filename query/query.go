@@ -13,6 +13,9 @@ type Query struct {
 	Filters
 	OrderBy
 	OrderDirection
+	// Sorted reports whether the query explicitly defined an ordering
+	// (ex: the "sort:" qualifier), as opposed to relying on the default.
+	Sorted bool
 }
 
 // NewQuery return an identity query with the default sorting (creation-desc).

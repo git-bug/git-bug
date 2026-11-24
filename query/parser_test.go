@@ -59,7 +59,9 @@ func TestParse(t *testing.T) {
 
 		{"sort:edit", &Query{
 			OrderBy: OrderByEdit,
+			Sorted:  true,
 		}},
+		{"sort:edit sort:id", nil},
 		{"sort:unknown", nil},
 
 		{"label:\"foo:bar\"", &Query{
@@ -91,6 +93,7 @@ func TestParse(t *testing.T) {
 				},
 				OrderBy:        OrderByEdit,
 				OrderDirection: OrderDescending,
+				Sorted:         true,
 			},
 		},
 	}
@@ -110,6 +113,7 @@ func TestParse(t *testing.T) {
 					require.Equal(t, tc.output.OrderDirection, query.OrderDirection)
 				}
 				require.Equal(t, tc.output.Filters, query.Filters)
+				require.Equal(t, tc.output.Sorted, query.Sorted)
 			}
 		})
 	}
