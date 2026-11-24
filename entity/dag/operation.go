@@ -15,7 +15,7 @@ import (
 )
 
 // OperationType is an operation type identifier
-type OperationType int
+type OperationType int64
 
 // Operation is a piece of data defining a change to reflect on the state of an Entity.
 // What this Operation or Entity's state looks like is not of the resort of this package as it only deals with the
@@ -213,6 +213,10 @@ func (base *OpBase) Validate(op Operation, opType OperationType) error {
 	}
 	if len(base.Nonce) < 20 {
 		return fmt.Errorf("nonce is too small")
+	}
+
+	if err := validateMetadata(base.Metadata); err != nil {
+		return fmt.Errorf("metadata: %w", err)
 	}
 
 	return nil

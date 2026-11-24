@@ -1,7 +1,9 @@
 package dag
 
 import (
+	"encoding/json"
 	"math/rand"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -40,6 +42,16 @@ func TestOperationPackReadWrite(t *testing.T) {
 		op.setEditTime(opp.EditTime)
 	}
 	require.Equal(t, opp, opp2)
+
+	t.Run("no operation", func(t *testing.T) {
+		// a merge commit holds a pack without operation, written as an empty
+		// array: a writer never writes null
+		data, err := json.Marshal(&operationPack{Author: author, EditTime: 456})
+		require.NoError(t, err)
+		var raw map[string]json.RawMessage
+		require.NoError(t, json.Unmarshal(data, &raw))
+		require.Equal(t, `[]`, string(raw["ops"]))
+	})
 }
 
 func TestOperationPackSignedReadWrite(t *testing.T) {
@@ -160,4 +172,43 @@ func randomData() []byte {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return b
+}
+
+func TestUnmarshallPack(t *testing.T) {
+	_, author, _, resolvers, def := makeTestContext()
+	id := string(author.Id())
+
+	// the pack rules of dag-entity.md §5 in the spec
+	op := `{"type":1,"timestamp":1609459200,"nonce":"AAAAAAAAAAAAAAAAAAAAAAAAAAAA","field_1":"foo"}`
+	cases := []struct {
+		name  string
+		raw   string
+		valid bool
+	}{
+		{"the reference: every rule followed", `{"author":{"id":"` + id + `"},"ops":[` + op + `]}`, true},
+		{"a member of author that the reader does not know is ignored", `{"author":{"id":"` + id + `","name":"Alice"},"ops":[` + op + `]}`, true},
+		{"a pack without author", `{"ops":[` + op + `]}`, false},
+		{"an author that is null is absent", `{"author":null,"ops":[` + op + `]}`, false},
+		{"an author without id", `{"author":{},"ops":[` + op + `]}`, false},
+		{"an author id in uppercase", `{"author":{"id":"` + strings.ToUpper(id) + `"},"ops":[` + op + `]}`, false},
+		{"an author id of 40 characters", `{"author":{"id":"` + id[:40] + `"},"ops":[` + op + `]}`, false},
+		{"an element of ops without type", `{"author":{"id":"` + id + `"},"ops":[{"timestamp":1609459200,"nonce":"AAAAAAAAAAAAAAAAAAAAAAAAAAAA"}]}`, false},
+		{"a type that is null is absent", `{"author":{"id":"` + id + `"},"ops":[{"type":null,"timestamp":1609459200,"nonce":"AAAAAAAAAAAAAAAAAAAAAAAAAAAA"}]}`, false},
+		{"a type that is a string", `{"author":{"id":"` + id + `"},"ops":[{"type":"1","timestamp":1609459200,"nonce":"AAAAAAAAAAAAAAAAAAAAAAAAAAAA"}]}`, false},
+		{"a type with a fraction", `{"author":{"id":"` + id + `"},"ops":[{"type":1.0,"timestamp":1609459200,"nonce":"AAAAAAAAAAAAAAAAAAAAAAAAAAAA"}]}`, false},
+		{"an element of ops that is null", `{"author":{"id":"` + id + `"},"ops":[null]}`, false},
+		{"an element of ops that is not an object", `{"author":{"id":"` + id + `"},"ops":[1]}`, false},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			_, _, err := unmarshallPack(t.Context(), def, resolvers, []byte(c.raw))
+			if c.valid {
+				require.NoError(t, err)
+			} else {
+				// rejected by the pack rules, not by the operation unmarshaler
+				require.ErrorContains(t, err, "invalid operation pack")
+			}
+		})
+	}
 }

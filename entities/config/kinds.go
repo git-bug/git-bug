@@ -2,11 +2,11 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 )
 
 // The kinds of operations are the ones of the spec, see config.md §7.2 in
@@ -28,7 +28,13 @@ import (
 // setValue is the kind of the operations replacing the value of a register.
 type setValue[V scalar] struct {
 	opBase
-	Value V `json:"value,omitzero"`
+	Value V `json:"value"`
+}
+
+// requiredMembers lists the members of the operation that the unmarshaler checks
+// with jsondoc.Require: the value is required, and its zero value is valid.
+func (s *setValue[V]) requiredMembers() []string {
+	return []string{"value"}
 }
 
 func newSetValue[V scalar](repo repository.RepoClock, opType dag.OperationType, author identity.Interface, unixTime int64, value V) (setValue[V], error) {
@@ -65,13 +71,12 @@ type setEntry[K ~string, F fields[F]] struct {
 	Fields F
 }
 
-// setEntryJSON is the JSON of a setEntry. The names in Clear are pointers, for a
-// null name to be told apart.
+// setEntryJSON is the JSON of a setEntry.
 type setEntryJSON[K ~string, F fields[F]] struct {
 	opBase
-	Key    K         `json:"key"`
-	Fields F         `json:"fields,omitzero"`
-	Clear  []*string `json:"clear,omitempty"`
+	Key    K        `json:"key"`
+	Fields F        `json:"fields,omitzero"`
+	Clear  []string `json:"clear,omitempty"`
 }
 
 func newSetEntry[K ~string, F fields[F]](repo repository.RepoClock, opType dag.OperationType, author identity.Interface, unixTime int64, key K, change F) (setEntry[K, F], error) {
@@ -87,7 +92,7 @@ func (s setEntry[K, F]) MarshalJSON() ([]byte, error) {
 	eachFieldState(&aux.Fields, func(name string, state *fieldState) {
 		if *state == fieldCleared {
 			*state = fieldAbsent
-			aux.Clear = append(aux.Clear, new(name))
+			aux.Clear = append(aux.Clear, name)
 		}
 	})
 	return json.Marshal(aux)
@@ -97,15 +102,12 @@ func (s setEntry[K, F]) MarshalJSON() ([]byte, error) {
 // its field unless "fields" sets it, and is ignored if no field has it.
 func (s *setEntry[K, F]) UnmarshalJSON(data []byte) error {
 	var aux setEntryJSON[K, F]
-	if err := json.Unmarshal(data, &aux); err != nil {
+	if err := jsondoc.Unmarshal(data, &aux); err != nil {
 		return err
 	}
 	for _, name := range aux.Clear {
-		if name == nil {
-			return fmt.Errorf("clear: null name")
-		}
 		eachFieldState(&aux.Fields, func(field string, state *fieldState) {
-			if field == *name && *state == fieldAbsent {
+			if field == name && *state == fieldAbsent {
 				*state = fieldCleared
 			}
 		})

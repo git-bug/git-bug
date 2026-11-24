@@ -9,6 +9,7 @@ import (
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 	"github.com/git-bug/git-bug/util/lamport"
 	"github.com/git-bug/git-bug/util/text"
 )
@@ -161,7 +162,7 @@ func (v *version) MarshalJSON() ([]byte, error) {
 func (v *version) UnmarshalJSON(data []byte) error {
 	var aux versionJSON
 
-	if err := json.Unmarshal(data, &aux); err != nil {
+	if err := jsondoc.Unmarshal(data, &aux); err != nil {
 		return err
 	}
 
@@ -175,7 +176,12 @@ func (v *version) UnmarshalJSON(data []byte) error {
 	v.name = aux.Name
 	v.email = aux.Email
 	v.login = aux.Login
-	v.avatarURL = aux.AvatarUrl
+	// An avatar URL that isn't an HTTPS URL reads as absent, see identity.md §4 in
+	// the spec: git-bug v0.12.0 wrote any URL, and an avatar alone doesn't make a
+	// version invalid.
+	if text.ValidHTTPSURL(aux.AvatarUrl) {
+		v.avatarURL = aux.AvatarUrl
+	}
 	v.keys = aux.Keys
 	v.nonce = aux.Nonce
 	v.metadata = aux.Metadata
@@ -187,6 +193,11 @@ func (v *version) Validate() error {
 	// time must be set after a commit
 	if v.commitHash != "" && v.unixTime == 0 {
 		return fmt.Errorf("unix time not set")
+	}
+
+	// absent or null when nil, empty when no clock is known
+	if v.times == nil {
+		return fmt.Errorf("lamport times not set")
 	}
 
 	if text.Empty(v.name) && text.Empty(v.login) {
@@ -204,8 +215,17 @@ func (v *version) Validate() error {
 		return fmt.Errorf("email has unsafe characters")
 	}
 
-	if v.avatarURL != "" && !text.ValidUrl(v.avatarURL) {
-		return fmt.Errorf("avatarUrl is not a valid URL")
+	if v.avatarURL != "" && !text.ValidHTTPSURL(v.avatarURL) {
+		return fmt.Errorf("avatarUrl is not an HTTPS URL")
+	}
+
+	for key, val := range v.metadata {
+		if !text.SafeOneLine(key) {
+			return fmt.Errorf("metadata key %q has unsafe characters", key)
+		}
+		if !text.Safe(val) {
+			return fmt.Errorf("metadata value of %q has unsafe characters", key)
+		}
 	}
 
 	if len(v.nonce) > 64 {

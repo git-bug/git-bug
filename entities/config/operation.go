@@ -9,6 +9,7 @@ import (
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
@@ -39,7 +40,7 @@ const (
 
 // sectionOperations makes an empty operation of each type of a section, by section
 // number, to decode an operation into.
-var sectionOperations = map[int]map[dag.OperationType]func() Operation{
+var sectionOperations = map[dag.OperationType]map[dag.OperationType]func() Operation{
 	repoSection:   repoOperations,
 	labelsSection: labelsOperations,
 }
@@ -91,7 +92,7 @@ func opTimes(op dag.Operation) map[string]lamport.Time {
 		var raw struct {
 			Times map[string]lamport.Time `json:"times"`
 		}
-		_ = json.Unmarshal(op.RawJSON, &raw)
+		_ = jsondoc.Unmarshal(op.RawJSON, &raw)
 		return raw.Times
 	default:
 		return nil
@@ -124,7 +125,7 @@ func operationUnmarshaler(_ context.Context, raw json.RawMessage, resolvers enti
 		OperationType dag.OperationType `json:"type"`
 	}
 
-	if err := json.Unmarshal(raw, &t); err != nil {
+	if err := jsondoc.Unmarshal(raw, &t); err != nil {
 		return nil, err
 	}
 
@@ -134,16 +135,20 @@ func operationUnmarshaler(_ context.Context, raw json.RawMessage, resolvers enti
 	case CreateOp:
 		op = &CreateOperation{}
 	default:
-		newOp, ok := sectionOperations[int(t.OperationType)/sectionSize][t.OperationType]
+		newOp, ok := sectionOperations[t.OperationType/sectionSize][t.OperationType]
 		if !ok {
 			return dag.NewUnknownOp[*Snapshot](raw)
 		}
 		op = newOp()
 	}
 
-	err := json.Unmarshal(raw, &op)
-	if err != nil {
+	if err := jsondoc.Unmarshal(raw, op); err != nil {
 		return nil, err
+	}
+	if op, ok := op.(interface{ requiredMembers() []string }); ok {
+		if err := jsondoc.Require(raw, op.requiredMembers()...); err != nil {
+			return nil, err
+		}
 	}
 
 	return op, nil

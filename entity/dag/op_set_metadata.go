@@ -14,7 +14,7 @@ var _ OperationDoesntChangeSnapshot = &SetMetadataOperation[Snapshot]{}
 type SetMetadataOperation[SnapT Snapshot] struct {
 	OpBase
 	Target      entity.Id         `json:"target"`
-	NewMetadata map[string]string `json:"new_metadata"`
+	NewMetadata map[string]string `json:"new_metadata,omitempty"`
 }
 
 func NewSetMetadataOp[SnapT Snapshot](opType OperationType, author identity.Interface, unixTime int64, target entity.Id, newMetadata map[string]string) *SetMetadataOperation[SnapT] {
@@ -52,16 +52,26 @@ func (op *SetMetadataOperation[SnapT]) Validate() error {
 		return fmt.Errorf("target invalid: %w", err)
 	}
 
-	for key, val := range op.NewMetadata {
-		if !text.SafeOneLine(key) {
-			return fmt.Errorf("metadata key is unsafe")
-		}
-		if !text.Safe(val) {
-			return fmt.Errorf("metadata value is not fully printable")
-		}
+	if err := validateMetadata(op.NewMetadata); err != nil {
+		return fmt.Errorf("new metadata: %w", err)
 	}
 
 	return nil
 }
 
 func (op *SetMetadataOperation[SnapT]) DoesntChangeSnapshot() {}
+
+// validateMetadata checks the metadata of an operation, or the metadata that a
+// SetMetadataOperation adds: each key is text and each value multi-line text, see
+// dag-entity.md §6.1 in the spec.
+func validateMetadata(metadata map[string]string) error {
+	for key, val := range metadata {
+		if !text.SafeOneLine(key) {
+			return fmt.Errorf("key %q has unsafe characters", key)
+		}
+		if !text.Safe(val) {
+			return fmt.Errorf("value of %q has unsafe characters", key)
+		}
+	}
+	return nil
+}

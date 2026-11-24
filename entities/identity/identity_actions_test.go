@@ -150,6 +150,31 @@ func TestIdentityPushPull(t *testing.T) {
 	}
 }
 
+func TestPullIdentityWithCustomPortAvatar(t *testing.T) {
+	repoA, repoB, _ := repotest.SetupGoGitReposAndRemote(t)
+	ctx := t.Context()
+	const avatar = "https://gitlab.example.org:8929/avatar.png"
+	// Another writer may leave whitespace around the first version's JSON.
+	raw := []byte(` {"version":2,"times":{},"unix_time":1609459200,"name":"Alice","avatar_url":"` + avatar + `","nonce":"AAAAAAAAAAAAAAAAAAAAAAAAAAA="}` + "\n")
+	id := entity.DeriveId(raw)
+	blob, err := repoA.StoreData(ctx, raw)
+	require.NoError(t, err)
+	tree, err := repoA.StoreTree(ctx, []repository.TreeEntry{{ObjectType: repository.Blob, Hash: blob, Name: versionEntryName}})
+	require.NoError(t, err)
+	commit, err := repoA.StoreCommit(ctx, tree)
+	require.NoError(t, err)
+	require.NoError(t, repoA.UpdateRef(ctx, Namespace, id.String(), "", commit))
+
+	_, err = Push(ctx, repoA, "origin")
+	require.NoError(t, err)
+	require.NoError(t, Pull(ctx, repoB, "origin"))
+	got, err := Read(ctx, repoB, id)
+	require.NoError(t, err)
+	require.Equal(t, id, got.Id())
+	// an HTTPS URL has no port: the avatar reads as absent, the version stays valid
+	require.Empty(t, got.AvatarUrl())
+}
+
 func allIdentities(t testing.TB, identities <-chan entity.StreamedEntity[*Identity]) []*Identity {
 	var result []*Identity
 	for streamed := range identities {

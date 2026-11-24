@@ -13,6 +13,7 @@ import (
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
@@ -56,13 +57,19 @@ func (opp *operationPack) Id() entity.Id {
 	return opp.id
 }
 
+// MarshalJSON writes the pack. "ops" is an array even when the pack has no
+// operation, as in a merge commit: a writer never writes null.
 func (opp *operationPack) MarshalJSON() ([]byte, error) {
+	ops := opp.Operations
+	if ops == nil {
+		ops = []Operation{}
+	}
 	return json.Marshal(struct {
 		Author     identity.Interface `json:"author"`
 		Operations []Operation        `json:"ops"`
 	}{
 		Author:     opp.Author,
-		Operations: opp.Operations,
+		Operations: ops,
 	})
 }
 
@@ -177,7 +184,7 @@ func (opp *operationPack) Write(ctx context.Context, def Definition, repo reposi
 func (opp *operationPack) makeExtraTree() []repository.TreeEntry {
 	var tree []repository.TreeEntry
 	counter := 0
-	added := make(map[repository.Hash]interface{})
+	added := make(map[repository.Hash]any)
 
 	for _, ops := range opp.Operations {
 		ops, ok := ops.(OperationWithFiles)
@@ -215,8 +222,8 @@ func readOperationPack(ctx context.Context, def Definition, repo repository.Repo
 	// check the format version first, fail early instead of trying to read something
 	var version uint
 	for _, entry := range entries {
-		if strings.HasPrefix(entry.Name, versionEntryPrefix) {
-			v, err := strconv.ParseUint(strings.TrimPrefix(entry.Name, versionEntryPrefix), 10, 64)
+		if after, ok := strings.CutPrefix(entry.Name, versionEntryPrefix); ok {
+			v, err := strconv.ParseUint(after, 10, 64)
 			if err != nil {
 				return nil, fmt.Errorf("can't read format version: %w", err)
 			}
@@ -334,21 +341,37 @@ func readOperationPackClock(ctx context.Context, repo repository.RepoData, commi
 	return createTime, editTime, nil
 }
 
-// unmarshallPack delegate the unmarshalling of the Operation's JSON to the decoding
-// function provided by the concrete entity. This gives access to the concrete type of each
-// Operation.
+// unmarshallPack checks data by the pack rules of dag-entity.md §5 in the spec:
+// a JSON document (see jsondoc), an author id, and in ops an object with an
+// integer type for each operation. It then delegates the unmarshalling of the
+// Operation's JSON to the decoding function provided by the concrete entity.
+// This gives access to the concrete type of each Operation.
 func unmarshallPack(ctx context.Context, def Definition, resolvers entity.Resolvers, data []byte) ([]Operation, identity.Interface, error) {
 	aux := struct {
 		Author     identity.IdentityStub `json:"author"`
 		Operations []json.RawMessage     `json:"ops"`
 	}{}
 
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return nil, nil, err
+	if err := jsondoc.Unmarshal(data, &aux); err != nil {
+		return nil, nil, fmt.Errorf("invalid operation pack: %w", err)
 	}
 
-	if aux.Author.Id() == "" || aux.Author.Id() == entity.UnsetId {
-		return nil, nil, fmt.Errorf("missing author")
+	if err := aux.Author.Id().Validate(); err != nil {
+		return nil, nil, fmt.Errorf("invalid operation pack: author id: %w", err)
+	}
+
+	for i, raw := range aux.Operations {
+		// an element of ops is an object whose type is an integer: decoding
+		// rejects any other value, and leaves the type nil when absent or null
+		var op struct {
+			Type *OperationType `json:"type"`
+		}
+		if err := jsondoc.Unmarshal(raw, &op); err != nil {
+			return nil, nil, fmt.Errorf("invalid operation pack: element %d of ops: %w", i, err)
+		}
+		if op.Type == nil {
+			return nil, nil, fmt.Errorf("invalid operation pack: element %d of ops: missing type", i)
+		}
 	}
 
 	author, err := entity.Resolve[identity.Interface](ctx, resolvers, aux.Author.Id())

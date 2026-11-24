@@ -5,6 +5,7 @@ import (
 
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 	"github.com/git-bug/git-bug/util/lamport"
 	"github.com/git-bug/git-bug/util/timestamp"
 )
@@ -34,7 +35,7 @@ func (i *IdentityStub) UnmarshalJSON(data []byte) error {
 		Id entity.Id `json:"id"`
 	}{}
 
-	if err := json.Unmarshal(data, &aux); err != nil {
+	if err := jsondoc.Unmarshal(data, &aux); err != nil {
 		return err
 	}
 
