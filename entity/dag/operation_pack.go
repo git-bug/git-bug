@@ -285,6 +285,21 @@ func readOperationPack(ctx context.Context, def Definition, repo repository.Repo
 		op.setEditTime(editTime)
 	}
 
+	// Judge each operation by its position, see Definition.ValidatePosition: the
+	// root operation is the first of the pack of the root commit, the only one
+	// without parents.
+	if def.ValidatePosition != nil {
+		root := len(commit.Parents) == 0
+		for i, op := range ops {
+			if op.Invalid() != nil {
+				continue
+			}
+			if err := def.ValidatePosition(op, root && i == 0); err != nil {
+				op.setInvalid(err)
+			}
+		}
+	}
+
 	// Verify signature if we expect one
 	keys := author.ValidKeysAtTime(def.editClock(), editTime)
 	if len(keys) > 0 {

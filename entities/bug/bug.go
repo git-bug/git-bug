@@ -31,6 +31,7 @@ var def = dag.Definition{
 	Namespace:            Namespace,
 	OperationUnmarshaler: operationUnmarshaler,
 	FormatVersion:        formatVersion,
+	ValidatePosition:     validatePosition,
 }
 
 // Mutable is what the functions creating operations (AddComment, SetTitle, ...)
@@ -84,35 +85,23 @@ func ListLocalIds(ctx context.Context, repo repository.Repo) ([]entity.Id, error
 	return dag.ListLocalIds(ctx, def, repo)
 }
 
+// validatePosition judges an operation by whether it is the root operation of a bug,
+// see dag.Definition.ValidatePosition: the Create op is the first operation, and only
+// it.
+func validatePosition(op dag.Operation, isRoot bool) error {
+	switch {
+	case isRoot && op.Type() != CreateOp:
+		return fmt.Errorf("a bug starts with a Create op")
+	case !isRoot && op.Type() == CreateOp:
+		return fmt.Errorf("only one Create op allowed")
+	}
+	return nil
+}
+
 // EnsureClocks makes sure that the clocks ordering bugs are usable, and rebuilds
 // them from the bugs if not. See dag.EnsureClocks.
 func EnsureClocks(ctx context.Context, repo repository.Repo) error {
 	return dag.EnsureClocks(ctx, def, repo)
-}
-
-// Validate check if the Bug data is valid
-func (bug *Bug) Validate() error {
-	if err := bug.Entity.Validate(); err != nil {
-		return err
-	}
-
-	// The very first Op should be a CreateOp
-	firstOp := bug.FirstOp()
-	if firstOp == nil || firstOp.Type() != CreateOp {
-		return fmt.Errorf("first operation should be a Create op")
-	}
-
-	// Check that there is no more CreateOp op
-	for i, op := range bug.Entity.Operations() {
-		if i == 0 {
-			continue
-		}
-		if op.Type() == CreateOp {
-			return fmt.Errorf("only one Create op allowed")
-		}
-	}
-
-	return nil
 }
 
 // Append add a new Operation to the Bug

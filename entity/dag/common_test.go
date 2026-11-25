@@ -178,18 +178,30 @@ func makeTestContextInternal(repo repository.Repo) (identity.Interface, identity
 	return id1, id2, resolvers, def
 }
 
-// writeInvalid writes on top of e a pack holding an invalid operation, as a client
-// with earlier rules could have: Commit refuses to.
-func writeInvalid(t *testing.T, def Definition, repo repository.Repo, e *Entity, author identity.Interface) {
+// writeInvalid writes on top of e a pack holding the invalid operation op, as a
+// client with earlier rules could have: Commit refuses to.
+func writeInvalid(t *testing.T, def Definition, repo repository.Repo, e *Entity, op Operation) {
 	t.Helper()
 	editTime, err := incrementClock(t.Context(), def, repo, def.editClock())
 	require.NoError(t, err)
 	opp := &operationPack{
-		Author:     author,
-		Operations: []Operation{newOp1(author, invalidField1)},
+		Author:     op.Author(),
+		Operations: []Operation{op},
 		EditTime:   editTime,
 	}
 	hash, err := opp.Write(t.Context(), def, repo, e.lastCommit)
 	require.NoError(t, err)
 	require.NoError(t, repo.UpdateRef(t.Context(), def.Namespace, e.Id().String(), e.lastCommit, hash))
+}
+
+// rootOp1 is a Definition.ValidatePosition making op1 the root operation of the test
+// entity, and only it, as the Create op of a real entity.
+func rootOp1(op Operation, isRoot bool) error {
+	switch {
+	case isRoot && op.Type() != Op1:
+		return fmt.Errorf("a foo starts with an op1")
+	case !isRoot && op.Type() == Op1:
+		return fmt.Errorf("only one op1 allowed")
+	}
+	return nil
 }

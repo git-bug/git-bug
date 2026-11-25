@@ -37,6 +37,12 @@ type Definition struct {
 	SingletonKey string
 	// a function decoding a JSON message into an Operation
 	OperationUnmarshaler OperationUnmarshaler
+	// ValidatePosition, if set, judges an operation by its position in the Entity:
+	// whether it is the root operation, the first of the root commit. That is the
+	// only position that never changes, as merges reorder the other operations. An
+	// operation it refuses is invalid, see Operation.Invalid, and so is the Entity
+	// if it is the root.
+	ValidatePosition func(op Operation, isRoot bool) error
 	// the expected format version number, that can be used for data migration/upgrade
 	FormatVersion uint
 }

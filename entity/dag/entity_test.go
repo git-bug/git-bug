@@ -86,46 +86,99 @@ func TestReadIdMismatch(t *testing.T) {
 }
 
 func TestReadInvalidOperation(t *testing.T) {
-	repo, id1, _, resolvers, def := makeTestContext()
+	for _, tc := range []struct {
+		name             string
+		validatePosition func(op Operation, isRoot bool) error
+		field1           string
+		reason           string
+	}{
+		{name: "invalid in itself", field1: invalidField1, reason: "field_1 is invalid"},
+		{name: "invalid at its position", validatePosition: rootOp1, field1: "bar", reason: "only one op1 allowed"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			repo, id1, _, resolvers, def := makeTestContext()
+			def.ValidatePosition = tc.validatePosition
 
-	e := New(def)
-	e.Append(newOp1(id1, "foo"))
-	require.NoError(t, e.Commit(t.Context(), repo))
-	writeInvalid(t, def, repo, e, id1)
+			e := New(def)
+			e.Append(newOp1(id1, "foo"))
+			require.NoError(t, e.Commit(t.Context(), repo))
+			writeInvalid(t, def, repo, e, newOp1(id1, tc.field1))
 
-	// the invalid operation is kept, flagged
-	read, err := Read(t.Context(), def, wrapper, repo, resolvers, e.Id())
-	require.NoError(t, err)
-	ops := read.Operations()
-	require.Len(t, ops, 2)
-	require.NoError(t, ops[0].Invalid())
-	require.ErrorContains(t, ops[1].Invalid(), "field_1 is invalid")
-	require.Equal(t, invalidField1, ops[1].(*op1).Field1)
+			// the invalid operation is kept, flagged
+			read, err := Read(t.Context(), def, wrapper, repo, resolvers, e.Id())
+			require.NoError(t, err)
+			ops := read.Operations()
+			require.Len(t, ops, 2)
+			require.NoError(t, ops[0].Invalid())
+			require.ErrorContains(t, ops[1].Invalid(), tc.reason)
+			require.Equal(t, tc.field1, ops[1].(*op1).Field1)
 
-	// it was judged when taken in: an operation is committed after it all the same
-	read.Append(newOp2(id1, "bar"))
-	require.NoError(t, read.Commit(t.Context(), repo))
+			// it was judged when taken in: an operation is committed after it all the same
+			read.Append(newOp2(id1, "baz"))
+			require.NoError(t, read.Commit(t.Context(), repo))
 
-	read, err = Read(t.Context(), def, wrapper, repo, resolvers, e.Id())
-	require.NoError(t, err)
-	ops = read.Operations()
-	require.Len(t, ops, 3)
-	require.Error(t, ops[1].Invalid())
-	require.NoError(t, ops[2].Invalid())
+			read, err = Read(t.Context(), def, wrapper, repo, resolvers, e.Id())
+			require.NoError(t, err)
+			ops = read.Operations()
+			require.Len(t, ops, 3)
+			require.Error(t, ops[1].Invalid())
+			require.NoError(t, ops[2].Invalid())
+		})
+	}
+
+	t.Run("invalid at its position, in the first pack", func(t *testing.T) {
+		repo, id1, _, resolvers, def := makeTestContext()
+		def.ValidatePosition = rootOp1
+
+		first := newOp1(id1, "foo")
+		opp := &operationPack{Author: id1, Operations: []Operation{first, newOp1(id1, "bar")}, CreateTime: 1, EditTime: 1}
+		hash, err := opp.Write(t.Context(), def, repo)
+		require.NoError(t, err)
+		require.NoError(t, repo.UpdateRef(t.Context(), def.Namespace, first.Id().String(), "", hash))
+
+		read, err := Read(t.Context(), def, wrapper, repo, resolvers, first.Id())
+		require.NoError(t, err)
+		ops := read.Operations()
+		require.Len(t, ops, 2)
+		require.NoError(t, ops[0].Invalid())
+		require.ErrorContains(t, ops[1].Invalid(), "only one op1 allowed")
+	})
 }
 
 func TestReadInvalidFirstOperation(t *testing.T) {
-	repo, id1, _, resolvers, def := makeTestContext()
-
 	// without a valid first operation, the entity has no state to start from
-	op := newOp1(id1, invalidField1)
-	opp := &operationPack{Author: id1, Operations: []Operation{op}, CreateTime: 1, EditTime: 1}
-	hash, err := opp.Write(t.Context(), def, repo)
-	require.NoError(t, err)
-	require.NoError(t, repo.UpdateRef(t.Context(), def.Namespace, op.Id().String(), "", hash))
+	for _, tc := range []struct {
+		name             string
+		validatePosition func(op Operation, isRoot bool) error
+		first            func(author identity.Interface) Operation
+		err              string
+	}{
+		{
+			name:  "invalid in itself",
+			first: func(author identity.Interface) Operation { return newOp1(author, invalidField1) },
+			err:   "the first operation of the foo is invalid",
+		},
+		{
+			name:             "root invalid at its position",
+			validatePosition: rootOp1,
+			first:            func(author identity.Interface) Operation { return newOp2(author, "foo") },
+			err:              "the first operation of the foo is invalid: a foo starts with an op1",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			repo, id1, _, resolvers, def := makeTestContext()
+			def.ValidatePosition = tc.validatePosition
 
-	_, err = Read(t.Context(), def, wrapper, repo, resolvers, op.Id())
-	require.ErrorContains(t, err, "the first operation of the foo is invalid")
+			first := tc.first(id1)
+			opp := &operationPack{Author: id1, Operations: []Operation{first}, CreateTime: 1, EditTime: 1}
+			hash, err := opp.Write(t.Context(), def, repo)
+			require.NoError(t, err)
+			require.NoError(t, repo.UpdateRef(t.Context(), def.Namespace, first.Id().String(), "", hash))
+
+			_, err = Read(t.Context(), def, wrapper, repo, resolvers, first.Id())
+			require.ErrorContains(t, err, tc.err)
+		})
+	}
 }
 
 func TestCommitStaleCopy(t *testing.T) {
@@ -362,16 +415,45 @@ func TestCommitOperations(t *testing.T) {
 	})
 }
 
-// Repair reloads the committed state after the ref moved, so that the pending
-// or write-through operations can be committed on top of it.
 func TestCommitRefusesInvalidOperation(t *testing.T) {
-	repo, id1, _, _, def := makeTestContext()
+	t.Run("invalid in itself", func(t *testing.T) {
+		repo, id1, _, _, def := makeTestContext()
 
-	e := New(def)
-	e.Append(newOp1(id1, invalidField1))
-	require.ErrorContains(t, e.Commit(t.Context(), repo), "field_1 is invalid")
+		e := New(def)
+		e.Append(newOp1(id1, invalidField1))
+		require.ErrorContains(t, e.Commit(t.Context(), repo), "field_1 is invalid")
+	})
+
+	t.Run("root invalid at its position", func(t *testing.T) {
+		repo, id1, _, _, def := makeTestContext()
+		def.ValidatePosition = rootOp1
+
+		e := New(def)
+		e.Append(newOp2(id1, "foo"))
+		require.ErrorContains(t, e.Commit(t.Context(), repo), "a foo starts with an op1")
+	})
+
+	t.Run("invalid at its position", func(t *testing.T) {
+		repo, id1, _, _, def := makeTestContext()
+		def.ValidatePosition = rootOp1
+
+		// in the same commit
+		e := New(def)
+		e.Append(newOp1(id1, "foo"))
+		e.Append(newOp1(id1, "bar"))
+		require.ErrorContains(t, e.Commit(t.Context(), repo), "only one op1 allowed")
+
+		// in a later one
+		e = New(def)
+		e.Append(newOp1(id1, "foo"))
+		require.NoError(t, e.Commit(t.Context(), repo))
+		e.Append(newOp1(id1, "bar"))
+		require.ErrorContains(t, e.Commit(t.Context(), repo), "only one op1 allowed")
+	})
 }
 
+// Repair reloads the committed state after the ref moved, so that the pending
+// or write-through operations can be committed on top of it.
 func TestRepair(t *testing.T) {
 	// setup returns a stale copy of an entity, and the up-to-date one
 	setup := func(t *testing.T) (repository.Repo, entity.Resolvers, Definition, *Foo, *Foo, identity.Interface, identity.Interface) {

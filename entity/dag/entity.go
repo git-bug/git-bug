@@ -520,14 +520,15 @@ func (e *Entity) Validate() error {
 		return fmt.Errorf("entity has no operations")
 	}
 
-	return validateOperations(e.ops, e.staging)
+	return validateOperations(e.Definition, e.ops, e.staging)
 }
 
 // validateOperations checks that each added operation is valid, and that there
 // is no colliding operation's ID across held and added. The held operations,
 // read from the Entity, were judged when taken in: one that is invalid stays,
-// flagged, see Operation.Invalid and dag-entity.md §6 in the spec.
-func validateOperations(held []Operation, added []Operation) error {
+// flagged, see Operation.Invalid and dag-entity.md §6 in the spec. An added
+// operation is judged by its position too, see Definition.ValidatePosition.
+func validateOperations(def Definition, held []Operation, added []Operation) error {
 	ids := make(map[entity.Id]struct{})
 	for _, op := range held {
 		if _, ok := ids[op.Id()]; ok {
@@ -535,9 +536,14 @@ func validateOperations(held []Operation, added []Operation) error {
 		}
 		ids[op.Id()] = struct{}{}
 	}
-	for _, op := range added {
+	for i, op := range added {
 		if err := op.Validate(); err != nil {
 			return err
+		}
+		if def.ValidatePosition != nil {
+			if err := def.ValidatePosition(op, len(held) == 0 && i == 0); err != nil {
+				return err
+			}
 		}
 		if _, ok := ids[op.Id()]; ok {
 			return fmt.Errorf("id collision: %s", op.Id())
@@ -663,7 +669,7 @@ func (e *Entity) commitOperationsLocked(ctx context.Context, repo repository.Rep
 	}
 
 	// pending operations are ignored, they are not part of this commit
-	err := validateOperations(e.ops, ops)
+	err := validateOperations(e.Definition, e.ops, ops)
 	if err != nil {
 		return fmt.Errorf("can't commit a %s with invalid data: %w", e.Definition.Typename, err)
 	}

@@ -782,72 +782,85 @@ func TestMergeInvalidRemote(t *testing.T) {
 }
 
 func TestMergeInvalidOperation(t *testing.T) {
-	for _, tc := range []struct {
-		name     string
-		held     bool // the local entity holds the invalid operation already
-		existing bool // the entity already exists locally
-		diverged bool // the local entity has new commits
-		status   entity.MergeStatus
+	for _, kind := range []struct {
+		name             string
+		validatePosition func(op Operation, isRoot bool) error
+		field1           string
+		reason           string
 	}{
-		{name: "new, taken in", status: entity.MergeStatusInvalid},
-		{name: "fast-forward, taken in", existing: true, status: entity.MergeStatusInvalid},
-		{name: "merge commit, taken in", existing: true, diverged: true, status: entity.MergeStatusInvalid},
-		{name: "fast-forward, held", existing: true, held: true, status: entity.MergeStatusUpdated},
-		{name: "merge commit, held", existing: true, held: true, diverged: true, status: entity.MergeStatusUpdated},
+		{name: "invalid in itself", field1: invalidField1, reason: "field_1 is invalid"},
+		{name: "invalid at its position", validatePosition: rootOp1, field1: "second", reason: "only one op1 allowed"},
 	} {
-		t.Run(tc.name, func(t *testing.T) {
-			repoA, repoB, _, id1, _, resolvers, def := makeTestContextRemote(t)
+		t.Run(kind.name, func(t *testing.T) {
+			for _, tc := range []struct {
+				name     string
+				held     bool // the local entity holds the invalid operation already
+				existing bool // the entity already exists locally
+				diverged bool // the local entity has new commits
+				status   entity.MergeStatus
+			}{
+				{name: "new, taken in", status: entity.MergeStatusInvalid},
+				{name: "fast-forward, taken in", existing: true, status: entity.MergeStatusInvalid},
+				{name: "merge commit, taken in", existing: true, diverged: true, status: entity.MergeStatusInvalid},
+				{name: "fast-forward, held", existing: true, held: true, status: entity.MergeStatusUpdated},
+				{name: "merge commit, held", existing: true, held: true, diverged: true, status: entity.MergeStatusUpdated},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					repoA, repoB, _, id1, _, resolvers, def := makeTestContextRemote(t)
+					def.ValidatePosition = kind.validatePosition
 
-			eA := New(def)
-			eA.Append(newOp1(id1, "foo"))
-			require.NoError(t, eA.Commit(t.Context(), repoA))
-			if tc.held {
-				writeInvalid(t, def, repoA, eA, id1)
-			}
+					eA := New(def)
+					eA.Append(newOp1(id1, "foo"))
+					require.NoError(t, eA.Commit(t.Context(), repoA))
+					if tc.held {
+						writeInvalid(t, def, repoA, eA, newOp1(id1, kind.field1))
+					}
 
-			if tc.existing {
-				_, err := Push(t.Context(), def, repoA, "remote")
-				require.NoError(t, err)
-				_, err = Fetch(t.Context(), def, repoB, "remote")
-				require.NoError(t, err)
-				// B takes the entity as it is, as a client with earlier rules could have
-				head, err := repoA.ResolveRef(t.Context(), def.Namespace, eA.Id().String())
-				require.NoError(t, err)
-				require.NoError(t, repoB.UpdateRef(t.Context(), def.Namespace, eA.Id().String(), "", head))
-			}
+					if tc.existing {
+						_, err := Push(t.Context(), def, repoA, "remote")
+						require.NoError(t, err)
+						_, err = Fetch(t.Context(), def, repoB, "remote")
+						require.NoError(t, err)
+						// B takes the entity as it is, as a client with earlier rules could have
+						head, err := repoA.ResolveRef(t.Context(), def.Namespace, eA.Id().String())
+						require.NoError(t, err)
+						require.NoError(t, repoB.UpdateRef(t.Context(), def.Namespace, eA.Id().String(), "", head))
+					}
 
-			if tc.diverged {
-				eB, err := Read(t.Context(), def, wrapper, repoB, resolvers, eA.Id())
-				require.NoError(t, err)
-				eB.Append(newOp1(id1, "bar"))
-				require.NoError(t, eB.Commit(t.Context(), repoB))
-			}
+					if tc.diverged {
+						eB, err := Read(t.Context(), def, wrapper, repoB, resolvers, eA.Id())
+						require.NoError(t, err)
+						eB.Append(newOp2(id1, "bar"))
+						require.NoError(t, eB.Commit(t.Context(), repoB))
+					}
 
-			// A adds a commit: an invalid operation, or a valid one on top of the held
-			// invalid one
-			readA, err := Read(t.Context(), def, wrapper, repoA, resolvers, eA.Id())
-			require.NoError(t, err)
-			if tc.held {
-				readA.Append(newOp2(id1, "baz"))
-				require.NoError(t, readA.Commit(t.Context(), repoA))
-			} else {
-				writeInvalid(t, def, repoA, readA.Entity, id1)
-			}
+					// A adds a commit: an invalid operation, or a valid one on top of the
+					// held invalid one
+					readA, err := Read(t.Context(), def, wrapper, repoA, resolvers, eA.Id())
+					require.NoError(t, err)
+					if tc.held {
+						readA.Append(newOp2(id1, "baz"))
+						require.NoError(t, readA.Commit(t.Context(), repoA))
+					} else {
+						writeInvalid(t, def, repoA, readA.Entity, newOp1(id1, kind.field1))
+					}
 
-			_, err = Push(t.Context(), def, repoA, "remote")
-			require.NoError(t, err)
-			_, err = Fetch(t.Context(), def, repoB, "remote")
-			require.NoError(t, err)
+					_, err = Push(t.Context(), def, repoA, "remote")
+					require.NoError(t, err)
+					_, err = Fetch(t.Context(), def, repoB, "remote")
+					require.NoError(t, err)
 
-			var all []entity.MergeResult
-			for result := range MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", id1) {
-				all = append(all, result)
-			}
-			require.Len(t, all, 1)
-			require.NoError(t, all[0].Err)
-			require.Equal(t, tc.status, all[0].Status, all[0].Reason)
-			if tc.status == entity.MergeStatusInvalid {
-				require.Contains(t, all[0].Reason, "field_1 is invalid")
+					var all []entity.MergeResult
+					for result := range MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", id1) {
+						all = append(all, result)
+					}
+					require.Len(t, all, 1)
+					require.NoError(t, all[0].Err)
+					require.Equal(t, tc.status, all[0].Status, all[0].Reason)
+					if tc.status == entity.MergeStatusInvalid {
+						require.Contains(t, all[0].Reason, kind.reason)
+					}
+				})
 			}
 		})
 	}
