@@ -14,6 +14,7 @@ import (
 	"github.com/git-bug/git-bug/entity/dag"
 	"github.com/git-bug/git-bug/entity/dag/dagtest"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
@@ -102,6 +103,12 @@ func TestOperations(t *testing.T) {
 		for _, op := range []Operation{create, description, set, remove} {
 			require.ErrorContains(t, op.Validate(), "times", "operation type %d", op.Type())
 		}
+
+		// in the range a reader accepts, see jsondoc.MaxInt
+		create.Times = map[string]lamport.Time{"foo": jsondoc.MaxInt}
+		require.NoError(t, create.Validate())
+		create.Times = map[string]lamport.Time{"foo": jsondoc.MaxInt + 1}
+		require.ErrorContains(t, create.Validate(), "times: foo out of range")
 	})
 
 	t.Run("unknown", func(t *testing.T) {

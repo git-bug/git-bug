@@ -28,15 +28,11 @@ type scalar interface {
 	~string | ~int64 | ~bool
 }
 
-// maxInteger bounds the integer values, so that every JSON implementation reads
-// them exactly.
-const maxInteger = 1<<53 - 1
-
 // validateScalar checks what any value must satisfy, before the checks of its
-// setting.
+// setting: an integer in the range of jsondoc.MaxInt.
 func validateScalar[V scalar](value V) error {
 	v := reflect.ValueOf(value)
-	if v.Kind() == reflect.Int64 && (v.Int() > maxInteger || v.Int() < -maxInteger) {
+	if v.Kind() == reflect.Int64 && (v.Int() > jsondoc.MaxInt || v.Int() < -jsondoc.MaxInt) {
 		return fmt.Errorf("integer %d out of range", v.Int())
 	}
 	return nil

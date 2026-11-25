@@ -70,6 +70,11 @@ func (base *opBase) Validate(op Operation, opType dag.OperationType) error {
 	if base.Times == nil {
 		return fmt.Errorf("times not set")
 	}
+	for name, time := range base.Times {
+		if time > jsondoc.MaxInt {
+			return fmt.Errorf("times: %s out of range", name)
+		}
+	}
 	return nil
 }
 

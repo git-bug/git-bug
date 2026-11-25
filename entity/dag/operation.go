@@ -11,6 +11,7 @@ import (
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
@@ -200,6 +201,9 @@ func (base *OpBase) Validate(op Operation, opType OperationType) error {
 
 	if op.Time().Unix() == 0 {
 		return fmt.Errorf("time not set")
+	}
+	if base.UnixTime > jsondoc.MaxInt || base.UnixTime < -jsondoc.MaxInt {
+		return fmt.Errorf("timestamp out of range")
 	}
 
 	// The author only needs to resolve, see dag-entity.md §5 in the spec: the

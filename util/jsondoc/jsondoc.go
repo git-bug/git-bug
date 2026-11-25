@@ -21,9 +21,10 @@ import (
 	"strconv"
 )
 
-// maxInt is the largest integer, and -maxInt the smallest: every JSON
-// implementation reads them exactly.
-const maxInt = 1<<53 - 1
+// MaxInt is the largest integer, and -MaxInt the smallest: every JSON
+// implementation reads them exactly, see values.md §4 in the spec. A writer keeps
+// the integers it writes in that range, as Unmarshal rejects the others.
+const MaxInt = 1<<53 - 1
 
 // Unmarshal decodes data, a JSON document or a part of one, into v. It rejects
 // invalid UTF-8, an escaped surrogate other than a pair, a byte order mark, an
@@ -31,7 +32,7 @@ const maxInt = 1<<53 - 1
 // even within what v keeps as raw JSON. Names match exactly, case included. A member that is null sets its Go value to
 // zero, as an absent member leaves it in a new value: v is new, or a member that
 // is null isn't absent. An integer has neither a fraction nor an exponent, and
-// lies between -maxInt and maxInt. An array or a map holding null is an error.
+// lies between -MaxInt and MaxInt. An array or a map holding null is an error.
 func Unmarshal(data []byte, v any) error {
 	return json.Unmarshal(data, v, unmarshalers)
 }
@@ -107,7 +108,7 @@ func unmarshalInteger(dec *jsontext.Decoder, e reflect.Value) error {
 	switch {
 	case errors.Is(err, strconv.ErrSyntax):
 		return semanticError(e.Type(), value, "not an integer")
-	case err != nil || n > maxInt || n < -maxInt:
+	case err != nil || n > MaxInt || n < -MaxInt:
 		return semanticError(e.Type(), value, "integer out of range")
 	}
 	// then it has to fit e

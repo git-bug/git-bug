@@ -43,6 +43,10 @@ func TestValidate(t *testing.T) {
 		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@descartes.fr\u001b"), unix, common.ClosedStatus),
 		NewSetStatusOp(makeIdentity(t, "René \nDescartes", "rene@descartes.fr"), unix, common.ClosedStatus),
 		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@\ndescartes.fr"), unix, common.ClosedStatus),
+
+		// a timestamp at the bounds of the integers of JSON
+		NewSetStatusOp(rene, 1<<53-1, common.ClosedStatus),
+		NewSetStatusOp(rene, -(1<<53 - 1), common.ClosedStatus),
 	}
 
 	for _, op := range good {
@@ -57,6 +61,8 @@ func TestValidate(t *testing.T) {
 			Title:   "title",
 			Message: "message",
 		},
+		NewSetStatusOp(rene, 1<<53, common.ClosedStatus),
+		NewSetStatusOp(rene, -(1 << 53), common.ClosedStatus),
 
 		NewCreateOp(rene, unix, "multi\nline", "message", nil),
 		NewCreateOp(rene, unix, "title", "message", []repository.Hash{repository.Hash("invalid")}),

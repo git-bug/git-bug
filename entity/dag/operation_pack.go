@@ -85,6 +85,10 @@ func (opp *operationPack) Validate() error {
 	if opp.EditTime == 0 {
 		return fmt.Errorf("lamport edit time is zero")
 	}
+	// a reader rejects a larger clock, see parseClock
+	if opp.CreateTime > jsondoc.MaxInt || opp.EditTime > jsondoc.MaxInt {
+		return fmt.Errorf("lamport time out of range")
+	}
 	return nil
 }
 
@@ -266,18 +270,16 @@ func readOperationPack(ctx context.Context, def Definition, repo repository.Repo
 			id = entity.DeriveId(data)
 
 		case strings.HasPrefix(entry.Name, createClockEntryPrefix):
-			v, err := strconv.ParseUint(strings.TrimPrefix(entry.Name, createClockEntryPrefix), 10, 64)
+			createTime, err = parseClock(strings.TrimPrefix(entry.Name, createClockEntryPrefix))
 			if err != nil {
 				return nil, fmt.Errorf("can't read creation lamport time: %w", err)
 			}
-			createTime = lamport.Time(v)
 
 		case strings.HasPrefix(entry.Name, editClockEntryPrefix):
-			v, err := strconv.ParseUint(strings.TrimPrefix(entry.Name, editClockEntryPrefix), 10, 64)
+			editTime, err = parseClock(strings.TrimPrefix(entry.Name, editClockEntryPrefix))
 			if err != nil {
 				return nil, fmt.Errorf("can't read edit lamport time: %w", err)
 			}
-			editTime = lamport.Time(v)
 		}
 	}
 
@@ -338,22 +340,35 @@ func readOperationPackClock(ctx context.Context, repo repository.RepoData, commi
 	for _, entry := range entries {
 		switch {
 		case strings.HasPrefix(entry.Name, createClockEntryPrefix):
-			v, err := strconv.ParseUint(strings.TrimPrefix(entry.Name, createClockEntryPrefix), 10, 64)
+			createTime, err = parseClock(strings.TrimPrefix(entry.Name, createClockEntryPrefix))
 			if err != nil {
 				return 0, 0, fmt.Errorf("can't read creation lamport time: %w", err)
 			}
-			createTime = lamport.Time(v)
 
 		case strings.HasPrefix(entry.Name, editClockEntryPrefix):
-			v, err := strconv.ParseUint(strings.TrimPrefix(entry.Name, editClockEntryPrefix), 10, 64)
+			editTime, err = parseClock(strings.TrimPrefix(entry.Name, editClockEntryPrefix))
 			if err != nil {
 				return 0, 0, fmt.Errorf("can't read edit lamport time: %w", err)
 			}
-			editTime = lamport.Time(v)
 		}
 	}
 
 	return createTime, editTime, nil
+}
+
+// parseClock reads the Lamport time of a clock entry, after its prefix: a decimal
+// integer up to jsondoc.MaxInt, see dag-entity.md §4 in the spec. A clock read is
+// witnessed, then recorded in JSON, as by the versions of an identity: a larger
+// one would make those unreadable.
+func parseClock(s string) (lamport.Time, error) {
+	v, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	if v > jsondoc.MaxInt {
+		return 0, fmt.Errorf("%d out of range", v)
+	}
+	return lamport.Time(v), nil
 }
 
 // unmarshallPack checks data by the pack rules of dag-entity.md §5 in the spec:

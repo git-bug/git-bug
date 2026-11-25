@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/git-bug/git-bug/util/fracindex"
+	"github.com/git-bug/git-bug/util/jsondoc"
 )
 
 // listItem is the fields of the entries of an ordered list, for the tests: no
@@ -41,10 +42,10 @@ func TestShapes(t *testing.T) {
 
 	t.Run("integer range", func(t *testing.T) {
 		accept := func(int64) error { return nil }
-		for _, value := range []int64{0, maxInteger, -maxInteger} {
+		for _, value := range []int64{0, jsondoc.MaxInt, -jsondoc.MaxInt} {
 			require.NoError(t, SetField(value).validate(accept))
 		}
-		for _, value := range []int64{maxInteger + 1, -maxInteger - 1} {
+		for _, value := range []int64{jsondoc.MaxInt + 1, -jsondoc.MaxInt - 1} {
 			require.Error(t, SetField(value).validate(accept))
 		}
 	})

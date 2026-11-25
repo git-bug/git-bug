@@ -194,10 +194,18 @@ func (v *version) Validate() error {
 	if v.commitHash != "" && v.unixTime == 0 {
 		return fmt.Errorf("unix time not set")
 	}
+	if v.unixTime > jsondoc.MaxInt || v.unixTime < -jsondoc.MaxInt {
+		return fmt.Errorf("unix time out of range")
+	}
 
 	// absent or null when nil, empty when no clock is known
 	if v.times == nil {
 		return fmt.Errorf("lamport times not set")
+	}
+	for name, time := range v.times {
+		if time > jsondoc.MaxInt {
+			return fmt.Errorf("lamport time %s out of range", name)
+		}
 	}
 
 	if text.Empty(v.name) && text.Empty(v.login) {
