@@ -367,7 +367,7 @@ func completeQuery(q *query.Query, opts bugOptions) error {
 
 	q.Author = append(q.Author, opts.authorQuery...)
 	for _, str := range opts.metadataQuery {
-		tokens := strings.Split(str, "=")
+		tokens := strings.SplitN(str, "=", 2)
 		if len(tokens) < 2 {
 			return fmt.Errorf("no \"=\" in key=value metadata markup")
 		}
