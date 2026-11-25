@@ -202,12 +202,10 @@ func (base *OpBase) Validate(op Operation, opType OperationType) error {
 		return fmt.Errorf("time not set")
 	}
 
+	// The author only needs to resolve, see dag-entity.md §5 in the spec: the
+	// versions of its identity are judged when taken in, see identity.md §4.5.
 	if base.author == nil {
 		return fmt.Errorf("author not set")
-	}
-
-	if err := op.Author().Validate(); err != nil {
-		return fmt.Errorf("author: %w", err)
 	}
 
 	if op, ok := op.(OperationWithFiles); ok {

@@ -36,6 +36,13 @@ func TestValidate(t *testing.T) {
 		NewAddCommentOp(rene, unix, "message2", nil),
 		NewSetStatusOp(rene, unix, common.ClosedStatus),
 		NewLabelChangeOperation(rene, unix, []common.Label{"added"}, []common.Label{"removed"}),
+
+		// an author whose identity is invalid: the identity is judged on its own
+		NewSetStatusOp(makeIdentity(t, "", "rene@descartes.fr"), unix, common.ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René Descartes\u001b", "rene@descartes.fr"), unix, common.ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@descartes.fr\u001b"), unix, common.ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René \nDescartes", "rene@descartes.fr"), unix, common.ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@\ndescartes.fr"), unix, common.ClosedStatus),
 	}
 
 	for _, op := range good {
@@ -46,11 +53,6 @@ func TestValidate(t *testing.T) {
 
 	bad := []Operation{
 		// opbase
-		NewSetStatusOp(makeIdentity(t, "", "rene@descartes.fr"), unix, common.ClosedStatus),
-		NewSetStatusOp(makeIdentity(t, "René Descartes\u001b", "rene@descartes.fr"), unix, common.ClosedStatus),
-		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@descartes.fr\u001b"), unix, common.ClosedStatus),
-		NewSetStatusOp(makeIdentity(t, "René \nDescartes", "rene@descartes.fr"), unix, common.ClosedStatus),
-		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@\ndescartes.fr"), unix, common.ClosedStatus),
 		&CreateOperation{OpBase: dag.NewOpBase(CreateOp, rene, 0),
 			Title:   "title",
 			Message: "message",
