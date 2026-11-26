@@ -125,3 +125,32 @@ func rebuildClock(repo repository.Repo, name string, time lamport.Time) error {
 
 	return clock.Witness(time)
 }
+
+// maxClockJump bounds how far a time read goes above the ones before it: the edit
+// time of a commit above the ones of its parents, and the times of a root or a
+// merge commit taken in above the local clocks, see readSince. A remote can't push
+// the clocks toward their limit faster than that.
+const maxClockJump = 1_000_000
+
+// readLocalClocks returns the times of the clocks of a definition, which must be
+// usable, see EnsureClocks.
+func readLocalClocks(def Definition, repo repository.Repo) (createTime, editTime lamport.Time, err error) {
+	createTime, err = clockTime(repo, def.creationClock())
+	if err != nil {
+		return 0, 0, err
+	}
+	editTime, err = clockTime(repo, def.editClock())
+	if err != nil {
+		return 0, 0, err
+	}
+	return createTime, editTime, nil
+}
+
+// clockTime returns the time of a clock of the repository.
+func clockTime(repo repository.Repo, name string) (lamport.Time, error) {
+	clock, err := repo.GetClock(name)
+	if err != nil {
+		return 0, err
+	}
+	return clock.Time()
+}

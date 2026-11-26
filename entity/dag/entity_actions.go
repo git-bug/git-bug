@@ -117,6 +117,8 @@ func Pull[EntityT entity.Interface](ctx context.Context, def Definition, wrapper
 //
 // A remote reference whose key can't hold an Entity is ignored, and nothing is emitted for it.
 // The key of an Entity in the outdated repository format emits entity.MergeStatusInvalid.
+// So does a remote reference whose merge would take in a lamport time out of reach of the
+// local clocks, see readSince.
 //
 // Note: an author is necessary for the case where a merge commit is created, as this commit will
 // have an author and may be signed if a signing key is available. The author can be nil, in which
@@ -129,6 +131,13 @@ func MergeAll[EntityT entity.Interface](ctx context.Context, def Definition, wra
 
 		remoteRefs, err := repo.ListTrackingRefs(ctx, remote, def.Namespace)
 		if err != nil {
+			out <- entity.NewMergeError(err, "")
+			return
+		}
+
+		// the times taken in are checked against the local clocks, see
+		// readSince: a fresh clone has none yet
+		if err := EnsureClocks(ctx, def, repo); err != nil {
 			out <- entity.NewMergeError(err, "")
 			return
 		}
@@ -197,7 +206,9 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 		}
 	}
 
-	remote, remoteCommits, err := readEntity(ctx, def, repo, resolvers, id, remoteCommit)
+	// the times of the remote Entity are taken in, so they must be within reach of the
+	// local clocks
+	remote, remoteCommits, err := readEntity(ctx, def, repo, resolvers, id, remoteCommit, true)
 	if err != nil {
 		// a read cut short says nothing of the remote data
 		if ctx.Err() != nil {
