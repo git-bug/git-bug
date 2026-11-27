@@ -411,3 +411,38 @@ func TestIdentityRemove(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, ids, 0)
 }
+
+// A version taken in is checked against the one before it, the held tip for the
+// first one: the held versions were judged when taken in, see validateFrom.
+func TestIdentityValidateFrom(t *testing.T) {
+	type times = map[string]lamport.Time
+
+	for _, tc := range []struct {
+		name   string
+		chain  []times
+		from   int
+		errMsg string
+	}{
+		{name: "clocks that go up or stay", chain: []times{{"foo": 1}, {"foo": 2}, {"foo": 2, "bar": 1}}},
+		{name: "a clock going back", chain: []times{{"foo": 2}, {"foo": 1}}, errMsg: "non-chronological lamport clock foo"},
+		{name: "a clock dropped", chain: []times{{"foo": 1}, {}}, errMsg: "missing foo"},
+		{name: "a held pair with a clock going back", chain: []times{{"foo": 2}, {"foo": 1}, {"foo": 1}}, from: 2},
+		{name: "a held pair with a clock dropped", chain: []times{{"foo": 1}, {}, {}}, from: 2},
+		{name: "a clock of the held tip going back", chain: []times{{"foo": 1}, {"foo": 2}, {"foo": 1}}, from: 2, errMsg: "non-chronological lamport clock foo"},
+		{name: "a clock of the held tip dropped", chain: []times{{"foo": 1}, {"foo": 1}, {}}, from: 2, errMsg: "missing foo"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			identity := Identity{}
+			for _, ts := range tc.chain {
+				identity.versions = append(identity.versions, &version{name: "René", nonce: make([]byte, 20), times: ts})
+			}
+
+			err := identity.validateFrom(tc.from)
+			if tc.errMsg == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tc.errMsg)
+			}
+		})
+	}
+}

@@ -115,6 +115,39 @@ func TestVersionAvatarURL(t *testing.T) {
 	})
 }
 
+// A writer keeps the integers of a version in the range a reader accepts, see
+// jsondoc.MaxInt.
+func TestVersionIntegerRange(t *testing.T) {
+	makeVersion := func(t *testing.T) *version {
+		v, err := newVersion(makeIdentityTestRepo(t), "Alice", "", "", "", nil)
+		require.NoError(t, err)
+		return v
+	}
+
+	t.Run("unix time", func(t *testing.T) {
+		for _, c := range []struct {
+			unixTime int64
+			valid    bool
+		}{{jsondoc.MaxInt, true}, {-jsondoc.MaxInt, true}, {jsondoc.MaxInt + 1, false}, {-jsondoc.MaxInt - 1, false}} {
+			v := makeVersion(t)
+			v.unixTime = c.unixTime
+			if c.valid {
+				require.NoError(t, v.Validate(), c.unixTime)
+			} else {
+				require.ErrorContains(t, v.Validate(), "unix time out of range", c.unixTime)
+			}
+		}
+	})
+
+	t.Run("times", func(t *testing.T) {
+		v := makeVersion(t)
+		v.times = map[string]lamport.Time{"foo": jsondoc.MaxInt}
+		require.NoError(t, v.Validate())
+		v.times = map[string]lamport.Time{"foo": jsondoc.MaxInt + 1}
+		require.ErrorContains(t, v.Validate(), "lamport time foo out of range")
+	})
+}
+
 func TestVersionUnmarshal(t *testing.T) {
 	t.Run("null key", func(t *testing.T) {
 		// an array holding null makes the version invalid

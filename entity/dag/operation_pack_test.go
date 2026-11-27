@@ -3,6 +3,7 @@ package dag
 import (
 	"encoding/json"
 	"math/rand"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 )
 
 func TestOperationPackReadWrite(t *testing.T) {
@@ -51,6 +53,45 @@ func TestOperationPackReadWrite(t *testing.T) {
 		var raw map[string]json.RawMessage
 		require.NoError(t, json.Unmarshal(data, &raw))
 		require.Equal(t, `[]`, string(raw["ops"]))
+	})
+
+	t.Run("clock out of range", func(t *testing.T) {
+		// a writer never writes a clock above jsondoc.MaxInt
+		tooLate := &operationPack{Author: author, CreateTime: 1, EditTime: jsondoc.MaxInt + 1}
+		_, err := tooLate.Write(t.Context(), def, repo)
+		require.ErrorContains(t, err, "lamport time out of range")
+
+		// a reader rejects one, as written into the edit clock entry of the pack above
+		entries, err := repo.ReadTree(t.Context(), commit.TreeHash)
+		require.NoError(t, err)
+		for _, c := range []struct {
+			clock uint64
+			valid bool
+		}{{jsondoc.MaxInt, true}, {jsondoc.MaxInt + 1, false}} {
+			renamed := make([]repository.TreeEntry, len(entries))
+			for i, entry := range entries {
+				if strings.HasPrefix(entry.Name, editClockEntryPrefix) {
+					entry.Name = editClockEntryPrefix + strconv.FormatUint(c.clock, 10)
+				}
+				renamed[i] = entry
+			}
+			tree, err := repo.StoreTree(t.Context(), renamed)
+			require.NoError(t, err)
+			hash, err := repo.StoreCommit(t.Context(), tree)
+			require.NoError(t, err)
+			commit, err := repo.ReadCommit(t.Context(), hash)
+			require.NoError(t, err)
+
+			_, err = readOperationPack(t.Context(), def, repo, resolver, commit)
+			_, _, clockErr := readOperationPackClock(t.Context(), repo, commit)
+			if c.valid {
+				require.NoError(t, err)
+				require.NoError(t, clockErr)
+			} else {
+				require.ErrorContains(t, err, "out of range")
+				require.ErrorContains(t, clockErr, "out of range")
+			}
+		}
 	})
 }
 
@@ -187,6 +228,8 @@ func TestUnmarshallPack(t *testing.T) {
 	}{
 		{"the reference: every rule followed", `{"author":{"id":"` + id + `"},"ops":[` + op + `]}`, true},
 		{"a member of author that the reader does not know is ignored", `{"author":{"id":"` + id + `","name":"Alice"},"ops":[` + op + `]}`, true},
+		{"ops that is absent, as in a merge commit", `{"author":{"id":"` + id + `"}}`, true},
+		{"ops that is null is absent", `{"author":{"id":"` + id + `"},"ops":null}`, true},
 		{"a pack without author", `{"ops":[` + op + `]}`, false},
 		{"an author that is null is absent", `{"author":null,"ops":[` + op + `]}`, false},
 		{"an author without id", `{"author":{},"ops":[` + op + `]}`, false},

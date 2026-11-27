@@ -117,6 +117,8 @@ func Pull[EntityT entity.Interface](ctx context.Context, def Definition, wrapper
 //
 // A remote reference whose key can't hold an Entity is ignored, and nothing is emitted for it.
 // The key of an Entity in the outdated repository format emits entity.MergeStatusInvalid.
+// So does a remote reference whose merge would take in a lamport time out of reach of the
+// local clocks, see readSince.
 //
 // Note: an author is necessary for the case where a merge commit is created, as this commit will
 // have an author and may be signed if a signing key is available. The author can be nil, in which
@@ -129,6 +131,13 @@ func MergeAll[EntityT entity.Interface](ctx context.Context, def Definition, wra
 
 		remoteRefs, err := repo.ListTrackingRefs(ctx, remote, def.Namespace)
 		if err != nil {
+			out <- entity.NewMergeError(err, "")
+			return
+		}
+
+		// the times taken in are checked against the local clocks, see
+		// readSince: a fresh clone has none yet
+		if err := EnsureClocks(ctx, def, repo); err != nil {
 			out <- entity.NewMergeError(err, "")
 			return
 		}
@@ -174,6 +183,7 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 	// the most common case.
 
 	var localRoot repository.Hash
+	var localCommits map[repository.Hash]repository.Commit
 	if localExist {
 		// SCENARIO 1
 		// if the remote and local Entity have the same state, nothing is changed
@@ -186,7 +196,6 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 		// SCENARIO 2
 		// if the local Entity has new commits but the remote don't, nothing is changed
 
-		var localCommits map[repository.Hash]repository.Commit
 		localCommits, localRoot, err = walkHistory(ctx, repo, localCommit, "")
 		if err != nil {
 			return entity.NewMergeError(err, id)
@@ -197,7 +206,9 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 		}
 	}
 
-	remoteEntity, remoteCommits, err := read[EntityT](ctx, def, wrapper, repo, resolvers, id, remoteCommit)
+	// the times of the remote Entity are taken in, so they must be within reach of the
+	// local clocks
+	remote, remoteCommits, err := readEntity(ctx, def, repo, resolvers, id, remoteCommit, true)
 	if err != nil {
 		// a read cut short says nothing of the remote data
 		if ctx.Err() != nil {
@@ -207,7 +218,13 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 	}
 
 	// Check for error in remote data
-	if err := remoteEntity.Validate(); err != nil {
+	if err := wrapper(remote).Validate(); err != nil {
+		return entity.NewMergeInvalidStatus(id, fmt.Errorf("remote %s data is invalid: %w", def.Typename, err).Error())
+	}
+	if err := invalidTakenIn(ctx, def, repo, resolvers, remote, remoteCommits, localCommits); err != nil {
+		if ctx.Err() != nil {
+			return entity.NewMergeError(err, id)
+		}
 		return entity.NewMergeInvalidStatus(id, fmt.Errorf("remote %s data is invalid: %w", def.Typename, err).Error())
 	}
 
@@ -289,6 +306,38 @@ func merge[EntityT entity.Interface](ctx context.Context, def Definition, wrappe
 	}
 
 	return entity.NewMergeUpdatedStatus(id)
+}
+
+// invalidTakenIn returns an error if an operation that merging the remote Entity
+// takes in is invalid: one in a commit that the local Entity, made of
+// localCommits, doesn't hold. Those the local Entity holds were judged when taken
+// in, see dag-entity.md §6 in the spec.
+func invalidTakenIn(ctx context.Context, def Definition, repo repository.Repo, resolvers entity.Resolvers, remote *Entity, remoteCommits map[repository.Hash]repository.Commit, localCommits map[repository.Hash]repository.Commit) error {
+	// a new Entity: every operation is taken in, and was judged by reading it
+	if len(localCommits) == 0 {
+		for _, op := range remote.ops {
+			if err := op.Invalid(); err != nil {
+				return fmt.Errorf("operation %s: %w", op.Id(), err)
+			}
+		}
+		return nil
+	}
+	// otherwise, judge the packs of the commits taken in: usually a few
+	for hash, commit := range remoteCommits {
+		if _, ok := localCommits[hash]; ok {
+			continue
+		}
+		opp, err := readOperationPack(ctx, def, repo, resolvers, commit)
+		if err != nil {
+			return err
+		}
+		for _, op := range opp.Operations {
+			if err := op.Invalid(); err != nil {
+				return fmt.Errorf("operation %s: %w", op.Id(), err)
+			}
+		}
+	}
+	return nil
 }
 
 // Remove delete an Entity, as well as its tracking refs for every remote.

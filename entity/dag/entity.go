@@ -90,18 +90,27 @@ func ReadSingleton[EntityT entity.Interface](ctx context.Context, def Definition
 // that it is the Entity with the expected id, if not empty.
 // It also returns the commits of the Entity.
 func read[EntityT entity.Interface](ctx context.Context, def Definition, wrapper func(e *Entity) EntityT, repo repository.Repo, resolvers entity.Resolvers, expected entity.Id, lastCommit repository.Hash) (EntityT, map[repository.Hash]repository.Commit, error) {
-	ops, createTime, editTime, commits, err := readSince(ctx, def, repo, resolvers, expected, lastCommit, "", 0)
+	e, commits, err := readEntity(ctx, def, repo, resolvers, expected, lastCommit, false)
 	if err != nil {
 		return *new(EntityT), nil, err
 	}
+	return wrapper(e), commits, nil
+}
 
-	return wrapper(&Entity{
+// readEntity is read, without the wrapper, and with checkClockReach as in readSince.
+func readEntity(ctx context.Context, def Definition, repo repository.Repo, resolvers entity.Resolvers, expected entity.Id, lastCommit repository.Hash, checkClockReach bool) (*Entity, map[repository.Hash]repository.Commit, error) {
+	ops, createTime, editTime, commits, err := readSince(ctx, def, repo, resolvers, expected, lastCommit, "", 0, checkClockReach)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &Entity{
 		Definition: def,
 		ops:        ops,
 		lastCommit: lastCommit,
 		createTime: createTime,
 		editTime:   editTime,
-	}), commits, nil
+	}, commits, nil
 }
 
 // walkHistory performs a breadth-first search to read lastCommit and its ancestors,
@@ -156,8 +165,12 @@ func walkHistory(ctx context.Context, repo repository.RepoData, lastCommit repos
 // and make sure that it is the Entity with the expected id, if not empty.
 // If since is not empty, only the commits after it are read, and sinceEditTime must be
 // its edit time. Those commits must all descend from it, otherwise an error is returned.
+// If checkClockReach, the times of the root and of the merge commits must be within
+// reach of the local clocks, which must be usable: at most maxClockJump above them,
+// otherwise an error is returned. A merge asks for it, as it takes in an Entity the
+// clocks haven't witnessed, see dag-entity.md §10 in the spec.
 // It also returns the commits it read.
-func readSince(ctx context.Context, def Definition, repo repository.Repo, resolvers entity.Resolvers, expected entity.Id, lastCommit repository.Hash, since repository.Hash, sinceEditTime lamport.Time) ([]Operation, lamport.Time, lamport.Time, map[repository.Hash]repository.Commit, error) {
+func readSince(ctx context.Context, def Definition, repo repository.Repo, resolvers entity.Resolvers, expected entity.Id, lastCommit repository.Hash, since repository.Hash, sinceEditTime lamport.Time, checkClockReach bool) ([]Operation, lamport.Time, lamport.Time, map[repository.Hash]repository.Commit, error) {
 	// Discover the commits of the DAG, then count the children of each commit.
 
 	commits, _, err := walkHistory(ctx, repo, lastCommit, since)
@@ -249,6 +262,15 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 		return false
 	}
 
+	// read before the times of this Entity are witnessed, see below
+	var localCreateTime, localEditTime lamport.Time
+	if checkClockReach {
+		localCreateTime, localEditTime, err = readLocalClocks(def, repo)
+		if err != nil {
+			return nil, 0, 0, nil, err
+		}
+	}
+
 	for i, commit := range slices.Backward(topoOrder) {
 		isFirstCommit := since == "" && i == len(topoOrder)-1
 		isMerge := len(commit.Parents) > 1
@@ -301,6 +323,12 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 		if isFirstCommit && expected != "" && opp.Operations[0].Id() != expected {
 			return nil, 0, 0, nil, fmt.Errorf("the %s doesn't match its id %s", def.Typename, expected)
 		}
+		// Without a valid first operation, the Entity has no state to start from.
+		if isFirstCommit {
+			if err := opp.Operations[0].Invalid(); err != nil {
+				return nil, 0, 0, nil, fmt.Errorf("the first operation of the %s is invalid: %w", def.Typename, err)
+			}
+		}
 
 		// make sure that the lamport clocks causality match the DAG topology
 		for _, parentHash := range commit.Parents {
@@ -310,13 +338,20 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 				return nil, 0, 0, nil, fmt.Errorf("lamport clock ordering doesn't match the DAG")
 			}
 
-			// to avoid an attack where clocks are pushed toward the uint64 rollover, make sure
-			// that the clocks don't jump too far in the future
+			// to avoid an attack where clocks are pushed toward their limit, make sure
+			// that the clocks don't jump too far in the future, see maxClockJump
 			// we ignore merge commits here to allow merging after a loooong time without breaking anything,
 			// as long as there is one valid chain of small hops, it's fine.
-			if !isMerge && opp.EditTime-parentEditTime > 1_000_000 {
+			if !isMerge && opp.EditTime-parentEditTime > maxClockJump {
 				return nil, 0, 0, nil, fmt.Errorf("lamport clock jumping too far in the future, likely an attack")
 			}
+		}
+
+		// the root and the merge commits aren't bounded by their parents, but can be
+		// by the local clocks
+		if checkClockReach && (isFirstCommit || isMerge) &&
+			(opp.CreateTime > localCreateTime+maxClockJump || opp.EditTime > localEditTime+maxClockJump) {
+			return nil, 0, 0, nil, fmt.Errorf("lamport time out of reach of the local clocks")
 		}
 
 		// A merge joins diverged branches: none of its parents can be an ancestor
@@ -333,18 +368,6 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 
 		oppMap[commit.Hash] = opp
 		opsCount += len(opp.Operations)
-	}
-
-	// The clocks are fine, we witness them
-	for _, opp := range oppMap {
-		err := witnessClock(repo, def.creationClock(), opp.CreateTime)
-		if err != nil {
-			return nil, 0, 0, nil, err
-		}
-		err = witnessClock(repo, def.editClock(), opp.EditTime)
-		if err != nil {
-			return nil, 0, 0, nil, err
-		}
 	}
 
 	// Now that we know that the topological order and clocks are fine, we order the operationPacks
@@ -382,6 +405,17 @@ func readSince(ctx context.Context, def Definition, repo repository.Repo, resolv
 		if pack.EditTime > editTime {
 			editTime = pack.EditTime
 		}
+	}
+
+	// The clocks are fine, we witness them: a clock only goes up, so the highest
+	// times are enough
+	err = witnessClock(repo, def.creationClock(), createTime)
+	if err != nil {
+		return nil, 0, 0, nil, err
+	}
+	err = witnessClock(repo, def.editClock(), editTime)
+	if err != nil {
+		return nil, 0, 0, nil, err
 	}
 
 	return ops, createTime, editTime, commits, nil
@@ -505,23 +539,35 @@ func (e *Entity) Validate() error {
 		return fmt.Errorf("entity has no operations")
 	}
 
-	return validateOperations(e.ops, e.staging)
+	return validateOperations(e.Definition, e.ops, e.staging)
 }
 
-// validateOperations checks that each operation is valid, and that there is
-// no colliding operation's ID across all the given lists.
-func validateOperations(lists ...[]Operation) error {
+// validateOperations checks that each added operation is valid, and that there
+// is no colliding operation's ID across held and added. The held operations,
+// read from the Entity, were judged when taken in: one that is invalid stays,
+// flagged, see Operation.Invalid and dag-entity.md §6 in the spec. An added
+// operation is judged by its position too, see Definition.ValidatePosition.
+func validateOperations(def Definition, held []Operation, added []Operation) error {
 	ids := make(map[entity.Id]struct{})
-	for _, list := range lists {
-		for _, op := range list {
-			if err := op.Validate(); err != nil {
+	for _, op := range held {
+		if _, ok := ids[op.Id()]; ok {
+			return fmt.Errorf("id collision: %s", op.Id())
+		}
+		ids[op.Id()] = struct{}{}
+	}
+	for i, op := range added {
+		if err := op.Validate(); err != nil {
+			return err
+		}
+		if def.ValidatePosition != nil {
+			if err := def.ValidatePosition(op, len(held) == 0 && i == 0); err != nil {
 				return err
 			}
-			if _, ok := ids[op.Id()]; ok {
-				return fmt.Errorf("id collision: %s", op.Id())
-			}
-			ids[op.Id()] = struct{}{}
 		}
+		if _, ok := ids[op.Id()]; ok {
+			return fmt.Errorf("id collision: %s", op.Id())
+		}
+		ids[op.Id()] = struct{}{}
 	}
 	return nil
 }
@@ -642,7 +688,7 @@ func (e *Entity) commitOperationsLocked(ctx context.Context, repo repository.Rep
 	}
 
 	// pending operations are ignored, they are not part of this commit
-	err := validateOperations(e.ops, ops)
+	err := validateOperations(e.Definition, e.ops, ops)
 	if err != nil {
 		return fmt.Errorf("can't commit a %s with invalid data: %w", e.Definition.Typename, err)
 	}
@@ -762,7 +808,7 @@ func (e *Entity) Repair(ctx context.Context, repo repository.Repo, resolvers ent
 	// any real problem.
 	// Note: both read the clocks, so that the next commit get higher ones.
 	if e.lastCommit != "" {
-		ops, createTime, editTime, _, err := readSince(ctx, e.Definition, repo, resolvers, id, commit, e.lastCommit, e.editTime)
+		ops, createTime, editTime, _, err := readSince(ctx, e.Definition, repo, resolvers, id, commit, e.lastCommit, e.editTime, false)
 		if err == nil {
 			// readSince only sees the new operations, check them against the known ones
 			known := make(map[entity.Id]struct{}, len(e.ops))
@@ -793,7 +839,7 @@ func (e *Entity) Repair(ctx context.Context, repo repository.Repo, resolvers ent
 	if e.isSingleton() {
 		expected = ""
 	}
-	ops, createTime, editTime, _, err := readSince(ctx, e.Definition, repo, resolvers, expected, commit, "", 0)
+	ops, createTime, editTime, _, err := readSince(ctx, e.Definition, repo, resolvers, expected, commit, "", 0, false)
 	if err != nil {
 		return err
 	}

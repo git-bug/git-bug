@@ -399,7 +399,9 @@ func (i *Identity) Commit(ctx context.Context, repo repository.Repo) error {
 		return fmt.Errorf("can't commit an identity with no pending version")
 	}
 
-	if err := i.Validate(); err != nil {
+	// the committed versions were judged when taken in
+	pending := slices.IndexFunc(i.versions, func(v *version) bool { return v.commitHash == "" })
+	if err := i.validateFrom(pending); err != nil {
 		return fmt.Errorf("can't commit an identity with invalid data: %w", err)
 	}
 
@@ -545,31 +547,36 @@ func (i *Identity) Merge(ctx context.Context, repo repository.Repo, other *Ident
 
 // Validate check if the Identity data is valid
 func (i *Identity) Validate() error {
-	lastTimes := make(map[string]lamport.Time)
+	return i.validateFrom(0)
+}
 
+// validateFrom checks the versions from index from on: those that a commit or a
+// merge takes in. Each is checked for its data, and against the version before
+// it, the held tip for the first one: it keeps every clock, none going back. The
+// versions before were judged when taken in, and are kept even if invalid, see
+// identity.md §4.5 in the spec: an identity would otherwise become unreadable for
+// good, and with it every entity it authored.
+func (i *Identity) validateFrom(from int) error {
 	if len(i.versions) == 0 {
 		return fmt.Errorf("no version")
 	}
 
-	for _, v := range i.versions {
+	for j := from; j < len(i.versions); j++ {
+		v := i.versions[j]
 		if err := v.Validate(); err != nil {
 			return err
 		}
-
-		// check for always increasing lamport time
-		// check that a new version didn't drop a clock
-		for name, previous := range lastTimes {
-			if now, ok := v.times[name]; ok {
-				if now < previous {
-					return fmt.Errorf("non-chronological lamport clock %s (%d --> %d)", name, previous, now)
-				}
-			} else {
+		if j == 0 {
+			continue
+		}
+		for name, previous := range i.versions[j-1].times {
+			now, ok := v.times[name]
+			if !ok {
 				return fmt.Errorf("version has less lamport clocks than before (missing %s)", name)
 			}
-		}
-
-		for name, now := range v.times {
-			lastTimes[name] = now
+			if now < previous {
+				return fmt.Errorf("non-chronological lamport clock %s (%d --> %d)", name, previous, now)
+			}
 		}
 	}
 

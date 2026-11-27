@@ -11,6 +11,7 @@ import (
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/jsondoc"
 	"github.com/git-bug/git-bug/util/lamport"
 )
 
@@ -44,6 +45,11 @@ type Operation interface {
 	Type() OperationType
 	// Validate check if the Operation data is valid
 	Validate() error
+	// Invalid returns why an operation read from an entity is invalid, or nil if
+	// it is not. Such an operation was judged valid by earlier rules, or pushed to
+	// a repository directly: it is kept as it is, but has no effect, as a snapshot
+	// leaves it out. See dag-entity.md §6 in the spec.
+	Invalid() error
 	// Author returns the author of this operation
 	Author() identity.Interface
 	// Time return the time when the operation was added
@@ -66,6 +72,9 @@ type Operation interface {
 	setId(id entity.Id)
 	// setAuthor allow to set the author, used when unmarshalling only
 	setAuthor(author identity.Interface)
+	// setInvalid flags the operation as invalid, used when unmarshalling only, see
+	// Invalid
+	setInvalid(reason error)
 	// setEditTime sets the edit time, used when reading a pack, or on a copy, see
 	// withEditTime
 	setEditTime(time lamport.Time)
@@ -115,6 +124,8 @@ type OpBase struct {
 	// Not serialized. The edit time of the pack holding the operation, see
 	// Operation.EditTime.
 	editTime lamport.Time
+	// Not serialized. Why the operation is invalid, see Operation.Invalid.
+	invalid error
 
 	OperationType OperationType `json:"type"`
 	UnixTime      int64         `json:"timestamp"`
@@ -191,13 +202,14 @@ func (base *OpBase) Validate(op Operation, opType OperationType) error {
 	if op.Time().Unix() == 0 {
 		return fmt.Errorf("time not set")
 	}
-
-	if base.author == nil {
-		return fmt.Errorf("author not set")
+	if base.UnixTime > jsondoc.MaxInt || base.UnixTime < -jsondoc.MaxInt {
+		return fmt.Errorf("timestamp out of range")
 	}
 
-	if err := op.Author().Validate(); err != nil {
-		return fmt.Errorf("author: %w", err)
+	// The author only needs to resolve, see dag-entity.md §5 in the spec: the
+	// versions of its identity are judged when taken in, see identity.md §4.5.
+	if base.author == nil {
+		return fmt.Errorf("author not set")
 	}
 
 	if op, ok := op.(OperationWithFiles); ok {
@@ -288,6 +300,16 @@ func (base *OpBase) setId(id entity.Id) {
 // setAuthor allow to set the author, used when unmarshalling only
 func (base *OpBase) setAuthor(author identity.Interface) {
 	base.author = author
+}
+
+// Invalid returns why the operation is invalid, see Operation.Invalid.
+func (base *OpBase) Invalid() error {
+	return base.invalid
+}
+
+// setInvalid flags the operation as invalid, used when unmarshalling only
+func (base *OpBase) setInvalid(reason error) {
+	base.invalid = reason
 }
 
 // EditTime returns the Lamport time of the pack holding the operation, see

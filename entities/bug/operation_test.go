@@ -36,6 +36,17 @@ func TestValidate(t *testing.T) {
 		NewAddCommentOp(rene, unix, "message2", nil),
 		NewSetStatusOp(rene, unix, common.ClosedStatus),
 		NewLabelChangeOperation(rene, unix, []common.Label{"added"}, []common.Label{"removed"}),
+
+		// an author whose identity is invalid: the identity is judged on its own
+		NewSetStatusOp(makeIdentity(t, "", "rene@descartes.fr"), unix, common.ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René Descartes\u001b", "rene@descartes.fr"), unix, common.ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@descartes.fr\u001b"), unix, common.ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René \nDescartes", "rene@descartes.fr"), unix, common.ClosedStatus),
+		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@\ndescartes.fr"), unix, common.ClosedStatus),
+
+		// a timestamp at the bounds of the integers of JSON
+		NewSetStatusOp(rene, 1<<53-1, common.ClosedStatus),
+		NewSetStatusOp(rene, -(1<<53 - 1), common.ClosedStatus),
 	}
 
 	for _, op := range good {
@@ -46,15 +57,12 @@ func TestValidate(t *testing.T) {
 
 	bad := []Operation{
 		// opbase
-		NewSetStatusOp(makeIdentity(t, "", "rene@descartes.fr"), unix, common.ClosedStatus),
-		NewSetStatusOp(makeIdentity(t, "René Descartes\u001b", "rene@descartes.fr"), unix, common.ClosedStatus),
-		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@descartes.fr\u001b"), unix, common.ClosedStatus),
-		NewSetStatusOp(makeIdentity(t, "René \nDescartes", "rene@descartes.fr"), unix, common.ClosedStatus),
-		NewSetStatusOp(makeIdentity(t, "René Descartes", "rene@\ndescartes.fr"), unix, common.ClosedStatus),
 		&CreateOperation{OpBase: dag.NewOpBase(CreateOp, rene, 0),
 			Title:   "title",
 			Message: "message",
 		},
+		NewSetStatusOp(rene, 1<<53, common.ClosedStatus),
+		NewSetStatusOp(rene, -(1 << 53), common.ClosedStatus),
 
 		NewCreateOp(rene, unix, "multi\nline", "message", nil),
 		NewCreateOp(rene, unix, "title", "message", []repository.Hash{repository.Hash("invalid")}),
@@ -255,6 +263,11 @@ func TestValidityExamples(t *testing.T) {
 			require.NoError(t, err)
 
 			op, err := operationUnmarshaler(t.Context(), raw, nil)
+			if err == nil {
+				// an operation that can't be decoded is flagged invalid already,
+				// which replacing its OpBase below would lose
+				err = op.Invalid()
+			}
 			if err == nil {
 				// a read takes the author from the operation pack: give the
 				// operation one, keeping what it decoded

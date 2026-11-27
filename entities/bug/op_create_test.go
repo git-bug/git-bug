@@ -91,3 +91,30 @@ func TestCommitOperations(t *testing.T) {
 		})
 	})
 }
+
+func TestValidatePosition(t *testing.T) {
+	now := time.Now().Unix()
+	create := NewCreateOp(nil, now, "title", "message", nil)
+	comment := NewAddCommentOp(nil, now, "comment", nil)
+
+	for _, tc := range []struct {
+		name   string
+		op     Operation
+		isRoot bool
+		err    string
+	}{
+		{name: "Create op at the root", op: create, isRoot: true},
+		{name: "Create op elsewhere", op: create, err: "only one Create op allowed"},
+		{name: "other op at the root", op: comment, isRoot: true, err: "a bug starts with a Create op"},
+		{name: "other op elsewhere", op: comment},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validatePosition(tc.op, tc.isRoot)
+			if tc.err == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tc.err)
+			}
+		})
+	}
+}

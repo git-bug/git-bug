@@ -14,6 +14,7 @@ import (
 	"github.com/git-bug/git-bug/entities/identity"
 	"github.com/git-bug/git-bug/entity"
 	"github.com/git-bug/git-bug/repository"
+	"github.com/git-bug/git-bug/util/lamport"
 )
 
 func allEntities(t testing.TB, bugs <-chan entity.StreamedEntity[*Foo]) []*Foo {
@@ -781,6 +782,91 @@ func TestMergeInvalidRemote(t *testing.T) {
 	}
 }
 
+func TestMergeInvalidOperation(t *testing.T) {
+	for _, kind := range []struct {
+		name             string
+		validatePosition func(op Operation, isRoot bool) error
+		field1           string
+		reason           string
+	}{
+		{name: "invalid in itself", field1: invalidField1, reason: "field_1 is invalid"},
+		{name: "invalid at its position", validatePosition: rootOp1, field1: "second", reason: "only one op1 allowed"},
+	} {
+		t.Run(kind.name, func(t *testing.T) {
+			for _, tc := range []struct {
+				name     string
+				held     bool // the local entity holds the invalid operation already
+				existing bool // the entity already exists locally
+				diverged bool // the local entity has new commits
+				status   entity.MergeStatus
+			}{
+				{name: "new, taken in", status: entity.MergeStatusInvalid},
+				{name: "fast-forward, taken in", existing: true, status: entity.MergeStatusInvalid},
+				{name: "merge commit, taken in", existing: true, diverged: true, status: entity.MergeStatusInvalid},
+				{name: "fast-forward, held", existing: true, held: true, status: entity.MergeStatusUpdated},
+				{name: "merge commit, held", existing: true, held: true, diverged: true, status: entity.MergeStatusUpdated},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					repoA, repoB, _, id1, _, resolvers, def := makeTestContextRemote(t)
+					def.ValidatePosition = kind.validatePosition
+
+					eA := New(def)
+					eA.Append(newOp1(id1, "foo"))
+					require.NoError(t, eA.Commit(t.Context(), repoA))
+					if tc.held {
+						writeInvalid(t, def, repoA, eA, newOp1(id1, kind.field1))
+					}
+
+					if tc.existing {
+						_, err := Push(t.Context(), def, repoA, "remote")
+						require.NoError(t, err)
+						_, err = Fetch(t.Context(), def, repoB, "remote")
+						require.NoError(t, err)
+						// B takes the entity as it is, as a client with earlier rules could have
+						head, err := repoA.ResolveRef(t.Context(), def.Namespace, eA.Id().String())
+						require.NoError(t, err)
+						require.NoError(t, repoB.UpdateRef(t.Context(), def.Namespace, eA.Id().String(), "", head))
+					}
+
+					if tc.diverged {
+						eB, err := Read(t.Context(), def, wrapper, repoB, resolvers, eA.Id())
+						require.NoError(t, err)
+						eB.Append(newOp2(id1, "bar"))
+						require.NoError(t, eB.Commit(t.Context(), repoB))
+					}
+
+					// A adds a commit: an invalid operation, or a valid one on top of the
+					// held invalid one
+					readA, err := Read(t.Context(), def, wrapper, repoA, resolvers, eA.Id())
+					require.NoError(t, err)
+					if tc.held {
+						readA.Append(newOp2(id1, "baz"))
+						require.NoError(t, readA.Commit(t.Context(), repoA))
+					} else {
+						writeInvalid(t, def, repoA, readA.Entity, newOp1(id1, kind.field1))
+					}
+
+					_, err = Push(t.Context(), def, repoA, "remote")
+					require.NoError(t, err)
+					_, err = Fetch(t.Context(), def, repoB, "remote")
+					require.NoError(t, err)
+
+					var all []entity.MergeResult
+					for result := range MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", id1) {
+						all = append(all, result)
+					}
+					require.Len(t, all, 1)
+					require.NoError(t, all[0].Err)
+					require.Equal(t, tc.status, all[0].Status, all[0].Reason)
+					if tc.status == entity.MergeStatusInvalid {
+						require.Contains(t, all[0].Reason, kind.reason)
+					}
+				})
+			}
+		})
+	}
+}
+
 // Pull fails on an entity that can't be merged, and merges the others all the
 // same.
 func TestPullContinuesOnFailure(t *testing.T) {
@@ -1255,5 +1341,97 @@ func TestSingleton(t *testing.T) {
 		def.SingletonKey = ""
 		_, err := ReadSingleton(t.Context(), def, wrapper, repoA, resolvers)
 		require.Error(t, err)
+	})
+}
+
+// A merge takes in a time only within reach of the local clocks, see readSince:
+// a root or a merge commit isn't bounded by its parents.
+func TestMergeClockOutOfReach(t *testing.T) {
+	writePack := func(t *testing.T, def Definition, repo repository.Repo, author identity.Interface, createTime, editTime lamport.Time, ops []Operation, parents ...repository.Hash) repository.Hash {
+		t.Helper()
+		opp := &operationPack{Author: author, Operations: ops, CreateTime: createTime, EditTime: editTime}
+		hash, err := opp.Write(t.Context(), def, repo, parents...)
+		require.NoError(t, err)
+		return hash
+	}
+	// sync pushes the entities of repoA to the remote, and merges them into repoB
+	sync := func(t *testing.T, def Definition, repoA, repoB repository.Repo, resolvers entity.Resolvers, author identity.Interface) map[entity.Id]entity.MergeResult {
+		t.Helper()
+		_, err := Push(t.Context(), def, repoA, "remote")
+		require.NoError(t, err)
+		_, err = Fetch(t.Context(), def, repoB, "remote")
+		require.NoError(t, err)
+		results := make(map[entity.Id]entity.MergeResult)
+		for result := range MergeAll(t.Context(), def, wrapper, repoB, resolvers, "remote", author) {
+			require.NoError(t, result.Err)
+			results[result.Id] = result
+		}
+		return results
+	}
+	editTime := func(t *testing.T, def Definition, repo repository.Repo) lamport.Time {
+		t.Helper()
+		time, err := clockTime(repo, def.editClock())
+		require.NoError(t, err)
+		return time
+	}
+
+	t.Run("a root out of reach is rejected", func(t *testing.T) {
+		repoA, repoB, _, id1, _, resolvers, def := makeTestContextRemote(t)
+
+		root := newOp1(id1, "foo")
+		head := writePack(t, def, repoA, id1, 1, 3*maxClockJump, []Operation{root})
+		require.NoError(t, repoA.UpdateRef(t.Context(), def.Namespace, root.Id().String(), "", head))
+
+		results := sync(t, def, repoA, repoB, resolvers, id1)
+		require.Equal(t, entity.MergeStatusInvalid, results[root.Id()].Status)
+		require.Contains(t, results[root.Id()].Reason, "out of reach")
+		_, err := repoB.ResolveRef(t.Context(), def.Namespace, root.Id().String())
+		require.ErrorIs(t, err, repository.ErrNotFound)
+		require.Less(t, editTime(t, def, repoB), lamport.Time(maxClockJump))
+	})
+
+	t.Run("a root within reach of the clock raised by an earlier merge is taken in", func(t *testing.T) {
+		repoA, repoB, _, id1, _, resolvers, def := makeTestContextRemote(t)
+
+		// a root within reach, and a commit only bounded by its parent
+		first := newOp1(id1, "foo")
+		firstRoot := writePack(t, def, repoA, id1, 1, maxClockJump*9/10, []Operation{first})
+		firstHead := writePack(t, def, repoA, id1, 0, maxClockJump*18/10, []Operation{newOp2(id1, "bar")}, firstRoot)
+		require.NoError(t, repoA.UpdateRef(t.Context(), def.Namespace, first.Id().String(), "", firstHead))
+		results := sync(t, def, repoA, repoB, resolvers, id1)
+		require.Equal(t, entity.MergeStatusNew, results[first.Id()].Status, results[first.Id()].Reason)
+		require.Equal(t, lamport.Time(maxClockJump*18/10), editTime(t, def, repoB))
+
+		// a root out of reach of the clock B started with, within reach of it now
+		second := newOp1(id1, "baz")
+		secondRoot := writePack(t, def, repoA, id1, 2, maxClockJump*27/10, []Operation{second})
+		require.NoError(t, repoA.UpdateRef(t.Context(), def.Namespace, second.Id().String(), "", secondRoot))
+		results = sync(t, def, repoA, repoB, resolvers, id1)
+		require.Equal(t, entity.MergeStatusNew, results[second.Id()].Status, results[second.Id()].Reason)
+		require.Equal(t, lamport.Time(maxClockJump*27/10), editTime(t, def, repoB))
+	})
+
+	t.Run("a merge commit out of reach is rejected", func(t *testing.T) {
+		repoA, repoB, _, id1, _, resolvers, def := makeTestContextRemote(t)
+
+		root := newOp1(id1, "foo")
+		rootCommit := writePack(t, def, repoA, id1, 1, 1, []Operation{root})
+		require.NoError(t, repoA.UpdateRef(t.Context(), def.Namespace, root.Id().String(), "", rootCommit))
+		results := sync(t, def, repoA, repoB, resolvers, id1)
+		require.Equal(t, entity.MergeStatusNew, results[root.Id()].Status, results[root.Id()].Reason)
+
+		// two branches, joined by a merge commit far ahead
+		left := writePack(t, def, repoA, id1, 0, 2, []Operation{newOp2(id1, "left")}, rootCommit)
+		right := writePack(t, def, repoA, id1, 0, 3, []Operation{newOp2(id1, "right")}, rootCommit)
+		merged := writePack(t, def, repoA, id1, 0, 3*maxClockJump, nil, left, right)
+		require.NoError(t, repoA.UpdateRef(t.Context(), def.Namespace, root.Id().String(), rootCommit, merged))
+
+		results = sync(t, def, repoA, repoB, resolvers, id1)
+		require.Equal(t, entity.MergeStatusInvalid, results[root.Id()].Status)
+		require.Contains(t, results[root.Id()].Reason, "out of reach")
+		head, err := repoB.ResolveRef(t.Context(), def.Namespace, root.Id().String())
+		require.NoError(t, err)
+		require.Equal(t, rootCommit, head)
+		require.Less(t, editTime(t, def, repoB), lamport.Time(maxClockJump))
 	})
 }

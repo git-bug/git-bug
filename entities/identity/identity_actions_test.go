@@ -175,6 +175,59 @@ func TestPullIdentityWithCustomPortAvatar(t *testing.T) {
 	require.Empty(t, got.AvatarUrl())
 }
 
+func TestPullIdentityInvalidVersion(t *testing.T) {
+	repoA, repoB, _ := repotest.SetupGoGitReposAndRemote(t)
+	ctx := t.Context()
+
+	// a name that isn't text, which git-bug v0.12.0 accepted
+	raw := []byte(`{"version":2,"times":{},"unix_time":1609459200,"name":"Alice\u2028","nonce":"AAAAAAAAAAAAAAAAAAAAAAAAAAA="}`)
+	id := entity.DeriveId(raw)
+	blob, err := repoA.StoreData(ctx, raw)
+	require.NoError(t, err)
+	tree, err := repoA.StoreTree(ctx, []repository.TreeEntry{{ObjectType: repository.Blob, Hash: blob, Name: versionEntryName}})
+	require.NoError(t, err)
+	first, err := repoA.StoreCommit(ctx, tree)
+	require.NoError(t, err)
+	require.NoError(t, repoA.UpdateRef(ctx, Namespace, id.String(), "", first))
+	_, err = Push(ctx, repoA, "origin")
+	require.NoError(t, err)
+
+	t.Run("a clone that doesn't hold it rejects it", func(t *testing.T) {
+		require.ErrorContains(t, Pull(ctx, repoB, "origin"), "remote identity is invalid")
+		_, err := Read(ctx, repoB, id)
+		require.Error(t, err)
+	})
+
+	t.Run("its holder reads it and adds a version", func(t *testing.T) {
+		i, err := Read(ctx, repoA, id)
+		require.NoError(t, err)
+		require.Error(t, i.Validate())
+		require.NoError(t, i.Mutate(repoA, func(m *Mutator) { m.Name = "Alice" }))
+		require.NoError(t, i.Commit(ctx, repoA))
+		_, err = Push(ctx, repoA, "origin")
+		require.NoError(t, err)
+	})
+
+	t.Run("a clone that holds it takes in the new version", func(t *testing.T) {
+		// hold the first version, as a clone that took it in by earlier rules
+		_, err := Fetch(ctx, repoB, "origin")
+		require.NoError(t, err)
+		require.NoError(t, repoB.UpdateRef(ctx, Namespace, id.String(), "", first))
+
+		require.NoError(t, Pull(ctx, repoB, "origin"))
+		i, err := Read(ctx, repoB, id)
+		require.NoError(t, err)
+		require.Equal(t, "Alice", i.Name())
+	})
+
+	t.Run("an invalid version taken in is rejected", func(t *testing.T) {
+		i, err := Read(ctx, repoA, id)
+		require.NoError(t, err)
+		require.NoError(t, i.Mutate(repoA, func(m *Mutator) { m.Name = "Alice\u2028" }))
+		require.ErrorContains(t, i.Commit(ctx, repoA), "can't commit an identity with invalid data")
+	})
+}
+
 func allIdentities(t testing.TB, identities <-chan entity.StreamedEntity[*Identity]) []*Identity {
 	var result []*Identity
 	for streamed := range identities {
